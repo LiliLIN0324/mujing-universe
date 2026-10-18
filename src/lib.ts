@@ -21,13 +21,14 @@ export function featuredWorks<T extends { line: string; images: string[]; icon: 
 const R2_FIG = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
 const LOCAL_COVER = '/scroll-placeholder.svg';
 /** R2 has no usable still for these slugs (01/logo 404). */
-const BROKEN_COVERS = new Set(['box-up-my-stuff-in-cyberspace', 'scendance']);
+const BROKEN_COVERS = new Set(['box-up-my-stuff-in-cyberspace']);
 
 /** 精选环带用的静帧。音画只有一卷时，用同一件作品的 01 / 02。缺图用本地占位，不留破图。 */
 export function workCovers(w: { slug: string; images?: string[]; icon?: string }): string[] {
   if (w.slug === 'xihu-panorama') {
     return [`${R2_FIG}/xihu-panorama/01.jpg`, `${R2_FIG}/xihu-panorama/02.jpg`];
   }
+  if (w.slug === 'scendance') return ['/ring/_sources/scendance-hero.jpg'];
   if (BROKEN_COVERS.has(w.slug)) return [LOCAL_COVER];
   const photos = (w.images ?? []).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
   if (photos.length) return photos.slice(0, 2);

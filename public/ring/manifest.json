@@ -6,7 +6,7 @@
   {
     "slug": "box-up-my-stuff-in-cyberspace",
     "file": "1.jpg",
-    "fallback": true
+    "note": "stand-in xihu-panorama/02.jpg (box-up R2 404); landscape not paper"
   },
   {
     "slug": "litflow",
@@ -19,7 +19,7 @@
   {
     "slug": "scendance",
     "file": "4.jpg",
-    "fallback": true
+    "source": "_sources/scendance-hero.jpg"
   },
   {
     "slug": "bazi-fengshui-analysis",
@@ -27,11 +27,13 @@
   },
   {
     "slug": "genshot-AI-video-generation-tool",
-    "file": "6.jpg"
+    "file": "6.jpg",
+    "note": "qa-scendance/b-part2-resting.png landscape stand-in (genshot washed)"
   },
   {
     "slug": "genstyle",
-    "file": "7.jpg"
+    "file": "7.jpg",
+    "note": "genstyle02"
   },
   {
     "slug": "anyreal",
@@ -39,6 +41,7 @@
   },
   {
     "slug": "dragon-diffussion",
-    "file": "9.jpg"
+    "file": "9.jpg",
+    "note": "riffle/02.jpg landscape (dragon 01 washed)"
   }
 ]

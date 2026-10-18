@@ -4,8 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "node scripts/fetch-ring-covers.mjs",
     "build": "astro build",
+    "fetch-covers": "node scripts/fetch-ring-covers.mjs",
     "preview": "astro preview --port 4471 --host 127.0.0.1"
   },
   "dependencies": {
