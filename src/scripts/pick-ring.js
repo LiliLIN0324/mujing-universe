@@ -57,27 +57,24 @@ void main() {
   float spin = uTime * 0.12 + uVelocity;
   float delta = atan(sin(theta - uFront), cos(theta - uFront));
   float ad = abs(delta);
-  float front = 1.0 - smoothstep(0.12, 0.54, ad);
-  float nearEdge = 1.0 - step(0.7, ad);
-  float thetaUse = mix(theta, uFront, uClose * 0.82 * (1.0 - front));
-  float radius = uRadius * (1.0 + 0.24 * uOpen) * (1.0 - 0.28 * uClose);
-  float pop = front * uClose;
-  float squeeze = 1.0 - uClose * (1.0 - front) * mix(0.95, 0.8, nearEdge);
-  vec2 scl = vec2(
-    uScale.x * (1.0 + (uPop - 1.0) * pop) * squeeze,
-    uScale.y * (1.0 + (uPop - 1.0) * pop)
-  );
-  float yaw = thetaUse - PI * 0.18 - position.x * 0.32 - uVelocity * 15.0;
-  yaw += uClose * (1.0 - front) * sign(delta + 1e-4) * 1.15;
-  vec3 p = vec3(position.x * scl.x, position.y * scl.y, 0.0);
+  float front = 1.0 - smoothstep(0.04, 0.32, ad);
+  float thetaUse = mix(theta, uFront, uClose * 0.8 * (1.0 - front));
+  float radius = uRadius * (1.0 + 0.32 * uOpen) * (1.0 - 0.2 * uClose);
+  float grow = mix(1.0, uPop, front * uClose);
+  float fold = 1.0 - uClose * (1.0 - front) * 0.84;
+  vec2 scl = vec2(uScale.x * grow * fold, uScale.y * grow);
+  float yaw = thetaUse - PI * 0.22 - position.x * 0.62 - uVelocity * 6.0;
+  yaw += uClose * (1.0 - front) * sign(delta + 1e-4) * 1.2;
+  float bow = position.x * position.x * 0.55;
+  vec3 p = vec3(position.x * scl.x, position.y * scl.y, bow * scl.x);
   p = rotate(p, vec3(0.0, 1.0, 0.0), yaw);
   p += vec3(cos(thetaUse) * radius, 0.0, sin(thetaUse) * radius);
   p = rotate(p, vec3(0.0, 1.0, 0.0), spin);
-  float tilt = -uPitch * (1.0 - 0.2 * uClose);
+  float tilt = -uPitch * (1.0 - 0.22 * uClose);
   p = rotate(p, vec3(1.0, 0.0, 0.0), tilt);
-  p.x -= uIdle.x + uShiftX * pop;
-  p.y -= uIdle.y + uShiftY * pop;
-  p.z -= mix(uZFar, uZNear, pop) + uClose * (1.0 - front) * 1.1;
+  p.x -= uIdle.x + uShiftX * front * uClose;
+  p.y -= uIdle.y + uShiftY * front * uClose;
+  p.z -= mix(uZFar, uZNear, front * uClose) + uClose * (1.0 - front) * 1.6;
   gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
   vUv = uv;
 }
@@ -161,26 +158,26 @@ export function mountPickRing(root, pickData) {
   const gl = renderer.gl;
   gl.clearColor(0, 0, 0, 0);
 
-  const camera = new Camera(gl, { fov: 52, near: 0.05, far: 40 });
-  camera.position.z = 5.15;
+  const camera = new Camera(gl, { fov: 56, near: 0.05, far: 40 });
+  camera.position.z = 4.5;
 
   const scene = new Transform();
   const geometry = new Plane(gl, { width: 1, height: 1, widthSegments: 50, heightSegments: 50 });
   const shared = {
     uTime: { value: 0 },
     uVelocity: { value: 0 },
-    uRadius: { value: 0.76 },
-    uPitch: { value: 0.5 },
+    uRadius: { value: 0.84 },
+    uPitch: { value: 0.4 },
     uOpen: { value: 0 },
     uClose: { value: 0 },
-    uZFar: { value: 0.15 },
-    uZNear: { value: -1.35 },
-    uShiftX: { value: 0.48 },
-    uShiftY: { value: -0.78 },
-    uPop: { value: 2.55 },
+    uZFar: { value: 0.05 },
+    uZNear: { value: -0.62 },
+    uShiftX: { value: 0.95 },
+    uShiftY: { value: -0.22 },
+    uPop: { value: 1.92 },
     uFront: { value: 0 },
-    uIdle: { value: [1.15, 0.62] },
-    uScale: { value: [1.06, 1.48] },
+    uIdle: { value: [1.22, 0.52] },
+    uScale: { value: [0.94, 1.5] },
   };
 
   const meshes = images.slice(0, 10).map((img, i) => {
@@ -189,7 +186,7 @@ export function mountPickRing(root, pickData) {
       ...shared,
       uAngle: { value: i / 10 },
       uTexture: { value: texture },
-      uPlane: { value: [1.06, 1.48] },
+      uPlane: { value: [0.94, 1.5] },
       uImage: { value: [1, 1] },
       uReady: { value: 0 },
     };
@@ -278,8 +275,8 @@ export function mountPickRing(root, pickData) {
     if (progress > 1) progress = 1;
     const dProgress = progress - lastProgress;
     velocity = lerp(velocity, motion.matches ? 0 : dProgress, 0.1);
-    const open = smoothstep(Math.min(1, progress / 0.5));
-    const close = smoothstep(Math.max(0, (progress - 0.8) / 0.2));
+    const open = smoothstep(Math.min(1, progress / 0.42));
+    const close = smoothstep(Math.max(0, (progress - 0.58) / 0.42));
     if (inView && !motion.matches) uTime += (0.009 * dt + 15 * velocity) * (1 - close);
     shared.uTime.value = uTime;
     shared.uVelocity.value = velocity;
