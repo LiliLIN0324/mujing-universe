@@ -42,12 +42,15 @@ const lead = picks[0];
     data-src={SCROLL_VIDEO}
     aria-hidden="true"
   ></video>
-  <div class="hero-copy">
-    <p class="kicker cap">古画新绘 · 进行中</p>
-    <h1>当代西湖繁胜全景图</h1>
-    <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成</p>
+  <div class="hero-overlay">
+    <div class="hero-copy">
+      <p class="kicker">古画新绘 · 进行中</p>
+      <h1>当代西湖繁胜全景图</h1>
+      <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成</p>
+      <button id="snd" class="btn solid sound" type="button" aria-pressed="false" aria-controls="scroll-video">▶ 聆听图景</button>
+    </div>
+    <a class="hero-more" href="/works/xihu-panorama/">查看作品</a>
   </div>
-  <button id="snd" class="btn solid sound" type="button" aria-pressed="false" aria-controls="scroll-video">▶ 聆听图景</button>
 </section>
 
 {lead && <section class="picks" id="picks" aria-labelledby="picks-mark">
@@ -110,24 +113,40 @@ const lead = picks[0];
   pointer-events: none;
   background: linear-gradient(to top right, rgba(8, 10, 9, 0.4) 0%, rgba(8, 10, 9, 0.1) 32%, rgba(8, 10, 9, 0) 54%);
 }
-.hero-copy {
+.hero-overlay {
   position: absolute;
   left: clamp(24px, 4vw, 48px);
-  bottom: clamp(28px, 5vh, 56px);
+  right: clamp(24px, 4vw, 48px);
+  bottom: clamp(24px, 4vw, 48px);
   z-index: 2;
-  max-width: min(34em, calc(100% - clamp(24px, 4vw, 48px) * 2 - 9rem));
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  pointer-events: none;
+}
+.hero-copy,
+.hero-more { pointer-events: auto; }
+.hero-copy {
+  max-width: min(420px, 46vw);
   text-align: left;
   color: #fff;
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
 }
 .hero-copy .kicker {
   margin: 0 0 8px;
-  color: rgba(255, 255, 255, 0.82);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
 }
 .hero-copy h1 {
   margin: 0 0 8px;
   color: #fff;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: clamp(28px, 3.5vw, 44px);
+  font-family: inherit;
+  font-size: clamp(28px, 3.6vw, 44px);
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.15;
@@ -135,20 +154,30 @@ const lead = picks[0];
 .hero-copy .sub {
   margin: 0;
   color: #fff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.55;
   opacity: 0.75;
 }
 #snd.btn.solid {
-  position: absolute;
-  right: clamp(24px, 4vw, 48px);
-  bottom: clamp(28px, 5vh, 56px);
-  z-index: 2;
+  margin-top: 18px;
   background: #fff;
   color: #1A1A1C;
   border-color: #fff;
 }
+.hero-more {
+  flex: none;
+  color: #fff;
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  opacity: 0.85;
+  white-space: nowrap;
+}
+.hero-more:hover { opacity: 1; }
 #snd.btn.solid:disabled,
 #snd.btn.solid:disabled:hover {
   opacity: 0.45;
@@ -302,7 +331,12 @@ const lead = picks[0];
 }
 @media (max-width: 760px) {
   .hero { height: clamp(460px, 78vh, 640px); border-radius: 0; }
-  .hero-copy .sub { font-size: 14px; }
+  .hero-overlay {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .hero-copy { max-width: none; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-video { display: none; transition: none; }
