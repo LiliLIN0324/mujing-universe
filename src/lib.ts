@@ -3,7 +3,8 @@ export const LINES = ['音画', 'AIGC 产品', '游戏', '空间与研究'] as c
 export const LINE_EN: Record<string,string> = { '音画':'Audio-Visual', 'AIGC 产品':'AIGC Products', '游戏':'Games', '空间与研究':'Space & Research' };
 export async function allWorks() {
   const ws = (await getCollection('works')).map(w => w.data);
-  ws.sort((a,b) => LINES.indexOf(a.line) - LINES.indexOf(b.line) || b.yearNum - a.yearNum);
+  // slug breaks ties so the order (and the /ring/<slot>.jpg covers) is the same on every build
+  ws.sort((a,b) => LINES.indexOf(a.line) - LINES.indexOf(b.line) || b.yearNum - a.yearNum || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0));
   return ws.map((w,i) => ({ ...w, no: String(i+1).padStart(2,'0') }));
 }
 const PLACEHOLDER_COVER = 'scroll-placeholder.svg';
@@ -21,7 +22,7 @@ export function featuredWorks<T extends { line: string; images: string[]; icon: 
 const R2_FIG = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
 const LOCAL_COVER = '/scroll-placeholder.svg';
 /** R2 has no usable still for these slugs (01/logo 404). */
-const BROKEN_COVERS = new Set(['box-up-my-stuff-in-cyberspace']);
+const BROKEN_COVERS = new Set<string>([]);
 
 /** 精选环带用的静帧。音画只有一卷时，用同一件作品的 01 / 02。缺图用本地占位，不留破图。 */
 export function workCovers(w: { slug: string; images?: string[]; icon?: string }): string[] {
@@ -44,7 +45,7 @@ export function workFallback(w: { slug: string; icon?: string }) {
   return LOCAL_COVER;
 }
 
-const XIHU_INTRO = '当代西湖繁胜全景图，是幕景宇宙正在进行的音画长卷。以宋画的观看方式重绘今日西湖，舟船、岸线与人烟由声音转译生成。这一卷仍在创作中，眼下先以其中两帧静帧并置。其余作品按年份列在右侧，声音只留在页首的图景里。';
+const XIHU_INTRO = '当代西湖繁胜全景图，是幕景宇宙正在进行的音画长卷。以宋画的观看方式重绘今日西湖，舟船、岸线与人烟由声音转译生成。这一卷仍在创作中。';
 
 function textWidth(text: string) {
   let width = 0;
@@ -64,8 +65,6 @@ export function pickIntro(w: { slug: string; title: string; yearNum?: number; li
   let text = bits.join('');
   const pads = [
     '这件作品与音画长卷一起，收在幕景宇宙的创作目录里。',
-    '封面用项目静帧，年份写在这一行的右侧。',
-    '点选这一行时，左侧简介与主封面一起换成这件作品。',
   ];
   for (const pad of pads) {
     if (textWidth(text) >= 380 * 4.15) break;
@@ -77,4 +76,27 @@ export function pickIntro(w: { slug: string; title: string; yearNum?: number; li
     text = sentences.join('');
   }
   return text;
+}
+
+/* ---- Mobile featured stack (≤768px) helpers. Desktop does not read these. ---- */
+const isPlaceholder = (text: string) => /占位/.test(text);
+const stripPlaceholder = (text: string) => text.replace(/[（(]占位[^）)]*[）)]/g, '').trim();
+
+/** 移动端精选正文：作品自己的完整描述，不截断、不补句。没有就留空。 */
+export function pickBody(w: { slug: string; description?: string }): string {
+  if (w.slug === 'xihu-panorama') return XIHU_INTRO;
+  const raw = stripPlaceholder(w.description || '');
+  if (!raw) return '';
+  return /[。！？.!?]$/.test(raw) ? raw : `${raw}。`;
+}
+
+/** 真实技术栈：去掉含「占位」的条目。 */
+export function pickTech(w: { tech?: string[] }): string[] {
+  return (w.tech || []).filter((item) => item && !isPlaceholder(item)).map((item) => item.trim()).filter(Boolean);
+}
+
+/** 移动端副标题：类型 · 年份 · 技术（前两项）。缺哪段就省哪段。 */
+export function pickMeta(w: { line?: string; yearNum?: number; tech?: string[] }): string {
+  const tech = pickTech(w).slice(0, 2).join(' / ');
+  return [w.line || '', w.yearNum ? String(w.yearNum) : '', tech].filter(Boolean).join(' · ');
 }

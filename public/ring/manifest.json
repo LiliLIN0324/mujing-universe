@@ -4,44 +4,44 @@
     "file": "0.jpg"
   },
   {
-    "slug": "box-up-my-stuff-in-cyberspace",
-    "file": "1.jpg",
-    "note": "stand-in xihu-panorama/02.jpg (box-up R2 404); landscape not paper"
-  },
-  {
     "slug": "litflow",
-    "file": "2.jpg"
+    "file": "1.jpg"
   },
   {
     "slug": "riffle-ai-game-generation-tool",
-    "file": "3.jpg"
+    "file": "2.jpg"
   },
   {
     "slug": "scendance",
-    "file": "4.jpg",
+    "file": "3.jpg",
     "source": "_sources/scendance-hero.jpg"
   },
   {
     "slug": "bazi-fengshui-analysis",
-    "file": "5.jpg"
+    "file": "4.jpg"
   },
   {
     "slug": "genshot-AI-video-generation-tool",
-    "file": "6.jpg",
+    "file": "5.jpg",
     "note": "qa-scendance/b-part2-resting.png landscape stand-in (genshot washed)"
   },
   {
     "slug": "genstyle",
-    "file": "7.jpg",
+    "file": "6.jpg",
     "note": "genstyle02"
   },
   {
     "slug": "anyreal",
-    "file": "8.jpg"
+    "file": "7.jpg"
   },
   {
     "slug": "dragon-diffussion",
-    "file": "9.jpg",
+    "file": "8.jpg",
     "note": "riffle/02.jpg landscape (dragon 01 washed)"
+  },
+  {
+    "slug": "early-campus-experience",
+    "file": "9.jpg",
+    "note": "1037pinpin/01.jpg (first photo), resized to 1920"
   }
 ]
