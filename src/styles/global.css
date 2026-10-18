@@ -349,3 +349,89 @@ header.top.top--home:focus-within {
   header.top.top--home.top--work { margin-bottom: 0; background: rgba(255, 255, 255, 0.78); }
   .top--home nav a.on { border-bottom: 0; padding-bottom: 11px; font-weight: 600; }
 }
+
+/* Non-home pages opting into the unified bar (artist): desktop keeps the red-dot
+   bar; ≤768px shows the homepage 'Scendance Space' bar (52px, always visible, menu). */
+.top--unified .wordmark,
+.top--unified .menu-btn { display: none; }
+@media (max-width: 768px) {
+  header.top.top--unified {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    min-height: 0;
+    height: 52px;
+    padding: 0 24px;
+    flex-wrap: nowrap;
+    background: rgba(246, 245, 243, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: #1a1a18;
+    font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
+  }
+  .top--unified .brand { display: none; }
+  .top--unified .wordmark {
+    display: block;
+    color: #1a1a18;
+    font-family: "Cormorant SC", serif;
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: 0.16em;
+    line-height: 1;
+    text-decoration: none;
+  }
+  .top--unified .menu-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    width: 44px;
+    height: 44px;
+    margin-right: -12px;
+    padding: 0 12px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .top--unified .menu-btn i { display: block; width: 20px; height: 1.5px; background: #1a1a18; transition: transform 0.25s ease; }
+  .top--unified.is-menu-open .menu-btn i:first-child { transform: translateY(3.75px) rotate(45deg); }
+  .top--unified.is-menu-open .menu-btn i:last-child { transform: translateY(-3.75px) rotate(-45deg); }
+  .top--unified nav {
+    display: none;
+    position: absolute;
+    top: 52px;
+    right: 16px;
+    width: auto;
+    min-width: 148px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 6px 0;
+    background: rgba(246, 245, 243, 0.96);
+    border: 1px solid #e3dfd8;
+    border-radius: 6px;
+    box-shadow: 0 12px 28px rgba(40, 30, 20, 0.12);
+  }
+  .top--unified.is-menu-open nav { display: flex; }
+  .top--unified nav a,
+  .top--unified nav a.btn.solid {
+    display: block;
+    margin: 0;
+    padding: 11px 18px;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: #1a1a18;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: normal;
+    letter-spacing: 0.08em;
+    text-align: left;
+  }
+  .top--unified nav a.on { font-weight: 600; }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .top--unified .menu-btn i { transition: none; }
+}

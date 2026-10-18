@@ -2,6 +2,8 @@
 import '../styles/global.css';
 const { title = '幕景宇宙 · 林丽丽艺术工作室', active = '', home = false, navClass = '' } = Astro.props;
 const links = [['/works/', '作品'], ['/artist/', '艺术家']];
+// 'top--unified' (non-home pages): ≤768px shows the homepage 'Scendance Space' bar instead of the red-dot bar.
+const unified = !home && navClass.split(' ').includes('top--unified');
 const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
 ---
 <html lang="zh-CN">
@@ -16,7 +18,7 @@ const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '�
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet"/>
-  {home && <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600&family=Noto+Serif+SC:wght@600&display=swap" rel="stylesheet"/>}
+  {(home || unified) && <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600&family=Noto+Serif+SC:wght@600&display=swap" rel="stylesheet"/>}
 </head>
 <body>
 {home ? (
@@ -29,9 +31,11 @@ const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '�
   </nav>
 </header>
 ) : (
-<header class="top">
+<header class:list={['top', !home && navClass]} id={unified ? 'home-nav' : undefined}>
   <a class="brand" href="/"><i></i><span>幕景宇宙</span></a>
-  <nav>
+  {unified && <a class="wordmark" href="/">Scendance Space</a>}
+  {unified && <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i></i><i></i></button>}
+  <nav id={unified ? 'home-menu' : undefined}>
     {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
     <a class="btn solid" href="/contact/">合作</a>
   </nav>
