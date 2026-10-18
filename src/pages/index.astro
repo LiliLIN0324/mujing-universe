@@ -31,9 +31,14 @@ const mobilePicks = ws.slice(0, 10).map((w, i) => ({
   fallback: workFallback(w) || '/ring/paper.jpg',
 }));
 const mLead = mobilePicks[0];
+/* Mobile (≤768px) page-by-page homepage: per-page "dwell" switch.
+   'on'  = vertical swipes first play through the page's own content (hero: pan the
+           painting in 3 steps; featured: walk the cards 01→10), then flip the page.
+   'off' = the swipe flips the page immediately. Which pages dwell is TBD: all off. */
+const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off', picks: 'off', cta: 'off' };
 ---
 <Base active="/" home>
-<div class="first-screen" id="first-screen">
+<div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
   <div class="hero-pan">
     <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
@@ -54,6 +59,7 @@ const mLead = mobilePicks[0];
   </div>
   <div class="hero-cue" aria-hidden="true">长卷 · 自动展开<i></i>01 / 12</div>
   <div class="hero-seal" aria-hidden="true">滑动或拖动 · 浏览全卷</div>
+  <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
 </section>
 <div class="hero-info">
   <div class="hero-copy">
@@ -66,9 +72,11 @@ const mLead = mobilePicks[0];
   </div>
 </div>
 <a class="scroll-cue" id="scroll-cue" href="#picks" aria-label="向下滚动至精选"><span>SCROLL</span><i></i></a>
+<a class="m-down" href="#picks" aria-label="向下滚动至精选作品"><b>下滑</b><i></i><em>⌄</em></a>
+<a class="m-peek" href="#picks"><span>精选作品</span><span>{mobilePicks.length}</span></a>
 </div>
 
-{leadPick && <section class="picks" id="picks" aria-label="精选">
+{leadPick && <section class="picks" id="picks" aria-label="精选" data-dwell={PAGE_DWELL.picks}>
   {mLead && <div class="m-feat" id="m-feat">
     <div class="m-hd"><b>精选作品</b><span id="m-count">01 / {String(mobilePicks.length).padStart(2, '0')}</span></div>
     <div class="m-stage" id="m-stage" role="group" aria-roledescription="carousel" aria-label="精选作品">
@@ -141,7 +149,7 @@ const mLead = mobilePicks[0];
   <script type="application/json" id="pick-data" set:html={JSON.stringify(picks).replace(/</g, '\\u003c')}></script>
 </section>}
 
-<section class="narrow cta">
+<section class="narrow cta" id="cta" data-dwell={PAGE_DWELL.cta}>
   <h2>展览 · 委托 · 合作</h2>
   <p>文旅数字展陈、AIGC 音画委托、品牌合作与驻留，由经纪人统一对接。</p>
   <a class="btn solid" href="/contact/">合作</a>
@@ -531,6 +539,152 @@ const mLead = mobilePicks[0];
   .hero-copy h1 { font-size: 34px; }
   .hero-copy .sub { font-size: 15px; }
 }
+/* ---- Mobile first screen (≤768px): full-height painting as the player. ---- */
+.m-prog,
+.m-down,
+.m-peek { display: none; }
+@media (max-width: 768px) {
+  .first-screen {
+    height: 100vh;
+    height: max(100svh, 844px);
+    background: #fff;
+  }
+  .hero {
+    height: 490px;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .hero-pan {
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: auto;
+    animation: none;
+    transform: translate3d(var(--pan-x, 0px), 0, 0);
+  }
+  .hero-still {
+    position: relative;
+    inset: auto;
+    top: 0;
+    height: 100%;
+    width: auto;
+    max-width: none;
+    object-fit: initial;
+  }
+  .hero-cue,
+  .hero-seal,
+  .scroll-cue { display: none; }
+  .m-prog {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    z-index: 2;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 11px;
+    line-height: normal;
+    letter-spacing: 0.2em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+  }
+  .m-prog i {
+    display: block;
+    width: 120px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.5);
+    position: relative;
+  }
+  .m-prog b {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 1px;
+    width: 100%;
+    background: #fff;
+    transform-origin: 0 50%;
+    transform: scaleX(var(--prog, 0));
+  }
+  .hero-info {
+    padding: 26px 24px 0;
+    display: block;
+    text-align: center;
+  }
+  .hero-copy h1 {
+    font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+  }
+  .hero-copy .sub { margin-top: 10px; font-size: 15px; line-height: 1.6; color: #3d3a35; letter-spacing: 0; }
+  .hero-copy .meta { margin-top: 10px; font-size: 12px; color: #9a958c; letter-spacing: 0.06em; }
+  .hero-act { margin-top: 30px; justify-content: center; }
+  .listen { padding: 13px 24px; font-size: 15px; letter-spacing: 0.08em; }
+  .m-down {
+    position: absolute;
+    left: 50%;
+    bottom: 74px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #8a857c;
+    font-size: 10px;
+    line-height: normal;
+    letter-spacing: 0.3em;
+    text-decoration: none;
+  }
+  .m-down b { font-weight: 400; margin-right: -0.3em; }
+  .m-down i {
+    display: block;
+    width: 1px;
+    height: 30px;
+    background: rgba(26, 26, 24, 0.12);
+    position: relative;
+    overflow: hidden;
+  }
+  .m-down i::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 1px;
+    height: 14px;
+    background: #1a1a18;
+    animation: m-down-drip 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+  @keyframes m-down-drip {
+    0% { transform: translateY(-26px); }
+    100% { transform: translateY(26px); }
+  }
+  .m-down em { font-style: normal; font-size: 12px; line-height: 1; margin-top: -6px; }
+  .m-peek {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 64px;
+    padding: 16px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    background: #F6F5F3;
+    color: #9a958c;
+    font-size: 12px;
+    line-height: normal;
+    letter-spacing: 0.2em;
+    text-decoration: none;
+  }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .m-down i::after { animation: none; }
+}
 /* ---- Mobile featured card stack (≤768px). Desktop never shows .m-feat. ---- */
 .m-feat { display: none; }
 @media (max-width: 768px) {
@@ -636,6 +790,20 @@ const mLead = mobilePicks[0];
   .m-row.m-all button { color: #1a1a18; font-size: 13px; letter-spacing: 0.08em; }
   .m-row.m-all .y { color: #9a958c; }
 }
+/* ---- Mobile homepage paging (≤768px): one vertical swipe = one page. ---- */
+@media (max-width: 768px) {
+  :global(html) { scroll-snap-type: y mandatory; }
+  .first-screen,
+  .picks,
+  .cta {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  /* page 2: featured fills one screen; content clears the 52px overlay bar */
+  .picks { min-height: 100vh; min-height: 100svh; padding-top: 52px; scroll-margin-top: 0; }
+  /* page 3: CTA + footer; the CTA starts the page */
+  .cta { margin-top: 0; padding-top: 96px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .hero-video { opacity: 0; }
   .hero-pan { animation: none; }
@@ -653,6 +821,9 @@ const video = document.getElementById('scroll-video');
 const listen = document.getElementById('snd');
 const listenLabel = listen.querySelector('.lb');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
+// ≤768px: the painting player in scripts/mobile-hero.js owns the button and the video.
+const mobileHeroMq = matchMedia('(max-width: 768px)');
+const heroOnMobile = () => mobileHeroMq.matches;
 let listening = false;
 
 function setVolume(value) {
@@ -721,9 +892,11 @@ video.addEventListener('playing', () => {
   hero.classList.add('is-playing');
 });
 video.addEventListener('error', () => {
+  if (heroOnMobile()) return;
   failSilent();
 });
 listen.addEventListener('click', () => {
+  if (heroOnMobile()) return;
   if (listen.disabled) return;
   if (listening) {
     setAudible(false);
@@ -739,9 +912,19 @@ listen.addEventListener('click', () => {
   });
 });
 if (motion.addEventListener) motion.addEventListener('change', () => {
+  if (heroOnMobile()) return;
   if (!motion.matches) startVideo();
 });
-startVideo();
+if (!heroOnMobile()) {
+  startVideo();
+} else {
+  const toDesktop = () => {
+    if (heroOnMobile()) return;
+    mobileHeroMq.removeEventListener?.('change', toDesktop);
+    startVideo();
+  };
+  mobileHeroMq.addEventListener?.('change', toDesktop);
+}
 </script>
 <script>
 // Homepage auto-hide nav + SCROLL cue (layout only; no hero media logic here).
@@ -802,8 +985,16 @@ if (!ringMounted) {
 }
 </script>
 <script>
+import { mountMobileHero } from '../scripts/mobile-hero.js';
 import { mountMobileStack } from '../scripts/mobile-stack.js';
+import { mountMobilePager } from '../scripts/mobile-pager.js';
+const heroDwell = mountMobileHero();
 const mobileStackRoot = document.getElementById('m-feat');
-if (mobileStackRoot) mountMobileStack(mobileStackRoot);
+const stackDwell = mobileStackRoot ? mountMobileStack(mobileStackRoot) : null;
+mountMobilePager([
+  { el: document.getElementById('first-screen'), dwell: heroDwell },
+  { el: document.getElementById('picks'), dwell: stackDwell },
+  { el: document.getElementById('cta'), dwell: null },
+]);
 </script>
 </Base>
