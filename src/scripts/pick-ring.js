@@ -59,7 +59,7 @@ void main() {
   float ad = abs(delta);
   float front = 1.0 - smoothstep(0.04, 0.32, ad);
   float thetaUse = mix(theta, uFront, uClose * 0.8 * (1.0 - front));
-  float radius = uRadius * (1.0 + 0.1 * uOpen) * (1.0 - 0.2 * uClose);
+  float radius = uRadius * (1.0 + 0.32 * uOpen) * (1.0 - 0.2 * uClose);
   float grow = mix(1.0, uPop, front * uClose);
   float fold = 1.0 - uClose * (1.0 - front) * 0.84;
   vec2 scl = vec2(uScale.x * grow * fold, uScale.y * grow);
@@ -172,11 +172,11 @@ export function mountPickRing(root, pickData) {
     uClose: { value: 0 },
     uZFar: { value: 0.05 },
     uZNear: { value: -0.62 },
-    uShiftX: { value: 0.75 },
+    uShiftX: { value: 0.95 },
     uShiftY: { value: -0.22 },
     uPop: { value: 1.92 },
     uFront: { value: 0 },
-    uIdle: { value: [1.52, 0.52] },
+    uIdle: { value: [1.22, 0.52] },
     uScale: { value: [1.6, 0.9] },
   };
 
