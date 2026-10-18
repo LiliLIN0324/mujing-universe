@@ -18,7 +18,8 @@ uniform float uZFar;
 uniform float uZNear;
 uniform float uShiftX;
 uniform float uShiftY;
-uniform float uEdge;
+uniform float uPop;
+uniform float uFront;
 uniform vec2 uIdle;
 varying vec2 vUv;
 
@@ -52,22 +53,31 @@ mat4 combinedMatrix(vec3 pos, float rotationAngle, vec3 scale) {
 
 void main() {
   const float PI = 3.141592653589793;
-  float angle = uAngle;
-  float theta = angle * PI * 2.0;
+  float theta = uAngle * PI * 2.0;
   float spin = uTime * 0.12 + uVelocity;
-  float facing = cos(theta + spin);
-  float away = 1.0 - clamp(facing, 0.0, 1.0);
-  float yaw = theta - PI * 0.2 - position.x * 0.3 - uVelocity * 15.0;
-  yaw += uEdge * away * sign(sin(theta + spin) + 1e-4);
-  vec2 ringPos = vec2(cos(theta), sin(theta)) * uRadius;
-  mat4 xform = combinedMatrix(vec3(ringPos.x, 0.0, ringPos.y), yaw, vec3(uScale.x, uScale.y, 1.0));
-  vec3 p = (xform * vec4(position, 1.0)).xyz;
+  float delta = atan(sin(theta - uFront), cos(theta - uFront));
+  float ad = abs(delta);
+  float front = 1.0 - smoothstep(0.12, 0.54, ad);
+  float nearEdge = 1.0 - step(0.7, ad);
+  float thetaUse = mix(theta, uFront, uClose * 0.82 * (1.0 - front));
+  float radius = uRadius * (1.0 + 0.24 * uOpen) * (1.0 - 0.28 * uClose);
+  float pop = front * uClose;
+  float squeeze = 1.0 - uClose * (1.0 - front) * mix(0.95, 0.8, nearEdge);
+  vec2 scl = vec2(
+    uScale.x * (1.0 + (uPop - 1.0) * pop) * squeeze,
+    uScale.y * (1.0 + (uPop - 1.0) * pop)
+  );
+  float yaw = thetaUse - PI * 0.18 - position.x * 0.32 - uVelocity * 15.0;
+  yaw += uClose * (1.0 - front) * sign(delta + 1e-4) * 1.15;
+  vec3 p = vec3(position.x * scl.x, position.y * scl.y, 0.0);
+  p = rotate(p, vec3(0.0, 1.0, 0.0), yaw);
+  p += vec3(cos(thetaUse) * radius, 0.0, sin(thetaUse) * radius);
   p = rotate(p, vec3(0.0, 1.0, 0.0), spin);
-  float tilt = -uPitch * (1.0 - uOpen);
+  float tilt = -uPitch * (1.0 - 0.2 * uClose);
   p = rotate(p, vec3(1.0, 0.0, 0.0), tilt);
-  p.z -= mix(uZFar, uZNear, uClose);
-  p.x -= uShiftX * uClose + uIdle.x;
-  p.y -= uShiftY * uClose + uIdle.y;
+  p.x -= uIdle.x + uShiftX * pop;
+  p.y -= uIdle.y + uShiftY * pop;
+  p.z -= mix(uZFar, uZNear, pop) + uClose * (1.0 - front) * 1.1;
   gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
   vUv = uv;
 }
@@ -151,25 +161,26 @@ export function mountPickRing(root, pickData) {
   const gl = renderer.gl;
   gl.clearColor(0, 0, 0, 0);
 
-  const camera = new Camera(gl, { fov: 45, near: 0.08, far: 100 });
-  camera.position.z = 5;
+  const camera = new Camera(gl, { fov: 52, near: 0.05, far: 40 });
+  camera.position.z = 5.15;
 
   const scene = new Transform();
   const geometry = new Plane(gl, { width: 1, height: 1, widthSegments: 50, heightSegments: 50 });
   const shared = {
     uTime: { value: 0 },
     uVelocity: { value: 0 },
-    uRadius: { value: 5.6 },
-    uPitch: { value: Math.PI * 0.34 },
+    uRadius: { value: 0.76 },
+    uPitch: { value: 0.5 },
     uOpen: { value: 0 },
     uClose: { value: 0 },
-    uZFar: { value: 18.4 },
-    uZNear: { value: 1.45 },
-    uShiftX: { value: 3.15 },
-    uShiftY: { value: 3.6 },
-    uEdge: { value: 0 },
-    uIdle: { value: [1.7, 2.15] },
-    uScale: { value: [2.35, 3.55] },
+    uZFar: { value: 0.15 },
+    uZNear: { value: -1.35 },
+    uShiftX: { value: 0.48 },
+    uShiftY: { value: -0.78 },
+    uPop: { value: 2.55 },
+    uFront: { value: 0 },
+    uIdle: { value: [1.15, 0.62] },
+    uScale: { value: [1.06, 1.48] },
   };
 
   const meshes = images.slice(0, 10).map((img, i) => {
@@ -178,7 +189,7 @@ export function mountPickRing(root, pickData) {
       ...shared,
       uAngle: { value: i / 10 },
       uTexture: { value: texture },
-      uPlane: { value: [2.35, 3.55] },
+      uPlane: { value: [1.06, 1.48] },
       uImage: { value: [1, 1] },
       uReady: { value: 0 },
     };
@@ -186,7 +197,7 @@ export function mountPickRing(root, pickData) {
       vertex: VERT,
       fragment: FRAG,
       uniforms,
-      cullFace: null,
+      cullFace: false,
     });
     const mesh = new Mesh(gl, { geometry, program });
     mesh.setParent(scene);
@@ -205,7 +216,7 @@ export function mountPickRing(root, pickData) {
         uniforms.uImage.value = [fallback.naturalWidth || 1, fallback.naturalHeight || 1];
         uniforms.uReady.value = 1;
       };
-      fallback.src = '/scroll-placeholder.svg';
+      fallback.src = '/ring/paper.jpg';
     };
     loader.src = local;
     return { mesh, img };
@@ -267,14 +278,13 @@ export function mountPickRing(root, pickData) {
     if (progress > 1) progress = 1;
     const dProgress = progress - lastProgress;
     velocity = lerp(velocity, motion.matches ? 0 : dProgress, 0.1);
-    if (inView && !motion.matches) uTime += 0.009 * dt + 15 * velocity;
-    const open = smoothstep(Math.min(1, progress / 0.42));
-    const close = smoothstep(Math.max(0, (progress - 0.4) / 0.6));
+    const open = smoothstep(Math.min(1, progress / 0.5));
+    const close = smoothstep(Math.max(0, (progress - 0.8) / 0.2));
+    if (inView && !motion.matches) uTime += (0.009 * dt + 15 * velocity) * (1 - close);
     shared.uTime.value = uTime;
     shared.uVelocity.value = velocity;
     shared.uOpen.value = open;
     shared.uClose.value = close;
-    shared.uEdge.value = close * 1.15;
     const spin = motion.matches ? 0 : uTime * 0.12 + velocity;
     let best = 0;
     let bestFacing = -Infinity;
@@ -286,6 +296,7 @@ export function mountPickRing(root, pickData) {
         best = i;
       }
     }
+    shared.uFront.value = (best / 10) * Math.PI * 2;
     if (listEl) listEl.style.transform = `translateY(${scrollCurrent}px)`;
     root.dataset.progress = progress.toFixed(3);
     root.classList.toggle('is-end', progress > 0.92);
