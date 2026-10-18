@@ -17,33 +17,41 @@ const picks = ws.map((w) => ({
 const leadPick = picks[0];
 const ringWorks = picks.slice(0, 10);
 ---
-<Base active="/">
+<Base active="/" home>
+<div class="first-screen" id="first-screen">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
-  <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
-  <video
-    id="scroll-video"
-    class="hero-video"
-    muted
-    autoplay
-    playsinline
-    loop
-    preload="auto"
-    disablepictureinpicture
-    referrerpolicy="no-referrer"
-    src={SCROLL_VIDEO}
-    data-src={SCROLL_VIDEO}
-    aria-hidden="true"
-  ></video>
-  <div class="hero-overlay">
-    <div class="hero-copy">
-      <p class="kicker">古画新绘 · 进行中</p>
-      <h1>当代西湖繁胜全景图</h1>
-      <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成</p>
-      <button id="snd" class="btn solid sound" type="button" aria-pressed="false" aria-controls="scroll-video">▶ 聆听图景</button>
-    </div>
-    <a class="hero-more" href="/works/xihu-panorama/">查看作品</a>
+  <div class="hero-pan">
+    <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+    <video
+      id="scroll-video"
+      class="hero-video"
+      muted
+      autoplay
+      playsinline
+      loop
+      preload="auto"
+      disablepictureinpicture
+      referrerpolicy="no-referrer"
+      src={SCROLL_VIDEO}
+      data-src={SCROLL_VIDEO}
+      aria-hidden="true"
+    ></video>
   </div>
+  <div class="hero-cue" aria-hidden="true">长卷 · 自动展开<i></i>01 / 12</div>
+  <div class="hero-seal" aria-hidden="true">滑动或拖动 · 浏览全卷</div>
 </section>
+<div class="hero-info">
+  <div class="hero-copy">
+    <h1>当代西湖繁胜全景图</h1>
+    <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
+    <p class="meta">古画新绘　·　进行中　·　2026</p>
+  </div>
+  <div class="hero-act">
+    <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+  </div>
+</div>
+<a class="scroll-cue" id="scroll-cue" href="#picks" aria-label="向下滚动至精选"><span>SCROLL</span><i></i></a>
+</div>
 
 {leadPick && <section class="picks" id="picks" aria-label="精选">
   <div class="picks-sticky">
@@ -96,13 +104,36 @@ const ringWorks = picks.slice(0, 10);
 </section>
 
 <style>
+.first-screen {
+  --hh: max(420px, min(660px, 73.4vh));
+  position: relative;
+  height: max(100vh, calc(var(--hh) + 240px));
+  background: #fff;
+  color: #1a1a18;
+  font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
+}
 .hero {
   position: relative;
   width: 100%;
-  height: clamp(560px, 82vh, 920px);
+  height: var(--hh);
   overflow: hidden;
-  border-radius: 0;
-  background: #141816;
+  background: #d8d2c4;
+}
+/* Mock framing: still scaled to 1180/660 of the frame height, anchored top-left,
+   lifted 100px so only pavilions / willows / blossoms / shoreline show.
+   Pans very slowly left-to-right across the scroll. */
+.hero-pan {
+  position: absolute;
+  top: calc(var(--hh) * -100 / 660);
+  left: -6vw;
+  height: calc(var(--hh) * 1180 / 660);
+  width: max(calc(var(--hh) * 1180 / 660 * 1920 / 760), 112vw);
+  animation: hero-pan 140s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes hero-pan {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-97% + 106vw)); }
 }
 .hero-still,
 .hero-video {
@@ -110,95 +141,169 @@ const ringWorks = picks.slice(0, 10);
   inset: 0;
   width: 100%;
   height: 100%;
+  max-width: none;
   object-fit: cover;
-  object-position: center;
+  object-position: 0 0;
   display: block;
 }
 .hero-video {
   opacity: 0;
   pointer-events: none;
 }
-.hero::before {
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(120% 90% at 50% 40%, rgba(0, 0, 0, 0) 60%, rgba(40, 30, 20, 0.12) 100%);
+}
+.hero-cue,
+.hero-seal {
+  position: absolute;
+  z-index: 2;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 12px;
+  line-height: normal;
+  letter-spacing: 0.24em;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+}
+.hero-cue {
+  left: 64px;
+  bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.hero-cue i {
+  display: block;
+  width: 120px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.5);
+  position: relative;
+}
+.hero-cue i::after {
   content: "";
   position: absolute;
   left: 0;
-  bottom: 0;
-  width: min(460px, 42vw);
-  height: 46%;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(to top, rgba(8, 10, 9, 0.22), rgba(8, 10, 9, 0));
+  top: 0;
+  height: 1px;
+  width: 22%;
+  background: #fff;
 }
-.hero-overlay {
-  position: absolute;
-  left: clamp(24px, 4vw, 48px);
-  right: clamp(24px, 4vw, 48px);
-  bottom: clamp(24px, 4vw, 48px);
-  z-index: 2;
+.hero-seal {
+  right: 64px;
+  bottom: 22px;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.2em;
+}
+.hero-info {
+  padding: 36px 64px 0;
   display: flex;
-  align-items: flex-end;
   justify-content: space-between;
-  gap: 24px;
-  pointer-events: none;
-}
-.hero-copy,
-.hero-more { pointer-events: auto; }
-.hero-copy {
-  max-width: min(420px, 46vw);
-  text-align: left;
-  color: #fff;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-}
-.hero-copy .kicker {
-  margin: 0 0 8px;
-  color: #fff;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.12em;
-  opacity: 0.7;
+  align-items: center;
+  gap: 32px;
 }
 .hero-copy h1 {
-  margin: 0 0 8px;
-  color: #fff;
-  font-family: inherit;
-  font-size: clamp(28px, 3.6vw, 44px);
+  margin: 0;
+  color: #1a1a18;
+  font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
   font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  font-size: 52px;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
 }
 .hero-copy .sub {
-  margin: 0;
+  margin: 12px 0 0;
+  font-size: 17px;
+  line-height: normal;
+  color: #3d3a35;
+  letter-spacing: 0.03em;
+}
+.hero-copy .meta {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: normal;
+  letter-spacing: 0.06em;
+  color: #9a958c;
+}
+.hero-act { display: flex; gap: 28px; align-items: center; flex: none; }
+.listen {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: #1a1a18;
   color: #fff;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.55;
-  opacity: 0.75;
+  border-radius: 999px;
+  padding: 14px 26px;
+  font-family: inherit;
+  font-size: 15px;
+  line-height: normal;
+  letter-spacing: 0.08em;
+  cursor: pointer;
 }
-#snd.btn.solid {
-  margin-top: 18px;
-  background: #fff;
-  color: #1A1A1C;
-  border-color: #fff;
+.listen:hover { opacity: 0.86; }
+.listen .ic {
+  width: 0;
+  height: 0;
+  border-left: 9px solid #fff;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
 }
-.hero-more {
-  flex: none;
-  color: #fff;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1;
-  letter-spacing: 0.04em;
-  text-decoration: none;
-  opacity: 0.85;
-  white-space: nowrap;
+.listen[aria-pressed="true"] .ic {
+  width: 9px;
+  height: 12px;
+  border: 0;
+  border-left: 3px solid #fff;
+  border-right: 3px solid #fff;
 }
-.hero-more:hover { opacity: 1; }
-#snd.btn.solid:disabled,
-#snd.btn.solid:disabled:hover {
+.listen:disabled,
+.listen:disabled:hover {
   opacity: 0.45;
   cursor: not-allowed;
 }
+.scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: #8a857c;
+  font-size: 11px;
+  line-height: normal;
+  letter-spacing: 0.3em;
+  text-decoration: none;
+  transition: opacity 0.4s ease;
+}
+.scroll-cue span { margin-right: -0.3em; }
+.scroll-cue i {
+  display: block;
+  width: 1px;
+  height: 44px;
+  background: linear-gradient(180deg, rgba(26, 26, 24, 0), rgba(26, 26, 24, 0.15));
+  position: relative;
+  overflow: hidden;
+}
+.scroll-cue i::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 14px;
+  width: 1px;
+  height: 18px;
+  background: #1a1a18;
+  animation: scroll-drip 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+@keyframes scroll-drip {
+  0% { transform: translateY(-46px); }
+  100% { transform: translateY(44px); }
+}
+.scroll-cue.is-gone { opacity: 0; pointer-events: none; }
 .picks {
   height: 220vh;
   background: #F6F5F3;
@@ -374,16 +479,18 @@ const ringWorks = picks.slice(0, 10);
   .pick-list-window { grid-column: 1; grid-row: 3; height: auto; max-height: none; overflow: hidden; }
 }
 @media (max-width: 760px) {
-  .hero { height: clamp(520px, 86vh, 720px); border-radius: 0; }
-  .hero-overlay {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-  }
-  .hero-copy { max-width: none; width: 100%; }
+  .first-screen { --hh: max(360px, min(560px, 62vh)); }
+  .hero-cue { left: 20px; }
+  .hero-cue i { width: 64px; }
+  .hero-seal { display: none; }
+  .hero-info { padding: 28px 20px 0; flex-direction: column; align-items: flex-start; gap: 20px; }
+  .hero-copy h1 { font-size: 34px; }
+  .hero-copy .sub { font-size: 15px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-video { opacity: 0; }
+  .hero-pan { animation: none; }
+  .scroll-cue i::after { animation: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .about__gallery__wrapper,
@@ -395,6 +502,7 @@ const ringWorks = picks.slice(0, 10);
 const hero = document.getElementById('scroll-hero');
 const video = document.getElementById('scroll-video');
 const listen = document.getElementById('snd');
+const listenLabel = listen.querySelector('.lb');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
 let listening = false;
 
@@ -411,7 +519,7 @@ function failSilent() {
   setVolume(0);
   listen.disabled = false;
   listen.setAttribute('aria-pressed', 'false');
-  listen.textContent = '▶ 聆听图景';
+  listenLabel.textContent = '聆听图景';
 }
 
 function setAudible(on) {
@@ -423,14 +531,14 @@ function setAudible(on) {
     video.removeAttribute('muted');
     setVolume(1);
     listen.setAttribute('aria-pressed', 'true');
-    listen.textContent = '❚❚ 静音';
+    listenLabel.textContent = '静音';
   } else {
     video.muted = true;
     video.defaultMuted = true;
     video.setAttribute('muted', '');
     setVolume(0);
     listen.setAttribute('aria-pressed', 'false');
-    listen.textContent = '▶ 聆听图景';
+    listenLabel.textContent = '聆听图景';
   }
 }
 
@@ -485,6 +593,42 @@ if (motion.addEventListener) motion.addEventListener('change', () => {
   if (!motion.matches) startVideo();
 });
 startVideo();
+</script>
+<script>
+// Homepage auto-hide nav + SCROLL cue (layout only; no hero media logic here).
+const nav = document.getElementById('home-nav');
+const cue = document.getElementById('scroll-cue');
+let hoverTop = false;
+let scrollShown = false;
+let lastY = window.scrollY;
+function syncNav() {
+  if (nav) nav.classList.toggle('is-shown', hoverTop || scrollShown);
+}
+window.addEventListener('mousemove', (e) => {
+  const near = e.clientY <= (nav && nav.classList.contains('is-shown') ? 96 : 72);
+  if (near !== hoverTop) { hoverTop = near; syncNav(); }
+}, { passive: true });
+document.documentElement.addEventListener('mouseleave', () => { hoverTop = false; syncNav(); });
+window.addEventListener('scroll', () => {
+  const y = window.scrollY;
+  const dy = y - lastY;
+  if (y <= 4) scrollShown = false;
+  else if (dy < -4) scrollShown = true;
+  else if (dy > 4) scrollShown = false;
+  if (Math.abs(dy) > 4 || y <= 4) lastY = y;
+  syncNav();
+  if (cue) cue.classList.toggle('is-gone', y > 40);
+}, { passive: true });
+if (cue) {
+  cue.classList.toggle('is-gone', window.scrollY > 40);
+  cue.addEventListener('click', (e) => {
+    const target = document.getElementById('picks');
+    if (!target) return;
+    e.preventDefault();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+  });
+}
 </script>
 <script>
 import { mountPickRing } from '../scripts/pick-ring.js';
