@@ -1,6 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
-import { allWorks, pickBody, pickMeta, pickTech, workAudio, workFallback, workHero, workStills, workStrip, workSubtitle } from '../../lib';
+import { allWorks, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
   // 下一件 follows the catalogue order; its first 10 are the 精选 list (xihu → LitFlow …), last wraps to first.
@@ -13,6 +13,7 @@ const { w, next, featured } = Astro.props;
 const PAGE_DWELL: Record<'intro' | 'scroll' | 'next', 'on' | 'off'> = { intro: 'off', scroll: 'off', next: 'off' };
 
 const hero = workHero(w);
+const paper = workPaper(w);
 const fallback = workFallback(w);
 const stills = workStills(w);
 const strip = workStrip(w);
@@ -34,7 +35,7 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 <Base title={`${w.title} · 幕景宇宙`} active="/works/" home navClass="top--work">
 <div class="wd">
   <section class="wd-page wd-p1" data-dwell={PAGE_DWELL.intro}>
-    <figure class="wd-hero">
+    <figure class="wd-hero" style={paper ? `--wd-paper:${paper}` : undefined}>
       <img src={hero} data-fallback={fallback} alt={w.title} referrerpolicy="no-referrer" fetchpriority="high"/>
       <figcaption class="wd-cap" aria-hidden="true">{w.slug === 'xihu-panorama' ? '长卷 · 静帧 01' : '静帧 01'}</figcaption>
     </figure>
@@ -91,7 +92,7 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 :global(body) { background: #fff; }
 .wd { color: #1a1a18; font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif; -webkit-font-smoothing: antialiased; }
 .wd p { margin: 0; }
-.wd-hero { position: relative; height: 568px; margin: 0; overflow: hidden; background: #d8d2c4; }
+.wd-hero { position: relative; height: 568px; margin: 0; overflow: hidden; background: var(--wd-paper, #d8d2c4); }
 .wd-hero img {
   position: absolute;
   top: 0;
