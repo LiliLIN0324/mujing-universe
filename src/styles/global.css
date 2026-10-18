@@ -342,3 +342,10 @@ header.top.top--home:focus-within {
     mask-image: linear-gradient(180deg, #000 60%, transparent);
   }
 }
+/* Work detail page bar: same component as the homepage. Active link underlined;
+   ≤768px it stays in flow above the hero (no overlay) on a light bar. */
+.top--home nav a.on { border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+@media (max-width: 768px) {
+  header.top.top--home.top--work { margin-bottom: 0; background: rgba(255, 255, 255, 0.78); }
+  .top--home nav a.on { border-bottom: 0; padding-bottom: 11px; font-weight: 600; }
+}
