@@ -20,7 +20,6 @@ const picks = ws.map((w) => ({
 const leadPick = picks[0];
 const RING_N = Math.min(10, picks.length);
 const RING_RADIUS = 280;
-const RING_FIT = 0.38;
 const ringWorks = picks.slice(0, RING_N);
 function ringCardYaw(index) {
   const angle = (index / RING_N) * Math.PI * 2;
@@ -56,6 +55,7 @@ function ringCardYaw(index) {
 </section>
 
 {leadPick && <section class="picks" id="picks" aria-label="精选">
+  <div class="picks-sticky">
   <div class="picks-layout">
     <div class="picks-copy">
       <h2 class="picks-label">精选</h2>
@@ -65,13 +65,12 @@ function ringCardYaw(index) {
       <div
         class="about__gallery__wrapper"
         id="pick-gallery"
-        style={`transform:translate3d(0px,0px,${-20 * (RING_RADIUS / 3) * RING_FIT}px) rotateX(${-Math.PI * 0.15}rad) rotateY(0rad)`}
+        style={`transform:translate3d(0px,0px,${-20 * (RING_RADIUS / 3)}px) rotateX(${-Math.PI * 0.15}rad) rotateY(0rad)`}
       >
         {ringWorks.map((work, i) => (
           <div class="about__gallery__link" data-i={i}>
             <figure
               class="about__gallery__media"
-              aria-current={i === 0 ? 'true' : 'false'}
               style={`transform:rotateY(${ringCardYaw(i)}rad) translateZ(${RING_RADIUS}px)`}
             >
               <img
@@ -93,13 +92,14 @@ function ringCardYaw(index) {
     <div class="pick-list-window">
       <ol class="pick-list" id="pick-list">
         {picks.map((p, i) => (
-          <li class:list={['pick-row', { 'is-on': i === 0 }]} data-i={i} aria-current={i === 0 ? 'true' : undefined}>
+          <li class="pick-row">
             <span class="row-title">{p.title}</span>
             <span class="row-year">{p.year}</span>
           </li>
         ))}
       </ol>
     </div>
+  </div>
   </div>
   <script type="application/json" id="pick-data" set:html={JSON.stringify(picks).replace(/</g, '\\u003c')}></script>
 </section>}
@@ -220,11 +220,24 @@ function ringCardYaw(index) {
 }
 .picks {
   --ring-radius: 280px;
+  height: 220vh;
   background: #F6F5F3;
-  padding: clamp(80px, 12vh, 120px) clamp(24px, 4vw, 48px) clamp(96px, 12vh, 160px);
   color: #1A1A1C;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
   overflow: visible;
+}
+.picks-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(88px, 12vh, 120px) clamp(24px, 4vw, 48px) clamp(48px, 6vh, 72px);
+  overflow: visible;
+  background: #F6F5F3;
 }
 .picks-layout {
   display: grid;
@@ -258,18 +271,18 @@ function ringCardYaw(index) {
   grid-column: 1;
   grid-row: 2;
   position: relative;
-  height: min(520px, 58vh);
-  min-height: 380px;
-  margin-top: 28px;
+  height: min(560px, 64vh);
+  min-height: 420px;
+  margin-top: 12px;
   overflow: visible;
-  perspective: 800px;
-  perspective-origin: 42% 46%;
+  perspective: 1000px;
+  perspective-origin: 46% 70%;
   transform-style: preserve-3d;
 }
 .about__gallery__wrapper {
   position: absolute;
-  left: 56%;
-  top: 52%;
+  left: 82%;
+  top: 78%;
   width: 0;
   height: 0;
   transform-style: preserve-3d;
@@ -339,11 +352,6 @@ function ringCardYaw(index) {
   pointer-events: none;
   user-select: none;
 }
-.pick-row.is-on,
-.pick-row[aria-current="true"] {
-  font-weight: 600;
-  background: #EFEDE9;
-}
 .row-title {
   min-width: 0;
   overflow: hidden;
@@ -364,7 +372,8 @@ function ringCardYaw(index) {
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 860px) {
-  .picks { --ring-radius: 200px; }
+  .picks { --ring-radius: 200px; height: auto; }
+  .picks-sticky { position: relative; top: auto; height: auto; padding-top: 72px; }
   .picks-layout { grid-template-columns: 1fr; row-gap: 28px; }
   .picks-copy { grid-column: 1; grid-row: 1; }
   .about__gallery { grid-column: 1; grid-row: 2; height: 380px; }
@@ -531,12 +540,10 @@ if (picksRoot && pickDataEl) {
   const listEl = document.getElementById('pick-list');
   const listWindow = picksRoot.querySelector('.pick-list-window');
   const medias = [...picksRoot.querySelectorAll('.about__gallery__media')];
-  const rows = [...picksRoot.querySelectorAll('.pick-row')];
   const pickMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const RING_N = medias.length || 1;
   const RADIUS = 280;
   const K = RADIUS / 3;
-  const FIT = 0.38;
   let uTime = 0;
   let velocity = 0;
   let scrollTarget = 0;
@@ -563,8 +570,17 @@ if (picksRoot && pickDataEl) {
   });
 
   function scrollLimit() {
-    if (!listEl || !listWindow) return 0;
-    return Math.max(0, listEl.scrollHeight - listWindow.clientHeight);
+    if (!listEl) return window.innerHeight;
+    const view = listWindow ? listWindow.clientHeight : window.innerHeight;
+    return Math.max(window.innerHeight * 0.85, listEl.scrollHeight - view);
+  }
+
+  function syncRunway() {
+    if (window.innerWidth <= 860) {
+      picksRoot.style.height = '';
+      return;
+    }
+    picksRoot.style.height = `${window.innerHeight + scrollLimit()}px`;
   }
 
   function wrapPi(rad) {
@@ -579,22 +595,16 @@ if (picksRoot && pickDataEl) {
     front = index;
     const work = pickData[index];
     if (introEl && work) introEl.textContent = work.intro;
-    medias.forEach((media, i) => {
-      media.setAttribute('aria-current', i === index ? 'true' : 'false');
-    });
-    rows.forEach((row, i) => {
-      const on = i === index;
-      row.classList.toggle('is-on', on);
-      if (on) row.setAttribute('aria-current', 'true');
-      else row.removeAttribute('aria-current');
-    });
   }
 
   function frame(now) {
     const dt = Math.min(34, now - lastNow);
     lastNow = now;
     const limit = scrollLimit();
-    scrollTarget = Math.max(-limit, Math.min(0, scrollTarget));
+    const rect = picksRoot.getBoundingClientRect();
+    const runway = Math.max(1, picksRoot.offsetHeight - window.innerHeight);
+    const passed = Math.min(runway, Math.max(0, -rect.top));
+    scrollTarget = -passed * (limit / runway);
     const lerp = pickMotion.matches ? 1 : 0.1;
     scrollCurrent += (scrollTarget - scrollCurrent) * lerp;
     if (scrollCurrent > -0.4) scrollCurrent = 0;
@@ -605,9 +615,9 @@ if (picksRoot && pickDataEl) {
     velocity += ((pickMotion.matches ? 0 : dProgress) - velocity) * 0.1;
     if (inView && !pickMotion.matches) uTime += 0.009 * dt + 15 * velocity;
     const spin = pickMotion.matches ? 0 : uTime * 0.12 + velocity;
-    const tx = -6.5 * progress * K * FIT * 0.22;
-    const ty = -1.2 * progress * K * FIT * 0.35;
-    const tz = -(20 - 17 * progress) * K * FIT;
+    const tx = -6.5 * progress * K;
+    const ty = -1.2 * progress * K;
+    const tz = -(20 - 17 * progress) * K;
     const tilt = -Math.PI * 0.15 * (1 - progress);
     if (stage) {
       stage.style.transform = `translate3d(${tx}px, ${ty}px, ${tz}px) rotateX(${tilt}rad) rotateY(${spin}rad)`;
@@ -632,29 +642,13 @@ if (picksRoot && pickDataEl) {
     requestAnimationFrame(frame);
   }
 
-  function onWheel(event) {
-    if (!inView) return;
-    const rect = picksRoot.getBoundingClientRect();
-    const engaged = rect.top < window.innerHeight * 0.42 && rect.bottom > window.innerHeight * 0.62;
-    if (!engaged) return;
-    let dy = event.deltaY;
-    if (event.deltaMode === 1) dy *= 16;
-    else if (event.deltaMode === 2) dy *= window.innerHeight;
-    if (!dy) return;
-    const limit = scrollLimit();
-    const atBottom = scrollCurrent <= -limit + 2 && dy > 0;
-    const atTop = scrollCurrent >= -2 && dy < 0;
-    if (atBottom || atTop || limit <= 0) return;
-    event.preventDefault();
-    scrollTarget = Math.max(-limit, Math.min(0, scrollTarget - dy));
-  }
-
-  window.addEventListener('wheel', onWheel, { passive: false });
   const watch = new IntersectionObserver((entries) => {
     inView = entries.some((entry) => entry.isIntersecting);
   }, { threshold: 0.12 });
   watch.observe(picksRoot);
   if (pickMotion.matches) picksRoot.classList.add('is-reduced');
+  syncRunway();
+  window.addEventListener('resize', syncRunway);
   requestAnimationFrame(frame);
 }
 </script>
