@@ -4,6 +4,7 @@ import { allWorks, pickIntro, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
+const SCROLL_STILL = `${R2}/01.jpg`;
 const picks = ws.map((w) => ({
   slug: w.slug,
   title: w.title,
@@ -24,6 +25,7 @@ function ringCardYaw(index) {
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
+  <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   <video
     id="scroll-video"
     class="hero-video"
@@ -36,6 +38,7 @@ function ringCardYaw(index) {
     referrerpolicy="no-referrer"
     src={SCROLL_VIDEO}
     data-src={SCROLL_VIDEO}
+    aria-hidden="true"
   ></video>
   <div class="hero-overlay">
     <div class="hero-copy">
@@ -113,6 +116,7 @@ function ringCardYaw(index) {
   border-radius: 0;
   background: #141816;
 }
+.hero-still,
 .hero-video {
   position: absolute;
   inset: 0;
@@ -121,7 +125,9 @@ function ringCardYaw(index) {
   object-fit: cover;
   object-position: center;
   display: block;
-  opacity: 1;
+}
+.hero-video {
+  opacity: 0;
   pointer-events: none;
 }
 .hero::before {
@@ -377,7 +383,7 @@ function ringCardYaw(index) {
   .hero-copy { max-width: none; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-video { opacity: 1; }
+  .hero-video { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .about__gallery__wrapper,
