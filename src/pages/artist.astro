@@ -1,11 +1,14 @@
 ---
-import Base from '../layouts/Base.astro'; import artist from '../data/artist.json'; import { allWorks, LINES } from '../lib';
+import Base from '../layouts/Base.astro'; import artist from '../data/artist.json'; import { allWorks, LINES } from '../lib'; import portraits from '../data/portraits.json';
 const ws = await allWorks();
 const skills=['城市气候与韧性','AI 辅助城市规划','机器学习与数据分析','空间统计与 GIS','React / Next.js','TypeScript','WebGL / Three.js','UI 设计系统'];
+// One random portrait per page load, picked by an inline script right after the <img> is parsed (before first paint).
+// In dev, a missing R2 object falls back to the gitignored local copy in public/_preview-portraits/.
+const pickJs=`(function(){var L=${JSON.stringify(portraits)},D=${import.meta.env.DEV?1:0},im=document.getElementById('apimg');if(!im||!L.length)return;var u=L[Math.floor(Math.random()*L.length)],f=0;im.onload=function(){im.classList.add('on')};im.onerror=function(){if(D&&!f){f=1;im.src='/_preview-portraits/'+u.split('/').pop();}else{im.remove();}};im.src=u;})();`;
 const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
 ---
 <Base title="艺术家 林丽丽 · 幕景宇宙" active="/artist/" navClass="top--unified">
-<section class="wrap ahero"><div class="portrait"><span class="serif">林<br/>丽<br/>丽</span><span class="cap">肖像照 <span class="ph">占位</span></span></div>
+<section class="wrap ahero"><div class="portrait"><img id="apimg" class="pimg" alt="林丽丽 肖像" width="900" height="1200" decoding="async" fetchpriority="high" /><script is:inline set:html={pickJs}></script><span class="serif">林<br/>丽<br/>丽</span></div>
 <div><p class="kicker cap">Artist · 主理人</p><h1>林丽丽 <small>Lili Lin</small></h1>
 <p class="lead">从建筑学、城市规划到 AIGC 产品、游戏与音画——她以空间思维与计算方法组织图像与叙事。</p>
 <p class="quote">“我是林丽丽，毕业于首尔大学城市与区域规划专业，拥有华中科技大学建筑学背景。我关注 AI 与产品创新，喜欢从用户需求出发，将复杂的技术转化为直观、易用的产品体验。”<span class="cap">—— 引自艺术家个人站</span></p>
@@ -37,7 +40,12 @@ const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
   position: relative;
   overflow: hidden;
 }
-.portrait .serif { position: relative; font-size: clamp(2.8rem, 4vw, 3.8rem); line-height: 1.15; letter-spacing: 0.18em; color: var(--ivory); }
+.portrait::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(100deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.12) 32%, rgba(0,0,0,0) 55%); opacity: 0; transition: opacity 0.35s ease; }
+.portrait:has(.pimg.on)::after { opacity: 1; }
+.pimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s ease; }
+.pimg.on { opacity: 1; }
+.portrait:has(.pimg.on) .serif { color: #f6f1e7; text-shadow: 0 1px 14px rgba(0,0,0,0.45); }
+.portrait .serif { position: relative; z-index: 2; font-size: clamp(2.8rem, 4vw, 3.8rem); line-height: 1.15; letter-spacing: 0.18em; color: var(--ivory); }
 h1 { font-size: clamp(36px, 4vw, 48px); margin: 0; font-weight: 600; letter-spacing: -0.03em; }
 h1 small {
   display: inline-block;
