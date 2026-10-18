@@ -78,3 +78,26 @@ export function pickIntro(w: { slug: string; title: string; yearNum?: number; li
   }
   return text;
 }
+
+/* ---- Mobile featured stack (≤768px) helpers. Desktop does not read these. ---- */
+const isPlaceholder = (text: string) => /占位/.test(text);
+const stripPlaceholder = (text: string) => text.replace(/[（(]占位[^）)]*[）)]/g, '').trim();
+
+/** 移动端精选正文：作品自己的完整描述，不截断、不补句。没有就留空。 */
+export function pickBody(w: { slug: string; description?: string }): string {
+  if (w.slug === 'xihu-panorama') return XIHU_INTRO;
+  const raw = stripPlaceholder(w.description || '');
+  if (!raw) return '';
+  return /[。！？.!?]$/.test(raw) ? raw : `${raw}。`;
+}
+
+/** 真实技术栈：去掉含「占位」的条目。 */
+export function pickTech(w: { tech?: string[] }): string[] {
+  return (w.tech || []).filter((item) => item && !isPlaceholder(item)).map((item) => item.trim()).filter(Boolean);
+}
+
+/** 移动端副标题：类型 · 年份 · 技术（前两项）。缺哪段就省哪段。 */
+export function pickMeta(w: { line?: string; yearNum?: number; tech?: string[] }): string {
+  const tech = pickTech(w).slice(0, 2).join(' / ');
+  return [w.line || '', w.yearNum ? String(w.yearNum) : '', tech].filter(Boolean).join(' · ');
+}

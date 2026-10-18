@@ -257,3 +257,76 @@ header.top.top--home:focus-within {
 @media (prefers-reduced-motion: reduce) {
   header.top.top--home { transition: opacity 0.2s linear; transform: none; }
 }
+
+/* Homepage mobile top bar (≤768px): always visible, sticky 52px, two-line menu
+   button opening the existing nav as a dropdown. Desktop keeps auto-hide above. */
+.top--home .menu-btn { display: none; }
+@media (max-width: 768px) {
+  header.top.top--home,
+  header.top.top--home.is-shown {
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    z-index: 200;
+    height: 52px;
+    padding: 0 24px;
+    flex-wrap: nowrap;
+    background: rgba(246, 245, 243, 0.72);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    -webkit-mask-image: none;
+    mask-image: none;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    transition: none;
+  }
+  .top--home .wordmark { font-size: 17px; font-weight: 600; letter-spacing: 0.16em; line-height: 1; }
+  .top--home .menu-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    width: 44px;
+    height: 44px;
+    margin-right: -12px;
+    padding: 0 12px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .top--home .menu-btn i { display: block; width: 20px; height: 1.5px; background: #1a1a18; transition: transform 0.25s ease; }
+  .top--home.is-menu-open .menu-btn i:first-child { transform: translateY(3.75px) rotate(45deg); }
+  .top--home.is-menu-open .menu-btn i:last-child { transform: translateY(-3.75px) rotate(-45deg); }
+  .top--home nav {
+    display: none;
+    position: absolute;
+    top: 52px;
+    right: 16px;
+    width: auto;
+    min-width: 148px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 6px 0;
+    background: rgba(246, 245, 243, 0.96);
+    border: 1px solid #e3dfd8;
+    border-radius: 6px;
+    box-shadow: 0 12px 28px rgba(40, 30, 20, 0.12);
+  }
+  .top--home.is-menu-open nav { display: flex; }
+  .top--home nav a,
+  .top--home nav a.pill {
+    padding: 11px 18px;
+    background: none;
+    color: #1a1a18;
+    border-radius: 0;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+  }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .top--home .menu-btn i { transition: none; }
+}
