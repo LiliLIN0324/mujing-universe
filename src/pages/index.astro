@@ -18,8 +18,28 @@ const picks = ws.map((w) => ({
   fallback: workFallback(w),
 }));
 const leadPick = picks[0];
-const rearPick = leadPick.stills[1] ? leadPick : picks[1];
-const rearStill = leadPick.stills[1] || rearPick.stills[0];
+const DECK_COUNT = Math.min(7, picks.length);
+function ringOffsets(n) {
+  const half = Math.floor((n - 1) / 2);
+  const offs = [];
+  for (let k = -half; k <= half; k++) offs.push(k);
+  while (offs.length < n) offs.push(offs[offs.length - 1] + 1);
+  return offs;
+}
+const deckOffsets = ringOffsets(DECK_COUNT);
+function deckPose(off) {
+  const mag = Math.min(Math.abs(off), 3);
+  const sign = Math.sign(off) || 0;
+  return {
+    transform: `translateX(${off * 56}%) translateZ(${-mag * 140}px) rotateY(${-sign * mag * 34}deg)`,
+    zIndex: 10 - mag,
+    opacity: Math.max(0, 1 - mag * 0.28),
+  };
+}
+const deckCards = deckOffsets.map((off) => {
+  const index = ((off % picks.length) + picks.length) % picks.length;
+  return { off, index, pose: deckPose(off), work: picks[index] };
+});
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
@@ -54,13 +74,22 @@ const rearStill = leadPick.stills[1] || rearPick.stills[0];
     <div class="picks-left">
       <h2 class="picks-label">精选</h2>
       <p class="picks-intro" id="pick-intro">{leadPick.intro}</p>
-      <div class="pick-stack" id="pick-stack">
-        <button type="button" class="pick-card" data-slot="0" data-work="0" data-still="0" aria-label={leadPick.title} aria-current="true">
-          <img class="pick-img" alt="" width="640" height="480" referrerpolicy="no-referrer" decoding="async" src={leadPick.stills[0]} />
-        </button>
-        <button type="button" class="pick-card" data-slot="1" data-work={leadPick.stills[1] ? '0' : '1'} data-still={leadPick.stills[1] ? '1' : '0'} aria-label={rearPick.title} aria-current="false">
-          <img class="pick-img" alt="" width="640" height="480" referrerpolicy="no-referrer" decoding="async" src={rearStill} />
-        </button>
+      <div class="deck-wrap">
+        <div class="deck" id="pick-deck" aria-label="项目卡片">
+          {deckCards.map((card) => (
+            <button
+              type="button"
+              class="pick-card"
+              data-pick={card.index}
+              data-front={card.off === 0 ? 'true' : 'false'}
+              aria-label={card.work.title}
+              aria-current={card.off === 0 ? 'true' : 'false'}
+              style={`transform:${card.pose.transform};z-index:${card.pose.zIndex};opacity:${card.pose.opacity}`}
+            >
+              <img class="pick-img" alt="" width="640" height="480" referrerpolicy="no-referrer" decoding="async" src={card.work.stills[0]} data-fallback={card.work.fallback} />
+            </button>
+          ))}
+        </div>
       </div>
     </div>
     <ol class="pick-list">
@@ -196,14 +225,16 @@ const rearStill = leadPick.stills[1] || rearPick.stills[0];
   padding: clamp(80px, 12vh, 120px) clamp(24px, 4vw, 48px) clamp(64px, 8vh, 96px);
   color: #1A1A1C;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  overflow: visible;
 }
 .picks-layout {
   display: grid;
-  grid-template-columns: min(380px, 32vw) minmax(0, 1fr);
-  column-gap: clamp(28px, 3vw, 48px);
+  grid-template-columns: minmax(280px, 1.05fr) minmax(280px, 0.95fr);
+  column-gap: 48px;
+  row-gap: 28px;
   align-items: start;
 }
-.picks-left { position: sticky; top: 88px; z-index: 1; }
+.picks-left { position: relative; z-index: 1; }
 .picks-label {
   position: absolute;
   width: 1px;
@@ -224,29 +255,50 @@ const rearStill = leadPick.stills[1] || rearPick.stills[0];
   font-weight: 400;
   line-height: 1.65;
 }
-.pick-stack {
-  position: relative;
-  width: calc(min(320px, 28vw) + 56px);
-  height: calc(min(320px, 28vw) * 3 / 4 + 32px);
-  margin-top: 56px;
+.deck-wrap {
+  margin-top: 48px;
+  overflow: visible;
+  padding: 48px min(28%, 120px) 72px;
+  margin-left: calc(-1 * min(28%, 120px));
+  margin-right: calc(-1 * min(28%, 120px));
 }
+.deck {
+  position: relative;
+  width: min(320px, 28vw);
+  height: 0;
+  padding-bottom: calc(min(320px, 28vw) * 0.75);
+  margin: 0 auto;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+.deck.paused .pick-card { transition: none; }
 .pick-card {
   position: absolute;
   left: 0;
   top: 0;
-  width: min(320px, 28vw);
+  width: 100%;
   aspect-ratio: 4 / 3;
   height: auto;
+  margin: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
-  background: #E6E3DE;
+  background: #E6E3DE center / cover no-repeat;
   color: inherit;
   font: inherit;
   cursor: pointer;
   overflow: hidden;
-  transform-origin: 50% 70%;
-  transition: transform 0.65s cubic-bezier(.22, .61, .36, 1);
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  box-shadow: 0 12px 28px rgba(26, 26, 28, 0.1);
+  transition:
+    transform 0.55s cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 0.55s cubic-bezier(0.23, 1, 0.32, 1);
+  will-change: transform, opacity;
+}
+.pick-card[data-front="true"] {
+  box-shadow: 0 18px 40px rgba(26, 26, 28, 0.14);
 }
 .pick-img {
   width: 100%;
@@ -255,16 +307,6 @@ const rearStill = leadPick.stills[1] || rearPick.stills[0];
   border-radius: 0;
   display: block;
   pointer-events: none;
-}
-.pick-card[data-slot="0"] {
-  z-index: 2;
-  transform: translate3d(0, 0, 0) rotate(0deg);
-  box-shadow: 0 14px 28px rgba(26, 26, 28, 0.12);
-}
-.pick-card[data-slot="1"] {
-  z-index: 1;
-  transform: translate3d(40px, 12px, 0) rotate(5deg);
-  box-shadow: 0 8px 18px rgba(26, 26, 28, 0.08);
 }
 .pick-card:focus-visible,
 .pick-row:focus-visible {
@@ -275,6 +317,8 @@ const rearStill = leadPick.stills[1] || rearPick.stills[0];
   list-style: none;
   margin: 0;
   padding: 0;
+  max-height: min(640px, 70vh);
+  overflow: auto;
   border-top: 1px solid rgba(26, 26, 28, 0.1);
   font-family: inherit;
 }
@@ -320,13 +364,14 @@ const rearStill = leadPick.stills[1] || rearPick.stills[0];
   .picks-layout { grid-template-columns: 1fr; row-gap: 36px; }
   .picks-left { position: static; }
   .picks-intro { width: min(380px, 100%); }
-  .pick-card { width: min(320px, 78vw); }
-  .pick-stack {
-    width: calc(min(320px, 78vw) + 48px);
-    height: calc(min(320px, 78vw) * 3 / 4 + 28px);
-    margin-top: 36px;
+  .deck { width: min(320px, 72vw); padding-bottom: calc(min(320px, 72vw) * 0.75); }
+  .deck-wrap {
+    margin-top: 28px;
+    padding: 32px min(18%, 64px) 56px;
+    margin-left: calc(-1 * min(18%, 64px));
+    margin-right: calc(-1 * min(18%, 64px));
   }
-  .pick-card[data-slot="1"] { transform: translate3d(40px, 12px, 0) rotate(5deg); }
+  .pick-list { max-height: none; }
 }
 @media (max-width: 760px) {
   .hero { height: clamp(520px, 86vh, 720px); border-radius: 0; }
@@ -483,32 +528,29 @@ const picksRoot = document.getElementById('picks');
 const pickDataEl = document.getElementById('pick-data');
 if (picksRoot && pickDataEl) {
   const pickData = JSON.parse(pickDataEl.textContent || '[]');
-  const stack = document.getElementById('pick-stack');
+  const deckEl = document.getElementById('pick-deck');
   const introEl = document.getElementById('pick-intro');
   const cards = [...picksRoot.querySelectorAll('.pick-card')];
   const rows = [...picksRoot.querySelectorAll('.pick-row')];
+  const listEl = picksRoot.querySelector('.pick-list');
   const pickMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  let workIndex = 0;
-  let stillIndex = 0;
-  let flip = 0;
+  const count = pickData.length;
+  const visible = cards.length;
+  const TX = 56;
+  const TZ = 140;
+  const RY = 34;
+  let active = 0;
   let timer = 0;
-  let onscreen = true;
-  let holds = 0;
+  let inView = true;
 
-  function paint(card, slot, src, work, still) {
-    card.dataset.slot = slot;
-    card.dataset.work = String(work);
-    card.dataset.still = String(still);
-    card.setAttribute('aria-current', slot === '0' ? 'true' : 'false');
-    card.setAttribute('aria-label', pickData[work].title);
-    const img = card.querySelector('img');
-    if (!img) return;
-    img.dataset.fallback = pickData[work].fallback || '';
-    if (img.getAttribute('src') !== src) {
-      img.style.visibility = '';
-      img.src = src;
-    }
+  function ringOffsets(n) {
+    const half = Math.floor((n - 1) / 2);
+    const offs = [];
+    for (let k = -half; k <= half; k++) offs.push(k);
+    while (offs.length < n) offs.push(offs[offs.length - 1] + 1);
+    return offs;
   }
+  const offsets = ringOffsets(visible);
 
   function failImage(img) {
     const next = img.dataset.fallback;
@@ -525,93 +567,104 @@ if (picksRoot && pickDataEl) {
     if (img.complete && img.getAttribute('src') && img.naturalWidth === 0) failImage(img);
   });
 
-  function render() {
-    const work = pickData[workIndex];
-    const stills = work.stills.length ? work.stills : [];
-    const frontStill = stills.length ? stillIndex % stills.length : 0;
-    const frontSrc = stills[frontStill];
-    let rearWork = workIndex;
-    let rearStill = stills.length > 1 ? (frontStill + 1) % stills.length : 0;
-    let rearSrc = stills[rearStill];
-    if (stills.length < 2 && pickData.length > 1) {
-      rearWork = (workIndex + 1) % pickData.length;
-      rearStill = 0;
-      rearSrc = pickData[rearWork].stills[0];
-    }
-    const order = flip % 2 ? [cards[1], cards[0]] : [cards[0], cards[1]];
-    paint(order[0], '0', frontSrc, workIndex, frontStill);
-    paint(order[1], '1', rearSrc, rearWork, rearStill);
+  function layoutDeck(index) {
+    const motionOn = !pickMotion.matches && inView;
+    if (deckEl) deckEl.classList.toggle('paused', !motionOn);
+    cards.forEach((card, slot) => {
+      const off = offsets[slot];
+      const workIdx = ((index + off) % count + count) % count;
+      const work = pickData[workIdx];
+      const mag = Math.min(Math.abs(off), 3);
+      const sign = Math.sign(off) || 0;
+      card.dataset.pick = String(workIdx);
+      card.dataset.front = off === 0 ? 'true' : 'false';
+      card.style.zIndex = String(10 - mag);
+      card.style.opacity = String(Math.max(0, 1 - mag * 0.28));
+      card.style.transform = `translateX(${off * TX}%) translateZ(${-mag * TZ}px) rotateY(${-sign * mag * RY}deg)`;
+      card.setAttribute('aria-label', work.title);
+      card.setAttribute('aria-current', off === 0 ? 'true' : 'false');
+      const img = card.querySelector('img');
+      const src = (work.stills && work.stills[0]) || '';
+      if (!img || !src) return;
+      img.dataset.fallback = work.fallback || '';
+      if (img.getAttribute('src') !== src) {
+        img.style.visibility = '';
+        img.src = src;
+      }
+    });
+  }
+
+  function revealRow(index) {
+    const row = rows[index];
+    if (!row || !listEl) return;
+    const li = row.closest('li') || row;
+    const top = li.offsetTop;
+    const bottom = top + li.offsetHeight;
+    if (top < listEl.scrollTop) listEl.scrollTop = top;
+    else if (bottom > listEl.scrollTop + listEl.clientHeight) listEl.scrollTop = bottom - listEl.clientHeight;
+  }
+
+  function select(index, fromUser) {
+    if (!count) return;
+    active = ((index % count) + count) % count;
+    const work = pickData[active];
     if (introEl) introEl.textContent = work.intro;
+    layoutDeck(active);
     rows.forEach((row, i) => {
-      const on = i === workIndex;
+      const on = i === active;
       row.classList.toggle('is-on', on);
       if (on) row.setAttribute('aria-current', 'true');
       else row.removeAttribute('aria-current');
     });
+    revealRow(active);
+    if (fromUser) restartAuto();
   }
 
-  function arm() {
+  function stopAuto() {
     window.clearInterval(timer);
     timer = 0;
-    const stills = pickData[workIndex] ? pickData[workIndex].stills : [];
-    const paused = holds > 0 || !onscreen || document.hidden || pickMotion.matches || stills.length < 2;
-    if (paused) return;
-    timer = window.setInterval(() => {
-      stillIndex = (stillIndex + 1) % pickData[workIndex].stills.length;
-      flip += 1;
-      render();
-    }, 4200);
   }
 
-  function hold(delta) {
-    holds = Math.max(0, holds + delta);
-    arm();
+  function startAuto() {
+    stopAuto();
+    if (pickMotion.matches || !inView || count < 2) return;
+    timer = window.setInterval(() => select(active + 1, false), 1000);
+  }
+
+  function restartAuto() {
+    stopAuto();
+    startAuto();
   }
 
   cards.forEach((card) => {
     card.addEventListener('click', () => {
-      const nextWork = Number(card.dataset.work);
-      const nextStill = Number(card.dataset.still);
-      if (nextWork === workIndex && nextStill === stillIndex) return;
-      workIndex = nextWork;
-      stillIndex = nextStill;
-      flip += 1;
-      render();
-      arm();
+      const pick = Number(card.dataset.pick);
+      if (!Number.isNaN(pick)) select(pick, true);
     });
   });
   rows.forEach((row) => {
-    row.addEventListener('click', () => {
-      const next = Number(row.dataset.i);
-      if (next === workIndex) return;
-      workIndex = next;
-      stillIndex = 0;
-      flip += 1;
-      render();
-      arm();
-    });
-  });
-
-  [stack, picksRoot.querySelector('.pick-list')].forEach((el) => {
-    if (!el) return;
-    el.addEventListener('pointerenter', () => hold(1));
-    el.addEventListener('pointerleave', () => hold(-1));
-    el.addEventListener('focusin', () => hold(1));
-    el.addEventListener('focusout', (event) => {
-      if (el.contains(event.relatedTarget)) return;
-      hold(-1);
-    });
+    row.addEventListener('click', () => select(Number(row.dataset.i), true));
   });
 
   const watch = new IntersectionObserver((entries) => {
-    onscreen = entries.some((entry) => entry.isIntersecting);
-    arm();
-  }, { threshold: 0.2 });
-  if (stack) watch.observe(stack);
-  document.addEventListener('visibilitychange', arm);
-  if (pickMotion.addEventListener) pickMotion.addEventListener('change', arm);
-  render();
-  arm();
+    inView = entries.some((entry) => entry.isIntersecting);
+    if (deckEl) deckEl.classList.toggle('paused', pickMotion.matches || !inView);
+    if (inView && !pickMotion.matches) startAuto();
+    else stopAuto();
+  }, { threshold: 0.12 });
+  if (picksRoot) watch.observe(picksRoot);
+  if (pickMotion.addEventListener) pickMotion.addEventListener('change', () => {
+    if (pickMotion.matches) {
+      if (deckEl) deckEl.classList.add('paused');
+      stopAuto();
+      layoutDeck(active);
+      return;
+    }
+    startAuto();
+  });
+  if (pickMotion.matches && deckEl) deckEl.classList.add('paused');
+  select(0, false);
+  if (!pickMotion.matches) startAuto();
 }
 </script>
 </Base>
