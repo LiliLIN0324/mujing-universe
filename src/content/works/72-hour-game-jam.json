@@ -1,0 +1,27 @@
+{
+ "id": "01",
+ "slug": "72-hour-game-jam",
+ "title": "腾讯×华科72小时极限开发挑战赛",
+ "category": "Game",
+ "year": "2022-5-27~2022-5-30",
+ "description": "腾讯×华科72小时极限开发挑战赛！一款在 72 小时 Game Jam 中完成的物资配送主题游戏，向疫情期间默默付出的配送人员与志愿者致敬。",
+ "abstract": "",
+ "challenge": "如何在短时间内完成一款兼具主题表达与可玩性的 Game Jam 作品，并让玩家感受到配送工作的责任与挑战。",
+ "solution": "以物资配送为核心玩法，玩家通过连接道路、避开障碍并在限定时间内完成投送任务，在轻量的解谜体验中向城市无名英雄致敬。",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/game-jam/logo.jpg",
+ "tech": [
+  "Game Design",
+  "Level Design",
+  "Puzzle Mechanics"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/game-jam/01.png"
+ ],
+ "hasDemo": true,
+ "line": "游戏",
+ "source": "https://lililin0324.github.io/#/game/72-hour-game-jam",
+ "sourceFile": "games/01_72-hour-game-jam.md",
+ "yearNum": 2022,
+ "status": "已完成",
+ "flags": []
+}

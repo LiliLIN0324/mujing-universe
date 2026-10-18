@@ -1,0 +1,30 @@
+{
+ "id": "08",
+ "slug": "scendance",
+ "title": "幕景 Scendance - AI 活动布置工作台",
+ "category": "AI Product",
+ "year": "2026.10.1-2026.10.4",
+ "description": "一款把平面图、真实尺寸物料库和 AI 方案生成串起来的三维活动布置工作台。",
+ "abstract": "幕景 Scendance 是一款面向活动策划与场地布置的 AI 工作台。它把平面图变成可编辑的场地，用真实尺寸的物料库摆放桌椅、吧台、舞台等道具，并支持用一句需求让 AI 生成布置初稿；方案可以云端保存，由同一工作室的成员协作编辑。",
+ "challenge": "活动布置的沟通成本集中在「场地尺寸」和「道具清单」两件事上：平面图只有约定俗成的标注，物料表又是另一份文件，客户、策划和执行的版本经常对不上。要在有限的制作周期内把这些信息收敛到同一个可编辑的三维场景，同时保证多人协作时不会互相覆盖。",
+ "solution": "以场地 + 物料为核心数据模型：平面图作为尺寸证据被引用，场地以矩形或多边形表示并校验顶点、面积和出入口位置；物料按真实尺寸入库，场景中的每件物件都有唯一实例编号。AI 方案生成、预算上限和制作计划都挂在同一份场景数据上，编辑权以交接的方式在成员之间流转，断网时草稿本地保留、恢复后与云端版本比对。",
+ "icon": "/scroll-placeholder.svg",
+ "tech": [
+  "Next.js",
+  "React",
+  "TypeScript",
+  "Supabase",
+  "Cloudflare Pages"
+ ],
+ "images": [],
+ "hasDemo": true,
+ "line": "AIGC 产品",
+ "source": "https://lililin0324.github.io/#/product/scendance",
+ "sourceFile": "product/08_scendance.md",
+ "yearNum": 2026,
+ "status": "已完成",
+ "flags": [
+  "个人站图床无可用图片（R2 返回 404），暂用占位图"
+ ],
+ "note": "幕景 Scendance 是 AI 活动布置工作台（非音画作品）"
+}

@@ -1,0 +1,30 @@
+{
+ "id": "02",
+ "slug": "box-up-my-stuff-in-cyberspace",
+ "title": "Box up my stuff in cyberspace",
+ "category": "Platform",
+ "year": "2026-2-8",
+ "description": "一款让人们在虚拟空间中收纳个人物品的应用",
+ "abstract": "Box up my stuff in cyberspace is an App that people could box up their belongings in cyberspace. It provides a platform for users to upload their belongings, and for other users to find and download them.",
+ "challenge": "Designing a platform that is user-friendly, efficient, and scalable to support a large number of users.",
+ "solution": "We developed Box up my stuff in cyberspace using a modern web development stack, including React for the frontend, Node.js for the backend, and MongoDB for the database. The platform features a responsive user interface, a powerful search engine, and a user-friendly paper upload process.",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/box-up-my-stuff/logo.jpg",
+ "tech": [
+  "python",
+  "React",
+  "TypeScript"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/box-up-my-stuff/01.png",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/box-up-my-stuff/02.png"
+ ],
+ "hasDemo": true,
+ "line": "AIGC 产品",
+ "source": "https://lililin0324.github.io/#/platform/box-up-my-stuff-in-cyberspace",
+ "sourceFile": "platform/02_box-up-my-stuff-in-cyberspace.md",
+ "yearNum": 2026,
+ "status": "已完成",
+ "flags": [
+  "solution 为通用模板句（多个平台项目雷同，含“paper upload”等错位描述），待作者重写"
+ ]
+}
