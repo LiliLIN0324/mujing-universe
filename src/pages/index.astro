@@ -1,34 +1,34 @@
 ---
 import Base from '../layouts/Base.astro'; import WorkCard from '../components/WorkCard.astro';
-import { allWorks, FEATURED } from '../lib';
-const ws = await allWorks(); const feat = FEATURED.map(s => ws.find(w => w.slug === s)).filter(Boolean);
+import { allWorks, featuredWorks } from '../lib';
+const ws = await allWorks(); const feat = featuredWorks(ws);
 // Public R2 object. Do not commit the mp4. logo.jpg / 01.jpg are not in this prefix, so the poster is the local SVG.
 const SCROLL_VIDEO = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/scroll-placeholder.mp4';
 const SCROLL_POSTER = '/scroll-placeholder.svg';
 ---
 <Base active="/">
-<section class="wrap stage">
-  <div class="hero" id="scroll-hero">
-    <img class="hero-still" src={SCROLL_POSTER} alt="占位长卷" width="4800" height="600"/>
-    <video
-      id="scroll-video"
-      class="hero-video"
-      poster={SCROLL_POSTER}
-      muted
-      playsinline
-      loop
-      preload="none"
-      disablepictureinpicture
-      referrerpolicy="no-referrer"
-      data-src={SCROLL_VIDEO}
-      aria-hidden="true"
-    ></video>
-  </div>
+<section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
+  <img class="hero-still" src={SCROLL_POSTER} alt="当代西湖繁胜全景图" width="4800" height="600"/>
+  <video
+    id="scroll-video"
+    class="hero-video"
+    poster={SCROLL_POSTER}
+    muted
+    playsinline
+    loop
+    preload="none"
+    disablepictureinpicture
+    referrerpolicy="no-referrer"
+    data-src={SCROLL_VIDEO}
+    aria-hidden="true"
+  ></video>
   <div class="hero-copy">
-    <p class="kicker cap">音画新线 · 进行中</p>
-    <h1>当代西湖繁胜全景图</h1>
-    <p class="sub">占位长卷 · 自绘矢量 · 正式作品待替换</p>
-    <button id="snd" class="btn solid sound" type="button">▶ 聆听图景</button>
+    <div class="wrap">
+      <p class="kicker cap">音画新线 · 进行中</p>
+      <h1>当代西湖繁胜全景图</h1>
+      <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成</p>
+      <button id="snd" class="btn solid sound" type="button">▶ 聆听图景</button>
+    </div>
   </div>
 </section>
 
@@ -45,14 +45,13 @@ const SCROLL_POSTER = '/scroll-placeholder.svg';
 </section>
 
 <style>
-.stage { padding-top: 48px; }
 .hero {
   position: relative;
+  width: 100%;
+  height: clamp(560px, 82vh, 920px);
   overflow: hidden;
-  height: min(62vh, 560px);
-  min-height: 360px;
-  border-radius: var(--radius);
-  background: var(--bg2);
+  border-radius: 0;
+  background: #141816;
 }
 .hero-still,
 .hero-video {
@@ -71,14 +70,31 @@ const SCROLL_POSTER = '/scroll-placeholder.svg';
 }
 .hero.is-playing .hero-video { opacity: 1; }
 .hero.is-still .hero-video { display: none; }
-.hero-copy { text-align: center; padding: 56px 0 8px; }
+.hero-copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  padding: 88px 0 56px;
+  text-align: center;
+  color: #F6F5F3;
+  background: linear-gradient(to top, rgba(8, 10, 9, 0.78) 0%, rgba(8, 10, 9, 0.28) 52%, rgba(8, 10, 9, 0) 100%);
+}
+.hero-copy .kicker { color: rgba(246, 245, 243, 0.72); }
 .hero-copy h1 {
   margin: 0 0 12px;
+  color: #F6F5F3;
   font-size: clamp(36px, 4vw, 48px);
   font-weight: 600;
   line-height: 1.15;
 }
-.sub { color: var(--muted); margin: 0 0 22px; }
+.hero-copy .sub { color: rgba(246, 245, 243, 0.82); margin: 0 0 22px; }
+.hero-copy .btn.solid {
+  background: #F6F5F3;
+  color: #1A1A1C;
+  border-color: #F6F5F3;
+}
 .picks { padding-top: 120px; }
 .picks h2 {
   margin: 0 0 48px;
@@ -87,13 +103,15 @@ const SCROLL_POSTER = '/scroll-placeholder.svg';
   font-weight: 600;
 }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px 40px; }
+.grid:has(> :only-child) { grid-template-columns: minmax(0, 360px); justify-content: center; }
 .more { text-align: center; margin: 40px 0 0; }
 .cta { text-align: center; margin-top: 160px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 980px) { .grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 760px) {
-  .hero { height: 62vw; min-height: 220px; border-radius: 16px; }
+  .hero { height: clamp(460px, 78vh, 640px); border-radius: 0; }
+  .hero-copy { padding: 72px 0 36px; }
   .grid { grid-template-columns: 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {
