@@ -38,7 +38,7 @@ export function mountMobileStack(root) {
   };
   const data = JSON.parse((dataEl && dataEl.textContent) || '[]');
   const N = Math.min(cards.length, data.length);
-  if (!stage || N < 2) return;
+  if (!stage || N < 2) return null;
 
   cards.forEach((card) => {
     const img = card.querySelector('img');
@@ -229,4 +229,17 @@ export function mountMobileStack(root) {
 
   if (mq.matches) { measure(); layout(); }
   root.dataset.ready = '1';
+
+  // dwell controller (mobile-pager.js, data-dwell="on"): vertical swipes walk 01 → N, then flip the page
+  return {
+    canStep(dir) {
+      if (!mq.matches) return false;
+      const idx = mod(Math.round(pos), N);
+      return dir > 0 ? idx < N - 1 : idx > 0;
+    },
+    step(dir) {
+      goTo(mod(Math.round(pos), N) + dir);
+    },
+    get index() { return mod(Math.round(pos), N); },
+  };
 }
