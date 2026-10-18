@@ -3,3 +3,6 @@ dist/
 .astro/
 .DS_Store
 *.log
+
+# local-only preview copies of artist portraits (served when R2 object is missing in dev)
+public/_preview-portraits/
