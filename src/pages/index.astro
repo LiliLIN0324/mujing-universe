@@ -8,17 +8,23 @@ const SCROLL_VIDEO = `${R2}/scroll.mp4`;
 const SCROLL_POSTER = `${R2}/still.jpg`;
 const PICK_FRAMES = {
   'xihu-panorama': [
-    { src: `${R2}/01.jpg`, focus: '32% center' },
-    { src: `${R2}/02.jpg`, focus: '40% center' },
+    { src: `${R2}/01.jpg`, ratio: '16 / 9', width: '100%', focus: 'center 62%' },
+    { src: `${R2}/02.jpg`, ratio: '3 / 4', width: '72%', focus: '42% center' },
+    { src: `${R2}/logo.jpg`, ratio: '1 / 1', width: '46%', focus: 'center' },
   ],
 };
+const FALLBACK_RATIOS = [
+  { ratio: '16 / 9', width: '100%' },
+  { ratio: '3 / 4', width: '72%' },
+  { ratio: '1 / 1', width: '46%' },
+];
 const picks = featuredWorks(ws).slice(0, 3).map((w) => {
   const own = (w.images || []).filter((src) => src && !src.includes('scroll-placeholder'));
-  const frames = PICK_FRAMES[w.slug] || own.slice(0, 3).map((src) => ({ src, focus: 'center' }));
+  const frames = PICK_FRAMES[w.slug] || own.slice(0, 3).map((src, i) => ({ src, focus: 'center', ...FALLBACK_RATIOS[i % 3] }));
   return {
     slug: w.slug,
     title: w.title,
-    meta: [w.yearNum || w.year, w.category].filter(Boolean).join(' · '),
+    meta: [w.line, w.yearNum || w.year].filter(Boolean).join(' · '),
     href: `/works/${w.slug}/`,
     frames,
   };
@@ -56,12 +62,11 @@ const lead = picks[0];
 {lead && <section class="picks" id="picks" aria-labelledby="picks-mark">
   <div class="picks-board">
     <div class="picks-copy">
-      <h2 class="picks-title" id="picks-title">{lead.title}</h2>
+      <h2><a class="picks-title" id="picks-title" href={lead.href}>{lead.title}</a></h2>
       <p class="picks-meta" id="picks-meta">{lead.meta}</p>
     </div>
-    <a class="picks-open" id="picks-open" href={lead.href}>查看</a>
     <div class="picks-col" id="picks-col">
-      {lead.frames.map((frame, i) => <img src={frame.src} alt={i === 0 ? lead.title : ''} style={`object-position:${frame.focus}`} referrerpolicy="no-referrer" loading="lazy"/>)}
+      {lead.frames.map((frame, i) => <img src={frame.src} alt={i === 0 ? lead.title : ''} style={`width:${frame.width};aspect-ratio:${frame.ratio};object-position:${frame.focus}`} referrerpolicy="no-referrer" loading="lazy"/>)}
     </div>
     <p class="picks-mark" id="picks-mark">精选</p>
     <ul class="picks-list">
@@ -185,65 +190,56 @@ const lead = picks[0];
 }
 .picks {
   background: #F6F5F3;
-  padding: 128px 0 96px;
+  padding: 148px 0 120px;
 }
 .picks-board {
-  width: min(1200px, calc(100% - 96px));
+  width: min(1180px, calc(100% - 96px));
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(240px, 380px) minmax(160px, 0.82fr);
+  grid-template-columns: minmax(160px, 0.85fr) minmax(280px, 520px) minmax(120px, 0.62fr);
   grid-template-rows: auto 1fr auto;
-  column-gap: 36px;
+  column-gap: 8px;
   align-items: start;
 }
 .picks-copy {
   grid-column: 1;
   grid-row: 1;
   z-index: 2;
-  margin-right: -56px;
-  padding-top: 28px;
+  margin-right: -36px;
+  padding-top: 6vh;
 }
+.picks-copy h2 { margin: 0; font-weight: inherit; }
 .picks-title {
-  margin: 0;
-  max-width: calc(100% + 56px);
-  color: var(--ink);
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: clamp(40px, 4.4vw, 64px);
-  font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 1.12;
-}
-.picks-meta {
-  margin: 14px 0 0;
-  color: var(--muted);
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-}
-.picks-open {
-  grid-column: 3;
-  grid-row: 1;
-  justify-self: end;
-  margin-top: 36px;
-  color: var(--ink2);
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 14px;
+  display: block;
+  max-width: calc(100% + 48px);
+  color: #1A1A1C;
+  font-family: "Noto Serif SC", "Songti SC", "Noto Serif", serif;
+  font-size: clamp(34px, 3.4vw, 52px);
   font-weight: 500;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.01em;
+  line-height: 1.18;
   text-decoration: none;
 }
-.picks-open:hover { color: var(--ink); }
+.picks-title:hover { color: #1A1A1C; }
+.picks-meta {
+  margin: 8px 0 0;
+  color: #9A9A9A;
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.18em;
+}
 .picks-col {
   grid-column: 2;
   grid-row: 1 / span 3;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  align-items: center;
+  gap: 42px;
 }
 .picks-col img {
-  width: 100%;
-  aspect-ratio: 3 / 4;
+  height: auto;
+  max-width: 100%;
   object-fit: cover;
   display: block;
   border-radius: 0;
@@ -253,17 +249,19 @@ const lead = picks[0];
   grid-column: 1;
   grid-row: 3;
   align-self: end;
+  z-index: 2;
   margin: 0;
-  color: var(--muted);
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 13px;
+  color: #1A1A1C;
+  font-family: "Noto Serif SC", "Songti SC", "Noto Serif", serif;
+  font-size: clamp(64px, 7.4vw, 112px);
   font-weight: 500;
-  letter-spacing: 0.32em;
+  letter-spacing: -0.04em;
+  line-height: 0.86;
 }
 .picks-list {
   grid-column: 3;
-  grid-row: 3;
-  align-self: end;
+  grid-row: 1 / span 3;
+  align-self: center;
   justify-self: end;
   list-style: none;
   margin: 0;
@@ -273,60 +271,55 @@ const lead = picks[0];
 .picks-list button {
   display: block;
   width: 100%;
-  max-width: 16em;
+  max-width: 12em;
   margin-left: auto;
-  padding: 7px 0;
+  padding: 5px 0;
   border: 0;
   background: none;
-  color: var(--muted);
+  color: #B5B5B5;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 15px;
-  font-weight: 500;
-  line-height: 1.45;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
   text-align: right;
   cursor: pointer;
 }
-.picks-list button[aria-current="true"] { color: var(--ink); }
+.picks-list button[aria-current="true"] {
+  color: #1A1A1C;
+  font-weight: 600;
+}
 .picks-list button:focus-visible {
   outline: 1px solid var(--ink);
   outline-offset: 4px;
 }
 .picks-all {
   display: inline-block;
-  margin-top: 22px;
-  color: var(--muted);
+  margin-top: 18px;
+  color: #B5B5B5;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
   font-size: 12px;
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   text-decoration: none;
 }
-.picks-all:hover { color: var(--ink); }
+.picks-all:hover { color: #1A1A1C; }
 .cta { text-align: center; margin-top: 160px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 900px) {
   .picks { padding: 72px 0 56px; }
   .picks-board {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
     width: calc(100% - 32px);
-    grid-template-columns: 1fr;
-    grid-template-rows: none;
-    row-gap: 22px;
+    gap: 28px;
   }
-  .picks-copy,
-  .picks-open,
-  .picks-col,
-  .picks-mark,
-  .picks-list {
-    grid-column: 1;
-    grid-row: auto;
-    margin: 0;
-    justify-self: start;
-  }
-  .picks-copy { padding-top: 0; }
-  .picks-title { max-width: 100%; }
-  .picks-open { margin-top: 0; }
-  .picks-list { text-align: left; }
+  .picks-copy { margin: 0; padding-top: 0; order: 1; }
+  .picks-col { order: 2; align-items: flex-start; gap: 28px; }
+  .picks-list { order: 3; text-align: left; align-self: start; }
+  .picks-mark { order: 4; font-size: 64px; margin-top: 8px; }
+  .picks-title { max-width: 100%; font-size: 34px; }
   .picks-list button { margin-left: 0; text-align: left; }
 }
 @media (max-width: 760px) {
@@ -482,7 +475,6 @@ if (board) {
   const buttons = [...board.querySelectorAll('.picks-list button')];
   const title = board.querySelector('.picks-title');
   const meta = board.querySelector('.picks-meta');
-  const open = board.querySelector('.picks-open');
   const col = board.querySelector('.picks-col');
   const drop = (img) => img.addEventListener('error', () => img.remove(), { once: true });
   col.querySelectorAll('img').forEach(drop);
@@ -491,8 +483,8 @@ if (board) {
     buttons.forEach((b) => b.removeAttribute('aria-current'));
     btn.setAttribute('aria-current', 'true');
     title.textContent = btn.dataset.title || '';
+    title.href = btn.dataset.href || '/works/';
     meta.textContent = btn.dataset.meta || '';
-    open.href = btn.dataset.href || '/works/';
     let frames = [];
     try { frames = JSON.parse(btn.dataset.frames || '[]'); } catch (err) { frames = []; }
     col.replaceChildren();
@@ -500,6 +492,8 @@ if (board) {
       const img = document.createElement('img');
       img.src = frame.src;
       img.alt = i === 0 ? (btn.dataset.title || '') : '';
+      img.style.width = frame.width || '100%';
+      img.style.aspectRatio = frame.ratio || '3 / 4';
       img.style.objectPosition = frame.focus || 'center';
       img.referrerPolicy = 'no-referrer';
       drop(img);
