@@ -54,18 +54,18 @@ mat4 combinedMatrix(vec3 pos, float rotationAngle, vec3 scale) {
 void main() {
   const float PI = 3.141592653589793;
   float theta = uAngle * PI * 2.0;
-  float spin = uTime * 0.12 + uVelocity;
+  float spin = (uTime * 0.12 + uVelocity) * (1.0 - uClose);
   float delta = atan(sin(theta - uFront), cos(theta - uFront));
   float ad = abs(delta);
   float front = 1.0 - smoothstep(0.04, 0.32, ad);
   float thetaUse = mix(theta, uFront, uClose * 0.8 * (1.0 - front));
-  float radius = uRadius * (1.0 + 0.32 * uOpen) * (1.0 - 0.2 * uClose);
+  float radius = uRadius * (1.0 + 0.32 * uOpen) * (1.0 - 0.45 * uClose);
   float grow = mix(1.0, uPop, front * uClose);
-  float fold = 1.0 - uClose * (1.0 - front) * 0.84;
+  float fold = 1.0 - uClose * (1.0 - front) * 0.92;
   vec2 scl = vec2(uScale.x * grow * fold, uScale.y * grow);
   float yaw = thetaUse - PI * 0.22 - position.x * 0.62 - uVelocity * 6.0;
   yaw += uClose * (1.0 - front) * sign(delta + 1e-4) * 1.2;
-  float bow = position.x * position.x * 0.55;
+  float bow = position.x * position.x * 0.95;
   vec3 p = vec3(position.x * scl.x, position.y * scl.y, bow * scl.x);
   p = rotate(p, vec3(0.0, 1.0, 0.0), yaw);
   p += vec3(cos(thetaUse) * radius, 0.0, sin(thetaUse) * radius);
@@ -166,15 +166,15 @@ export function mountPickRing(root, pickData) {
   const shared = {
     uTime: { value: 0 },
     uVelocity: { value: 0 },
-    uRadius: { value: 0.84 },
-    uPitch: { value: 0.4 },
+    uRadius: { value: 0.62 },
+    uPitch: { value: 0.55 },
     uOpen: { value: 0 },
     uClose: { value: 0 },
     uZFar: { value: 0.05 },
     uZNear: { value: -0.62 },
     uShiftX: { value: 0.95 },
     uShiftY: { value: -0.22 },
-    uPop: { value: 1.92 },
+    uPop: { value: 2.4 },
     uFront: { value: 0 },
     uIdle: { value: [1.22, 0.52] },
     uScale: { value: [1.6, 0.9] },
