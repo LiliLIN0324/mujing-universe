@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-const { title = '幕景宇宙 · 林丽丽艺术工作室', active = '' } = Astro.props;
+const { title = '幕景宇宙 · 林丽丽艺术工作室', active = '', home = false } = Astro.props;
 const links = [['/works/', '作品'], ['/artist/', '艺术家']];
 const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
 ---
@@ -16,8 +16,18 @@ const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '�
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet"/>
+  {home && <link href="https://fonts.googleapis.com/css2?family=Cormorant+SC:wght@600&family=Noto+Serif+SC:wght@600&display=swap" rel="stylesheet"/>}
 </head>
 <body>
+{home ? (
+<header class="top top--home" id="home-nav" data-autohide>
+  <a class="wordmark" href="/">Scendance Space</a>
+  <nav>
+    {links.map(([h, t]) => <a href={h}>{t}</a>)}
+    <a class="pill" href="/contact/">合作</a>
+  </nav>
+</header>
+) : (
 <header class="top">
   <a class="brand" href="/"><i></i><span>幕景宇宙</span></a>
   <nav>
@@ -25,6 +35,7 @@ const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '�
     <a class="btn solid" href="/contact/">合作</a>
   </nav>
 </header>
+)}
 <slot/>
 <footer class="bot">
   <div>
