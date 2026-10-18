@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 const LINES = ['音画', 'AIGC 产品', '游戏', '空间与研究'];
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
 /** R2 stills 404 — keep paper unless a local override exists. */
-const BROKEN = new Set(['box-up-my-stuff-in-cyberspace']);
+const BROKEN = new Set([]);
 const LOCAL_OVERRIDE = {
   scendance: '_sources/scendance-hero.jpg',
 };
@@ -72,7 +72,7 @@ const works = [];
 for (const name of files) {
   works.push(JSON.parse(await readFile(path.join(worksDir, name), 'utf8')));
 }
-works.sort((a, b) => LINES.indexOf(a.line) - LINES.indexOf(b.line) || (b.yearNum || 0) - (a.yearNum || 0));
+works.sort((a, b) => LINES.indexOf(a.line) - LINES.indexOf(b.line) || (b.yearNum || 0) - (a.yearNum || 0) || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0));
 const ring = works.slice(0, 10);
 await mkdir(outDir, { recursive: true });
 const manifest = [];
