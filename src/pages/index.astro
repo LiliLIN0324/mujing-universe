@@ -62,12 +62,12 @@ const ringWorks = picks.slice(0, 10);
                 class="about__gallery__media__image"
                 alt={work.title}
                 width="1200"
-                height="642"
+                height="675"
                 draggable="false"
                 referrerpolicy="no-referrer"
                 decoding="async"
-                src={work.stills[0]}
-                data-fallback={work.fallback}
+                src={`/ring/${i}.jpg`}
+                data-fallback={work.fallback || '/ring/paper.jpg'}
               />
             </figure>
           </div>
@@ -204,7 +204,7 @@ const ringWorks = picks.slice(0, 10);
   background: #F6F5F3;
   color: #1A1A1C;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  overflow: visible;
+  overflow: visible; /* MUST stay visible — overflow:hidden kills position:sticky */
 }
 .picks-sticky {
   position: sticky;
@@ -216,7 +216,7 @@ const ringWorks = picks.slice(0, 10);
   flex-direction: column;
   justify-content: center;
   padding: clamp(88px, 12vh, 120px) clamp(24px, 4vw, 48px) clamp(48px, 6vh, 72px);
-  overflow: visible;
+  overflow: hidden;
   background: #F6F5F3;
 }
 .pick-canvas {
@@ -277,7 +277,8 @@ const ringWorks = picks.slice(0, 10);
 }
 .about__gallery__media {
   width: 160px;
-  height: 214px;
+  height: 90px;
+  aspect-ratio: 16 / 9;
   background: #E6E3DE;
   overflow: hidden;
 }
@@ -299,7 +300,7 @@ const ringWorks = picks.slice(0, 10);
   border-top: 1px solid rgba(26, 26, 28, 0.1);
   font-family: inherit;
   position: relative;
-  z-index: 1;
+  z-index: 2;
   background: #F6F5F3;
 }
 .pick-list {
@@ -342,7 +343,7 @@ const ringWorks = picks.slice(0, 10);
   font-weight: inherit;
   font-variant-numeric: tabular-nums;
 }
-.cta { text-align: center; margin-top: 160px; }
+.cta { text-align: center; margin-top: 280px; padding-top: 48px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 860px) {
@@ -367,7 +368,7 @@ const ringWorks = picks.slice(0, 10);
   .about__gallery__media {
     width: 100%;
     height: auto;
-    aspect-ratio: 3 / 4;
+    aspect-ratio: 16 / 9;
   }
   .picks-intro { width: min(380px, 100%); }
   .pick-list-window { grid-column: 1; grid-row: 3; height: auto; max-height: none; overflow: hidden; }
