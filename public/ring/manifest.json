@@ -1,0 +1,47 @@
+[
+  {
+    "slug": "xihu-panorama",
+    "file": "0.jpg"
+  },
+  {
+    "slug": "box-up-my-stuff-in-cyberspace",
+    "file": "1.jpg",
+    "note": "stand-in xihu-panorama/02.jpg (box-up R2 404); landscape not paper"
+  },
+  {
+    "slug": "litflow",
+    "file": "2.jpg"
+  },
+  {
+    "slug": "riffle-ai-game-generation-tool",
+    "file": "3.jpg"
+  },
+  {
+    "slug": "scendance",
+    "file": "4.jpg",
+    "source": "_sources/scendance-hero.jpg"
+  },
+  {
+    "slug": "bazi-fengshui-analysis",
+    "file": "5.jpg"
+  },
+  {
+    "slug": "genshot-AI-video-generation-tool",
+    "file": "6.jpg",
+    "note": "qa-scendance/b-part2-resting.png landscape stand-in (genshot washed)"
+  },
+  {
+    "slug": "genstyle",
+    "file": "7.jpg",
+    "note": "genstyle02"
+  },
+  {
+    "slug": "anyreal",
+    "file": "8.jpg"
+  },
+  {
+    "slug": "dragon-diffussion",
+    "file": "9.jpg",
+    "note": "riffle/02.jpg landscape (dragon 01 washed)"
+  }
+]

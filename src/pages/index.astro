@@ -1,30 +1,36 @@
 ---
 import Base from '../layouts/Base.astro';
-import { allWorks, featuredWorks } from '../lib';
+import { allWorks, pickIntro, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
-// scroll.mp4 keeps its AAC track. Autoplay stays muted; 「聆听图景」 unmutes this same video.
-const SCROLL_VIDEO = `${R2}/scroll.mp4`;
-// 01.jpg matches the video frame (1920×760). still.jpg is a 52:1 panorama;
-// object-fit:cover sliced its inscriptions into giant cropped glyphs.
-const SCROLL_POSTER = `${R2}/01.jpg`;
-const lead = featuredWorks(ws).find((w) => w.slug === 'xihu-panorama') || featuredWorks(ws)[0];
-const pickSrc = `${R2}/01.jpg`;
+const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
+const SCROLL_STILL = `${R2}/01.jpg`;
+const picks = ws.map((w) => ({
+  slug: w.slug,
+  title: w.title,
+  year: w.yearNum || w.year,
+  href: `/works/${w.slug}/`,
+  intro: pickIntro(w),
+  stills: workCovers(w),
+  fallback: workFallback(w),
+}));
+const leadPick = picks[0];
+const ringWorks = picks.slice(0, 10);
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
-  <img class="hero-still" src={SCROLL_POSTER} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+  <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   <video
     id="scroll-video"
     class="hero-video"
-    poster={SCROLL_POSTER}
     muted
     autoplay
     playsinline
     loop
-    preload="none"
+    preload="auto"
     disablepictureinpicture
     referrerpolicy="no-referrer"
+    src={SCROLL_VIDEO}
     data-src={SCROLL_VIDEO}
     aria-hidden="true"
   ></video>
@@ -39,16 +45,48 @@ const pickSrc = `${R2}/01.jpg`;
   </div>
 </section>
 
-{lead && <section class="picks" id="picks" aria-label="精选">
-  <div class="picks-stage">
+{leadPick && <section class="picks" id="picks" aria-label="精选">
+  <div class="picks-sticky">
+  <canvas class="pick-canvas" id="pick-canvas" aria-hidden="true"></canvas>
+  <div class="picks-layout">
     <div class="picks-copy">
-      <h2><a class="picks-title" href={`/works/${lead.slug}/`}>{lead.title}</a></h2>
-      {lead.yearNum ? <p class="picks-year">{lead.yearNum}</p> : null}
+      <h2 class="picks-label">精选</h2>
+      <p class="picks-intro" id="pick-intro">{leadPick.intro}</p>
     </div>
-    <img class="picks-img" src={pickSrc} alt="" width="1920" height="760" referrerpolicy="no-referrer" loading="lazy"/>
-    <a class="picks-more" href={`/works/${lead.slug}/`}>查看作品</a>
+    <div class="about__gallery" id="pick-stage">
+      <div class="about__gallery__wrapper" id="pick-gallery">
+        {ringWorks.map((work, i) => (
+          <div class="about__gallery__link" data-i={i}>
+            <figure class="about__gallery__media">
+              <img
+                class="about__gallery__media__image"
+                alt={work.title}
+                width="1200"
+                height="675"
+                draggable="false"
+                referrerpolicy="no-referrer"
+                decoding="async"
+                src={`/ring/${i}.jpg`}
+                data-fallback={work.fallback || '/ring/paper.jpg'}
+              />
+            </figure>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div class="pick-list-window">
+      <ol class="pick-list" id="pick-list">
+        {picks.map((p, i) => (
+          <li class="pick-row">
+            <span class="row-title">{p.title}</span>
+            <span class="row-year">{p.year}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
   </div>
-  <a class="picks-all" href="/works/">全部作品</a>
+  </div>
+  <script type="application/json" id="pick-data" set:html={JSON.stringify(picks).replace(/</g, '\\u003c')}></script>
 </section>}
 
 <section class="narrow cta">
@@ -77,13 +115,9 @@ const pickSrc = `${R2}/01.jpg`;
   display: block;
 }
 .hero-video {
-  /* scroll.mp4 keeps its audio, but its frames carry burned-in captions
-     (「132 艘」「篷、桅船」). Those cannot be removed with CSS, so the
-     picture stays on 01.jpg and this element only plays sound. */
   opacity: 0;
   pointer-events: none;
 }
-.hero.is-still .hero-video { display: none; }
 .hero::before {
   content: "";
   position: absolute;
@@ -166,115 +200,178 @@ const pickSrc = `${R2}/01.jpg`;
   cursor: not-allowed;
 }
 .picks {
+  height: 220vh;
   background: #F6F5F3;
-  padding: clamp(108px, 13vh, 156px) 0 clamp(88px, 11vh, 128px);
+  color: #1A1A1C;
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  overflow: visible; /* MUST stay visible — overflow:hidden kills position:sticky */
+}
+.picks-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  height: 100vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(88px, 12vh, 120px) clamp(24px, 4vw, 48px) clamp(48px, 6vh, 72px);
   overflow: hidden;
+  background: #F6F5F3;
 }
-.picks-stage {
-  position: relative;
-  width: min(1040px, 70vw);
-  margin: 0 auto;
-}
-.picks-img {
+.pick-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 0;
-  background: #E6E3DE;
+  pointer-events: none;
+}
+.picks-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(280px, 1.05fr) minmax(280px, 0.95fr);
+  column-gap: 48px;
+  row-gap: 8px;
+  align-items: start;
 }
 .picks-copy {
-  position: absolute;
-  left: 0;
-  top: 50%;
+  grid-column: 1;
+  grid-row: 1;
+  position: relative;
   z-index: 1;
-  width: max-content;
-  transform: translate(-30%, -50%);
+  background: #F6F5F3;
 }
-.picks-copy h2 { margin: 0; font-weight: inherit; }
-.picks-title {
-  display: block;
-  max-width: 5.05em;
-  color: #1A1A1C;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: clamp(32px, 3.2vw, 48px);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
-  text-decoration: none;
-}
-.picks-year {
-  margin: 12px 0 0;
-  color: #8A8A8A;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-}
-.picks-more {
+.picks-label {
   position: absolute;
-  right: 0;
-  top: 46%;
-  transform: translate(118%, -50%);
-  color: #1A1A1C;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  text-decoration: none;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+  border: 0;
 }
-.picks-more:hover,
-.picks-title:hover { opacity: 0.62; }
-.picks-all {
-  display: block;
-  width: fit-content;
-  margin: 52px auto 0;
-  color: #9A9A9A;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 13px;
+.picks-intro {
+  width: min(380px, 32vw);
+  margin: 0;
+  color: #1A1A1C;
+  font-family: inherit;
+  font-size: 16px;
   font-weight: 400;
-  letter-spacing: 0.08em;
-  text-decoration: none;
+  line-height: 1.65;
 }
-.picks-all:hover { color: #1A1A1C; }
-.picks-title:focus-visible,
-.picks-more:focus-visible,
-.picks-all:focus-visible {
-  outline: 1px solid var(--ink);
-  outline-offset: 4px;
+.about__gallery {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
 }
-.cta { text-align: center; margin-top: 160px; }
+.about__gallery__wrapper,
+.about__gallery__link,
+.about__gallery__media {
+  margin: 0;
+}
+.about__gallery__media {
+  width: 160px;
+  height: 90px;
+  aspect-ratio: 16 / 9;
+  background: #E6E3DE;
+  overflow: hidden;
+}
+.about__gallery__media__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0;
+  pointer-events: none;
+  user-select: none;
+}
+.pick-list-window {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: stretch;
+  height: min(640px, 68vh);
+  overflow: hidden;
+  border-top: 1px solid rgba(26, 26, 28, 0.1);
+  font-family: inherit;
+  position: relative;
+  z-index: 2;
+  background: #F6F5F3;
+}
+.pick-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  will-change: transform;
+}
+.pick-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  border-bottom: 1px solid rgba(26, 26, 28, 0.1);
+  background: transparent;
+  color: #1A1A1C;
+  font-family: inherit;
+  font-weight: 400;
+  text-align: left;
+  pointer-events: none;
+  user-select: none;
+}
+.row-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: inherit;
+  line-height: 1.3;
+}
+.row-year {
+  flex: none;
+  color: #8A8A8A;
+  font-size: 13px;
+  font-weight: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.cta { text-align: center; margin-top: 280px; padding-top: 48px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
-@media (max-width: 900px) {
-  .picks { padding: 72px 0 64px; overflow: visible; }
-  .picks-stage { width: calc(100% - 32px); }
-  .picks-copy {
+@media (max-width: 860px) {
+  .picks { height: auto; }
+  .pick-canvas { display: none; }
+  .picks-sticky { position: relative; top: auto; height: auto; padding-top: 72px; }
+  .picks-layout { grid-template-columns: 1fr; row-gap: 28px; }
+  .picks-copy { grid-column: 1; grid-row: 1; }
+  .about__gallery {
     position: relative;
-    top: auto;
-    left: auto;
     width: auto;
-    max-width: none;
-    margin-bottom: 18px;
-    padding-right: 5.5em;
-    transform: none;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    grid-column: 1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
   }
-  .picks-img {
+  .about__gallery__media {
     width: 100%;
     height: auto;
     aspect-ratio: 16 / 9;
-    object-fit: cover;
-    object-position: center 62%;
   }
-  .picks-title { max-width: 8em; font-size: 30px; }
-  .picks-more {
-    position: absolute;
-    right: 0;
-    top: 0.2em;
-    transform: none;
-  }
-  .picks-all { margin-top: 28px; }
+  .picks-intro { width: min(380px, 100%); }
+  .pick-list-window { grid-column: 1; grid-row: 3; height: auto; max-height: none; overflow: hidden; }
 }
 @media (max-width: 760px) {
   .hero { height: clamp(520px, 86vh, 720px); border-radius: 0; }
@@ -286,11 +383,12 @@ const pickSrc = `${R2}/01.jpg`;
   .hero-copy { max-width: none; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-video { display: none; transition: none; }
-  .hero.is-listening .hero-video {
-    display: block;
-    opacity: 0;
-  }
+  .hero-video { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .about__gallery__wrapper,
+  .about__gallery__media,
+  .pick-list { transition: none; }
 }
 </style>
 <script>
@@ -298,40 +396,22 @@ const hero = document.getElementById('scroll-hero');
 const video = document.getElementById('scroll-video');
 const listen = document.getElementById('snd');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
-const still = hero.querySelector('.hero-still');
-let stopped = false;
 let listening = false;
-let unavailable = false;
-let suppressError = false;
 
 function setVolume(value) {
   try { video.volume = value; } catch (err) { /* iOS keeps volume read-only */ }
 }
 
-function showStill() {
-  hero.classList.add('is-still');
-  hero.classList.remove('is-playing');
-  if (stopped) return;
-  stopped = true;
-  suppressError = true;
-  video.pause();
-  video.removeAttribute('src');
-  video.load();
-}
-
-function markUnavailable() {
-  if (unavailable) return;
-  unavailable = true;
+function failSilent() {
   listening = false;
   hero.classList.remove('is-listening');
   video.muted = true;
   video.defaultMuted = true;
   video.setAttribute('muted', '');
   setVolume(0);
-  listen.disabled = true;
+  listen.disabled = false;
   listen.setAttribute('aria-pressed', 'false');
-  listen.textContent = '暂无声音';
-  showStill();
+  listen.textContent = '▶ 聆听图景';
 }
 
 function setAudible(on) {
@@ -350,16 +430,13 @@ function setAudible(on) {
     video.setAttribute('muted', '');
     setVolume(0);
     listen.setAttribute('aria-pressed', 'false');
-    if (!unavailable) listen.textContent = '▶ 聆听图景';
+    listen.textContent = '▶ 聆听图景';
   }
 }
 
 function attachSource() {
   const src = video.dataset.src;
   if (!src) return false;
-  suppressError = false;
-  stopped = false;
-  hero.classList.remove('is-still');
   video.playsInline = true;
   video.autoplay = true;
   video.loop = true;
@@ -374,53 +451,47 @@ function attachSource() {
 }
 
 function startVideo() {
-  if (unavailable) return;
-  if (motion.matches && !listening) { showStill(); return; }
-  if (!attachSource()) { markUnavailable(); return; }
+  if (!attachSource()) { failSilent(); return; }
   const attempt = video.play();
   if (attempt) attempt.catch((err) => {
-    if (listening || unavailable) return;
-    if (err && err.name === 'NotAllowedError') showStill();
-    else if (video.error) markUnavailable();
+    if (listening) return;
+    if (err && err.name === 'NotAllowedError') return;
+    if (video.error) failSilent();
   });
 }
 
 video.addEventListener('playing', () => {
-  if (motion.matches || hero.classList.contains('is-still')) return;
   hero.classList.add('is-playing');
 });
 video.addEventListener('error', () => {
-  if (suppressError || unavailable) return;
-  markUnavailable();
+  failSilent();
 });
-if (still) still.addEventListener('error', () => { still.hidden = true; });
 listen.addEventListener('click', () => {
-  if (unavailable || listen.disabled) return;
+  if (listen.disabled) return;
   if (listening) {
     setAudible(false);
-    if (motion.matches) showStill();
     return;
   }
-  if (!attachSource()) { markUnavailable(); return; }
-  // Unmute inside the click so the gesture unlocks this video's own audio track.
+  if (!attachSource()) { failSilent(); return; }
   setAudible(true);
   const attempt = video.play();
   if (attempt) attempt.catch((err) => {
-    if (unavailable) return;
     if (err && err.name === 'AbortError') return;
     setAudible(false);
-    if (video.error) markUnavailable();
+    if (video.error) failSilent();
   });
 });
 if (motion.addEventListener) motion.addEventListener('change', () => {
-  if (unavailable) return;
-  if (motion.matches) {
-    hero.classList.remove('is-playing');
-    if (!listening) showStill();
-    return;
-  }
-  startVideo();
+  if (!motion.matches) startVideo();
 });
 startVideo();
+</script>
+<script>
+import { mountPickRing } from '../scripts/pick-ring.js';
+const picksRoot = document.getElementById('picks');
+const pickDataEl = document.getElementById('pick-data');
+if (picksRoot && pickDataEl) {
+  mountPickRing(picksRoot, JSON.parse(pickDataEl.textContent || '[]'));
+}
 </script>
 </Base>
