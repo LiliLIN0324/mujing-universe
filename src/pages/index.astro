@@ -1,19 +1,39 @@
 ---
-import Base from '../layouts/Base.astro'; import WorkCard from '../components/WorkCard.astro';
+import Base from '../layouts/Base.astro';
 import { allWorks, featuredWorks } from '../lib';
-const ws = await allWorks(); const feat = featuredWorks(ws);
-// Public R2 object. Do not commit the mp4. logo.jpg / 01.jpg are not in this prefix, so the poster is the local SVG.
-const SCROLL_VIDEO = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/scroll-placeholder.mp4';
-const SCROLL_POSTER = '/scroll-placeholder.svg';
+const ws = await allWorks();
+const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
+// scroll.mp4 keeps its AAC track. Autoplay stays muted; 「聆听图景」 unmutes this same video.
+const SCROLL_VIDEO = `${R2}/scroll.mp4`;
+const SCROLL_POSTER = `${R2}/still.jpg`;
+const PICK_FRAMES = {
+  'xihu-panorama': [
+    { src: `${R2}/01.jpg`, focus: '32% center' },
+    { src: `${R2}/02.jpg`, focus: '40% center' },
+  ],
+};
+const picks = featuredWorks(ws).slice(0, 3).map((w) => {
+  const own = (w.images || []).filter((src) => src && !src.includes('scroll-placeholder'));
+  const frames = PICK_FRAMES[w.slug] || own.slice(0, 3).map((src) => ({ src, focus: 'center' }));
+  return {
+    slug: w.slug,
+    title: w.title,
+    meta: [w.yearNum || w.year, w.category].filter(Boolean).join(' · '),
+    href: `/works/${w.slug}/`,
+    frames,
+  };
+}).filter((item) => item.frames.length);
+const lead = picks[0];
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
-  <img class="hero-still" src={SCROLL_POSTER} alt="当代西湖繁胜全景图" width="4800" height="600"/>
+  <img class="hero-still" src={SCROLL_POSTER} alt="当代西湖繁胜全景图" width="32768" height="627" referrerpolicy="no-referrer" fetchpriority="high"/>
   <video
     id="scroll-video"
     class="hero-video"
     poster={SCROLL_POSTER}
     muted
+    autoplay
     playsinline
     loop
     preload="none"
@@ -23,20 +43,32 @@ const SCROLL_POSTER = '/scroll-placeholder.svg';
     aria-hidden="true"
   ></video>
   <div class="hero-copy">
-    <div class="wrap">
-      <p class="kicker cap">音画新线 · 进行中</p>
-      <h1>当代西湖繁胜全景图</h1>
-      <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成</p>
-      <button id="snd" class="btn solid sound" type="button">▶ 聆听图景</button>
-    </div>
+    <p class="kicker cap">古画新绘 · 进行中</p>
+    <h1>当代西湖繁胜全景图</h1>
+    <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成</p>
   </div>
+  <button id="snd" class="btn solid sound" type="button" aria-pressed="false" aria-controls="scroll-video">▶ 聆听图景</button>
 </section>
 
-<section class="wrap picks">
-  <h2>精选</h2>
-  <div class="grid">{feat.map(w => <WorkCard w={w}/>)}</div>
-  <p class="more"><a class="btn" href="/works/">全部 {ws.length} 件作品</a></p>
-</section>
+{lead && <section class="picks" id="picks" aria-labelledby="picks-mark">
+  <div class="picks-board">
+    <div class="picks-copy">
+      <h2 class="picks-title" id="picks-title">{lead.title}</h2>
+      <p class="picks-meta" id="picks-meta">{lead.meta}</p>
+    </div>
+    <a class="picks-open" id="picks-open" href={lead.href}>查看</a>
+    <div class="picks-col" id="picks-col">
+      {lead.frames.map((frame, i) => <img src={frame.src} alt={i === 0 ? lead.title : ''} style={`object-position:${frame.focus}`} referrerpolicy="no-referrer" loading="lazy"/>)}
+    </div>
+    <p class="picks-mark" id="picks-mark">精选</p>
+    <ul class="picks-list">
+      {picks.map((item, i) => <li>
+        <button type="button" data-title={item.title} data-meta={item.meta} data-href={item.href} data-frames={JSON.stringify(item.frames)} aria-current={i === 0 ? 'true' : undefined}>{item.title}</button>
+      </li>)}
+      <li><a class="picks-all" href="/works/">全部作品</a></li>
+    </ul>
+  </div>
+</section>}
 
 <section class="narrow cta">
   <h2>展览 · 委托 · 合作</h2>
@@ -70,99 +102,381 @@ const SCROLL_POSTER = '/scroll-placeholder.svg';
 }
 .hero.is-playing .hero-video { opacity: 1; }
 .hero.is-still .hero-video { display: none; }
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(to top right, rgba(8, 10, 9, 0.4) 0%, rgba(8, 10, 9, 0.1) 32%, rgba(8, 10, 9, 0) 54%);
+}
 .hero-copy {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 1;
-  padding: 88px 0 56px;
-  text-align: center;
-  color: #F6F5F3;
-  background: linear-gradient(to top, rgba(8, 10, 9, 0.78) 0%, rgba(8, 10, 9, 0.28) 52%, rgba(8, 10, 9, 0) 100%);
+  left: clamp(24px, 4vw, 48px);
+  bottom: clamp(28px, 5vh, 56px);
+  z-index: 2;
+  max-width: min(34em, calc(100% - clamp(24px, 4vw, 48px) * 2 - 9rem));
+  text-align: left;
+  color: #fff;
 }
-.hero-copy .kicker { color: rgba(246, 245, 243, 0.72); }
+.hero-copy .kicker {
+  margin: 0 0 8px;
+  color: rgba(255, 255, 255, 0.82);
+}
 .hero-copy h1 {
-  margin: 0 0 12px;
-  color: #F6F5F3;
-  font-size: clamp(36px, 4vw, 48px);
+  margin: 0 0 8px;
+  color: #fff;
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: clamp(28px, 3.5vw, 44px);
   font-weight: 600;
+  letter-spacing: -0.03em;
   line-height: 1.15;
 }
-.hero-copy .sub { color: rgba(246, 245, 243, 0.82); margin: 0 0 22px; }
-.hero-copy .btn.solid {
-  background: #F6F5F3;
+.hero-copy .sub {
+  margin: 0;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.55;
+  opacity: 0.75;
+}
+#snd.btn.solid {
+  position: absolute;
+  right: clamp(24px, 4vw, 48px);
+  bottom: clamp(28px, 5vh, 56px);
+  z-index: 2;
+  background: #fff;
   color: #1A1A1C;
-  border-color: #F6F5F3;
+  border-color: #fff;
 }
-.picks { padding-top: 120px; }
-.picks h2 {
-  margin: 0 0 48px;
-  text-align: center;
-  font-size: clamp(36px, 4vw, 48px);
+#snd.btn.solid:disabled,
+#snd.btn.solid:disabled:hover {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.picks {
+  background: #F6F5F3;
+  padding: 128px 0 96px;
+}
+.picks-board {
+  width: min(1200px, calc(100% - 96px));
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(240px, 380px) minmax(160px, 0.82fr);
+  grid-template-rows: auto 1fr auto;
+  column-gap: 36px;
+  align-items: start;
+}
+.picks-copy {
+  grid-column: 1;
+  grid-row: 1;
+  z-index: 2;
+  margin-right: -56px;
+  padding-top: 28px;
+}
+.picks-title {
+  margin: 0;
+  max-width: calc(100% + 56px);
+  color: var(--ink);
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: clamp(40px, 4.4vw, 64px);
   font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1.12;
 }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px 40px; }
-.grid:has(> :only-child) { grid-template-columns: minmax(0, 360px); justify-content: center; }
-.more { text-align: center; margin: 40px 0 0; }
+.picks-meta {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+.picks-open {
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  margin-top: 36px;
+  color: var(--ink2);
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-decoration: none;
+}
+.picks-open:hover { color: var(--ink); }
+.picks-col {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.picks-col img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+  border-radius: 0;
+  background: #E6E3DE;
+}
+.picks-mark {
+  grid-column: 1;
+  grid-row: 3;
+  align-self: end;
+  margin: 0;
+  color: var(--muted);
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+}
+.picks-list {
+  grid-column: 3;
+  grid-row: 3;
+  align-self: end;
+  justify-self: end;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+}
+.picks-list button {
+  display: block;
+  width: 100%;
+  max-width: 16em;
+  margin-left: auto;
+  padding: 7px 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: right;
+  cursor: pointer;
+}
+.picks-list button[aria-current="true"] { color: var(--ink); }
+.picks-list button:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 4px;
+}
+.picks-all {
+  display: inline-block;
+  margin-top: 22px;
+  color: var(--muted);
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+}
+.picks-all:hover { color: var(--ink); }
 .cta { text-align: center; margin-top: 160px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
-@media (max-width: 980px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 900px) {
+  .picks { padding: 72px 0 56px; }
+  .picks-board {
+    width: calc(100% - 32px);
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    row-gap: 22px;
+  }
+  .picks-copy,
+  .picks-open,
+  .picks-col,
+  .picks-mark,
+  .picks-list {
+    grid-column: 1;
+    grid-row: auto;
+    margin: 0;
+    justify-self: start;
+  }
+  .picks-copy { padding-top: 0; }
+  .picks-title { max-width: 100%; }
+  .picks-open { margin-top: 0; }
+  .picks-list { text-align: left; }
+  .picks-list button { margin-left: 0; text-align: left; }
+}
 @media (max-width: 760px) {
   .hero { height: clamp(460px, 78vh, 640px); border-radius: 0; }
-  .hero-copy { padding: 72px 0 36px; }
-  .grid { grid-template-columns: 1fr; }
+  .hero-copy .sub { font-size: 14px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-video { display: none; transition: none; }
+  .hero.is-listening .hero-video {
+    display: block;
+    opacity: 0;
+  }
 }
 </style>
 <script>
 const hero = document.getElementById('scroll-hero');
 const video = document.getElementById('scroll-video');
+const listen = document.getElementById('snd');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
+const still = hero.querySelector('.hero-still');
 let stopped = false;
+let listening = false;
+let unavailable = false;
+let suppressError = false;
+
+function setVolume(value) {
+  try { video.volume = value; } catch (err) { /* iOS keeps volume read-only */ }
+}
 
 function showStill() {
   hero.classList.add('is-still');
   hero.classList.remove('is-playing');
   if (stopped) return;
   stopped = true;
+  suppressError = true;
   video.pause();
   video.removeAttribute('src');
   video.load();
 }
 
-function startVideo() {
-  if (motion.matches) { showStill(); return; }
-  const src = video.dataset.src;
-  if (!src) { showStill(); return; }
-  stopped = false;
-  hero.classList.remove('is-still');
+function markUnavailable() {
+  if (unavailable) return;
+  unavailable = true;
+  listening = false;
+  hero.classList.remove('is-listening');
   video.muted = true;
   video.defaultMuted = true;
+  video.setAttribute('muted', '');
+  setVolume(0);
+  listen.disabled = true;
+  listen.setAttribute('aria-pressed', 'false');
+  listen.textContent = '暂无声音';
+  showStill();
+}
+
+function setAudible(on) {
+  listening = on;
+  hero.classList.toggle('is-listening', on);
+  if (on) {
+    video.muted = false;
+    video.defaultMuted = false;
+    video.removeAttribute('muted');
+    setVolume(1);
+    listen.setAttribute('aria-pressed', 'true');
+    listen.textContent = '❚❚ 静音';
+  } else {
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
+    setVolume(0);
+    listen.setAttribute('aria-pressed', 'false');
+    if (!unavailable) listen.textContent = '▶ 聆听图景';
+  }
+}
+
+function attachSource() {
+  const src = video.dataset.src;
+  if (!src) return false;
+  suppressError = false;
+  stopped = false;
+  hero.classList.remove('is-still');
   video.playsInline = true;
+  video.autoplay = true;
+  video.loop = true;
   video.preload = 'auto';
+  if (!listening) {
+    video.muted = true;
+    video.defaultMuted = true;
+    video.setAttribute('muted', '');
+  }
   if (video.getAttribute('src') !== src) video.src = src;
+  return true;
+}
+
+function startVideo() {
+  if (unavailable) return;
+  if (motion.matches && !listening) { showStill(); return; }
+  if (!attachSource()) { markUnavailable(); return; }
   const attempt = video.play();
   if (attempt) attempt.catch((err) => {
+    if (listening || unavailable) return;
     if (err && err.name === 'NotAllowedError') showStill();
+    else if (video.error) markUnavailable();
   });
 }
 
 video.addEventListener('playing', () => {
-  if (!hero.classList.contains('is-still')) hero.classList.add('is-playing');
+  if (motion.matches || hero.classList.contains('is-still')) return;
+  hero.classList.add('is-playing');
 });
-video.addEventListener('error', showStill);
-if (motion.addEventListener) motion.addEventListener('change', () => motion.matches ? showStill() : startVideo());
+video.addEventListener('error', () => {
+  if (suppressError || unavailable) return;
+  markUnavailable();
+});
+if (still) still.addEventListener('error', () => { still.hidden = true; });
+listen.addEventListener('click', () => {
+  if (unavailable || listen.disabled) return;
+  if (listening) {
+    setAudible(false);
+    if (motion.matches) showStill();
+    return;
+  }
+  if (!attachSource()) { markUnavailable(); return; }
+  // Unmute inside the click so the gesture unlocks this video's own audio track.
+  setAudible(true);
+  const attempt = video.play();
+  if (attempt) attempt.catch((err) => {
+    if (unavailable) return;
+    if (err && err.name === 'AbortError') return;
+    setAudible(false);
+    if (video.error) markUnavailable();
+  });
+});
+if (motion.addEventListener) motion.addEventListener('change', () => {
+  if (unavailable) return;
+  if (motion.matches) {
+    hero.classList.remove('is-playing');
+    if (!listening) showStill();
+    return;
+  }
+  startVideo();
+});
 startVideo();
 </script>
 <script>
-let ctx,nodes=null;const b=document.getElementById('snd');
-b.addEventListener('click',()=>{if(nodes){nodes.g.gain.setTargetAtTime(0,ctx.currentTime,.3);nodes.o.forEach(o=>o.stop(ctx.currentTime+1));nodes=null;b.textContent='▶ 聆听图景';return;}
-ctx=ctx||new AudioContext();const g=ctx.createGain();g.gain.value=0;g.connect(ctx.destination);
-const o=[196,293.7,392,587.3,659.3].map((f,i)=>{const x=ctx.createOscillator();x.type=i%2?'triangle':'sine';x.frequency.value=f;const lg=ctx.createGain();lg.gain.value=.1/(i+1);x.connect(lg).connect(g);x.start();return x;});
-g.gain.setTargetAtTime(.45,ctx.currentTime,.8);nodes={g,o};b.textContent='❚❚ 静音';});
+const board = document.getElementById('picks');
+if (board) {
+  const buttons = [...board.querySelectorAll('.picks-list button')];
+  const title = board.querySelector('.picks-title');
+  const meta = board.querySelector('.picks-meta');
+  const open = board.querySelector('.picks-open');
+  const col = board.querySelector('.picks-col');
+  const drop = (img) => img.addEventListener('error', () => img.remove(), { once: true });
+  col.querySelectorAll('img').forEach(drop);
+  const paint = (btn) => {
+    if (btn.getAttribute('aria-current') === 'true') return;
+    buttons.forEach((b) => b.removeAttribute('aria-current'));
+    btn.setAttribute('aria-current', 'true');
+    title.textContent = btn.dataset.title || '';
+    meta.textContent = btn.dataset.meta || '';
+    open.href = btn.dataset.href || '/works/';
+    let frames = [];
+    try { frames = JSON.parse(btn.dataset.frames || '[]'); } catch (err) { frames = []; }
+    col.replaceChildren();
+    frames.forEach((frame, i) => {
+      const img = document.createElement('img');
+      img.src = frame.src;
+      img.alt = i === 0 ? (btn.dataset.title || '') : '';
+      img.style.objectPosition = frame.focus || 'center';
+      img.referrerPolicy = 'no-referrer';
+      drop(img);
+      col.append(img);
+    });
+  };
+  buttons.forEach((btn) => {
+    btn.addEventListener('mouseenter', () => paint(btn));
+    btn.addEventListener('focus', () => paint(btn));
+    btn.addEventListener('click', () => paint(btn));
+  });
+}
 </script>
 </Base>
