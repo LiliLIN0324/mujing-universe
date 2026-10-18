@@ -128,3 +128,39 @@ export function workHero(w: { slug: string; images?: string[]; icon?: string }):
 export function workPaper(w: { slug: string }): string | null {
   return w.slug === 'xihu-panorama' ? '#aea695' : null;
 }
+
+/* ---- /works/ index page helpers ---- */
+/** 去掉「（占位…）」说明。 */
+export function clean(text?: string): string {
+  return (text || '').replace(/[（(]占位[^）)]*[）)]/g, '').trim();
+}
+/** 主标题 / 副标题：' - ' → ' — ' → '：' → 末尾全角括号 → 「中文 + 空格 + 英文」。只拆分，不改写。 */
+export function splitTitle(t: string): [string, string] {
+  for (const sep of [' - ', ' — ', '：']) {
+    const i = t.indexOf(sep);
+    if (i > 0) return [t.slice(0, i).trim(), t.slice(i + sep.length).trim()];
+  }
+  let m = t.match(/^(.*?)（(.*)）$/);
+  if (m) return [m[1].trim(), m[2].trim()];
+  m = t.match(/^([\u4e00-\u9fff].*?[\u4e00-\u9fff])\s+([A-Za-z].*)$/);
+  if (m) return [m[1], m[2]];
+  return [t, ''];
+}
+/** 标题宽度：汉字等全角计 2，其他计 1。 */
+export function titleWidth(t: string): number {
+  let n = 0;
+  for (const ch of t) n += ch.codePointAt(0)! > 0x2e80 ? 2 : 1;
+  return n;
+}
+/** 作品页封面：只有真实画面（作品 / 产品界面 / 渲染图）才用图，其余一律走排版封面。不自动猜图。 */
+export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: number }> = {
+  'xihu-panorama': { src: `${R2_FIG}/xihu-panorama/01.jpg`, scale: 1.08 },
+  'litflow': { src: `${R2_FIG}/litflow/03.png` },
+  'riffle-ai-game-generation-tool': { src: `${R2_FIG}/riffle/03.jpg` },
+  'bazi-fengshui-analysis': { src: `${R2_FIG}/bazi/02.jpg` },
+  'kittylovecarrots': { src: `${R2_FIG}/kittylovecarrots/01.png` },
+  'heatmapper': { src: `${R2_FIG}/heatmapper/01.png` },
+  'neurotopia': { src: `${R2_FIG}/neurotopia/01.jpg`, pos: '50% 0%' },
+  'chicken-utopia': { src: `${R2_FIG}/chicken-utopia/02.jpg`, pos: '50% 30%' },
+  'hongqiqu': { src: `${R2_FIG}/hongqiqu/logo.jpg`, pos: '50% 60%' },
+};
