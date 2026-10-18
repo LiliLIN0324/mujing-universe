@@ -19,12 +19,16 @@ export function featuredWorks<T extends { line: string; images: string[]; icon: 
 }
 
 const R2_FIG = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
+const LOCAL_COVER = '/scroll-placeholder.svg';
+/** R2 has no usable still for these slugs (01/logo 404). */
+const BROKEN_COVERS = new Set(['box-up-my-stuff-in-cyberspace', 'scendance']);
 
-/** 精选叠卡用的静帧。音画只有一卷时，用同一件作品的 01 / 02，不用占位矢量。 */
+/** 精选环带用的静帧。音画只有一卷时，用同一件作品的 01 / 02。缺图用本地占位，不留破图。 */
 export function workCovers(w: { slug: string; images?: string[]; icon?: string }): string[] {
   if (w.slug === 'xihu-panorama') {
     return [`${R2_FIG}/xihu-panorama/01.jpg`, `${R2_FIG}/xihu-panorama/02.jpg`];
   }
+  if (BROKEN_COVERS.has(w.slug)) return [LOCAL_COVER];
   const photos = (w.images ?? []).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
   if (photos.length) return photos.slice(0, 2);
   const icon = w.icon ?? '';
@@ -33,9 +37,10 @@ export function workCovers(w: { slug: string; images?: string[]; icon?: string }
 }
 
 export function workFallback(w: { slug: string; icon?: string }) {
+  if (BROKEN_COVERS.has(w.slug)) return LOCAL_COVER;
   const icon = w.icon ?? '';
   if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon) && !icon.includes('scroll-placeholder')) return icon;
-  return `${R2_FIG}/${w.slug}/logo.jpg`;
+  return LOCAL_COVER;
 }
 
 const XIHU_INTRO = '当代西湖繁胜全景图，是幕景宇宙正在进行的音画长卷。以宋画的观看方式重绘今日西湖，舟船、岸线与人烟由声音转译生成。这一卷仍在创作中，眼下先以其中两帧静帧并置。其余作品按年份列在右侧，声音只留在页首的图景里。';
