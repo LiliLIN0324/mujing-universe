@@ -3,11 +3,7 @@ import Base from '../layouts/Base.astro';
 import { allWorks, pickIntro, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
-// scroll.mp4 404s. scroll-placeholder.mp4 is the audio bed; the picture stays on 01.jpg.
 const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
-// 01.jpg matches the video frame (1920×760). still.jpg is a 52:1 panorama;
-// object-fit:cover sliced its inscriptions into giant cropped glyphs.
-const SCROLL_POSTER = `${R2}/01.jpg`;
 const picks = ws.map((w) => ({
   slug: w.slug,
   title: w.title,
@@ -28,20 +24,18 @@ function ringCardYaw(index) {
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
-  <img class="hero-still" src={SCROLL_POSTER} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   <video
     id="scroll-video"
     class="hero-video"
-    poster={SCROLL_POSTER}
     muted
     autoplay
     playsinline
     loop
-    preload="none"
+    preload="auto"
     disablepictureinpicture
     referrerpolicy="no-referrer"
+    src={SCROLL_VIDEO}
     data-src={SCROLL_VIDEO}
-    aria-hidden="true"
   ></video>
   <div class="hero-overlay">
     <div class="hero-copy">
@@ -119,7 +113,6 @@ function ringCardYaw(index) {
   border-radius: 0;
   background: #141816;
 }
-.hero-still,
 .hero-video {
   position: absolute;
   inset: 0;
@@ -128,15 +121,9 @@ function ringCardYaw(index) {
   object-fit: cover;
   object-position: center;
   display: block;
-}
-.hero-video {
-  /* scroll.mp4 keeps its audio, but its frames carry burned-in captions
-     (「132 艘」「篷、桅船」). Those cannot be removed with CSS, so the
-     picture stays on 01.jpg and this element only plays sound. */
-  opacity: 0;
+  opacity: 1;
   pointer-events: none;
 }
-.hero.is-still .hero-video { display: none; }
 .hero::before {
   content: "";
   position: absolute;
@@ -390,11 +377,7 @@ function ringCardYaw(index) {
   .hero-copy { max-width: none; width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .hero-video { display: none; transition: none; }
-  .hero.is-listening .hero-video {
-    display: block;
-    opacity: 0;
-  }
+  .hero-video { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
   .about__gallery__wrapper,
@@ -407,28 +390,13 @@ const hero = document.getElementById('scroll-hero');
 const video = document.getElementById('scroll-video');
 const listen = document.getElementById('snd');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
-const still = hero.querySelector('.hero-still');
-let stopped = false;
 let listening = false;
-let unavailable = false;
-let suppressError = false;
 
 function setVolume(value) {
   try { video.volume = value; } catch (err) { /* iOS keeps volume read-only */ }
 }
 
-function showStill() {
-  hero.classList.add('is-still');
-  hero.classList.remove('is-playing');
-  if (stopped) return;
-  stopped = true;
-  suppressError = true;
-  video.pause();
-  video.removeAttribute('src');
-  video.load();
-}
-
-function markUnavailable() {
+function failSilent() {
   listening = false;
   hero.classList.remove('is-listening');
   video.muted = true;
@@ -438,7 +406,6 @@ function markUnavailable() {
   listen.disabled = false;
   listen.setAttribute('aria-pressed', 'false');
   listen.textContent = '▶ 聆听图景';
-  showStill();
 }
 
 function setAudible(on) {
@@ -457,16 +424,13 @@ function setAudible(on) {
     video.setAttribute('muted', '');
     setVolume(0);
     listen.setAttribute('aria-pressed', 'false');
-    if (!unavailable) listen.textContent = '▶ 聆听图景';
+    listen.textContent = '▶ 聆听图景';
   }
 }
 
 function attachSource() {
   const src = video.dataset.src;
   if (!src) return false;
-  suppressError = false;
-  stopped = false;
-  hero.classList.remove('is-still');
   video.playsInline = true;
   video.autoplay = true;
   video.loop = true;
@@ -481,52 +445,38 @@ function attachSource() {
 }
 
 function startVideo() {
-  if (unavailable) return;
-  if (motion.matches && !listening) { showStill(); return; }
-  if (!attachSource()) { markUnavailable(); return; }
+  if (!attachSource()) { failSilent(); return; }
   const attempt = video.play();
   if (attempt) attempt.catch((err) => {
-    if (listening || unavailable) return;
-    if (err && err.name === 'NotAllowedError') showStill();
-    else if (video.error) markUnavailable();
+    if (listening) return;
+    if (err && err.name === 'NotAllowedError') return;
+    if (video.error) failSilent();
   });
 }
 
 video.addEventListener('playing', () => {
-  if (motion.matches || hero.classList.contains('is-still')) return;
   hero.classList.add('is-playing');
 });
 video.addEventListener('error', () => {
-  if (suppressError || unavailable) return;
-  markUnavailable();
+  failSilent();
 });
-if (still) still.addEventListener('error', () => { still.hidden = true; });
 listen.addEventListener('click', () => {
-  if (unavailable || listen.disabled) return;
+  if (listen.disabled) return;
   if (listening) {
     setAudible(false);
-    if (motion.matches) showStill();
     return;
   }
-  if (!attachSource()) { markUnavailable(); return; }
-  // Unmute inside the click so the gesture unlocks this video's own audio track.
+  if (!attachSource()) { failSilent(); return; }
   setAudible(true);
   const attempt = video.play();
   if (attempt) attempt.catch((err) => {
-    if (unavailable) return;
     if (err && err.name === 'AbortError') return;
     setAudible(false);
-    if (video.error) markUnavailable();
+    if (video.error) failSilent();
   });
 });
 if (motion.addEventListener) motion.addEventListener('change', () => {
-  if (unavailable) return;
-  if (motion.matches) {
-    hero.classList.remove('is-playing');
-    if (!listening) showStill();
-    return;
-  }
-  startVideo();
+  if (!motion.matches) startVideo();
 });
 startVideo();
 </script>
