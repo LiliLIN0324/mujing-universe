@@ -18,7 +18,7 @@ const picks = ws.map((w) => ({
   fallback: workFallback(w),
 }));
 const leadPick = picks[0];
-const DECK_COUNT = Math.min(7, picks.length);
+const DECK_COUNT = Math.min(9, picks.length);
 function ringOffsets(n) {
   const half = Math.floor((n - 1) / 2);
   const offs = [];
@@ -28,12 +28,12 @@ function ringOffsets(n) {
 }
 const deckOffsets = ringOffsets(DECK_COUNT);
 function deckPose(off) {
-  const mag = Math.min(Math.abs(off), 3);
+  const mag = Math.min(Math.abs(off), 4);
   const sign = Math.sign(off) || 0;
   return {
-    transform: `translateX(${off * 56}%) translateZ(${-mag * 140}px) rotateY(${-sign * mag * 34}deg)`,
-    zIndex: 10 - mag,
-    opacity: Math.max(0, 1 - mag * 0.28),
+    transform: `translateX(${off * 28}%) translateZ(${-mag * 48}px) rotateY(${-sign * mag * 22}deg)`,
+    zIndex: 20 - mag,
+    opacity: Math.max(0.42, 1 - mag * 0.12),
   };
 }
 const deckCards = deckOffsets.map((off) => {
@@ -258,7 +258,7 @@ const deckCards = deckOffsets.map((off) => {
 .deck-wrap {
   margin-top: 48px;
   overflow: visible;
-  padding: 48px min(28%, 120px) 72px;
+  padding: 36px min(28%, 120px) 148px;
   margin-left: calc(-1 * min(28%, 120px));
   margin-right: calc(-1 * min(28%, 120px));
 }
@@ -266,9 +266,10 @@ const deckCards = deckOffsets.map((off) => {
   position: relative;
   width: min(320px, 28vw);
   height: 0;
-  padding-bottom: calc(min(320px, 28vw) * 0.75);
+  padding-bottom: calc(min(320px, 28vw) * 0.75 + 56px);
   margin: 0 auto;
-  perspective: 1400px;
+  overflow: visible;
+  perspective: 1100px;
   transform-style: preserve-3d;
 }
 .deck.paused .pick-card { transition: none; }
@@ -340,7 +341,11 @@ const deckCards = deckOffsets.map((off) => {
   text-align: left;
   cursor: pointer;
 }
-.pick-row.is-on { font-weight: 600; }
+.pick-row.is-on,
+.pick-row[aria-current="true"] {
+  font-weight: 600;
+  background: #EFEDE9;
+}
 .row-title {
   min-width: 0;
   overflow: hidden;
@@ -364,10 +369,10 @@ const deckCards = deckOffsets.map((off) => {
   .picks-layout { grid-template-columns: 1fr; row-gap: 36px; }
   .picks-left { position: static; }
   .picks-intro { width: min(380px, 100%); }
-  .deck { width: min(320px, 72vw); padding-bottom: calc(min(320px, 72vw) * 0.75); }
+  .deck { width: min(320px, 72vw); padding-bottom: calc(min(320px, 72vw) * 0.75 + 48px); }
   .deck-wrap {
     margin-top: 28px;
-    padding: 32px min(18%, 64px) 56px;
+    padding: 28px min(18%, 64px) 112px;
     margin-left: calc(-1 * min(18%, 64px));
     margin-right: calc(-1 * min(18%, 64px));
   }
@@ -536,9 +541,9 @@ if (picksRoot && pickDataEl) {
   const pickMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const count = pickData.length;
   const visible = cards.length;
-  const TX = 56;
-  const TZ = 140;
-  const RY = 34;
+  const TX = 28;
+  const TZ = 48;
+  const RY = 22;
   let active = 0;
   let timer = 0;
   let inView = true;
@@ -574,12 +579,12 @@ if (picksRoot && pickDataEl) {
       const off = offsets[slot];
       const workIdx = ((index + off) % count + count) % count;
       const work = pickData[workIdx];
-      const mag = Math.min(Math.abs(off), 3);
+      const mag = Math.min(Math.abs(off), 4);
       const sign = Math.sign(off) || 0;
       card.dataset.pick = String(workIdx);
       card.dataset.front = off === 0 ? 'true' : 'false';
-      card.style.zIndex = String(10 - mag);
-      card.style.opacity = String(Math.max(0, 1 - mag * 0.28));
+      card.style.zIndex = String(20 - mag);
+      card.style.opacity = String(Math.max(0.42, 1 - mag * 0.12));
       card.style.transform = `translateX(${off * TX}%) translateZ(${-mag * TZ}px) rotateY(${-sign * mag * RY}deg)`;
       card.setAttribute('aria-label', work.title);
       card.setAttribute('aria-current', off === 0 ? 'true' : 'false');
