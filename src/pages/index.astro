@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { allWorks, pickIntro, workCovers, workFallback } from '../lib';
+import { allWorks, pickBody, pickIntro, pickMeta, pickTech, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
@@ -16,9 +16,29 @@ const picks = ws.map((w) => ({
 }));
 const leadPick = picks[0];
 const ringWorks = picks.slice(0, 10);
+/* Mobile (≤768px) card stack: same 10 works + covers as the ring. Role has no
+   field in the works data, so the 角色 column stays hidden until real data exists. */
+const mobilePicks = ws.slice(0, 10).map((w, i) => ({
+  no: String(i + 1).padStart(2, '0'),
+  title: w.title,
+  year: w.yearNum || w.year,
+  href: `/works/${w.slug}/`,
+  meta: pickMeta(w),
+  body: pickBody(w),
+  role: [] as string[],
+  tech: pickTech(w),
+  cover: `/ring/${i}.jpg`,
+  fallback: workFallback(w) || '/ring/paper.jpg',
+}));
+const mLead = mobilePicks[0];
+/* Mobile (≤768px) page-by-page homepage: per-page "dwell" switch.
+   'on'  = vertical swipes first play through the page's own content (hero: pan the
+           painting in 3 steps; featured: walk the cards 01→10), then flip the page.
+   'off' = the swipe flips the page immediately. Which pages dwell is TBD: all off. */
+const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off', picks: 'off', cta: 'off' };
 ---
 <Base active="/" home>
-<div class="first-screen" id="first-screen">
+<div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
   <div class="hero-pan">
     <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
@@ -39,6 +59,7 @@ const ringWorks = picks.slice(0, 10);
   </div>
   <div class="hero-cue" aria-hidden="true">长卷 · 自动展开<i></i>01 / 12</div>
   <div class="hero-seal" aria-hidden="true">滑动或拖动 · 浏览全卷</div>
+  <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
 </section>
 <div class="hero-info">
   <div class="hero-copy">
@@ -51,9 +72,40 @@ const ringWorks = picks.slice(0, 10);
   </div>
 </div>
 <a class="scroll-cue" id="scroll-cue" href="#picks" aria-label="向下滚动至精选"><span>SCROLL</span><i></i></a>
+<a class="m-down" href="#picks" aria-label="向下滚动至精选作品"><b>下滑</b><i></i><em>⌄</em></a>
+<a class="m-peek" href="#picks"><span>精选作品</span><span>{mobilePicks.length}</span></a>
 </div>
 
-{leadPick && <section class="picks" id="picks" aria-label="精选">
+{leadPick && <section class="picks" id="picks" aria-label="精选" data-dwell={PAGE_DWELL.picks}>
+  {mLead && <div class="m-feat" id="m-feat">
+    <div class="m-hd"><b>精选作品</b><span id="m-count">01 / {String(mobilePicks.length).padStart(2, '0')}</span></div>
+    <div class="m-stage" id="m-stage" role="group" aria-roledescription="carousel" aria-label="精选作品">
+      {mobilePicks.map((w, i) => (
+        <div class="m-card" data-i={i} aria-hidden={i === 0 ? 'false' : 'true'}>
+          <img src={w.cover} data-fallback={w.fallback} alt={w.title} width="1200" height="675" draggable="false" decoding="async" referrerpolicy="no-referrer" loading={i < 4 ? 'eager' : 'lazy'}/>
+        </div>
+      ))}
+    </div>
+    <div class="m-bar" id="m-bar" aria-hidden="true">{mobilePicks.map((_, i) => <i class={i === 0 ? 'on' : undefined}></i>)}</div>
+    <div class="m-info" aria-live="polite">
+      <h2 class="m-title" id="m-title">{mLead.title}</h2>
+      <div class="m-meta" id="m-meta" hidden={!mLead.meta}>{mLead.meta}</div>
+      <p class="m-body" id="m-body" hidden={!mLead.body}>{mLead.body}</p>
+      <dl class="m-facts" id="m-facts" hidden={!mLead.role.length && !mLead.tech.length}>
+        <div id="m-role" hidden={!mLead.role.length}><dt>角色</dt><dd>{mLead.role.join(' · ')}</dd></div>
+        <div id="m-tech" hidden={!mLead.tech.length}><dt>技术</dt><dd>{mLead.tech.join(' · ')}</dd></div>
+      </dl>
+    </div>
+    <ul class="m-list" id="m-list">
+      {mobilePicks.map((w, i) => (
+        <li class:list={['m-row', { on: i === 0 }]} data-i={i} hidden={i > 3}>
+          <button type="button"><span class="no">{w.no}</span><span class="t">{w.title}</span><span class="y">{w.year}</span></button>
+        </li>
+      ))}
+      <li class="m-row m-all"><button type="button" id="m-all" aria-expanded="false" aria-controls="m-list"><span class="t">全部作品</span><span class="y">{mobilePicks.length}</span></button></li>
+    </ul>
+    <script type="application/json" id="m-pick-data" set:html={JSON.stringify(mobilePicks).replace(/</g, '\\u003c')}></script>
+  </div>}
   <div class="picks-sticky">
   <canvas class="pick-canvas" id="pick-canvas" aria-hidden="true"></canvas>
   <div class="picks-layout">
@@ -97,7 +149,7 @@ const ringWorks = picks.slice(0, 10);
   <script type="application/json" id="pick-data" set:html={JSON.stringify(picks).replace(/</g, '\\u003c')}></script>
 </section>}
 
-<section class="narrow cta">
+<section class="narrow cta" id="cta" data-dwell={PAGE_DWELL.cta}>
   <h2>展览 · 委托 · 合作</h2>
   <p>文旅数字展陈、AIGC 音画委托、品牌合作与驻留，由经纪人统一对接。</p>
   <a class="btn solid" href="/contact/">合作</a>
@@ -487,6 +539,271 @@ const ringWorks = picks.slice(0, 10);
   .hero-copy h1 { font-size: 34px; }
   .hero-copy .sub { font-size: 15px; }
 }
+/* ---- Mobile first screen (≤768px): full-height painting as the player. ---- */
+.m-prog,
+.m-down,
+.m-peek { display: none; }
+@media (max-width: 768px) {
+  .first-screen {
+    height: 100vh;
+    height: max(100svh, 844px);
+    background: #fff;
+  }
+  .hero {
+    height: 490px;
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .hero-pan {
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: auto;
+    animation: none;
+    transform: translate3d(var(--pan-x, 0px), 0, 0);
+  }
+  .hero-still {
+    position: relative;
+    inset: auto;
+    top: 0;
+    height: 100%;
+    width: auto;
+    max-width: none;
+    object-fit: initial;
+  }
+  .hero-cue,
+  .hero-seal,
+  .scroll-cue { display: none; }
+  .m-prog {
+    position: absolute;
+    left: 50%;
+    bottom: 18px;
+    z-index: 2;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    white-space: nowrap;
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 11px;
+    line-height: normal;
+    letter-spacing: 0.2em;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+  }
+  .m-prog i {
+    display: block;
+    width: 120px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.5);
+    position: relative;
+  }
+  .m-prog b {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 1px;
+    width: 100%;
+    background: #fff;
+    transform-origin: 0 50%;
+    transform: scaleX(var(--prog, 0));
+  }
+  .hero-info {
+    padding: 26px 24px 0;
+    display: block;
+    text-align: center;
+  }
+  .hero-copy h1 {
+    font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
+    font-weight: 600;
+    font-size: 32px;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+  }
+  .hero-copy .sub { margin-top: 10px; font-size: 15px; line-height: 1.6; color: #3d3a35; letter-spacing: 0; }
+  .hero-copy .meta { margin-top: 10px; font-size: 12px; color: #9a958c; letter-spacing: 0.06em; }
+  .hero-act { margin-top: 30px; justify-content: center; }
+  .listen { padding: 13px 24px; font-size: 15px; letter-spacing: 0.08em; }
+  .m-down {
+    position: absolute;
+    left: 50%;
+    bottom: 74px;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: #8a857c;
+    font-size: 10px;
+    line-height: normal;
+    letter-spacing: 0.3em;
+    text-decoration: none;
+  }
+  .m-down b { font-weight: 400; margin-right: -0.3em; }
+  .m-down i {
+    display: block;
+    width: 1px;
+    height: 30px;
+    background: rgba(26, 26, 24, 0.12);
+    position: relative;
+    overflow: hidden;
+  }
+  .m-down i::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 10px;
+    width: 1px;
+    height: 14px;
+    background: #1a1a18;
+    animation: m-down-drip 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+  @keyframes m-down-drip {
+    0% { transform: translateY(-26px); }
+    100% { transform: translateY(26px); }
+  }
+  .m-down em { font-style: normal; font-size: 12px; line-height: 1; margin-top: -6px; }
+  .m-peek {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 64px;
+    padding: 16px 24px 0;
+    display: flex;
+    justify-content: space-between;
+    background: #F6F5F3;
+    color: #9a958c;
+    font-size: 12px;
+    line-height: normal;
+    letter-spacing: 0.2em;
+    text-decoration: none;
+  }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .m-down i::after { animation: none; }
+}
+/* ---- Mobile featured card stack (≤768px). Desktop never shows .m-feat. ---- */
+.m-feat { display: none; }
+@media (max-width: 768px) {
+  .picks { height: auto; padding-bottom: 8px; }
+  .picks-sticky { display: none; }
+  .m-feat {
+    --cw: calc(100vw - 90px);
+    --ch: calc(var(--cw) * 9 / 16);
+    display: block;
+    color: #1a1a18;
+    font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
+  }
+  .m-hd {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 14px 24px 0;
+    line-height: normal;
+  }
+  .m-hd b { font-size: 12px; font-weight: 400; color: #9a958c; letter-spacing: 0.2em; }
+  .m-hd span { font-size: 12px; color: #9a958c; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+  .m-stage {
+    position: relative;
+    height: calc(var(--ch) + 44px);
+    margin-top: 22px;
+    perspective: 900px;
+    touch-action: pan-y;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--cw);
+    height: var(--ch);
+    transform-origin: 100% 50%;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #e6e3de;
+    box-shadow: 0 14px 30px rgba(40, 30, 20, 0.16);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+  /* Pre-JS fallback: only the current card. */
+  .m-card:not([style]) { transform: translateX(24px); }
+  .m-card:not([style]) ~ .m-card:not([style]) { opacity: 0; }
+  .m-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    max-width: none;
+    pointer-events: none;
+  }
+  .m-bar { display: flex; gap: 6px; padding: 0 24px; }
+  .m-bar i { flex: 1; height: 2px; background: #e1ddd6; transition: background 0.25s ease; }
+  .m-bar i.on { background: #1a1a18; }
+  .m-info { padding: 22px 24px 0; }
+  .m-title {
+    margin: 0;
+    color: #1a1a18;
+    font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
+    font-weight: 600;
+    font-size: 28px;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+  .m-meta { margin-top: 8px; font-size: 12px; line-height: normal; color: #9a958c; letter-spacing: 0.08em; }
+  .m-body { margin: 12px 0 0; font-size: 14px; line-height: 1.75; color: #4a463f; }
+  .m-facts { margin: 14px 0 0; display: flex; gap: 28px; font-size: 12px; line-height: 1.5; }
+  .m-facts dt { color: #9a958c; letter-spacing: 0.08em; margin-bottom: 3px; }
+  .m-facts dd { margin: 0; color: #3d3a35; }
+  .m-feat [hidden] { display: none !important; }
+  .m-list { list-style: none; margin: 22px 24px 0; padding: 0; border-top: 1px solid #e3dfd8; }
+  .m-row { border-bottom: 1px solid #e3dfd8; }
+  .m-row button {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #8d887f;
+    font: inherit;
+    font-size: 14px;
+    line-height: normal;
+    text-align: left;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .m-row .no { font-size: 11px; width: 18px; color: #b9b4ab; font-variant-numeric: tabular-nums; }
+  .m-row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-row .y { font-size: 12px; }
+  .m-row.on button { color: #1a1a18; }
+  .m-row.on .no { color: #b5432f; }
+  .m-row.on .t { font-weight: 600; }
+  .m-row.m-all { border-bottom: none; }
+  .m-row.m-all button { color: #1a1a18; font-size: 13px; letter-spacing: 0.08em; }
+  .m-row.m-all .y { color: #9a958c; }
+}
+/* ---- Mobile homepage paging (≤768px): one vertical swipe = one page. ---- */
+@media (max-width: 768px) {
+  :global(html) { scroll-snap-type: y mandatory; }
+  .first-screen,
+  .picks,
+  .cta {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+  /* page 2: featured fills one screen; content clears the 52px overlay bar */
+  .picks { min-height: 100vh; min-height: 100svh; padding-top: 52px; scroll-margin-top: 0; }
+  /* page 3: CTA + footer; the CTA starts the page */
+  .cta { margin-top: 0; padding-top: 96px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .hero-video { opacity: 0; }
   .hero-pan { animation: none; }
@@ -504,6 +821,9 @@ const video = document.getElementById('scroll-video');
 const listen = document.getElementById('snd');
 const listenLabel = listen.querySelector('.lb');
 const motion = matchMedia('(prefers-reduced-motion: reduce)');
+// ≤768px: the painting player in scripts/mobile-hero.js owns the button and the video.
+const mobileHeroMq = matchMedia('(max-width: 768px)');
+const heroOnMobile = () => mobileHeroMq.matches;
 let listening = false;
 
 function setVolume(value) {
@@ -572,9 +892,11 @@ video.addEventListener('playing', () => {
   hero.classList.add('is-playing');
 });
 video.addEventListener('error', () => {
+  if (heroOnMobile()) return;
   failSilent();
 });
 listen.addEventListener('click', () => {
+  if (heroOnMobile()) return;
   if (listen.disabled) return;
   if (listening) {
     setAudible(false);
@@ -590,9 +912,19 @@ listen.addEventListener('click', () => {
   });
 });
 if (motion.addEventListener) motion.addEventListener('change', () => {
+  if (heroOnMobile()) return;
   if (!motion.matches) startVideo();
 });
-startVideo();
+if (!heroOnMobile()) {
+  startVideo();
+} else {
+  const toDesktop = () => {
+    if (heroOnMobile()) return;
+    mobileHeroMq.removeEventListener?.('change', toDesktop);
+    startVideo();
+  };
+  mobileHeroMq.addEventListener?.('change', toDesktop);
+}
 </script>
 <script>
 // Homepage auto-hide nav + SCROLL cue (layout only; no hero media logic here).
@@ -634,8 +966,35 @@ if (cue) {
 import { mountPickRing } from '../scripts/pick-ring.js';
 const picksRoot = document.getElementById('picks');
 const pickDataEl = document.getElementById('pick-data');
-if (picksRoot && pickDataEl) {
+// ≤768px: the WebGL ring is not initialised or rendered (mobile uses the card stack).
+// If the viewport later grows past 768px, the ring mounts then, exactly as on desktop.
+const mobileMq = matchMedia('(max-width: 768px)');
+let ringMounted = false;
+function mountRingIfDesktop() {
+  if (ringMounted || mobileMq.matches || !picksRoot || !pickDataEl) return;
+  ringMounted = true;
   mountPickRing(picksRoot, JSON.parse(pickDataEl.textContent || '[]'));
 }
+mountRingIfDesktop();
+if (!ringMounted) {
+  const onMq = () => {
+    mountRingIfDesktop();
+    if (ringMounted) mobileMq.removeEventListener?.('change', onMq);
+  };
+  mobileMq.addEventListener?.('change', onMq);
+}
+</script>
+<script>
+import { mountMobileHero } from '../scripts/mobile-hero.js';
+import { mountMobileStack } from '../scripts/mobile-stack.js';
+import { mountMobilePager } from '../scripts/mobile-pager.js';
+const heroDwell = mountMobileHero();
+const mobileStackRoot = document.getElementById('m-feat');
+const stackDwell = mobileStackRoot ? mountMobileStack(mobileStackRoot) : null;
+mountMobilePager([
+  { el: document.getElementById('first-screen'), dwell: heroDwell },
+  { el: document.getElementById('picks'), dwell: stackDwell },
+  { el: document.getElementById('cta'), dwell: null },
+]);
 </script>
 </Base>

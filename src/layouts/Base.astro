@@ -22,7 +22,8 @@ const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '�
 {home ? (
 <header class="top top--home" id="home-nav" data-autohide>
   <a class="wordmark" href="/">Scendance Space</a>
-  <nav>
+  <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i></i><i></i></button>
+  <nav id="home-menu">
     {links.map(([h, t]) => <a href={h}>{t}</a>)}
     <a class="pill" href="/contact/">合作</a>
   </nav>
@@ -66,6 +67,20 @@ document.querySelectorAll('.reveal').forEach(el => {
   }
   io.observe(el);
 });
+// Mobile (≤768px) home menu: the two-line button toggles the existing nav as a dropdown.
+const menuBtn = document.getElementById('home-menu-btn');
+const homeNav = document.getElementById('home-nav');
+if (menuBtn && homeNav) {
+  const setOpen = (open) => {
+    homeNav.classList.toggle('is-menu-open', open);
+    menuBtn.setAttribute('aria-expanded', String(open));
+  };
+  menuBtn.addEventListener('click', () => setOpen(!homeNav.classList.contains('is-menu-open')));
+  homeNav.querySelectorAll('#home-menu a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('click', (e) => { if (!homeNav.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  matchMedia('(max-width: 768px)').addEventListener?.('change', (e) => { if (!e.matches) setOpen(false); });
+}
 document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
   img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
 }));
