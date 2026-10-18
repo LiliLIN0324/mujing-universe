@@ -17,6 +17,7 @@ const picks = ws.map((w) => ({
 const leadPick = picks[0];
 const RING_N = Math.min(10, picks.length);
 const RING_RADIUS = 280;
+const RING_Z_REST = 13.35;
 const ringWorks = picks.slice(0, RING_N);
 function ringCardYaw(index) {
   const angle = (index / RING_N) * Math.PI * 2;
@@ -62,7 +63,7 @@ function ringCardYaw(index) {
       <div
         class="about__gallery__wrapper"
         id="pick-gallery"
-        style={`transform:translate3d(0px,0px,${-20 * (RING_RADIUS / 3)}px) rotateX(${-Math.PI * 0.15}rad) rotateY(0rad)`}
+        style={`transform:translate3d(0px,0px,${-RING_Z_REST * (RING_RADIUS / 3)}px) rotateX(${-Math.PI * 0.15}rad) rotateY(0rad)`}
       >
         {ringWorks.map((work, i) => (
           <div class="about__gallery__link" data-i={i}>
@@ -264,18 +265,18 @@ function ringCardYaw(index) {
   grid-column: 1;
   grid-row: 2;
   position: relative;
-  height: min(560px, 64vh);
-  min-height: 420px;
-  margin-top: 12px;
+  height: min(520px, 58vh);
+  min-height: 360px;
+  margin-top: 8px;
   overflow: visible;
-  perspective: 1000px;
-  perspective-origin: 46% 70%;
+  perspective: 1040px;
+  perspective-origin: 40% 58%;
   transform-style: preserve-3d;
 }
 .about__gallery__wrapper {
   position: absolute;
-  left: 82%;
-  top: 78%;
+  left: 72%;
+  top: 46%;
   width: 0;
   height: 0;
   transform-style: preserve-3d;
@@ -571,9 +572,9 @@ if (picksRoot && pickDataEl) {
     velocity += ((pickMotion.matches ? 0 : dProgress) - velocity) * 0.1;
     if (inView && !pickMotion.matches) uTime += 0.009 * dt + 15 * velocity;
     const spin = pickMotion.matches ? 0 : uTime * 0.12 + velocity;
-    const tx = -6.5 * progress * K;
-    const ty = -1.2 * progress * K;
-    const tz = -(20 - 17 * progress) * K;
+    const tx = -6.5 * progress * K * 0.48;
+    const ty = 230 * progress;
+    const tz = -(13.35 - 9.15 * progress) * K;
     const tilt = -Math.PI * 0.15 * (1 - progress);
     if (stage) {
       stage.style.transform = `translate3d(${tx}px, ${ty}px, ${tz}px) rotateX(${tilt}rad) rotateY(${spin}rad)`;
