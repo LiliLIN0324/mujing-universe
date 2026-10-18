@@ -57,19 +57,15 @@ void main() {
   vec2 ring = vec2(cos(angle * PI * 2.0), sin(angle * PI * 2.0)) * radius;
   float yaw0 = angle * PI * 2.0 - PI * 0.2 - position.x * 0.3 - uVelocity * 15.0;
 
-  // End: 1–2 near via uFocus; others pushed back/sideways out of the near stack
-  float park = mix(1.0, uFocus, smoothstep(0.42, 0.72, uScroll));
-  float grow = (1.0 + 0.72 * uScroll * uScroll) * mix(0.28, 1.0, park);
+  // Back to ~01:37 end dose (~3 near), then nudge MORE LEFT than that round
+  float grow = 1.0 + 0.5 * uScroll * uScroll;
   vec4 p = cabinMatrix(vec3(ring.x, 0.0, ring.y), yaw0, vec3(uScale.x * grow, uScale.y * grow, 1.0)) * vec4(position, 1.0);
   p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), uTime * 0.12 + uVelocity);
   p.xyz = rotate(p.xyz, vec3(1.0, 0.0, 0.0), -PI * 0.15 * (1.0 - uScroll));
-  p.z -= 20.0 - 13.0 * uScroll;          // near pull, 略大靠 grow
-  p.z -= (1.0 - park) * 14.0 * uScroll;  // non-focus deep
-  p.x -= 2.85 * uScroll;                 // 略右但仍避开名录
-  p.x -= (1.0 - park) * 7.0 * uScroll;   // non-focus off
-  p.y -= 1.7 * uScroll;                  // 左下
-  p.y += (1.0 - park) * 1.2 * uScroll;
-  p.x -= 1.2;
+  p.z -= 20.0 - 12.0 * uScroll;  // end ≈ z-8 (01:37)
+  p.x -= 3.7 * uScroll;          // more left than 01:37's 3.2
+  p.y -= 1.55 * uScroll;
+  p.x -= 1.4;                    // more left than 01:37's 1.15
 
   gl_Position = projectionMatrix * viewMatrix * p;
   vUv = uv;
@@ -117,12 +113,10 @@ void main() {
   float cornerDark = smoothstep(1.08, 1.48, corner) * 0.035;
   color *= 1.0 - cornerDark;
 
-  // End: hide wash/empty boards + fade non-focus so only 1–2 near read
-  float park = mix(1.0, uFocus, smoothstep(0.42, 0.72, uScroll));
-  float washKill = 1.0 - uWash * smoothstep(0.2, 0.55, uScroll);
-  float alpha = park * washKill;
-  if (alpha < 0.18) discard; // 远卡/空板直接丢掉，只留 1–2 近卡
-  color = mix(vec3(0.945, 0.945, 0.941), color, clamp(alpha, 0.0, 1.0));
+  // Soft AO kept; only kill wash/empty boards (no uFocus single-card lock)
+  float washKill = 1.0 - uWash * smoothstep(0.25, 0.65, uScroll);
+  if (washKill < 0.2) discard;
+  color = mix(vec3(0.945, 0.945, 0.941), color, clamp(washKill, 0.0, 1.0));
 
   gl_FragColor = vec4(color, 1.0);
 }
@@ -131,7 +125,7 @@ void main() {
 const SCROLL_LERP = 0.1;
 const DELTA_LERP = 0.1;
 /** Idle/mid readable size: ~40% frustum width, 16:9 (demalde DOM-scale order). */
-const CARD_FRAC_W = 0.56;
+const CARD_FRAC_W = 0.50;
 const TEX_MAX = 1920;
 
 function lerp(a, b, t) {
@@ -421,10 +415,10 @@ export function mountPickRing(root, pickData) {
     const best = ranked[0]?.i ?? 0;
     // End: only top-2 non-wash get focus=1 → 严格 1–2 近卡
     const keep = ranked.filter((r) => !(meshes[r.i].isPaper || meshes[r.i].coverScore < -20));
-    const nFocus = progress > 0.78 ? 1 : 2; // 落幅严格偏 1 张主近卡，转中可 2
-    const focusIdx = new Set(keep.slice(0, nFocus).map((r) => r.i));
+    // Intro highlight can prefer top-3; do NOT cull others to a single near card
+    const focusIdx = new Set(keep.slice(0, 3).map((r) => r.i));
     for (let i = 0; i < meshes.length; i++) {
-      meshes[i].uniforms.uFocus.value = focusIdx.has(i) ? 1 : 0;
+      meshes[i].uniforms.uFocus.value = 1; // render all; wash handled in frag
     }
 
     if (listEl) listEl.style.transform = `translateY(${scrollCurrent}px)`;
