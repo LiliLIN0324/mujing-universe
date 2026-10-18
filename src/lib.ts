@@ -100,3 +100,27 @@ export function pickMeta(w: { line?: string; yearNum?: number; tech?: string[] }
   const tech = pickTech(w).slice(0, 2).join(' / ');
   return [w.line || '', w.yearNum ? String(w.yearNum) : '', tech].filter(Boolean).join(' · ');
 }
+
+/* ---- Work detail page helpers ---- */
+/** 西湖长卷的副标题（与首页同一句）。其它作品没有副标题字段，留空即隐藏。 */
+export function workSubtitle(w: { slug: string }): string {
+  return w.slug === 'xihu-panorama' ? '以宋画长卷重绘当代西湖，画面由声音转译生成。' : '';
+}
+/** 全卷长条：R2 上只有西湖有整卷静帧（32768×627）。 */
+export function workStrip(w: { slug: string }): string | null {
+  return w.slug === 'xihu-panorama' ? `${R2_FIG}/xihu-panorama/still.jpg` : null;
+}
+/** 可聆听的声音：只有西湖有（首页同一个 R2 音画文件，含 AAC 音轨）。 */
+export function workAudio(w: { slug: string }): string | null {
+  return w.slug === 'xihu-panorama' ? `${R2_FIG}/xihu-panorama/scroll-placeholder.mp4` : null;
+}
+/** 详情页静帧：主图之后的全部 R2 图片（西湖为 02）。 */
+export function workStills(w: { slug: string; images?: string[]; icon?: string }): string[] {
+  if (w.slug === 'xihu-panorama') return workCovers(w).slice(1);
+  return (w.images ?? []).slice(1).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
+}
+/** 详情页主图：西湖用 R2 01，其它用第一张图或 icon。 */
+export function workHero(w: { slug: string; images?: string[]; icon?: string }): string {
+  if (w.slug === 'xihu-panorama') return workCovers(w)[0];
+  return (w.images ?? [])[0] || w.icon || LOCAL_COVER;
+}

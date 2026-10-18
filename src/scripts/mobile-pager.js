@@ -24,11 +24,15 @@ export function mountMobilePager(pages) {
   const list = pages.filter((p) => p && p.el);
   if (!list.length) return;
 
+  // pages rest at (top - scroll-padding-top): 0 on the homepage, 52px under a sticky bar
+  const pad = () => parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+
   function currentPage() {
     const y = window.scrollY;
+    const off = pad();
     let best = null;
     for (const p of list) {
-      const top = p.el.getBoundingClientRect().top + y;
+      const top = p.el.getBoundingClientRect().top + y - off;
       if (Math.abs(top - y) <= 4) best = p;
     }
     return best;
@@ -39,7 +43,8 @@ export function mountMobilePager(pages) {
   let idle = 0;
   function tops() {
     const y = window.scrollY;
-    return list.map((p) => Math.round(p.el.getBoundingClientRect().top + y));
+    const off = pad();
+    return list.map((p) => Math.max(0, Math.round(p.el.getBoundingClientRect().top + y - off)));
   }
   function armFence() {
     const t = tops();

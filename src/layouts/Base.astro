@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-const { title = '幕景宇宙 · 林丽丽艺术工作室', active = '', home = false } = Astro.props;
+const { title = '幕景宇宙 · 林丽丽艺术工作室', active = '', home = false, navClass = '' } = Astro.props;
 const links = [['/works/', '作品'], ['/artist/', '艺术家']];
 const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
 ---
@@ -20,11 +20,11 @@ const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '�
 </head>
 <body>
 {home ? (
-<header class="top top--home" id="home-nav" data-autohide>
+<header class:list={["top top--home", navClass]} id="home-nav" data-autohide>
   <a class="wordmark" href="/">Scendance Space</a>
   <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i></i><i></i></button>
   <nav id="home-menu">
-    {links.map(([h, t]) => <a href={h}>{t}</a>)}
+    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
     <a class="pill" href="/contact/">合作</a>
   </nav>
 </header>
