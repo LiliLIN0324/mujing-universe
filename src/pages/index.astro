@@ -34,8 +34,8 @@ const mLead = mobilePicks[0];
 /* Mobile (≤768px) page-by-page homepage: per-page "dwell" switch.
    'on'  = vertical swipes first play through the page's own content (hero: pan the
            painting in 3 steps; featured: walk the cards 01→10), then flip the page.
-   'off' = the swipe flips the page immediately. Which pages dwell is TBD: all off. */
-const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off', picks: 'off', cta: 'off' };
+   'off' = the swipe flips the page immediately. Default (project lead): only 精选 (picks) dwells. */
+const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off', picks: 'on', cta: 'off' };
 ---
 <Base active="/" home>
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
