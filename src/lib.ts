@@ -6,4 +6,14 @@ export async function allWorks() {
   ws.sort((a,b) => LINES.indexOf(a.line) - LINES.indexOf(b.line) || b.yearNum - a.yearNum);
   return ws.map((w,i) => ({ ...w, no: String(i+1).padStart(2,'0') }));
 }
-export const FEATURED = ['xihu-panorama','scendance','anyreal','riffle-ai-game-generation-tool','72-hour-game-jam','neurotopia'];
+const PLACEHOLDER_COVER = 'scroll-placeholder.svg';
+
+/** Homepage 精选：音画 / 展览线。产品、游戏、研究留在 /works/。有实拍封面的排在矢量底图前面。 */
+export function featuredWorks<T extends { line: string; images: string[]; icon: string }>(ws: T[]): T[] {
+  const art = ws.filter((w) => w.line === '音画');
+  const hasCover = (w: T) => {
+    const src = w.images[0] || w.icon || '';
+    return src.length > 0 && !src.includes(PLACEHOLDER_COVER);
+  };
+  return [...art.filter(hasCover), ...art.filter((w) => !hasCover(w))];
+}
