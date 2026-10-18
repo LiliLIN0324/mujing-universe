@@ -5,35 +5,15 @@ const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 // scroll.mp4 keeps its AAC track. Autoplay stays muted; 「聆听图景」 unmutes this same video.
 const SCROLL_VIDEO = `${R2}/scroll.mp4`;
-const SCROLL_POSTER = `${R2}/still.jpg`;
-const PICK_FRAMES = {
-  'xihu-panorama': [
-    { src: `${R2}/01.jpg`, ratio: '16 / 9', width: '100%', focus: 'center 62%' },
-    { src: `${R2}/02.jpg`, ratio: '3 / 4', width: '72%', focus: '42% center' },
-    { src: `${R2}/logo.jpg`, ratio: '1 / 1', width: '46%', focus: 'center' },
-  ],
-};
-const FALLBACK_RATIOS = [
-  { ratio: '16 / 9', width: '100%' },
-  { ratio: '3 / 4', width: '72%' },
-  { ratio: '1 / 1', width: '46%' },
-];
-const picks = featuredWorks(ws).slice(0, 3).map((w) => {
-  const own = (w.images || []).filter((src) => src && !src.includes('scroll-placeholder'));
-  const frames = PICK_FRAMES[w.slug] || own.slice(0, 3).map((src, i) => ({ src, focus: 'center', ...FALLBACK_RATIOS[i % 3] }));
-  return {
-    slug: w.slug,
-    title: w.title,
-    meta: [w.line, w.yearNum || w.year].filter(Boolean).join(' · '),
-    href: `/works/${w.slug}/`,
-    frames,
-  };
-}).filter((item) => item.frames.length);
-const lead = picks[0];
+// 01.jpg matches the video frame (1920×760). still.jpg is a 52:1 panorama;
+// object-fit:cover sliced its inscriptions into giant cropped glyphs.
+const SCROLL_POSTER = `${R2}/01.jpg`;
+const lead = featuredWorks(ws).find((w) => w.slug === 'xihu-panorama') || featuredWorks(ws)[0];
+const pickSrc = `${R2}/01.jpg`;
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
-  <img class="hero-still" src={SCROLL_POSTER} alt="当代西湖繁胜全景图" width="32768" height="627" referrerpolicy="no-referrer" fetchpriority="high"/>
+  <img class="hero-still" src={SCROLL_POSTER} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   <video
     id="scroll-video"
     class="hero-video"
@@ -59,23 +39,16 @@ const lead = picks[0];
   </div>
 </section>
 
-{lead && <section class="picks" id="picks" aria-labelledby="picks-mark">
-  <div class="picks-board">
+{lead && <section class="picks" id="picks" aria-label="精选">
+  <div class="picks-stage">
     <div class="picks-copy">
-      <h2><a class="picks-title" id="picks-title" href={lead.href}>{lead.title}</a></h2>
-      <p class="picks-meta" id="picks-meta">{lead.meta}</p>
+      <h2><a class="picks-title" href={`/works/${lead.slug}/`}>{lead.title}</a></h2>
+      {lead.yearNum ? <p class="picks-year">{lead.yearNum}</p> : null}
     </div>
-    <div class="picks-col" id="picks-col">
-      {lead.frames.map((frame, i) => <img src={frame.src} alt={i === 0 ? lead.title : ''} style={`width:${frame.width};aspect-ratio:${frame.ratio};object-position:${frame.focus}`} referrerpolicy="no-referrer" loading="lazy"/>)}
-    </div>
-    <p class="picks-mark" id="picks-mark">精选</p>
-    <ul class="picks-list">
-      {picks.map((item, i) => <li>
-        <button type="button" data-title={item.title} data-meta={item.meta} data-href={item.href} data-frames={JSON.stringify(item.frames)} aria-current={i === 0 ? 'true' : undefined}>{item.title}</button>
-      </li>)}
-      <li><a class="picks-all" href="/works/">全部作品</a></li>
-    </ul>
+    <img class="picks-img" src={pickSrc} alt="" width="1920" height="760" referrerpolicy="no-referrer" loading="lazy"/>
+    <a class="picks-more" href={`/works/${lead.slug}/`}>查看作品</a>
   </div>
+  <a class="picks-all" href="/works/">全部作品</a>
 </section>}
 
 <section class="narrow cta">
@@ -104,19 +77,23 @@ const lead = picks[0];
   display: block;
 }
 .hero-video {
+  /* scroll.mp4 keeps its audio, but its frames carry burned-in captions
+     (「132 艘」「篷、桅船」). Those cannot be removed with CSS, so the
+     picture stays on 01.jpg and this element only plays sound. */
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.6s ease;
 }
-.hero.is-playing .hero-video { opacity: 1; }
 .hero.is-still .hero-video { display: none; }
 .hero::before {
   content: "";
   position: absolute;
-  inset: 0;
+  left: 0;
+  bottom: 0;
+  width: min(460px, 42vw);
+  height: 46%;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(to top right, rgba(8, 10, 9, 0.4) 0%, rgba(8, 10, 9, 0.1) 32%, rgba(8, 10, 9, 0) 54%);
+  background: linear-gradient(to top, rgba(8, 10, 9, 0.22), rgba(8, 10, 9, 0));
 }
 .hero-overlay {
   position: absolute;
@@ -190,140 +167,117 @@ const lead = picks[0];
 }
 .picks {
   background: #F6F5F3;
-  padding: 148px 0 120px;
+  padding: clamp(108px, 13vh, 156px) 0 clamp(88px, 11vh, 128px);
+  overflow: hidden;
 }
-.picks-board {
-  width: min(1180px, calc(100% - 96px));
+.picks-stage {
+  position: relative;
+  width: min(1040px, 70vw);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(160px, 0.85fr) minmax(280px, 520px) minmax(120px, 0.62fr);
-  grid-template-rows: auto 1fr auto;
-  column-gap: 8px;
-  align-items: start;
+}
+.picks-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0;
+  background: #E6E3DE;
 }
 .picks-copy {
-  grid-column: 1;
-  grid-row: 1;
-  z-index: 2;
-  margin-right: -36px;
-  padding-top: 6vh;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  z-index: 1;
+  width: max-content;
+  transform: translate(-30%, -50%);
 }
 .picks-copy h2 { margin: 0; font-weight: inherit; }
 .picks-title {
   display: block;
-  max-width: calc(100% + 48px);
+  max-width: 5.05em;
   color: #1A1A1C;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: clamp(34px, 3.4vw, 52px);
+  font-size: clamp(32px, 3.2vw, 48px);
   font-weight: 600;
-  letter-spacing: 0.01em;
-  line-height: 1.18;
+  letter-spacing: -0.03em;
+  line-height: 1.12;
   text-decoration: none;
 }
-.picks-title:hover { color: #1A1A1C; }
-.picks-meta {
-  margin: 8px 0 0;
-  color: #9A9A9A;
+.picks-year {
+  margin: 12px 0 0;
+  color: #8A8A8A;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 400;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.04em;
 }
-.picks-col {
-  grid-column: 2;
-  grid-row: 1 / span 3;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 42px;
-}
-.picks-col img {
-  height: auto;
-  max-width: 100%;
-  object-fit: cover;
-  display: block;
-  border-radius: 0;
-  background: #E6E3DE;
-}
-.picks-mark {
-  grid-column: 1;
-  grid-row: 3;
-  align-self: end;
-  z-index: 2;
-  margin: 0;
+.picks-more {
+  position: absolute;
+  right: 0;
+  top: 46%;
+  transform: translate(118%, -50%);
   color: #1A1A1C;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: clamp(64px, 7.4vw, 112px);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 0.86;
-}
-.picks-list {
-  grid-column: 3;
-  grid-row: 1 / span 3;
-  align-self: center;
-  justify-self: end;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  text-align: right;
-}
-.picks-list button {
-  display: block;
-  width: 100%;
-  max-width: 12em;
-  margin-left: auto;
-  padding: 5px 0;
-  border: 0;
-  background: none;
-  color: #B5B5B5;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.5;
-  text-align: right;
-  cursor: pointer;
+  letter-spacing: 0.04em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
 }
-.picks-list button[aria-current="true"] {
-  color: #1A1A1C;
-  font-weight: 600;
-}
-.picks-list button:focus-visible {
-  outline: 1px solid var(--ink);
-  outline-offset: 4px;
-}
+.picks-more:hover,
+.picks-title:hover { opacity: 0.62; }
 .picks-all {
-  display: inline-block;
-  margin-top: 18px;
-  color: #B5B5B5;
+  display: block;
+  width: fit-content;
+  margin: 52px auto 0;
+  color: #9A9A9A;
   font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 400;
   letter-spacing: 0.08em;
   text-decoration: none;
 }
 .picks-all:hover { color: #1A1A1C; }
+.picks-title:focus-visible,
+.picks-more:focus-visible,
+.picks-all:focus-visible {
+  outline: 1px solid var(--ink);
+  outline-offset: 4px;
+}
 .cta { text-align: center; margin-top: 160px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 900px) {
-  .picks { padding: 72px 0 56px; }
-  .picks-board {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    width: calc(100% - 32px);
-    gap: 28px;
+  .picks { padding: 72px 0 64px; overflow: visible; }
+  .picks-stage { width: calc(100% - 32px); }
+  .picks-copy {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    max-width: none;
+    margin-bottom: 18px;
+    padding-right: 5.5em;
+    transform: none;
   }
-  .picks-copy { margin: 0; padding-top: 0; order: 1; }
-  .picks-col { order: 2; align-items: flex-start; gap: 28px; }
-  .picks-list { order: 3; text-align: left; align-self: start; }
-  .picks-mark { order: 4; font-size: 64px; margin-top: 8px; }
-  .picks-title { max-width: 100%; font-size: 34px; }
-  .picks-list button { margin-left: 0; text-align: left; }
+  .picks-img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    object-position: center 62%;
+  }
+  .picks-title { max-width: 8em; font-size: 30px; }
+  .picks-more {
+    position: absolute;
+    right: 0;
+    top: 0.2em;
+    transform: none;
+  }
+  .picks-all { margin-top: 28px; }
 }
 @media (max-width: 760px) {
-  .hero { height: clamp(460px, 78vh, 640px); border-radius: 0; }
+  .hero { height: clamp(520px, 86vh, 720px); border-radius: 0; }
   .hero-overlay {
     flex-direction: column;
     align-items: flex-start;
@@ -468,43 +422,5 @@ if (motion.addEventListener) motion.addEventListener('change', () => {
   startVideo();
 });
 startVideo();
-</script>
-<script>
-const board = document.getElementById('picks');
-if (board) {
-  const buttons = [...board.querySelectorAll('.picks-list button')];
-  const title = board.querySelector('.picks-title');
-  const meta = board.querySelector('.picks-meta');
-  const col = board.querySelector('.picks-col');
-  const drop = (img) => img.addEventListener('error', () => img.remove(), { once: true });
-  col.querySelectorAll('img').forEach(drop);
-  const paint = (btn) => {
-    if (btn.getAttribute('aria-current') === 'true') return;
-    buttons.forEach((b) => b.removeAttribute('aria-current'));
-    btn.setAttribute('aria-current', 'true');
-    title.textContent = btn.dataset.title || '';
-    title.href = btn.dataset.href || '/works/';
-    meta.textContent = btn.dataset.meta || '';
-    let frames = [];
-    try { frames = JSON.parse(btn.dataset.frames || '[]'); } catch (err) { frames = []; }
-    col.replaceChildren();
-    frames.forEach((frame, i) => {
-      const img = document.createElement('img');
-      img.src = frame.src;
-      img.alt = i === 0 ? (btn.dataset.title || '') : '';
-      img.style.width = frame.width || '100%';
-      img.style.aspectRatio = frame.ratio || '3 / 4';
-      img.style.objectPosition = frame.focus || 'center';
-      img.referrerPolicy = 'no-referrer';
-      drop(img);
-      col.append(img);
-    });
-  };
-  buttons.forEach((btn) => {
-    btn.addEventListener('mouseenter', () => paint(btn));
-    btn.addEventListener('focus', () => paint(btn));
-    btn.addEventListener('click', () => paint(btn));
-  });
-}
 </script>
 </Base>
