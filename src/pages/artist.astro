@@ -1,0 +1,113 @@
+---
+import Base from '../layouts/Base.astro'; import artist from '../data/artist.json'; import { allWorks, LINES } from '../lib';
+const ws = await allWorks();
+const skills=['城市气候与韧性','AI 辅助城市规划','机器学习与数据分析','空间统计与 GIS','React / Next.js','TypeScript','WebGL / Three.js','UI 设计系统'];
+const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
+---
+<Base title="艺术家 林丽丽 · 幕景宇宙" active="/artist/">
+<section class="wrap ahero"><div class="portrait"><span class="serif">林<br/>丽<br/>丽</span><span class="cap">肖像照 <span class="ph">占位</span></span></div>
+<div><p class="kicker cap">Artist · 主理人</p><h1>林丽丽 <small>Lili Lin</small></h1>
+<p class="lead">从建筑学、城市规划到 AIGC 产品、游戏与音画——她以空间思维与计算方法组织图像与叙事。</p>
+<p class="quote">“我是林丽丽，毕业于首尔大学城市与区域规划专业，拥有华中科技大学建筑学背景。我关注 AI 与产品创新，喜欢从用户需求出发，将复杂的技术转化为直观、易用的产品体验。”<span class="cap">—— 引自艺术家个人站</span></p>
+<p class="cap">艺术家陈述（面向音画创作）<span class="ph">占位：待艺术家撰写</span></p>
+<div class="stats">{[[ws.length-1,'件已收录作品'],[artist.talks.length,'场国际会议报告'],[cities.size,'座城市'],[artist.awards.reduce((n,a)=>n+a.items.length,0),'项荣誉与奖项']].map(([n,l])=><div><span class="serif">{n}</span><span class="cap">{l}</span></div>)}</div></div></section>
+
+<section class="wrap two reveal"><div><p class="kicker cap">Education · 教育</p>
+<ul class="list"><li><span class="serif">首尔大学</span><span>城市与区域规划（硕士）<span class="ph">学位与年份待确认</span></span></li><li><span class="serif">华中科技大学</span><span>建筑学（本科）<span class="ph">年份待确认</span></span></li></ul></div>
+<div><p class="kicker cap">Practice · 能力</p><p class="tags">{skills.map(s=><span>{s}</span>)}</p><p class="cap">创作线：{LINES.join(' · ')}</p></div></section>
+
+<section class="wrap sheet reveal"><p class="kicker cap">Talks · 国际会议报告 {artist.talks.length}</p>
+<table class="talks"><tbody>{artist.talks.slice().sort((a,b)=>b.date.slice(-4).localeCompare(a.date.slice(-4))).map((t,i)=><tr><td class="mono">{String(i+1).padStart(2,'0')}</td><td><span class="serif">{t.title}</span><br/><span class="cap">{t.event}</span></td><td>{t.location}</td><td class="mono">{t.date}</td><td><span class={`fmt ${t.format}`}>{t.format==='Oral'?'口头报告':'海报'}</span></td></tr>)}</tbody></table></section>
+
+<section class="wrap reveal"><p class="kicker cap">Awards · 荣誉与奖项</p><div class="awards">
+{artist.awards.map(a=><div><h3>{a.category.split(' · ')[0]}</h3><ul>{a.items.slice().sort((x,y)=>+y.year-+x.year).map(it=><li><span class="mono">{it.year}</span>{it.name}</li>)}</ul></div>)}</div></section>
+<section class="narrow endcap reveal"><a class="btn" href="/works/">浏览作品 →</a> <a class="btn solid" href="/contact/">经纪合作</a></section>
+<style>
+.ahero { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 5vw; padding-top: 72px; align-items: start; }
+.portrait {
+  aspect-ratio: 3 / 4;
+  background:
+    radial-gradient(80% 50% at 50% 12%, rgba(203, 184, 146, 0.16), transparent 62%),
+    linear-gradient(165deg, #1c211f, #0e100f 72%);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.portrait::before {
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  top: 22%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(203,184,146,.7), transparent);
+}
+.portrait .serif { position: relative; font-size: clamp(2.8rem, 4vw, 3.8rem); line-height: 1.15; letter-spacing: 0.18em; color: var(--ivory); }
+h1 { font-size: clamp(2.6rem, 5vw, 4.2rem); margin: 0; font-weight: 500; letter-spacing: 0.06em; }
+h1 small {
+  display: inline-block;
+  margin-left: 10px;
+  font-family: var(--latin), var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+}
+.lead { font-family: var(--serif); font-size: 1.28rem; color: var(--ivory); }
+.quote {
+  font-family: var(--serif);
+  color: var(--ivory-2);
+  border-left: 1px solid rgba(203, 184, 146, 0.55);
+  padding-left: 16px;
+}
+.quote .cap { display: block; margin-top: 8px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); margin-top: 28px; }
+.stats div { padding: 16px 12px 0 0; display: flex; flex-direction: column; gap: 4px; }
+.stats .serif { font-size: clamp(2rem, 3vw, 2.6rem); color: var(--ivory); line-height: 1; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 5vw; margin-top: 110px; }
+.list { list-style: none; padding: 0; margin: 0; }
+.list li { display: grid; grid-template-columns: 9em 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); color: var(--ivory-2); }
+.tags span {
+  display: inline-block;
+  border: 1px solid var(--line);
+  padding: 4px 12px;
+  margin: 0 8px 8px 0;
+  font-size: 0.9rem;
+  background: var(--elev);
+  color: var(--ivory-2);
+}
+section.reveal, section.sheet { margin-top: 100px; }
+.talks { width: 100%; border-collapse: collapse; }
+.talks td { padding: 16px 10px 16px 0; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--ivory-2); }
+.talks .serif { color: var(--ivory); }
+.fmt {
+  font-family: var(--en), var(--sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  padding: 3px 8px;
+  border: 1px solid rgba(203, 184, 146, 0.45);
+  color: var(--gold);
+  white-space: nowrap;
+}
+.fmt.Oral { background: var(--ivory); color: var(--bg); border-color: var(--ivory); }
+.awards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px; }
+.awards h3 { border-bottom: 1px solid var(--line-strong); padding-bottom: 10px; font-size: 1.15rem; letter-spacing: 0.08em; }
+.awards ul { list-style: none; padding: 0; margin: 0; }
+.awards li { display: grid; grid-template-columns: 3.6em 1fr; gap: 8px; padding: 8px 0; font-size: 0.92rem; color: var(--ivory-2); border-bottom: 1px solid var(--line); }
+.endcap { text-align: center; margin-top: 88px; }
+.endcap .btn { margin: 6px; }
+@media (max-width: 860px) {
+  .ahero, .two, .awards { grid-template-columns: 1fr; }
+  .portrait { max-width: 420px; }
+  .stats { grid-template-columns: 1fr 1fr; }
+  .list li { grid-template-columns: 1fr; gap: 2px; }
+  .talks td:nth-child(3) { display: none; }
+  .sheet { overflow-x: auto; }
+}
+</style>
+</Base>

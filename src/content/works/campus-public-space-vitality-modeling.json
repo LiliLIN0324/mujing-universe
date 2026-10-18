@@ -1,0 +1,37 @@
+{
+ "id": "05",
+ "slug": "campus-public-space-vitality-modeling",
+ "title": "校园公共空间活力建模：基于对户外环境与人群活动的实时跟踪",
+ "category": "Computer Vision · Urban Sensing",
+ "year": "2023.06",
+ "description": "通过狩猎相机长时段高精度追踪校园户外环境与人群活动，建模人本尺度公共空间活力",
+ "abstract": "The vitality of space plays an important role in evaluating spatial quality and attractiveness. Using active perception technologies and image acquisition methods such as hunting cameras, this project captures campus outdoor environments and pedestrian activities over long periods at high precision, enabling vitality modeling of human-scale public spaces. Through time-series analysis, we investigated the impact of wind and heat environments on pedestrian activities.",
+ "challenge": "Past studies relied on low-sample surveys or low-precision positioning to obtain crowd vitality data, which could not capture individual environmental perception and behavioral activities accurately.",
+ "solution": "Active perception technologies and long-term, high-precision image acquisition (such as hunting cameras) were adopted to track campus crowd activities and the material environment, and time-series data were used to study how wind and heat environments influence pedestrian activities.",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/logo.jpg",
+ "tech": [
+  "Computer Vision",
+  "Active Sensing",
+  "Pedestrian Tracking",
+  "Time-series Analysis",
+  "Urban Analytics",
+  "Trail Camera"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/campus-public-space-vitality-modeling/08.jpg"
+ ],
+ "hasDemo": false,
+ "line": "空间与研究",
+ "source": "https://lililin0324.github.io/#/ai/campus-public-space-vitality-modeling",
+ "sourceFile": "AI/05_campus-public-space-vitality-modeling.md",
+ "yearNum": 2023,
+ "status": "已完成",
+ "flags": []
+}

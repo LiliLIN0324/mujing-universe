@@ -1,0 +1,17 @@
+{
+  "name": "mujing-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview --port 4471 --host 127.0.0.1"
+  },
+  "dependencies": {
+    "astro": "^5.0.0"
+  },
+  "allowScripts": {
+    "esbuild@0.27.7": true,
+    "sharp@0.34.5": true
+  }
+}

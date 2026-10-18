@@ -1,0 +1,34 @@
+{
+ "id": "07",
+ "slug": "early-campus-experience",
+ "title": "早期校园经历 — 1037拼拼 & persLEARN",
+ "category": "UI&UX Design",
+ "year": "2023-03-01~2024-03-01",
+ "description": "本科期间在华科Pivot Studio的校园产品设计与实践，涵盖校园拼团平台与论文文献平台。",
+ "abstract": "",
+ "challenge": "",
+ "solution": "",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/logo.jpg",
+ "tech": [
+  "Figma",
+  "React",
+  "TypeScript"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/1037pinpin/08.jpg"
+ ],
+ "hasDemo": false,
+ "line": "AIGC 产品",
+ "source": "https://lililin0324.github.io/#/product/early-campus-experience",
+ "sourceFile": "product/07_early-campus-experience.md",
+ "yearNum": 2023,
+ "status": "已完成",
+ "flags": []
+}

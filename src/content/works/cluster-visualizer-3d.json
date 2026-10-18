@@ -1,0 +1,36 @@
+{
+ "id": "07",
+ "slug": "cluster-visualizer-3d",
+ "title": "Cluster Visualizer 3D",
+ "category": "Global heat mapping",
+ "year": "2024-present",
+ "description": "基于PCA和K-Means的高维数据聚类3D探索",
+ "abstract": "An interactive 3D visualization tool that enables users to explore clustered high-dimensional datasets. By applying PCA for dimensionality reduction and K-Means for clustering, project visualizes complex data patterns in an intuitive manner.",
+ "challenge": "compressed 223 cities in global data and revelas pattern from window period of time-series data from 2017 to 2019 with both day and night time data",
+ "solution": "Implemented PCA to reduce dimensions while preserving variance, and K-Means to identify clusters. Leveraged Three.js for rendering and React for UI management, ensuring smooth interactivity and performance.",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/logo.jpg",
+ "tech": [
+  "Python",
+  "Three.js",
+  "React",
+  "SOM",
+  "K-Means"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/cluster-visualizer-3d/08.jpg"
+ ],
+ "hasDemo": true,
+ "line": "空间与研究",
+ "source": "https://lililin0324.github.io/#/planning/cluster-visualizer-3d",
+ "sourceFile": "planning/07_cluster-visualizer-3d.md",
+ "yearNum": 2024,
+ "status": "已完成",
+ "flags": []
+}

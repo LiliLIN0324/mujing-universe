@@ -1,0 +1,36 @@
+{
+ "id": "01",
+ "slug": "dragon-diffussion",
+ "title": "Dragon Diffussion - AI 创意生产平台",
+ "category": "UI&UX Design",
+ "year": "2023.10-2024.9",
+ "description": "一款基于AI的图像生成工具，可将文本提示转化为高质量视觉内容的平台。",
+ "abstract": "",
+ "challenge": "",
+ "solution": "",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/logo.jpg",
+ "tech": [
+  "Figma",
+  "React",
+  "TypeScript"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/08.jpg"
+ ],
+ "hasDemo": true,
+ "line": "AIGC 产品",
+ "source": "https://lililin0324.github.io/#/product/dragon-diffussion",
+ "sourceFile": "product/01_dragon-diffussion.md",
+ "yearNum": 2023,
+ "status": "已完成",
+ "flags": [
+  "description 与其他作品重复（疑似模板文案，待作者重写）"
+ ]
+}

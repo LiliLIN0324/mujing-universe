@@ -1,0 +1,32 @@
+{
+ "id": "04",
+ "slug": "participatory-urban-regeneration-empowered-by-artificial-intelligence",
+ "title": "人工智能赋能下的参与式城市更新 Participatory Urban Regeneration Empowered by Artificial Intelligence",
+ "category": "Urban regeneration, participatory urban planning",
+ "year": "2025-present",
+ "description": "利用AI技术构建平台以鼓励利益相关者参与城市更新",
+ "abstract": "This project integrates generative artificial intelligence techniques, including diffusion models, with large language model-based multi-agent mechanisms to develop a participatory urban regeneration framework that facilitates public interaction and multi-stakeholder engagement. Taking the area surrounding the initial development zone of Shanghai Wusong Innovation City as a case study, the framework incorporates urban spatial morphology, behavioral activity patterns, and urban heat island indicators into the early formulation of urban design guidelines, with the aim of achieving a participatory, efficient, and responsive pathway to urban regeneration.",
+ "challenge": "",
+ "solution": "",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/logo.jpg",
+ "tech": [
+  "diffusion models"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/participatory-urban-regeneration/07.jpg"
+ ],
+ "hasDemo": true,
+ "line": "空间与研究",
+ "source": "https://lililin0324.github.io/#/ai/participatory-urban-regeneration-empowered-by-artificial-intelligence",
+ "sourceFile": "AI/04_participatory-urban-regeneration-empowered-by-artificial-intelligence.md",
+ "yearNum": 2025,
+ "status": "已完成",
+ "flags": [],
+ "link": "https://upd-caup.tongji.edu.cn/6e/91/c36467a355985/page.htm"
+}

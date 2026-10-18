@@ -1,0 +1,97 @@
+---
+import Base from '../../layouts/Base.astro'; import WorkCard from '../../components/WorkCard.astro';
+import { allWorks } from '../../lib';
+export async function getStaticPaths() {
+  const ws = await allWorks();
+  return ws.map((w, i) => ({ params: { slug: w.slug }, props: { w, prev: ws[i-1] || null, next: ws[i+1] || null, related: ws.filter(x => x.line === w.line && x.slug !== w.slug).slice(0,3) } }));
+}
+const { w, prev, next, related } = Astro.props;
+const hero = w.images[0] || w.icon; const gallery = w.images.slice(1);
+const cap = `《${w.title}》（${w.year}），${w.category}`;
+---
+<Base title={`${w.title} · 幕景宇宙`} active="/works/">
+<figure class="hero wrap" data-hide-on-err><img data-r2 src={hero} alt={w.title} referrerpolicy="no-referrer"/><figcaption class="cap">No.{w.no} · {cap}</figcaption></figure>
+<article class="narrow">
+  <p class="cap crumbs"><a href="/works/">作品</a> / <a href={`/works/?line=${encodeURIComponent(w.line)}`}>{w.line}</a> / No.{w.no}</p>
+  <h1>{w.title}</h1>
+  <p class="meta mono">{w.year} · {w.category} · 林丽丽 {w.status==='进行中' && <span class="ph">进行中</span>}</p>
+  {w.flags.map(f => <p class="flag">⚑ {f}</p>)}
+  {(w.description || w.abstract) && <p class="lead">{w.description || w.abstract}</p>}
+  {w.abstract && w.abstract !== w.description && <p>{w.abstract}</p>}
+  {(w.note || w.challenge || w.solution) && <p>{w.note}{w.note && (w.challenge || w.solution) ? ' ' : ''}{w.challenge}{w.challenge && w.solution ? ' ' : ''}{w.solution}</p>}
+  {w.link && <p class="out"><a class="ext" href={w.link} target="_blank" rel="noopener">相关报道 / 链接 ↗</a></p>}
+  {w.tech.length > 0 && <p class="tags">{w.tech.map(t => <span>{t}</span>)}</p>}
+  {w.slug === 'xihu-panorama' && <div class="video">过程视频 / 音频 占位（16:9）</div>}
+</article>
+{gallery.length > 0 && <section class="gallery wrap">{gallery.map((g, i) => <figure class={`reveal ${i%3===0?'wide':''}`} data-hide-on-err><img data-r2 loading="lazy" src={g} alt="" referrerpolicy="no-referrer"/><figcaption class="cap">图 {i+2} · {cap}</figcaption></figure>)}</section>}
+<section class="narrow src">{w.source ? <p class="cap">原始资料：<a href={w.source} target="_blank" rel="noopener">艺术家个人站</a>（{w.sourceFile}）· 图片外链 R2，仅本地预览，正式使用需授权</p> : <p class="cap">手工条目 · 素材待提供</p>}</section>
+<nav class="wrap pn">{prev ? <a href={`/works/${prev.slug}/`}>← No.{prev.no} {prev.title}</a> : <span/>}{next && <a href={`/works/${next.slug}/`}>No.{next.no} {next.title} →</a>}</nav>
+{related.length > 0 && <section class="wrap related"><p class="kicker cap">同一创作线 · {w.line}</p><div class="rel">{related.map(r => <WorkCard w={r}/>)}</div></section>}
+<style>
+.hero { margin: 20px auto 0; }
+.hero img {
+  width: 100%;
+  height: min(68vh, 720px);
+  object-fit: cover;
+  display: block;
+  background: #1a1a1a;
+  border-radius: 20px;
+}
+.hero figcaption { padding: 10px 2px 0; }
+.crumbs { margin-top: 28px; }
+.crumbs a { text-decoration: none; color: var(--muted); }
+.crumbs a:hover { color: var(--ivory); }
+article h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); margin: 8px 0 10px; font-weight: 500; letter-spacing: 0; }
+.meta { border-bottom: 0; padding-bottom: 8px; color: var(--muted); }
+.lead, article > p { color: var(--ivory); font-size: 1.02rem; line-height: 1.7; }
+.ext { color: var(--ivory); }
+.tags span {
+  display: inline-block;
+  border-radius: 999px;
+  border: 1px solid #2a2a2a;
+  background: #000;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  letter-spacing: 0;
+  padding: 4px 10px;
+  margin: 0 8px 8px 0;
+  color: var(--ivory-2);
+}
+.video {
+  aspect-ratio: 16 / 9;
+  margin: 28px 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(244,240,230,.05), rgba(244,240,230,.02));
+  color: var(--muted);
+  letter-spacing: 0.14em;
+  font-family: var(--en), var(--sans);
+  font-size: 0.8rem;
+}
+.gallery { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 28px; }
+.gallery figure { margin: 0; }
+.gallery img { width: 100%; display: block; border-radius: 20px; }
+.src { margin-top: 56px; }
+.src a { color: var(--gold); }
+.pn {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  margin: 48px auto 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 18px;
+  font-family: var(--serif);
+}
+.pn a { text-decoration: none; }
+.pn a:hover { color: var(--gold); }
+.related { margin-top: 72px; }
+.rel { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+@media (max-width: 860px) {
+  .gallery, .rel { grid-template-columns: 1fr; }
+  .pn { flex-direction: column; }
+}
+</style>
+</Base>

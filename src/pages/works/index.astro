@@ -1,0 +1,89 @@
+---
+import Base from '../../layouts/Base.astro'; import WorkCard from '../../components/WorkCard.astro';
+import { allWorks, LINES } from '../../lib';
+const ws = await allWorks();
+const years = [...new Set(ws.map(w => w.yearNum).filter(Boolean))].sort((a,b)=>b-a);
+---
+<Base title="作品 · 幕景宇宙" active="/works/">
+<section class="wrap head"><p class="kicker cap">Works · {ws.length} 件</p><h1>作品</h1>
+  <div class="filters" id="filters"><button class="on" data-f="全部">全部 <sup>{ws.length}</sup></button>
+  {LINES.map(l => <button data-f={l}>{l} <sup>{ws.filter(w=>w.line===l).length}</sup></button>)}</div>
+  <div class="views"><button class="on" data-v="grid">图录</button><button data-v="index">编号索引</button><button data-v="timeline">年表</button></div>
+</section>
+<section class="wrap view" id="v-grid"><div class="grid">{ws.map(w => <WorkCard w={w}/>)}</div></section>
+<section class="wrap view" id="v-index" hidden><table class="idx"><thead><tr><th>No.</th><th>作品</th><th>线</th><th>类别</th><th>年份</th></tr></thead><tbody>
+  {ws.map(w => <tr data-line={w.line}><td class="mono">{w.no}</td><td><a href={`/works/${w.slug}/`} class="serif">{w.title}</a>{w.status==='进行中'&&<span class="ph">进行中</span>}</td><td>{w.line}</td><td class="cap">{w.category}</td><td class="mono">{w.year}</td></tr>)}
+</tbody></table></section>
+<section class="wrap view" id="v-timeline" hidden>{years.map(y => <div class="yr" ><h2 class="serif">{y}</h2><ul>{ws.filter(w=>w.yearNum===y).map(w => <li data-line={w.line}><span class="mono">No.{w.no} · {w.line}</span><a href={`/works/${w.slug}/`}>{w.title}</a></li>)}</ul></div>)}</section>
+<style>
+.head { padding-top: 48px; }
+.head h1 { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 500; letter-spacing: 0; line-height: 1.1; margin: 0 0 22px; }
+.filters, .views { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.filters button, .views button { cursor: pointer; border-radius: 999px; }
+.filters button {
+  font-family: var(--sans);
+  background: transparent;
+  border: 1px solid #2a2a2a;
+  padding: 8px 14px;
+  letter-spacing: 0;
+  color: var(--ivory-2);
+  font-size: 0.9rem;
+}
+.filters button sup { font-family: var(--sans); letter-spacing: 0; color: var(--muted); margin-left: 4px; }
+.filters button.on { background: #000; color: #fff; border-color: #3a3a3a; }
+.filters button.on sup { color: inherit; opacity: 0.7; }
+.filters button:hover:not(.on) { border-color: #3a3a3a; color: #fff; }
+.views { gap: 8px; margin: 12px 0 0; }
+.views button {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  letter-spacing: 0;
+  text-transform: none;
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 6px 12px;
+  color: var(--muted);
+}
+.views button.on { color: var(--ivory); border-color: #2a2a2a; background: #000; }
+.view { margin-top: 28px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.idx { width: 100%; border-collapse: collapse; }
+.idx th {
+  text-align: left;
+  font-family: var(--en), var(--sans);
+  font-size: 0.68rem;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line-strong);
+  padding: 10px 8px;
+}
+.idx td { padding: 16px 8px; border-bottom: 1px solid var(--line); vertical-align: baseline; }
+.idx a { text-decoration: none; font-size: 1.08rem; }
+.idx tr:hover { background: var(--elev); }
+.idx a:hover { color: var(--gold); }
+.yr { display: grid; grid-template-columns: 140px 1fr; gap: 12px; border-top: 1px solid var(--line); padding: 26px 0; }
+.yr h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.5rem); color: var(--ivory); font-weight: 500; }
+.yr ul { list-style: none; margin: 0; padding: 0; }
+.yr li { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 12px; padding: 8px 0; align-items: baseline; }
+.yr a { text-decoration: none; font-family: var(--serif); font-size: 1.05rem; }
+.yr a:hover { color: var(--gold); }
+[hidden], .hide { display: none !important; }
+@media (max-width: 980px) { .grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 720px) {
+  .grid { grid-template-columns: 1fr; }
+  .yr, .yr li { grid-template-columns: 1fr; }
+  .idx { display: block; overflow-x: auto; }
+}
+</style>
+<script>
+const qs=new URLSearchParams(location.search);let cur=qs.get('line')||'全部';
+function apply(){document.querySelectorAll('#filters button').forEach(b=>b.classList.toggle('on',b.dataset.f===cur));
+ document.querySelectorAll('[data-line]').forEach(el=>{if(el.closest('#filters'))return;el.classList.toggle('hide',cur!=='全部'&&el.dataset.line!==cur);if(el.classList.contains('reveal'))el.classList.add('in')});
+ document.querySelectorAll('.yr').forEach(y=>y.classList.toggle('hide',!y.querySelector('li:not(.hide)')));}
+document.querySelectorAll('#filters button').forEach(b=>b.onclick=()=>{cur=b.dataset.f;history.replaceState(null,'',cur==='全部'?'/works/':'?line='+encodeURIComponent(cur));apply()});
+document.querySelectorAll('.views button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.views button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!=='v-'+b.dataset.v)});
+apply();
+</script>
+</Base>

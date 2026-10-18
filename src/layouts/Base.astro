@@ -1,0 +1,62 @@
+---
+import '../styles/global.css';
+const { title = '幕景宇宙 · 林丽丽艺术工作室', active = '' } = Astro.props;
+const nav = [['/works/', '作品'], ['/artist/', '艺术家']];
+const foot = [['/', '首页'], ['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作与经纪']];
+---
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{title}</title>
+  <meta name="description" content="幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。"/>
+  <meta name="theme-color" content="#1A1A1C"/>
+  <meta name="referrer" content="no-referrer"/>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@500;600&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">
+    <span class="brand-txt"><strong>幕景宇宙</strong></span>
+  </a>
+  <nav>{nav.map(([h, t]) => <a href={h} class={active === h ? 'on' : ''}>{t}</a>)}<a class="nav-cta" href="/contact/">合作</a></nav>
+</header>
+<slot/>
+<footer class="bot">
+  <div>
+    <strong class="serif">幕景宇宙 Mujing Universe</strong>
+    <p>以艺术家林丽丽为核心的 AIGC 文化艺术工作室 · 浙江杭州</p>
+    <p class="cap">© 2026 · ICP 备案号 <span class="ph">占位</span></p>
+  </div>
+  <div>
+    <span class="cap">站点</span>
+    {foot.map(([h, t]) => <a href={h}>{t}</a>)}
+  </div>
+  <div>
+    <span class="cap">说明</span>
+    <p>本地原型。作品图片暂时外链艺术家个人站 R2 图床，仅供预览，正式使用需授权并迁移。</p>
+  </div>
+</footer>
+<noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+}), { threshold: .12 });
+document.querySelectorAll('.reveal').forEach(el => {
+  if (!reduce && el.parentElement) {
+    const sibs = [...el.parentElement.children].filter(n => n.classList?.contains('reveal'));
+    const idx = sibs.indexOf(el);
+    if (idx > 0) el.style.transitionDelay = `${Math.min(idx, 6) * 80}ms`;
+  }
+  io.observe(el);
+});
+document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
+  img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
+}));
+</script>
+</body>
+</html>
