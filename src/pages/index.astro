@@ -15,14 +15,7 @@ const picks = ws.map((w) => ({
   fallback: workFallback(w),
 }));
 const leadPick = picks[0];
-const RING_N = Math.min(10, picks.length);
-const RING_RADIUS = 280;
-const RING_Z_REST = 13.35;
-const ringWorks = picks.slice(0, RING_N);
-function ringCardYaw(index) {
-  const angle = (index / RING_N) * Math.PI * 2;
-  return angle - Math.PI * 0.2;
-}
+const ringWorks = picks.slice(0, 10);
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
@@ -54,23 +47,17 @@ function ringCardYaw(index) {
 
 {leadPick && <section class="picks" id="picks" aria-label="精选">
   <div class="picks-sticky">
+  <canvas class="pick-canvas" id="pick-canvas" aria-hidden="true"></canvas>
   <div class="picks-layout">
     <div class="picks-copy">
       <h2 class="picks-label">精选</h2>
       <p class="picks-intro" id="pick-intro">{leadPick.intro}</p>
     </div>
     <div class="about__gallery" id="pick-stage">
-      <div
-        class="about__gallery__wrapper"
-        id="pick-gallery"
-        style={`transform:translate3d(0px,0px,${-RING_Z_REST * (RING_RADIUS / 3)}px) rotateX(${-Math.PI * 0.15}rad) rotateY(0rad)`}
-      >
+      <div class="about__gallery__wrapper" id="pick-gallery">
         {ringWorks.map((work, i) => (
           <div class="about__gallery__link" data-i={i}>
-            <figure
-              class="about__gallery__media"
-              style={`transform:rotateY(${ringCardYaw(i)}rad) translateZ(${RING_RADIUS}px)`}
-            >
+            <figure class="about__gallery__media">
               <img
                 class="about__gallery__media__image"
                 alt={work.title}
@@ -213,7 +200,6 @@ function ringCardYaw(index) {
   cursor: not-allowed;
 }
 .picks {
-  --ring-radius: 280px;
   height: 220vh;
   background: #F6F5F3;
   color: #1A1A1C;
@@ -233,14 +219,29 @@ function ringCardYaw(index) {
   overflow: visible;
   background: #F6F5F3;
 }
+.pick-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  pointer-events: none;
+}
 .picks-layout {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: minmax(280px, 1.05fr) minmax(280px, 0.95fr);
   column-gap: 48px;
   row-gap: 8px;
   align-items: start;
 }
-.picks-copy { grid-column: 1; grid-row: 1; }
+.picks-copy {
+  grid-column: 1;
+  grid-row: 1;
+  position: relative;
+  z-index: 1;
+  background: #F6F5F3;
+}
 .picks-label {
   position: absolute;
   width: 1px;
@@ -262,47 +263,23 @@ function ringCardYaw(index) {
   line-height: 1.65;
 }
 .about__gallery {
-  grid-column: 1;
-  grid-row: 2;
-  position: relative;
-  height: min(520px, 58vh);
-  min-height: 360px;
-  margin-top: 8px;
-  overflow: visible;
-  perspective: 1040px;
-  perspective-origin: 40% 58%;
-  transform-style: preserve-3d;
-}
-.about__gallery__wrapper {
   position: absolute;
-  left: 72%;
-  top: 46%;
-  width: 0;
-  height: 0;
-  transform-style: preserve-3d;
-  will-change: transform;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
 }
-.about__gallery__link {
-  position: absolute;
-  left: 0;
-  top: 0;
+.about__gallery__wrapper,
+.about__gallery__link,
+.about__gallery__media {
   margin: 0;
-  transform-style: preserve-3d;
-  pointer-events: none;
 }
 .about__gallery__media {
-  width: calc(var(--ring-radius, 280px) * 1.84);
-  height: calc(var(--ring-radius, 280px) * 0.985);
-  margin: 0;
-  margin-left: calc(var(--ring-radius, 280px) * -0.92);
-  margin-top: calc(var(--ring-radius, 280px) * -0.492);
+  width: 160px;
+  height: 214px;
   background: #E6E3DE;
   overflow: hidden;
-  border-radius: 0;
-  transform-style: preserve-3d;
-  backface-visibility: hidden;
-  box-shadow: 0 14px 32px rgba(26, 26, 28, 0.12);
-  pointer-events: none;
 }
 .about__gallery__media__image {
   width: 100%;
@@ -321,6 +298,9 @@ function ringCardYaw(index) {
   overflow: hidden;
   border-top: 1px solid rgba(26, 26, 28, 0.1);
   font-family: inherit;
+  position: relative;
+  z-index: 1;
+  background: #F6F5F3;
 }
 .pick-list {
   list-style: none;
@@ -366,11 +346,29 @@ function ringCardYaw(index) {
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 860px) {
-  .picks { --ring-radius: 200px; height: auto; }
+  .picks { height: auto; }
+  .pick-canvas { display: none; }
   .picks-sticky { position: relative; top: auto; height: auto; padding-top: 72px; }
   .picks-layout { grid-template-columns: 1fr; row-gap: 28px; }
   .picks-copy { grid-column: 1; grid-row: 1; }
-  .about__gallery { grid-column: 1; grid-row: 2; height: 380px; }
+  .about__gallery {
+    position: relative;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    grid-column: 1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .about__gallery__media {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 3 / 4;
+  }
   .picks-intro { width: min(380px, 100%); }
   .pick-list-window { grid-column: 1; grid-row: 3; height: auto; max-height: none; overflow: hidden; }
 }
@@ -488,125 +486,11 @@ if (motion.addEventListener) motion.addEventListener('change', () => {
 startVideo();
 </script>
 <script>
+import { mountPickRing } from '../scripts/pick-ring.js';
 const picksRoot = document.getElementById('picks');
 const pickDataEl = document.getElementById('pick-data');
 if (picksRoot && pickDataEl) {
-  const pickData = JSON.parse(pickDataEl.textContent || '[]');
-  const stage = document.getElementById('pick-gallery');
-  const introEl = document.getElementById('pick-intro');
-  const listEl = document.getElementById('pick-list');
-  const listWindow = picksRoot.querySelector('.pick-list-window');
-  const medias = [...picksRoot.querySelectorAll('.about__gallery__media')];
-  const pickMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  const RING_N = medias.length || 1;
-  const RADIUS = 280;
-  const K = RADIUS / 3;
-  let uTime = 0;
-  let velocity = 0;
-  let scrollTarget = 0;
-  let scrollCurrent = 0;
-  let lastProgress = 0;
-  let inView = true;
-  let front = -1;
-  let lastNow = performance.now();
-
-  function failImage(img) {
-    const next = img.dataset.fallback;
-    const svg = '/scroll-placeholder.svg';
-    if (next && img.getAttribute('src') !== next) {
-      img.dataset.fallback = svg;
-      img.src = next;
-      return;
-    }
-    if (img.getAttribute('src') !== svg) img.src = svg;
-  }
-
-  picksRoot.querySelectorAll('.about__gallery__media__image').forEach((img) => {
-    img.addEventListener('error', () => failImage(img));
-    if (img.complete && img.getAttribute('src') && img.naturalWidth === 0) failImage(img);
-  });
-
-  function scrollLimit() {
-    if (!listEl) return window.innerHeight;
-    const view = listWindow ? listWindow.clientHeight : window.innerHeight;
-    return Math.max(window.innerHeight * 0.85, listEl.scrollHeight - view);
-  }
-
-  function syncRunway() {
-    if (window.innerWidth <= 860) {
-      picksRoot.style.height = '';
-      return;
-    }
-    picksRoot.style.height = `${window.innerHeight + scrollLimit()}px`;
-  }
-
-  function wrapPi(rad) {
-    const t = Math.PI * 2;
-    let x = (rad + Math.PI) % t;
-    if (x < 0) x += t;
-    return x - Math.PI;
-  }
-
-  function setFront(index) {
-    if (index === front) return;
-    front = index;
-    const work = pickData[index];
-    if (introEl && work) introEl.textContent = work.intro;
-  }
-
-  function frame(now) {
-    const dt = Math.min(34, now - lastNow);
-    lastNow = now;
-    const limit = scrollLimit();
-    const rect = picksRoot.getBoundingClientRect();
-    const runway = Math.max(1, picksRoot.offsetHeight - window.innerHeight);
-    const passed = Math.min(runway, Math.max(0, -rect.top));
-    scrollTarget = -passed * (limit / runway);
-    const lerp = pickMotion.matches ? 1 : 0.1;
-    scrollCurrent += (scrollTarget - scrollCurrent) * lerp;
-    if (scrollCurrent > -0.4) scrollCurrent = 0;
-    let progress = limit > 0 ? Math.abs(scrollCurrent) / limit : 0;
-    if (progress > 1) progress = 1;
-    progress = Math.round(progress * 10000) / 10000;
-    const dProgress = progress - lastProgress;
-    velocity += ((pickMotion.matches ? 0 : dProgress) - velocity) * 0.1;
-    if (inView && !pickMotion.matches) uTime += 0.009 * dt + 15 * velocity;
-    const spin = pickMotion.matches ? 0 : uTime * 0.12 + velocity;
-    const tx = -6.5 * progress * K * 0.48;
-    const ty = 230 * progress;
-    const tz = -(13.35 - 9.15 * progress) * K;
-    const tilt = -Math.PI * 0.15 * (1 - progress);
-    if (stage) {
-      stage.style.transform = `translate3d(${tx}px, ${ty}px, ${tz}px) rotateX(${tilt}rad) rotateY(${spin}rad)`;
-    }
-    let best = 0;
-    let bestFacing = -Infinity;
-    medias.forEach((media, i) => {
-      const angle = (i / RING_N) * Math.PI * 2;
-      const yaw = angle - Math.PI * 0.2 - (pickMotion.matches ? 0 : velocity * 15);
-      media.style.transform = `rotateY(${yaw}rad) translateZ(${RADIUS}px)`;
-      const facing = Math.cos(wrapPi(yaw + spin));
-      if (facing > bestFacing) {
-        bestFacing = facing;
-        best = i;
-      }
-    });
-    if (listEl) listEl.style.transform = `translateY(${scrollCurrent}px)`;
-    picksRoot.dataset.progress = progress.toFixed(3);
-    picksRoot.classList.toggle('is-end', progress > 0.92);
-    setFront(best);
-    lastProgress = progress;
-    requestAnimationFrame(frame);
-  }
-
-  const watch = new IntersectionObserver((entries) => {
-    inView = entries.some((entry) => entry.isIntersecting);
-  }, { threshold: 0.12 });
-  watch.observe(picksRoot);
-  if (pickMotion.matches) picksRoot.classList.add('is-reduced');
-  syncRunway();
-  window.addEventListener('resize', syncRunway);
-  requestAnimationFrame(frame);
+  mountPickRing(picksRoot, JSON.parse(pickDataEl.textContent || '[]'));
 }
 </script>
 </Base>
