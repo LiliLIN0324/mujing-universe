@@ -1,132 +1,71 @@
 ---
 import Base from '../layouts/Base.astro'; import WorkCard from '../components/WorkCard.astro';
-import { allWorks, FEATURED, LINES, LINE_EN } from '../lib';
-import artist from '../data/artist.json';
+import { allWorks, FEATURED } from '../lib';
 const ws = await allWorks(); const feat = FEATURED.map(s => ws.find(w => w.slug === s)).filter(Boolean);
-const counts = Object.fromEntries(LINES.map(l => [l, ws.filter(w => w.line === l).length]));
 ---
 <Base active="/">
 <section class="wrap stage">
-<section class="hero">
-  <div class="track"><img src="/scroll-placeholder.svg" alt="占位长卷"/><img src="/scroll-placeholder.svg" alt="" aria-hidden="true"/></div>
+  <div class="hero">
+    <div class="track"><img src="/scroll-placeholder.svg" alt="占位长卷"/><img src="/scroll-placeholder.svg" alt="" aria-hidden="true"/></div>
+  </div>
   <div class="hero-copy">
-    <div class="hero-txt"><p class="cap">音画新线 · 进行中</p><h1>当代西湖繁胜全景图</h1><p class="cap">占位长卷 · 自绘矢量 · 正式作品待替换</p></div>
+    <p class="kicker cap">音画新线 · 进行中</p>
+    <h1>当代西湖繁胜全景图</h1>
+    <p class="sub">占位长卷 · 自绘矢量 · 正式作品待替换</p>
     <button id="snd" class="btn solid sound" type="button">▶ 聆听图景</button>
   </div>
 </section>
-</section>
 
-<section class="wrap intro reveal">
-  <div><p class="kicker cap">Artist-led Studio</p><h2 class="big">让图景发声，<br/>让技术成为新的笔墨。</h2></div>
-  <div><p>幕景宇宙是以艺术家<strong>林丽丽</strong>为核心的 AIGC 文化艺术工作室。她从建筑学与城市规划出发，横跨 AIGC 产品、游戏与空间研究，如今把这些经验汇入新的音画创作。</p>
-  <p class="cap">首尔大学 城市与区域规划 · 华中科技大学 建筑学 · {artist.talks.length} 场国际会议报告</p>
-  <a class="btn" href="/artist/">认识艺术家 →</a></div>
-</section>
-
-<section class="wrap lines reveal">
-  {LINES.map((l) => <a href={`/works/?line=${encodeURIComponent(l)}`} class="pill"><span>{l}</span><span class="cap">{LINE_EN[l]}</span><em>{counts[l]}</em></a>)}
-</section>
-
-<section class="wrap"><p class="kicker cap reveal">Selected Works · 精选</p>
+<section class="wrap picks">
+  <h2>精选</h2>
   <div class="grid">{feat.map(w => <WorkCard w={w}/>)}</div>
-  <p class="more"><a class="btn" href="/works/">全部 {ws.length} 件作品 · 编号索引 →</a></p>
+  <p class="more"><a class="btn" href="/works/">全部 {ws.length} 件作品</a></p>
 </section>
 
-<section class="narrow cta reveal"><h2>展览 · 委托 · 合作</h2><p>文旅数字展陈、AIGC 音画委托、品牌合作与驻留，由经纪人统一对接。</p><a class="btn solid" href="/contact/">联系经纪人</a></section>
+<section class="narrow cta">
+  <h2>展览 · 委托 · 合作</h2>
+  <p>文旅数字展陈、AIGC 音画委托、品牌合作与驻留，由经纪人统一对接。</p>
+  <a class="btn solid" href="/contact/">合作</a>
+</section>
 
 <style>
-.stage { padding-top: 20px; }
-.hero { position: relative; overflow: hidden; height: min(62vh, 560px); min-height: 380px; border-radius: 20px; background: #070807; }
+.stage { padding-top: 48px; }
+.hero {
+  overflow: hidden;
+  height: min(62vh, 560px);
+  min-height: 360px;
+  border-radius: var(--radius);
+  background: var(--bg2);
+}
 .track { display: flex; height: 100%; width: max-content; animation: pan 100s linear infinite; }
 .track img { height: 100%; width: auto; max-width: none; display: block; }
 @keyframes pan { to { transform: translateX(-50%); } }
-.hero::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(11,12,11,.5) 0%, rgba(11,12,11,.08) 34%, rgba(11,12,11,.2) 58%, rgba(11,12,11,.92) 100%),
-    radial-gradient(70% 80% at 72% 42%, transparent, rgba(11,12,11,.42));
-}
-.hero-copy {
-  position: absolute;
-  z-index: 2;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-end;
-  gap: 28px;
-  padding: 0 28px 28px;
-}
-.hero-txt { max-width: min(640px, 70%); background: none; padding: 0; border: 0; }
-.hero-txt .cap { color: rgba(255,255,255,.72); }
-.hero-txt h1 {
-  margin: 6px 0 8px;
-  font-size: clamp(2rem, 4vw, 3.4rem);
-  font-weight: 500;
+.hero-copy { text-align: center; padding: 56px 0 8px; }
+.hero-copy h1 {
+  margin: 0 0 12px;
+  font-size: clamp(36px, 4vw, 48px);
+  font-weight: 600;
   line-height: 1.15;
-  letter-spacing: 0;
-  color: #fff;
 }
-.intro { display: grid; grid-template-columns: 1.15fr 0.95fr; gap: 6vw; padding-top: 72px; align-items: end; }
-.intro p { color: var(--ivory-2); }
-.intro .kicker { color: var(--gold); }
-.intro .cap:not(.kicker) { color: var(--muted); }
-.big { font-size: clamp(1.8rem, 3.4vw, 2.8rem); margin: 0; line-height: 1.25; font-weight: 500; letter-spacing: 0; }
-.lines { display: flex; flex-wrap: wrap; gap: 10px; margin: 36px auto 8px; }
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 1px solid #2a2a2a;
-  background: #000;
-  color: var(--ivory);
-  text-decoration: none;
-  font-size: 0.92rem;
+.sub { color: var(--muted); margin: 0 0 22px; }
+.picks { padding-top: 120px; }
+.picks h2 {
+  margin: 0 0 48px;
+  text-align: center;
+  font-size: clamp(36px, 4vw, 48px);
+  font-weight: 600;
 }
-.pill .cap { color: var(--muted); letter-spacing: 0.04em; }
-.pill em { font-style: normal; color: var(--muted); }
-.pill:hover { border-color: #3a3a3a; }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
-.more { text-align: center; margin-top: 36px; }
-.legend-sec { margin-top: 88px; background: transparent; color: var(--ivory); }
-.legend-grid { display: grid; grid-template-columns: 0.9fr 1.2fr; gap: 5vw; padding-top: 8px; padding-bottom: 8px; align-items: end; }
-.legend-sec h2 { margin: 0 0 12px; font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: 0; }
-.quiet { color: var(--muted); font-size: 0.92rem; }
-.legend { list-style: none; padding: 0; margin: 0; }
-.legend li { display: grid; grid-template-columns: 8em 1fr auto; gap: 16px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line); }
-.legend i { height: 1px; background: #2a2a2a; }
-.legend li span:last-child { color: var(--ivory); font-size: 1.05rem; }
-.team { margin-top: 88px; }
-.tgrid { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
-.person { padding: 24px; background: #161616; border: 0; border-radius: 20px; }
-.person.main { background: #161616; }
-.person h3 { font-size: 1.35rem; margin: 8px 0; letter-spacing: 0; }
-.person p { color: var(--ivory-2); }
-.person a { color: var(--ivory); text-decoration: none; }
-.person a:hover { color: var(--gold); }
-.cta { text-align: center; margin-top: 88px; padding-top: 8px; border-top: 0; }
-.cta h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: 0; margin-bottom: 12px; }
-.cta p { color: var(--muted); }
-@media (max-width: 980px) {
-  .grid { grid-template-columns: 1fr 1fr; }
-  .intro, .legend-grid, .tgrid { grid-template-columns: 1fr; }
-  .hero-copy { align-items: flex-start; flex-direction: column; }
-  .hero-txt { max-width: 100%; }
-}
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px 40px; }
+.more { text-align: center; margin: 40px 0 0; }
+.cta { text-align: center; margin-top: 160px; }
+.cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
+.cta p { color: var(--ink2); margin-bottom: 22px; }
+@media (max-width: 980px) { .grid { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 760px) {
-  .hero { height: 70vw; min-height: 280px; border-radius: 16px; }
-  .hero-copy { padding: 0 16px 16px; }
+  .hero { height: 62vw; min-height: 220px; border-radius: 16px; }
   .grid { grid-template-columns: 1fr; }
-  .legend li { grid-template-columns: 1fr; gap: 4px; }
-  .legend i { display: none; }
 }
+@media (prefers-reduced-motion: reduce) { .track { animation: none; } }
 </style>
 <script>
 let ctx,nodes=null;const b=document.getElementById('snd');
