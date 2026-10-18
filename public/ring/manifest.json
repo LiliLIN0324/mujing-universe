@@ -5,7 +5,8 @@
   },
   {
     "slug": "box-up-my-stuff-in-cyberspace",
-    "file": null
+    "file": "1.jpg",
+    "fallback": true
   },
   {
     "slug": "litflow",
@@ -17,7 +18,8 @@
   },
   {
     "slug": "scendance",
-    "file": null
+    "file": "4.jpg",
+    "fallback": true
   },
   {
     "slug": "bazi-fengshui-analysis",

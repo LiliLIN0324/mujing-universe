@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const LINES = ['音画', 'AIGC 产品', '游戏', '空间与研究'];
@@ -32,7 +32,9 @@ for (let i = 0; i < ring.length; i++) {
   const remote = coverOf(work);
   const file = `${i}.jpg`;
   if (!remote) {
-    manifest.push({ slug: work.slug, file: null });
+    await copyFile(path.join(outDir, 'paper.jpg'), path.join(outDir, file));
+    manifest.push({ slug: work.slug, file, fallback: true });
+    console.log('paper', work.slug);
     continue;
   }
   const url = remote.startsWith('http') ? remote : new URL(remote, 'http://local').pathname;
