@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { allWorks, featuredWorks } from '../lib';
+import { allWorks, pickIntro, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 // scroll.mp4 keeps its AAC track. Autoplay stays muted; 「聆听图景」 unmutes this same video.
@@ -8,8 +8,18 @@ const SCROLL_VIDEO = `${R2}/scroll.mp4`;
 // 01.jpg matches the video frame (1920×760). still.jpg is a 52:1 panorama;
 // object-fit:cover sliced its inscriptions into giant cropped glyphs.
 const SCROLL_POSTER = `${R2}/01.jpg`;
-const lead = featuredWorks(ws).find((w) => w.slug === 'xihu-panorama') || featuredWorks(ws)[0];
-const pickSrc = `${R2}/01.jpg`;
+const picks = ws.map((w) => ({
+  slug: w.slug,
+  title: w.title,
+  year: w.yearNum || w.year,
+  href: `/works/${w.slug}/`,
+  intro: pickIntro(w),
+  stills: workCovers(w),
+  fallback: workFallback(w),
+}));
+const leadPick = picks[0];
+const rearPick = leadPick.stills[1] ? leadPick : picks[1];
+const rearStill = leadPick.stills[1] || rearPick.stills[0];
 ---
 <Base active="/">
 <section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
@@ -39,16 +49,32 @@ const pickSrc = `${R2}/01.jpg`;
   </div>
 </section>
 
-{lead && <section class="picks" id="picks" aria-label="精选">
-  <div class="picks-stage">
-    <div class="picks-copy">
-      <h2><a class="picks-title" href={`/works/${lead.slug}/`}>{lead.title}</a></h2>
-      {lead.yearNum ? <p class="picks-year">{lead.yearNum}</p> : null}
+{leadPick && <section class="picks" id="picks" aria-label="精选">
+  <div class="picks-layout">
+    <div class="picks-left">
+      <h2 class="picks-label">精选</h2>
+      <p class="picks-intro" id="pick-intro">{leadPick.intro}</p>
+      <div class="pick-stack" id="pick-stack">
+        <button type="button" class="pick-card" data-slot="0" data-work="0" data-still="0" aria-label={leadPick.title} aria-current="true">
+          <img class="pick-img" alt="" width="640" height="480" referrerpolicy="no-referrer" decoding="async" src={leadPick.stills[0]} />
+        </button>
+        <button type="button" class="pick-card" data-slot="1" data-work={leadPick.stills[1] ? '0' : '1'} data-still={leadPick.stills[1] ? '1' : '0'} aria-label={rearPick.title} aria-current="false">
+          <img class="pick-img" alt="" width="640" height="480" referrerpolicy="no-referrer" decoding="async" src={rearStill} />
+        </button>
+      </div>
     </div>
-    <img class="picks-img" src={pickSrc} alt="" width="1920" height="760" referrerpolicy="no-referrer" loading="lazy"/>
-    <a class="picks-more" href={`/works/${lead.slug}/`}>查看作品</a>
+    <ol class="pick-list">
+      {picks.map((p, i) => (
+        <li>
+          <button type="button" class:list={['pick-row', { 'is-on': i === 0 }]} data-i={i} aria-current={i === 0 ? 'true' : undefined}>
+            <span class="row-title">{p.title}</span>
+            <span class="row-year">{p.year}</span>
+          </button>
+        </li>
+      ))}
+    </ol>
   </div>
-  <a class="picks-all" href="/works/">全部作品</a>
+  <script type="application/json" id="pick-data" set:html={JSON.stringify(picks).replace(/</g, '\\u003c')}></script>
 </section>}
 
 <section class="narrow cta">
@@ -167,114 +193,140 @@ const pickSrc = `${R2}/01.jpg`;
 }
 .picks {
   background: #F6F5F3;
-  padding: clamp(108px, 13vh, 156px) 0 clamp(88px, 11vh, 128px);
+  padding: clamp(80px, 12vh, 120px) clamp(24px, 4vw, 48px) clamp(64px, 8vh, 96px);
+  color: #1A1A1C;
+  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+}
+.picks-layout {
+  display: grid;
+  grid-template-columns: min(380px, 32vw) minmax(0, 1fr);
+  column-gap: clamp(28px, 3vw, 48px);
+  align-items: start;
+}
+.picks-left { position: sticky; top: 88px; z-index: 1; }
+.picks-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
   overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
-.picks-stage {
+.picks-intro {
+  width: min(380px, 32vw);
+  margin: 0;
+  color: #1A1A1C;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.65;
+}
+.pick-stack {
   position: relative;
-  width: min(1040px, 70vw);
-  margin: 0 auto;
+  width: calc(min(320px, 28vw) + 56px);
+  height: calc(min(320px, 28vw) * 3 / 4 + 32px);
+  margin-top: 56px;
 }
-.picks-img {
-  display: block;
-  width: 100%;
-  height: auto;
-  border-radius: 0;
-  background: #E6E3DE;
-}
-.picks-copy {
+.pick-card {
   position: absolute;
   left: 0;
-  top: 50%;
+  top: 0;
+  width: min(320px, 28vw);
+  aspect-ratio: 4 / 3;
+  height: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #E6E3DE;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  overflow: hidden;
+  transform-origin: 50% 70%;
+  transition: transform 0.65s cubic-bezier(.22, .61, .36, 1);
+}
+.pick-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 0;
+  display: block;
+  pointer-events: none;
+}
+.pick-card[data-slot="0"] {
+  z-index: 2;
+  transform: translate3d(0, 0, 0) rotate(0deg);
+  box-shadow: 0 14px 28px rgba(26, 26, 28, 0.12);
+}
+.pick-card[data-slot="1"] {
   z-index: 1;
-  width: max-content;
-  transform: translate(-30%, -50%);
+  transform: translate3d(40px, 12px, 0) rotate(5deg);
+  box-shadow: 0 8px 18px rgba(26, 26, 28, 0.08);
 }
-.picks-copy h2 { margin: 0; font-weight: inherit; }
-.picks-title {
-  display: block;
-  max-width: 5.05em;
+.pick-card:focus-visible,
+.pick-row:focus-visible {
+  outline: 1px solid #1A1A1C;
+  outline-offset: 3px;
+}
+.pick-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid rgba(26, 26, 28, 0.1);
+  font-family: inherit;
+}
+.pick-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid rgba(26, 26, 28, 0.1);
+  background: transparent;
   color: #1A1A1C;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: clamp(32px, 3.2vw, 48px);
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1.12;
-  text-decoration: none;
-}
-.picks-year {
-  margin: 12px 0 0;
-  color: #8A8A8A;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 13px;
+  font-family: inherit;
   font-weight: 400;
-  letter-spacing: 0.04em;
+  text-align: left;
+  cursor: pointer;
 }
-.picks-more {
-  position: absolute;
-  right: 0;
-  top: 46%;
-  transform: translate(118%, -50%);
-  color: #1A1A1C;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  line-height: 1;
-  text-decoration: none;
+.pick-row.is-on { font-weight: 600; }
+.row-title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 14px;
+  font-weight: inherit;
+  line-height: 1.3;
 }
-.picks-more:hover,
-.picks-title:hover { opacity: 0.62; }
-.picks-all {
-  display: block;
-  width: fit-content;
-  margin: 52px auto 0;
-  color: #9A9A9A;
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+.row-year {
+  flex: none;
+  color: #8A8A8A;
   font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.08em;
-  text-decoration: none;
-}
-.picks-all:hover { color: #1A1A1C; }
-.picks-title:focus-visible,
-.picks-more:focus-visible,
-.picks-all:focus-visible {
-  outline: 1px solid var(--ink);
-  outline-offset: 4px;
+  font-weight: inherit;
+  font-variant-numeric: tabular-nums;
 }
 .cta { text-align: center; margin-top: 160px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
-@media (max-width: 900px) {
-  .picks { padding: 72px 0 64px; overflow: visible; }
-  .picks-stage { width: calc(100% - 32px); }
-  .picks-copy {
-    position: relative;
-    top: auto;
-    left: auto;
-    width: auto;
-    max-width: none;
-    margin-bottom: 18px;
-    padding-right: 5.5em;
-    transform: none;
+@media (max-width: 860px) {
+  .picks-layout { grid-template-columns: 1fr; row-gap: 36px; }
+  .picks-left { position: static; }
+  .picks-intro { width: min(380px, 100%); }
+  .pick-card { width: min(320px, 78vw); }
+  .pick-stack {
+    width: calc(min(320px, 78vw) + 48px);
+    height: calc(min(320px, 78vw) * 3 / 4 + 28px);
+    margin-top: 36px;
   }
-  .picks-img {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    object-fit: cover;
-    object-position: center 62%;
-  }
-  .picks-title { max-width: 8em; font-size: 30px; }
-  .picks-more {
-    position: absolute;
-    right: 0;
-    top: 0.2em;
-    transform: none;
-  }
-  .picks-all { margin-top: 28px; }
+  .pick-card[data-slot="1"] { transform: translate3d(40px, 12px, 0) rotate(5deg); }
 }
 @media (max-width: 760px) {
   .hero { height: clamp(520px, 86vh, 720px); border-radius: 0; }
@@ -291,6 +343,9 @@ const pickSrc = `${R2}/01.jpg`;
     display: block;
     opacity: 0;
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pick-card { transition: none; }
 }
 </style>
 <script>
@@ -422,5 +477,141 @@ if (motion.addEventListener) motion.addEventListener('change', () => {
   startVideo();
 });
 startVideo();
+</script>
+<script>
+const picksRoot = document.getElementById('picks');
+const pickDataEl = document.getElementById('pick-data');
+if (picksRoot && pickDataEl) {
+  const pickData = JSON.parse(pickDataEl.textContent || '[]');
+  const stack = document.getElementById('pick-stack');
+  const introEl = document.getElementById('pick-intro');
+  const cards = [...picksRoot.querySelectorAll('.pick-card')];
+  const rows = [...picksRoot.querySelectorAll('.pick-row')];
+  const pickMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let workIndex = 0;
+  let stillIndex = 0;
+  let flip = 0;
+  let timer = 0;
+  let onscreen = true;
+  let holds = 0;
+
+  function paint(card, slot, src, work, still) {
+    card.dataset.slot = slot;
+    card.dataset.work = String(work);
+    card.dataset.still = String(still);
+    card.setAttribute('aria-current', slot === '0' ? 'true' : 'false');
+    card.setAttribute('aria-label', pickData[work].title);
+    const img = card.querySelector('img');
+    if (!img) return;
+    img.dataset.fallback = pickData[work].fallback || '';
+    if (img.getAttribute('src') !== src) {
+      img.style.visibility = '';
+      img.src = src;
+    }
+  }
+
+  function failImage(img) {
+    const next = img.dataset.fallback;
+    if (next && img.getAttribute('src') !== next) {
+      img.dataset.fallback = '';
+      img.src = next;
+      return;
+    }
+    img.style.visibility = 'hidden';
+  }
+
+  picksRoot.querySelectorAll('.pick-img').forEach((img) => {
+    img.addEventListener('error', () => failImage(img));
+    if (img.complete && img.getAttribute('src') && img.naturalWidth === 0) failImage(img);
+  });
+
+  function render() {
+    const work = pickData[workIndex];
+    const stills = work.stills.length ? work.stills : [];
+    const frontStill = stills.length ? stillIndex % stills.length : 0;
+    const frontSrc = stills[frontStill];
+    let rearWork = workIndex;
+    let rearStill = stills.length > 1 ? (frontStill + 1) % stills.length : 0;
+    let rearSrc = stills[rearStill];
+    if (stills.length < 2 && pickData.length > 1) {
+      rearWork = (workIndex + 1) % pickData.length;
+      rearStill = 0;
+      rearSrc = pickData[rearWork].stills[0];
+    }
+    const order = flip % 2 ? [cards[1], cards[0]] : [cards[0], cards[1]];
+    paint(order[0], '0', frontSrc, workIndex, frontStill);
+    paint(order[1], '1', rearSrc, rearWork, rearStill);
+    if (introEl) introEl.textContent = work.intro;
+    rows.forEach((row, i) => {
+      const on = i === workIndex;
+      row.classList.toggle('is-on', on);
+      if (on) row.setAttribute('aria-current', 'true');
+      else row.removeAttribute('aria-current');
+    });
+  }
+
+  function arm() {
+    window.clearInterval(timer);
+    timer = 0;
+    const stills = pickData[workIndex] ? pickData[workIndex].stills : [];
+    const paused = holds > 0 || !onscreen || document.hidden || pickMotion.matches || stills.length < 2;
+    if (paused) return;
+    timer = window.setInterval(() => {
+      stillIndex = (stillIndex + 1) % pickData[workIndex].stills.length;
+      flip += 1;
+      render();
+    }, 4200);
+  }
+
+  function hold(delta) {
+    holds = Math.max(0, holds + delta);
+    arm();
+  }
+
+  cards.forEach((card) => {
+    card.addEventListener('click', () => {
+      const nextWork = Number(card.dataset.work);
+      const nextStill = Number(card.dataset.still);
+      if (nextWork === workIndex && nextStill === stillIndex) return;
+      workIndex = nextWork;
+      stillIndex = nextStill;
+      flip += 1;
+      render();
+      arm();
+    });
+  });
+  rows.forEach((row) => {
+    row.addEventListener('click', () => {
+      const next = Number(row.dataset.i);
+      if (next === workIndex) return;
+      workIndex = next;
+      stillIndex = 0;
+      flip += 1;
+      render();
+      arm();
+    });
+  });
+
+  [stack, picksRoot.querySelector('.pick-list')].forEach((el) => {
+    if (!el) return;
+    el.addEventListener('pointerenter', () => hold(1));
+    el.addEventListener('pointerleave', () => hold(-1));
+    el.addEventListener('focusin', () => hold(1));
+    el.addEventListener('focusout', (event) => {
+      if (el.contains(event.relatedTarget)) return;
+      hold(-1);
+    });
+  });
+
+  const watch = new IntersectionObserver((entries) => {
+    onscreen = entries.some((entry) => entry.isIntersecting);
+    arm();
+  }, { threshold: 0.2 });
+  if (stack) watch.observe(stack);
+  document.addEventListener('visibilitychange', arm);
+  if (pickMotion.addEventListener) pickMotion.addEventListener('change', arm);
+  render();
+  arm();
+}
 </script>
 </Base>

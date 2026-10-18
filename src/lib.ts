@@ -17,3 +17,58 @@ export function featuredWorks<T extends { line: string; images: string[]; icon: 
   };
   return [...art.filter(hasCover), ...art.filter((w) => !hasCover(w))];
 }
+
+const R2_FIG = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
+
+/** 精选叠卡用的静帧。音画只有一卷时，用同一件作品的 01 / 02，不用占位矢量。 */
+export function workCovers(w: { slug: string; images?: string[]; icon?: string }): string[] {
+  if (w.slug === 'xihu-panorama') {
+    return [`${R2_FIG}/xihu-panorama/01.jpg`, `${R2_FIG}/xihu-panorama/02.jpg`];
+  }
+  const photos = (w.images ?? []).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
+  if (photos.length) return photos.slice(0, 2);
+  const icon = w.icon ?? '';
+  if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon) && !icon.includes('scroll-placeholder')) return [icon];
+  return [`${R2_FIG}/${w.slug}/01.jpg`];
+}
+
+export function workFallback(w: { slug: string; icon?: string }) {
+  const icon = w.icon ?? '';
+  if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon) && !icon.includes('scroll-placeholder')) return icon;
+  return `${R2_FIG}/${w.slug}/logo.jpg`;
+}
+
+const XIHU_INTRO = '当代西湖繁胜全景图，是幕景宇宙正在进行的音画长卷。以宋画的观看方式重绘今日西湖，舟船、岸线与人烟由声音转译生成。这一卷仍在创作中，眼下先以其中两帧静帧并置。其余作品按年份列在右侧，声音只留在页首的图景里。';
+
+function textWidth(text: string) {
+  let width = 0;
+  for (const ch of text) width += ch.charCodeAt(0) < 128 ? 8.4 : 16;
+  return width;
+}
+
+/** 约 4–6 行（380px、16px、1.65）。按中英文宽度收束，不写入占位说明。 */
+export function pickIntro(w: { slug: string; title: string; yearNum?: number; line: string; description?: string; category?: string; tech?: string[] }): string {
+  if (w.slug === 'xihu-panorama') return XIHU_INTRO;
+  const desc = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
+  const bits = [`${w.title}，${w.yearNum || ''}，${w.line}。`];
+  if (desc) bits.push(/[。！？]$/.test(desc) ? desc : `${desc}。`);
+  else if (w.category) bits.push(`归在${w.category}。`);
+  const tech = (w.tech || []).filter((item) => item && !item.includes('占位')).slice(0, 3);
+  if (tech.length) bits.push(`涉及${tech.join('、')}。`);
+  let text = bits.join('');
+  const pads = [
+    '这件作品与音画长卷一起，收在幕景宇宙的创作目录里。',
+    '封面用项目静帧，年份写在这一行的右侧。',
+    '点选这一行时，左侧简介与主封面一起换成这件作品。',
+  ];
+  for (const pad of pads) {
+    if (textWidth(text) >= 380 * 4.15) break;
+    text += pad;
+  }
+  if (textWidth(text) > 380 * 5.7) {
+    const sentences = text.split(/(?<=。)/);
+    while (sentences.length > 2 && textWidth(sentences.join('')) > 380 * 5.7) sentences.pop();
+    text = sentences.join('');
+  }
+  return text;
+}
