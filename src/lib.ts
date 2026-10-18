@@ -124,3 +124,7 @@ export function workHero(w: { slug: string; images?: string[]; icon?: string }):
   if (w.slug === 'xihu-panorama') return workCovers(w)[0];
   return (w.images ?? [])[0] || w.icon || LOCAL_COVER;
 }
+/** 主图两侧的纸色：西湖取自 01.jpg 左右边缘像素均值（≈rgb(174,166,149)），其它作品用默认底色。 */
+export function workPaper(w: { slug: string }): string | null {
+  return w.slug === 'xihu-panorama' ? '#aea695' : null;
+}
