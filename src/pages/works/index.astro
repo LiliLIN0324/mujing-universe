@@ -1,90 +1,190 @@
 ---
-import Base from '../../layouts/Base.astro'; import WorkCard from '../../components/WorkCard.astro';
-import { allWorks, LINES } from '../../lib';
-const ws = await allWorks();
-const years = [...new Set(ws.map(w => w.yearNum).filter(Boolean))].sort((a,b)=>b-a);
+import Base from '../../layouts/Base.astro'; import WorkCover from '../../components/WorkCover.astro';
+import { allWorks, LINES, WORKS_COVER, splitTitle, clean } from '../../lib';
+const ws = (await allWorks()).map(w => ({
+  ...w,
+  main: splitTitle(w.title)[0],
+  desc: clean(w.description),
+  ym: `${w.line} · ${w.yearNum || w.year}`,
+  meta: `${w.line} · ${w.yearNum || w.year}${w.status === '进行中' ? ' · 进行中' : ''}`,
+}));
+const first = ws[0];
+const preload = [...new Set(ws.map(w => WORKS_COVER[w.slug]?.src).filter(Boolean))];
+const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line === l).length])] as [string, number][];
 ---
 <Base title="作品 · 幕景宇宙" active="/works/">
-<section class="wrap head"><p class="kicker cap">Works · {ws.length} 件</p><h1>作品</h1>
-  <div class="filters" id="filters"><button class="on" data-f="全部">全部 <sup>{ws.length}</sup></button>
-  {LINES.map(l => <button data-f={l}>{l} <sup>{ws.filter(w=>w.line===l).length}</sup></button>)}</div>
-  <div class="views"><button class="on" data-v="grid">图录</button><button data-v="index">编号索引</button><button data-v="timeline">年表</button></div>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap"/>
+<main class="wk">
+<section class="wk-head">
+  <div class="wk-hl"><p class="wk-kick">Works · {ws.length}</p><h1>作品</h1></div>
+  <div class="wk-tabwrap"><nav class="wk-tabs" id="wk-tabs" aria-label="按创作线筛选">
+    {tabs.map(([l, n], i) => <a href={i === 0 ? '/works/' : `/works/?line=${encodeURIComponent(l)}`} data-f={l} class={i === 0 ? 'on' : undefined}>{l}<sup>{n}</sup></a>)}
+  </nav></div>
 </section>
-<section class="wrap view" id="v-grid"><div class="grid">{ws.map(w => <WorkCard w={w}/>)}</div></section>
-<section class="wrap view" id="v-index" hidden><table class="idx"><thead><tr><th>No.</th><th>作品</th><th>线</th><th>类别</th><th>年份</th></tr></thead><tbody>
-  {ws.map(w => <tr data-line={w.line}><td class="mono">{w.no}</td><td><a href={`/works/${w.slug}/`} class="serif">{w.title}</a>{w.status==='进行中'&&<span class="ph">进行中</span>}</td><td>{w.line}</td><td class="cap">{w.category}</td><td class="mono">{w.year}</td></tr>)}
-</tbody></table></section>
-<section class="wrap view" id="v-timeline" hidden>{years.map(y => <div class="yr" ><h2 class="serif">{y}</h2><ul>{ws.filter(w=>w.yearNum===y).map(w => <li data-line={w.line}><span class="mono">No.{w.no} · {w.line}</span><a href={`/works/${w.slug}/`}>{w.title}</a></li>)}</ul></div>)}</section>
-<style>
-.head { padding-top: 80px; text-align: center; }
-.head h1 { font-size: clamp(36px, 4vw, 48px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; margin: 0 0 28px; }
-.filters, .views { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 8px; }
-.filters button, .views button { cursor: pointer; border-radius: 999px; }
-.filters button {
-  font-family: var(--sans);
-  background: var(--paper);
-  border: 0;
-  padding: 8px 14px;
-  letter-spacing: 0;
-  color: var(--ink2);
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-.filters button sup { font-family: var(--en), var(--sans); letter-spacing: 0; color: var(--muted); margin-left: 4px; }
-.filters button.on { background: var(--cta-bg); color: var(--cta-fg); }
-.filters button.on sup { color: inherit; opacity: 0.7; }
-.filters button:hover:not(.on) { color: var(--ink); }
-.views { gap: 8px; margin: 12px 0 0; }
-.views button {
-  font-family: var(--sans);
-  font-size: 0.82rem;
-  letter-spacing: 0;
-  text-transform: none;
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 6px 12px;
-  color: var(--muted);
-}
-.views button.on { color: var(--cta-fg); border-color: transparent; background: var(--cta-bg); }
-.view { margin-top: 28px; }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px 40px; }
-.idx { width: 100%; border-collapse: collapse; }
-.idx th {
-  text-align: left;
-  font-family: var(--en), var(--sans);
-  font-size: 0.68rem;
-  font-weight: 400;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-  border-bottom: 1px solid var(--line-strong);
-  padding: 10px 8px;
-}
-.idx td { padding: 16px 8px; border-bottom: 1px solid var(--line); vertical-align: baseline; }
-.idx a { text-decoration: none; font-size: 1.08rem; }
-.idx tr:hover { background: var(--elev); }
-.idx a:hover { color: var(--gold); }
-.yr { display: grid; grid-template-columns: 140px 1fr; gap: 12px; border-top: 1px solid var(--line); padding: 26px 0; }
-.yr h2 { margin: 0; font-size: clamp(1.8rem, 3vw, 2.5rem); color: var(--ivory); font-weight: 500; }
-.yr ul { list-style: none; margin: 0; padding: 0; }
-.yr li { display: grid; grid-template-columns: minmax(140px, 220px) 1fr; gap: 12px; padding: 8px 0; align-items: baseline; }
-.yr a { text-decoration: none; font-family: var(--serif); font-size: 1.05rem; }
-.yr a:hover { color: var(--gold); }
-[hidden], .hide { display: none !important; }
-@media (max-width: 980px) { .grid { grid-template-columns: 1fr 1fr; } }
-@media (max-width: 720px) {
-  .grid { grid-template-columns: 1fr; }
-  .yr, .yr li { grid-template-columns: 1fr; }
-  .idx { display: block; overflow-x: auto; }
+
+<section class="wk-body">
+  <div class="wk-list">
+    <div class="wk-lh" aria-hidden="true"><span>No.</span><span>作品</span><span>类别 · 年份</span></div>
+    <ol id="wk-rows">
+      {ws.map((w, i) => <li data-line={w.line}><a class:list={['wk-row', i === 0 && 'on']} href={`/works/${w.slug}/`} data-slug={w.slug} data-no={w.no} data-title={w.title} data-meta={w.meta} data-desc={w.desc}>
+        <span class="no">{w.no}</span><span class="tt">{w.main}</span><span class="mt">{w.ym}</span></a></li>)}
+    </ol>
+  </div>
+  <aside class="wk-pv" id="wk-pv" aria-live="polite">
+    <a class="pv-cv" id="pv-cv" href={`/works/${first.slug}/`} tabindex="-1" aria-hidden="true"><div class="pv-layer"><WorkCover w={first}/></div></a>
+    <div class="pv-cap">
+      <div class="pv-row"><span class="pv-no" id="pv-no">{first.no}</span><span id="pv-meta">{first.meta}</span></div>
+      <h2 class="pv-t" id="pv-t">{first.title}</h2>
+      <p class="pv-d" id="pv-d" hidden={!first.desc}>{first.desc}</p>
+      <a class="more" id="pv-more" href={`/works/${first.slug}/`}>查看作品 <span>→</span></a>
+    </div>
+  </aside>
+
+  <ol class="wk-m" id="wk-m">
+    {ws.map(w => <li data-line={w.line} data-slug={w.slug}><a href={`/works/${w.slug}/`}>
+      <WorkCover w={w}/>
+      <div class="mr"><span class="no">{w.no}</span><span class="tt">{w.main}</span></div>
+      <p class="mt">{w.meta}</p></a></li>)}
+  </ol>
+</section>
+</main>
+<script is:inline type="application/json" id="wk-preload" set:html={JSON.stringify(preload)}></script>
+
+<style is:global>
+.wk { --rule1: rgba(26,26,28,.10); --rule2: rgba(26,26,28,.16); --fbpaper: #F1EEE6; --song: "Noto Serif SC", "Noto Serif CJK SC", serif;
+  width: min(1312px, calc(100% - 128px)); margin: 0 auto; }
+.wk a { color: inherit; text-decoration: none; }
+.wk [hidden], .wk .hide { display: none !important; }
+/* head */
+.wk-head { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; align-items: end; padding: 88px 0 36px; border-bottom: 1px solid var(--rule2); }
+.wk-hl { grid-column: 1 / 7; }
+.wk-kick { margin: 0; font-family: var(--en); font-size: 12px; letter-spacing: .14em; color: var(--muted); }
+.wk h1 { margin: 14px 0 0; font-family: var(--song); font-weight: 600; font-size: 52px; line-height: 1.1; letter-spacing: .03em; color: var(--ink); }
+.wk-tabwrap { grid-column: 7 / 13; }
+.wk-tabs { display: flex; justify-content: flex-end; gap: 30px; padding-bottom: 4px; font-size: 15px; letter-spacing: .04em; color: var(--ink2); }
+.wk-tabs a { white-space: nowrap; padding-bottom: 7px; border-bottom: 1px solid transparent; transition: color .15s; }
+.wk-tabs a:hover { color: var(--ink); }
+.wk-tabs a.on { color: var(--ink); border-bottom-color: var(--ink); }
+.wk-tabs sup { font-family: var(--en); font-size: 10px; color: var(--muted); margin-left: 3px; letter-spacing: 0; vertical-align: 6px; line-height: 0; }
+/* body */
+.wk-body { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; padding-top: 28px; align-items: start; }
+.wk-list { grid-column: 1 / 6; }
+.wk-lh { display: grid; grid-template-columns: 48px 1fr auto; font-family: var(--en); font-size: 11px; letter-spacing: .14em; color: var(--muted); padding: 0 0 12px; border-bottom: 1px solid var(--rule2); }
+.wk-list ol, .wk-m { list-style: none; margin: 0; padding: 0; }
+.wk-row { display: grid; grid-template-columns: 48px 1fr auto; align-items: baseline; padding: 15px 0 14px; border-bottom: 1px solid var(--rule1); outline-offset: 2px; }
+.wk-row .no { font-family: var(--en); font-size: 12px; letter-spacing: .06em; color: var(--muted); font-variant-numeric: tabular-nums; }
+.wk-row .tt { font-family: var(--song); font-size: 20px; line-height: 1.4; font-weight: 400; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px; color: #2a2a2c; }
+.wk-row .mt { font-size: 13px; color: var(--muted); letter-spacing: .03em; white-space: nowrap; }
+.wk-row.on .no { color: var(--accent); }
+.wk-row.on .tt { color: var(--ink); font-weight: 600; }
+.wk-row.on .mt { color: var(--ink2); }
+.wk-pv { grid-column: 7 / 13; position: sticky; top: 112px; padding-top: 29px; }
+.pv-cv { display: block; position: relative; aspect-ratio: 16 / 9; }
+.pv-layer { position: absolute; inset: 0; transition: opacity .15s ease; }
+.pv-layer.in { opacity: 0; }
+.pv-cap { padding-top: 22px; }
+.pv-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); letter-spacing: .04em; }
+.pv-no { font-family: var(--en); color: var(--accent); letter-spacing: .06em; }
+.wk .pv-t { margin: 10px 0 0; font-family: var(--song); font-weight: 600; font-size: 28px; line-height: 1.3; letter-spacing: .02em; color: var(--ink); }
+.pv-d { margin: 12px 0 0; font-size: 15px; line-height: 1.75; color: var(--ink2); max-width: 34em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wk .more { display: inline-block; margin-top: 20px; font-size: 14px; letter-spacing: .08em; border-bottom: 1px solid var(--ink); padding-bottom: 3px; }
+.more span { font-family: var(--en); margin-left: 4px; }
+.wk-m { display: none; }
+/* cover */
+.wk .cv { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #EFEDE9; container-type: inline-size; }
+.wk .pv-layer .cv { height: 100%; }
+.wk .cv img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; }
+.wk .cv:not(.fb) > :not(img) { display: none; }
+.wk .cv.fb { background: var(--fbpaper); box-shadow: inset 0 0 0 1px var(--rule2); }
+.fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
+.fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
+.fb-title { display: block; font-family: var(--song); font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: .03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
+.fb-title.long { font-size: 4.6cqw; }
+.fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-family: var(--en), "Noto Sans SC", sans-serif; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .04em; color: var(--muted); }
+.fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .06em; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) { .pv-layer { transition: none; } }
+/* mobile ≤1023 */
+@media (max-width: 1023px) {
+  .wk { width: auto; margin: 0; }
+  .wk-head { display: block; padding: 40px 24px 0; border-bottom: 0; }
+  .wk h1 { font-size: 36px; line-height: 1.15; margin-top: 10px; }
+  .wk-tabwrap { position: relative; margin: 26px -24px 0; border-bottom: 1px solid var(--rule2); }
+  .wk-tabwrap::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; pointer-events: none; background: linear-gradient(90deg, rgba(246,245,243,0), var(--bg)); }
+  .wk-tabs { justify-content: flex-start; gap: 24px; padding: 0 24px; font-size: 14px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+  .wk-tabs::-webkit-scrollbar { display: none; }
+  .wk-tabs a { padding-bottom: 12px; }
+  .wk-tabs a:last-child { margin-right: 16px; }
+  .wk-body { display: block; padding-top: 0; }
+  .wk-list, .wk-pv { display: none; }
+  .wk-m { display: block; padding: 0 24px; }
+  .wk-m li { border-bottom: 1px solid var(--rule1); }
+  .wk-m li > a { display: block; padding: 28px 0 26px; }
+  .wk-m .fb-no, .wk-m .fb-meta { display: none; }
+  .wk-m .fb-t { transform: translateY(-50%); }
+  .mr { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
+  .mr .no { flex: none; font-family: var(--en); font-size: 12px; letter-spacing: .06em; color: var(--muted); }
+  .mr .tt { font-family: var(--song); font-weight: 600; font-size: 18px; line-height: 1.45; letter-spacing: .02em; color: var(--ink); }
+  .wk-m .mt { margin: 6px 0 0 29px; font-size: 13px; color: var(--muted); letter-spacing: .03em; }
 }
 </style>
-<script>
-const qs=new URLSearchParams(location.search);let cur=qs.get('line')||'全部';
-function apply(){document.querySelectorAll('#filters button').forEach(b=>b.classList.toggle('on',b.dataset.f===cur));
- document.querySelectorAll('[data-line]').forEach(el=>{if(el.closest('#filters'))return;el.classList.toggle('hide',cur!=='全部'&&el.dataset.line!==cur);if(el.classList.contains('reveal'))el.classList.add('in')});
- document.querySelectorAll('.yr').forEach(y=>y.classList.toggle('hide',!y.querySelector('li:not(.hide)')));}
-document.querySelectorAll('#filters button').forEach(b=>b.onclick=()=>{cur=b.dataset.f;history.replaceState(null,'',cur==='全部'?'/works/':'?line='+encodeURIComponent(cur));apply()});
-document.querySelectorAll('.views button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.views button').forEach(x=>x.classList.toggle('on',x===b));document.querySelectorAll('.view').forEach(v=>v.hidden=v.id!=='v-'+b.dataset.v)});
-apply();
+<script is:inline>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // 图片封面出错 → 换成排版封面（排版内容已在 DOM 里）
+  const fail = (img) => { const cv = img.closest('.cv'); if (cv) cv.classList.add('fb'); img.remove(); };
+  const guard = (root) => $$('img[data-cv-img]', root).forEach((img) => {
+    if (img.complete && img.naturalWidth === 0 && img.src) fail(img);
+    else img.addEventListener('error', () => fail(img), { once: true });
+  });
+  guard(document);
+
+  const rows = $$('.wk-row'), cards = $$('#wk-m > li');
+  const pvCv = $('#pv-cv'), pvNo = $('#pv-no'), pvMeta = $('#pv-meta'), pvT = $('#pv-t'), pvD = $('#pv-d'), pvMore = $('#pv-more');
+  let cur = rows.find((r) => r.classList.contains('on'));
+  function show(row) {
+    if (!row || row === cur) return;
+    cur?.classList.remove('on'); row.classList.add('on'); cur = row;
+    const d = row.dataset, href = row.getAttribute('href');
+    pvNo.textContent = d.no; pvMeta.textContent = d.meta; pvT.textContent = d.title;
+    pvD.textContent = d.desc || ''; pvD.hidden = !d.desc;
+    pvMore.href = href; pvCv.href = href;
+    const src = cards.find((c) => c.dataset.slug === d.slug)?.querySelector('.cv');
+    if (!src) return;
+    const layer = document.createElement('div'); layer.className = 'pv-layer';
+    const cv = src.cloneNode(true); $$('img', cv).forEach((i) => { i.loading = 'eager'; });
+    layer.appendChild(cv); guard(layer);
+    const old = $$('.pv-layer', pvCv);
+    if (reduce) { old.forEach((o) => o.remove()); pvCv.appendChild(layer); return; }
+    layer.classList.add('in'); pvCv.appendChild(layer);
+    requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.remove('in')));
+    setTimeout(() => old.forEach((o) => o.remove()), 160);
+  }
+  rows.forEach((r) => { r.addEventListener('mouseenter', () => show(r)); r.addEventListener('focus', () => show(r)); });
+
+  // 筛选：?line= + replaceState；列表和移动卡片同时过滤，当前项重置为第一件
+  const tabs = $$('#wk-tabs a');
+  const valid = new Set(tabs.map((t) => t.dataset.f));
+  let line = new URLSearchParams(location.search).get('line') || '全部';
+  if (!valid.has(line)) line = '全部';
+  function apply() {
+    tabs.forEach((t) => { const on = t.dataset.f === line; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); });
+    const hit = (el) => line === '全部' || el.dataset.line === line;
+    $$('#wk-rows > li').forEach((li) => li.classList.toggle('hide', !hit(li)));
+    cards.forEach((li) => li.classList.toggle('hide', !hit(li)));
+    const firstRow = rows.find((r) => hit(r.parentElement));
+    if (firstRow && firstRow !== cur) show(firstRow);
+  }
+  tabs.forEach((t) => t.addEventListener('click', (e) => {
+    e.preventDefault(); line = t.dataset.f;
+    history.replaceState(null, '', line === '全部' ? '/works/' : '?line=' + encodeURIComponent(line));
+    apply();
+  }));
+  apply();
+
+  // 预取所有封面，悬停时不闪白
+  const pre = () => { try { JSON.parse($('#wk-preload').textContent).forEach((u) => { const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = u; }); } catch (e) {} };
+  if (document.readyState === 'complete') pre(); else addEventListener('load', pre, { once: true });
+})();
 </script>
 </Base>
