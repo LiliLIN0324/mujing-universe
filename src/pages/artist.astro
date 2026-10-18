@@ -26,10 +26,9 @@ const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
 .ahero { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 5vw; padding-top: 72px; align-items: start; }
 .portrait {
   aspect-ratio: 3 / 4;
-  background:
-    radial-gradient(80% 50% at 50% 12%, rgba(203, 184, 146, 0.16), transparent 62%),
-    linear-gradient(165deg, #1c211f, #0e100f 72%);
-  border: 1px solid var(--line);
+  background: var(--paper);
+  border: 0;
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -37,32 +36,23 @@ const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
   position: relative;
   overflow: hidden;
 }
-.portrait::before {
-  content: "";
-  position: absolute;
-  left: -10%;
-  right: -10%;
-  top: 22%;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(203,184,146,.7), transparent);
-}
 .portrait .serif { position: relative; font-size: clamp(2.8rem, 4vw, 3.8rem); line-height: 1.15; letter-spacing: 0.18em; color: var(--ivory); }
-h1 { font-size: clamp(2.6rem, 5vw, 4.2rem); margin: 0; font-weight: 500; letter-spacing: 0.06em; }
+h1 { font-size: clamp(36px, 4vw, 48px); margin: 0; font-weight: 600; letter-spacing: -0.03em; }
 h1 small {
   display: inline-block;
   margin-left: 10px;
-  font-family: var(--latin), var(--serif);
-  font-style: italic;
-  font-weight: 400;
-  font-size: 1.35rem;
-  letter-spacing: 0.04em;
-  color: var(--gold);
+  font-family: var(--en), var(--sans);
+  font-style: normal;
+  font-weight: 500;
+  font-size: 1.15rem;
+  letter-spacing: 0;
+  color: var(--ink2);
 }
-.lead { font-family: var(--serif); font-size: 1.28rem; color: var(--ivory); }
+.lead { font-family: var(--sans); font-weight: 400; font-size: 1.12rem; color: var(--ink); }
 .quote {
-  font-family: var(--serif);
-  color: var(--ivory-2);
-  border-left: 1px solid rgba(203, 184, 146, 0.55);
+  font-family: var(--sans);
+  color: var(--ink2);
+  border-left: 1px solid var(--rule);
   padding-left: 16px;
 }
 .quote .cap { display: block; margin-top: 8px; }
@@ -88,10 +78,12 @@ section.reveal, section.sheet { margin-top: 100px; }
 .fmt {
   font-family: var(--en), var(--sans);
   font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.08em;
   padding: 3px 8px;
-  border: 1px solid rgba(203, 184, 146, 0.45);
-  color: var(--gold);
+  border: 0;
+  border-radius: 999px;
+  background: var(--bg2);
+  color: var(--ink2);
   white-space: nowrap;
 }
 .fmt.Oral { background: var(--ivory); color: var(--bg); border-color: var(--ivory); }

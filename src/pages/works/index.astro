@@ -16,23 +16,24 @@ const years = [...new Set(ws.map(w => w.yearNum).filter(Boolean))].sort((a,b)=>b
 </tbody></table></section>
 <section class="wrap view" id="v-timeline" hidden>{years.map(y => <div class="yr" ><h2 class="serif">{y}</h2><ul>{ws.filter(w=>w.yearNum===y).map(w => <li data-line={w.line}><span class="mono">No.{w.no} · {w.line}</span><a href={`/works/${w.slug}/`}>{w.title}</a></li>)}</ul></div>)}</section>
 <style>
-.head { padding-top: 48px; }
-.head h1 { font-size: clamp(2rem, 4vw, 2.8rem); font-weight: 500; letter-spacing: 0; line-height: 1.1; margin: 0 0 22px; }
-.filters, .views { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.head { padding-top: 80px; text-align: center; }
+.head h1 { font-size: clamp(36px, 4vw, 48px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; margin: 0 0 28px; }
+.filters, .views { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 8px; }
 .filters button, .views button { cursor: pointer; border-radius: 999px; }
 .filters button {
   font-family: var(--sans);
-  background: transparent;
-  border: 1px solid #2a2a2a;
+  background: var(--paper);
+  border: 0;
   padding: 8px 14px;
   letter-spacing: 0;
-  color: var(--ivory-2);
+  color: var(--ink2);
   font-size: 0.9rem;
+  font-weight: 500;
 }
-.filters button sup { font-family: var(--sans); letter-spacing: 0; color: var(--muted); margin-left: 4px; }
-.filters button.on { background: #000; color: #fff; border-color: #3a3a3a; }
+.filters button sup { font-family: var(--en), var(--sans); letter-spacing: 0; color: var(--muted); margin-left: 4px; }
+.filters button.on { background: var(--cta-bg); color: var(--cta-fg); }
 .filters button.on sup { color: inherit; opacity: 0.7; }
-.filters button:hover:not(.on) { border-color: #3a3a3a; color: #fff; }
+.filters button:hover:not(.on) { color: var(--ink); }
 .views { gap: 8px; margin: 12px 0 0; }
 .views button {
   font-family: var(--sans);
@@ -44,9 +45,9 @@ const years = [...new Set(ws.map(w => w.yearNum).filter(Boolean))].sort((a,b)=>b
   padding: 6px 12px;
   color: var(--muted);
 }
-.views button.on { color: var(--ivory); border-color: #2a2a2a; background: #000; }
+.views button.on { color: var(--cta-fg); border-color: transparent; background: var(--cta-bg); }
 .view { margin-top: 28px; }
-.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 64px 40px; }
 .idx { width: 100%; border-collapse: collapse; }
 .idx th {
   text-align: left;

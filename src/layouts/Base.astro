@@ -1,8 +1,8 @@
 ---
 import '../styles/global.css';
 const { title = '幕景宇宙 · 林丽丽艺术工作室', active = '' } = Astro.props;
-const nav = [['/works/', '作品'], ['/artist/', '艺术家']];
-const foot = [['/', '首页'], ['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作与经纪']];
+const links = [['/works/', '作品'], ['/artist/', '艺术家'], ['/contact/', '合作']];
+const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
 ---
 <html lang="zh-CN">
 <head>
@@ -10,24 +10,25 @@ const foot = [['/', '首页'], ['/works/', '作品'], ['/artist/', '艺术家'],
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>{title}</title>
   <meta name="description" content="幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。"/>
-  <meta name="theme-color" content="#1A1A1C"/>
+  <meta name="theme-color" content="#F6F5F3"/>
   <meta name="referrer" content="no-referrer"/>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Sans+SC:wght@300;400;500&family=Noto+Serif+SC:wght@500;600&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600&display=swap" rel="stylesheet"/>
 </head>
 <body>
 <header class="top">
-  <a class="brand" href="/">
-    <span class="brand-txt"><strong>幕景宇宙</strong></span>
-  </a>
-  <nav>{nav.map(([h, t]) => <a href={h} class={active === h ? 'on' : ''}>{t}</a>)}<a class="nav-cta" href="/contact/">合作</a></nav>
+  <a class="brand" href="/"><i></i><span>幕景宇宙</span></a>
+  <nav>
+    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
+    <a class="btn solid" href="/contact/">合作</a>
+  </nav>
 </header>
 <slot/>
 <footer class="bot">
   <div>
-    <strong class="serif">幕景宇宙 Mujing Universe</strong>
+    <strong>幕景宇宙 Mujing Universe</strong>
     <p>以艺术家林丽丽为核心的 AIGC 文化艺术工作室 · 浙江杭州</p>
     <p class="cap">© 2026 · ICP 备案号 <span class="ph">占位</span></p>
   </div>
