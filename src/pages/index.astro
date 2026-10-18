@@ -2,11 +2,27 @@
 import Base from '../layouts/Base.astro'; import WorkCard from '../components/WorkCard.astro';
 import { allWorks, FEATURED } from '../lib';
 const ws = await allWorks(); const feat = FEATURED.map(s => ws.find(w => w.slug === s)).filter(Boolean);
+// Public R2 object. Do not commit the mp4. logo.jpg / 01.jpg are not in this prefix, so the poster is the local SVG.
+const SCROLL_VIDEO = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/scroll-placeholder.mp4';
+const SCROLL_POSTER = '/scroll-placeholder.svg';
 ---
 <Base active="/">
 <section class="wrap stage">
-  <div class="hero">
-    <div class="track"><img src="/scroll-placeholder.svg" alt="占位长卷"/><img src="/scroll-placeholder.svg" alt="" aria-hidden="true"/></div>
+  <div class="hero" id="scroll-hero">
+    <img class="hero-still" src={SCROLL_POSTER} alt="占位长卷" width="4800" height="600"/>
+    <video
+      id="scroll-video"
+      class="hero-video"
+      poster={SCROLL_POSTER}
+      muted
+      playsinline
+      loop
+      preload="none"
+      disablepictureinpicture
+      referrerpolicy="no-referrer"
+      data-src={SCROLL_VIDEO}
+      aria-hidden="true"
+    ></video>
   </div>
   <div class="hero-copy">
     <p class="kicker cap">音画新线 · 进行中</p>
@@ -31,15 +47,30 @@ const ws = await allWorks(); const feat = FEATURED.map(s => ws.find(w => w.slug 
 <style>
 .stage { padding-top: 48px; }
 .hero {
+  position: relative;
   overflow: hidden;
   height: min(62vh, 560px);
   min-height: 360px;
   border-radius: var(--radius);
   background: var(--bg2);
 }
-.track { display: flex; height: 100%; width: max-content; animation: pan 100s linear infinite; }
-.track img { height: 100%; width: auto; max-width: none; display: block; }
-@keyframes pan { to { transform: translateX(-50%); } }
+.hero-still,
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.hero-video {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.hero.is-playing .hero-video { opacity: 1; }
+.hero.is-still .hero-video { display: none; }
 .hero-copy { text-align: center; padding: 56px 0 8px; }
 .hero-copy h1 {
   margin: 0 0 12px;
@@ -65,8 +96,50 @@ const ws = await allWorks(); const feat = FEATURED.map(s => ws.find(w => w.slug 
   .hero { height: 62vw; min-height: 220px; border-radius: 16px; }
   .grid { grid-template-columns: 1fr; }
 }
-@media (prefers-reduced-motion: reduce) { .track { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .hero-video { display: none; transition: none; }
+}
 </style>
+<script>
+const hero = document.getElementById('scroll-hero');
+const video = document.getElementById('scroll-video');
+const motion = matchMedia('(prefers-reduced-motion: reduce)');
+let stopped = false;
+
+function showStill() {
+  hero.classList.add('is-still');
+  hero.classList.remove('is-playing');
+  if (stopped) return;
+  stopped = true;
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+}
+
+function startVideo() {
+  if (motion.matches) { showStill(); return; }
+  const src = video.dataset.src;
+  if (!src) { showStill(); return; }
+  stopped = false;
+  hero.classList.remove('is-still');
+  video.muted = true;
+  video.defaultMuted = true;
+  video.playsInline = true;
+  video.preload = 'auto';
+  if (video.getAttribute('src') !== src) video.src = src;
+  const attempt = video.play();
+  if (attempt) attempt.catch((err) => {
+    if (err && err.name === 'NotAllowedError') showStill();
+  });
+}
+
+video.addEventListener('playing', () => {
+  if (!hero.classList.contains('is-still')) hero.classList.add('is-playing');
+});
+video.addEventListener('error', showStill);
+if (motion.addEventListener) motion.addEventListener('change', () => motion.matches ? showStill() : startVideo());
+startVideo();
+</script>
 <script>
 let ctx,nodes=null;const b=document.getElementById('snd');
 b.addEventListener('click',()=>{if(nodes){nodes.g.gain.setTargetAtTime(0,ctx.currentTime,.3);nodes.o.forEach(o=>o.stop(ctx.currentTime+1));nodes=null;b.textContent='▶ 聆听图景';return;}
