@@ -439,66 +439,120 @@ export function mountPickRing(root, pickData) {
   }
 
   /**
-   * Phase of θ+spin where the card is screen-brightest.
+   * Phase of θ+spin where the card has the most visible pixels.
    *
-   * VERT puts the cabin center at (cos(θ+spin), sin(θ+spin)) after rotateY(spin),
-   * with yaw θ − π·0.2 − 15·uVelocity. The normal faces the camera when
-   * θ + spin − 15·uVelocity = π·0.2. Occlusion pulls the visible card a little
-   * closer than that pure yaw peak, and the pull grows as the dolly enlarges
-   * the ring: π·0.2·(1 + 0.4·progress). That is ~0.24π at mid (0.5) and ~0.28π
-   * at 落幅 (0.97). θ−spin and raw π/2 point at the far side of the ring.
+   * VERT faces the card normal at the camera when θ+spin−15·vel = π·0.2.
+   * At real card scale that yaw peak is one index early: perspective makes
+   * the nearer card larger, and tinted-pixel counts put the winner at
+   * π·(0.325 + 0.03·progress) — about 0.34π from mid through 落幅.
+   * A full extra slot (2π/N) overshoots, so the highlight leads the eye.
+   * θ−spin and raw π/2 point at the far side of the ring.
    */
   function eyePhase(progress) {
     const p = progress == null ? shared.uScroll.value : progress;
-    return Math.PI * 0.2 * (1 + 0.4 * p);
+    return Math.PI * (0.325 + 0.03 * p);
   }
 
-  /** cos(θ + spin − 15·vel − eyePhase). Higher = more of the eye-bright card. */
+  /** cos(θ + spin − 15·vel − eyePhase). Higher = the visually largest card. */
   function cardFacing(index, spin) {
     const theta = (index / N) * Math.PI * 2;
     const vel = shared.uVelocity.value || 0;
     return Math.cos(theta + spin - vel * 15 - eyePhase());
   }
 
-  /**
-   * Click hit-test only (not scroll-hero): nearest screen-X among facing cards.
-   * Scroll-hero uses argmax cardFacing — proximity to heroNX disagreed with eye.
-   */
+  /** Scroll-hero focal X (debug). Click hit-test uses the projected quad, not this. */
   function heroNX(progress) {
     return lerp(0.52, 0.36, smoothstep01(progress));
   }
 
-  function pickIndexAtNX(nx, spin, progress) {
-    const sp = spin == null ? liveSpin() : spin;
-    const pr = progress == null ? lastProgress : progress;
-    const scored = [];
-    for (let i = 0; i < meshes.length; i++) {
-      const facing = cardFacing(i, sp);
-      if (facing < -0.2) continue;
-      const sx = cardScreenNX(i, sp, pr);
-      if (sx < 0.0 || sx > 1.0) continue;
-      scored.push({ i, facing, sx, d: Math.abs(sx - nx) });
-    }
-    if (!scored.length) {
-      let best = 0;
-      let bestD = Infinity;
-      for (let i = 0; i < meshes.length; i++) {
-        const sx = cardScreenNX(i, sp, pr);
-        const d = Math.abs(sx - nx);
-        if (d < bestD) {
-          bestD = d;
-          best = i;
-        }
-      }
-      return best;
-    }
-    scored.sort((a, b) => a.d - b.d || b.facing - a.facing);
-    return scored[0].i;
+  /** Shader Y rotation: x' = c x − s z, z' = s x + c z. */
+  function rotY(x, y, z, angle) {
+    const c = Math.cos(angle);
+    const s = Math.sin(angle);
+    return [c * x - s * z, y, s * x + c * z];
   }
 
   /**
-   * Shortest spin that parks card index on eyePhase once velocity settles to 0.
-   * Same phase as cardFacing, so the clicked card becomes the eye-bright one.
+   * Project a card-local point to CSS-normalized canvas coords (ny 0 = top).
+   * Same cabin yaw, spin, pitch and dolly as VERT.
+   */
+  function projectLocal(px, py, theta, spin, vel, progress) {
+    const scale = shared.uScale.value;
+    const grow = 1 + 0.5 * progress * progress;
+    const yaw0 = theta - Math.PI * 0.2 - px * 0.3 - vel * 15;
+    let [x, y, z] = rotY(px * scale[0] * grow, py * scale[1] * grow, 0, yaw0);
+    x += 3 * Math.cos(theta);
+    z += 3 * Math.sin(theta);
+    [x, y, z] = rotY(x, y, z, spin);
+    const pitch = -Math.PI * 0.15 * (1 - progress);
+    const cp = Math.cos(pitch);
+    const sp = Math.sin(pitch);
+    const y2 = y * cp + sp * z;
+    const z2 = -sp * y + cp * z;
+    y = y2;
+    z = z2;
+    x -= 3.7 * progress + 1.4;
+    y -= 0.85 * progress;
+    z -= 20 - 12 * progress;
+    const depth = Math.max(0.35, -(z - camera.position.z));
+    const fovRad = (camera.fov * Math.PI) / 180;
+    const aspect = camera.aspect || 1;
+    const halfW = Math.tan(fovRad / 2) * depth * aspect;
+    const halfH = Math.tan(fovRad / 2) * depth;
+    const nx = (x / halfW) * 0.5 + 0.5;
+    const glNy = (y / halfH) * 0.5 + 0.5;
+    return { nx, ny: 1 - glNy, depth };
+  }
+
+  /** Barycentric depth if (nx, ny) lies in triangle abc; else null. */
+  function triDepth(nx, ny, a, b, c) {
+    const denom = (b.ny - c.ny) * (a.nx - c.nx) + (c.nx - b.nx) * (a.ny - c.ny);
+    if (Math.abs(denom) < 1e-8) return null;
+    const u = ((b.ny - c.ny) * (nx - c.nx) + (c.nx - b.nx) * (ny - c.ny)) / denom;
+    const v = ((c.ny - a.ny) * (nx - c.nx) + (a.nx - c.nx) * (ny - c.ny)) / denom;
+    const w = 1 - u - v;
+    if (u < -1e-3 || v < -1e-3 || w < -1e-3) return null;
+    return u * a.depth + v * b.depth + w * c.depth;
+  }
+
+  /**
+   * Card under (nx, ny). Samples the curved cabin (yaw depends on position.x)
+   * the same way VERT does. Closest fragment wins, so a click on a visible
+   * side card returns that index — nearest-center was one slot off on overlap.
+   */
+  function pickIndexAt(nx, ny, spin, progress) {
+    const sp = spin == null ? liveSpin() : spin;
+    const pr = progress == null ? lastProgress : progress;
+    const vel = shared.uVelocity.value || 0;
+    const xs = [-0.5, -0.25, 0, 0.25, 0.5];
+    const ys = [-0.5, -0.25, 0, 0.25, 0.5];
+    let best = -1;
+    let bestDepth = Infinity;
+    for (let i = 0; i < meshes.length; i++) {
+      const theta = (i / N) * Math.PI * 2;
+      const grid = ys.map((py) => xs.map((px) => projectLocal(px, py, theta, sp, vel, pr)));
+      for (let r = 0; r < ys.length - 1; r++) {
+        for (let c = 0; c < xs.length - 1; c++) {
+          const p00 = grid[r][c];
+          const p10 = grid[r][c + 1];
+          const p11 = grid[r + 1][c + 1];
+          const p01 = grid[r + 1][c];
+          const d0 = triDepth(nx, ny, p00, p10, p11);
+          const d1 = triDepth(nx, ny, p00, p11, p01);
+          const depth = d0 == null ? d1 : d1 == null ? d0 : Math.min(d0, d1);
+          if (depth != null && depth < bestDepth) {
+            bestDepth = depth;
+            best = i;
+          }
+        }
+      }
+    }
+    return best;
+  }
+
+  /**
+   * Shortest spin that parks card index on eyePhase — the same phase cardFacing
+   * scores — so the selected mesh is the largest card, not the previous index.
    */
   function spinTargetFor(index, spinNow) {
     const theta = (index / N) * Math.PI * 2;
@@ -580,7 +634,7 @@ export function mountPickRing(root, pickData) {
     shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
     shared.uScroll.value = progress;
 
-    // Scroll-hero (unpinned): argmax cardFacing — same eye phase as spinTargetFor.
+    // Scroll-hero (unpinned): argmax cardFacing, same phase as spinTargetFor.
     const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
     let best = 0;
     let bestFacing = -Infinity;
@@ -627,8 +681,8 @@ export function mountPickRing(root, pickData) {
 
   // Desktop: canvas / 名录 select only (bring to front + left sync). Detail via「查看作品 →」/ title link.
   /**
-   * Project ring phase to normalized canvas X.
-   * Hit-testing only. Phase is θ+spin, matching VERT's rotateY.
+   * Debug screen-X of a cabin center (state().sx). Clicks use pickIndexAt.
+   * Phase is θ+spin, matching VERT's rotateY.
    */
   function phaseScreenNX(phase, progress) {
     const R = 3;
@@ -656,14 +710,15 @@ export function mountPickRing(root, pickData) {
     return phaseScreenNX(theta + spin, progress);
   }
 
-  /** Map click on canvas to the visible card under the cursor (hit-test only). */
-  function pickIndexAtClientX(clientX) {
+  /** Map a canvas click to the visible card under the cursor (hit-test only). */
+  function pickIndexAtClient(clientX, clientY) {
     const rect = canvas.getBoundingClientRect();
     const nx = (clientX - rect.left) / Math.max(1, rect.width);
-    return pickIndexAtNX(nx);
+    const ny = (clientY - rect.top) / Math.max(1, rect.height);
+    return pickIndexAt(nx, ny);
   }
   canvas.addEventListener('click', (e) => {
-    select(pickIndexAtClientX(e.clientX));
+    select(pickIndexAtClient(e.clientX, e.clientY));
   });
   rowBtns.forEach((btn) => {
     btn.addEventListener('click', () => select(Number(btn.dataset.i)));
@@ -675,7 +730,7 @@ export function mountPickRing(root, pickData) {
 
   root.__pickRing = {
     select,
-    pickAt: pickIndexAtClientX,
+    pickAt: pickIndexAtClient,
     state: () => {
       const progress = shared.uScroll.value;
       const spin = liveSpin();
