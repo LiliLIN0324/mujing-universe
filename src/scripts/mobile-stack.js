@@ -180,7 +180,24 @@ export function mountMobileStack(root) {
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag;
     drag = null;
-    if (d.axis !== 'x') return;
+    // Tap (no horizontal drag): current card → detail; peek card → bring to front.
+    if (d.axis !== 'x') {
+      const dx = e.clientX - d.x0;
+      const dy = e.clientY - d.y0;
+      if (Math.hypot(dx, dy) < AXIS_SLOP) {
+        const hit = document.elementFromPoint(e.clientX, e.clientY);
+        const card = hit && hit.closest ? hit.closest('.m-card') : null;
+        const idx = card ? Number(card.dataset.i) : mod(Math.round(pos), N);
+        const cur = mod(Math.round(pos), N);
+        if (idx === cur) {
+          const href = data[cur] && data[cur].href;
+          if (href) location.href = href;
+        } else if (Number.isFinite(idx) && idx >= 0 && idx < N) {
+          goTo(idx);
+        }
+      }
+      return;
+    }
     const recent = d.samples.filter((s) => e.timeStamp - s.t < 100);
     const first = recent[0] || d.samples[0];
     const last = d.samples[d.samples.length - 1];
@@ -204,10 +221,7 @@ export function mountMobileStack(root) {
   stage.addEventListener('dragstart', (e) => e.preventDefault());
 
   // ---- list ----
-  rows.forEach((row) => {
-    const btn = row.querySelector('button');
-    if (btn) btn.addEventListener('click', () => goTo(Number(row.dataset.i)));
-  });
+  // Rows are <a href> → native navigation to detail. Only「全部作品」stays a button.
   if (allBtn) {
     const label = allBtn.querySelector('.t');
     allBtn.addEventListener('click', () => {
