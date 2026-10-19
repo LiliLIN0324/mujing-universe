@@ -439,6 +439,14 @@ export function mountPickRing(root, pickData) {
   watch.observe(root);
   if (motion.matches) root.classList.add('is-reduced');
 
+  // Click the WebGL ring (canvas): open the currently front-facing work.
+  // Layout copy/list keep pointer-events; canvas receives clicks in the ring area.
+  canvas.addEventListener('click', () => {
+    const i = front >= 0 ? front : 0;
+    const work = pickData[i];
+    if (work && work.href) location.href = work.href;
+  });
+
   syncRunway();
   resize();
   window.addEventListener('resize', () => {

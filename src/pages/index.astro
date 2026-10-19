@@ -99,7 +99,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     <ul class="m-list" id="m-list">
       {mobilePicks.map((w, i) => (
         <li class:list={['m-row', { on: i === 0 }]} data-i={i} hidden={i > 3}>
-          <button type="button"><span class="no">{w.no}</span><span class="t">{w.title}</span><span class="y">{w.year}</span></button>
+          <a href={w.href}><span class="no">{w.no}</span><span class="t">{w.title}</span><span class="y">{w.year}</span></a>
         </li>
       ))}
       <li class="m-row m-all"><button type="button" id="m-all" aria-expanded="false" aria-controls="m-list"><span class="t">全部作品</span><span class="y">{mobilePicks.length}</span></button></li>
@@ -136,10 +136,12 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     </div>
     <div class="pick-list-window">
       <ol class="pick-list" id="pick-list">
-        {picks.map((p, i) => (
-          <li class="pick-row">
-            <span class="row-title">{p.title}</span>
-            <span class="row-year">{p.year}</span>
+        {picks.map((p) => (
+          <li>
+            <a class="pick-row" href={p.href}>
+              <span class="row-title">{p.title}</span>
+              <span class="row-year">{p.year}</span>
+            </a>
           </li>
         ))}
       </ol>
@@ -381,7 +383,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   inset: 0;
   z-index: 0;
   display: block;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
 }
 .picks-layout {
   position: relative;
@@ -391,6 +394,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   column-gap: 48px;
   row-gap: 8px;
   align-items: start;
+  /* Let canvas receive clicks in the ring area; re-enable on copy/list. */
+  pointer-events: none;
 }
 .picks-copy {
   grid-column: 1;
@@ -398,6 +403,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   position: relative;
   z-index: 1;
   background: #F6F5F3;
+  pointer-events: auto;
 }
 .picks-label {
   position: absolute;
@@ -459,6 +465,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   position: relative;
   z-index: 2;
   background: #F6F5F3;
+  pointer-events: auto;
 }
 .pick-list {
   list-style: none;
@@ -481,7 +488,10 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   font-family: inherit;
   font-weight: 400;
   text-align: left;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
   user-select: none;
 }
 .row-title {
@@ -763,7 +773,9 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .m-feat [hidden] { display: none !important; }
   .m-list { list-style: none; margin: 22px 24px 0; padding: 0; border-top: 1px solid #e3dfd8; }
   .m-row { border-bottom: 1px solid #e3dfd8; }
-  .m-row button {
+  .m-row a { text-decoration: none; color: inherit; cursor: pointer; }
+  .m-row button,
+  .m-row a {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -783,7 +795,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .m-row .no { font-size: 11px; width: 18px; color: #b9b4ab; font-variant-numeric: tabular-nums; }
   .m-row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-row .y { font-size: 12px; }
-  .m-row.on button { color: #1a1a18; }
+  .m-row.on button,
+  .m-row.on a { color: #1a1a18; }
   .m-row.on .no { color: #b5432f; }
   .m-row.on .t { font-weight: 600; }
   .m-row.m-all { border-bottom: none; }
