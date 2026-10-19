@@ -292,10 +292,10 @@ header.top.top--home:focus-within {
 }
 .top--home .wordmark {
   color: #1a1a18;
-  font-family: "Cormorant SC", Palatino, "Palatino Linotype", "Songti SC", serif;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
   font-weight: 600;
   font-size: 20px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
   text-decoration: none;
 }
 .top--home nav { display: flex; align-items: center; gap: 32px; }

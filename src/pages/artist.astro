@@ -1,5 +1,5 @@
 ---
-import Base from '../layouts/Base.astro'; import artist from '../data/artist.json'; import { allWorks, LINES } from '../lib'; import portraits from '../data/portraits.json';
+import Base from '../layouts/Base.astro'; import Cooperate from '../components/Cooperate.astro'; import artist from '../data/artist.json'; import { allWorks, LINES } from '../lib'; import portraits from '../data/portraits.json';
 const ws = await allWorks();
 const skills=['城市气候与韧性','AI 辅助城市规划','机器学习与数据分析','空间统计与 GIS','React / Next.js','TypeScript','WebGL / Three.js','UI 设计系统'];
 // One random portrait per page load, picked by an inline script right after the <img> is parsed (before first paint).
@@ -24,7 +24,7 @@ const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
 
 <section class="wrap reveal"><p class="kicker cap">Awards · 荣誉与奖项</p><div class="awards">
 {artist.awards.map(a=><div><h3>{a.category.split(' · ')[0]}</h3><ul>{a.items.slice().sort((x,y)=>+y.year-+x.year).map(it=><li><span class="mono">{it.year}</span>{it.name}</li>)}</ul></div>)}</div></section>
-<section class="narrow endcap reveal"><a class="btn" href="/works/">浏览作品 →</a> <a class="btn solid" href="/contact/">经纪合作</a></section>
+<section class="narrow endcap reveal"><a class="btn" href="/works/">浏览作品 →</a><Cooperate /></section>
 <style>
 .ahero { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 5vw; padding-top: 20px; align-items: start; }
 .portrait {

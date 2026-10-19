@@ -8,7 +8,7 @@ const {
   home = false,
   navClass = '',
 } = Astro.props;
-const links = [['/works/', '作品'], ['/artist/', '艺术家']];
+const links = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
 // Every page uses the homepage 'Scendance Space' bar (header.top.top--home). `home` pages (homepage, work detail)
 // keep the auto-hide/overlay behaviour; all other pages add 'top--page': always visible, in flow, on the paper colour.
 const pageNav = navClass.split(' ').filter((c) => c && c !== 'top--unified').join(' ');
@@ -45,20 +45,18 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 <a class="skip" href="#content">跳到主要内容</a>
 {home ? (
 <header class:list={["top top--home", navClass]} id="home-nav" data-autohide>
-  <a class="wordmark" href="/" translate="no">Scendance Space</a>
+  <a class="wordmark" href="/" translate="no">幕景宇宙</a>
   <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
   <nav id="home-menu">
     {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
-    <a class="pill" href="/contact/">合作</a>
   </nav>
 </header>
 ) : (
 <header class:list={["top top--home top--page", pageNav]} id="home-nav">
-  <a class="wordmark" href="/" translate="no">Scendance Space</a>
+  <a class="wordmark" href="/" translate="no">幕景宇宙</a>
   <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
   <nav id="home-menu">
     {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
-    <a class:list={['pill', active === '/contact/' && 'on']} href="/contact/">合作</a>
   </nav>
 </header>
 )}
