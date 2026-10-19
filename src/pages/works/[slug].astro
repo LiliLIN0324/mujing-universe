@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Cooperate from '../../components/Cooperate.astro';
 import { allWorks, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
@@ -87,6 +88,7 @@ const backNote = featured ? '精选目录' : '作品目录';
       </a>
       <a class="wd-back-m" href={backHref}>{backText}<span>{backNote}</span></a>
     </nav>
+    <Cooperate />
   </section>
 </div>
 {audio && <video id="wd-audio" class="wd-sound" data-src={audio} preload="none" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" aria-hidden="true"></video>}

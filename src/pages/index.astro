@@ -64,6 +64,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 </section>
 <div class="hero-info">
   <div class="hero-copy">
+    <p class="by"><a href="/artist/">林丽丽</a><span lang="en">Lili Lin</span></p>
+    <p class="stance">以艺术家林丽丽为核心的 AIGC 文化艺术工作室</p>
     <h1>当代西湖繁胜全景图</h1>
     <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
     <p class="meta">古画新绘　·　进行中　·　2026</p>
@@ -168,7 +170,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 .first-screen {
   --hh: max(420px, min(660px, 73.4vh));
   position: relative;
-  height: max(100vh, calc(var(--hh) + 240px));
+  height: max(100vh, calc(var(--hh) + 340px));
   background: #fff;
   color: #1a1a18;
   font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
@@ -265,6 +267,31 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   justify-content: space-between;
   align-items: center;
   gap: 32px;
+}
+.hero-copy .by {
+  margin: 0;
+  font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: #1a1a18;
+}
+.hero-copy .by a { color: inherit; text-decoration: none; }
+.hero-copy .by a:hover { opacity: 0.7; }
+.hero-copy .by span {
+  margin-left: 12px;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #3d3a35;
+}
+.hero-copy .stance {
+  margin: 8px 0 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #3d3a35;
 }
 .hero-copy h1 {
   margin: 0;
@@ -629,7 +656,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   font-weight: inherit;
   font-variant-numeric: tabular-nums;
 }
-.cta { text-align: center; margin-top: 96px; padding-top: 48px; }
+.cta { text-align: center; margin-top: 0; padding-top: 48px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 860px) {
@@ -745,6 +772,9 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     display: block;
     text-align: center;
   }
+  .hero-copy .by { font-size: 28px; }
+  .hero-copy .by span { font-size: 14px; }
+  .hero-copy .stance { margin-bottom: 12px; font-size: 14px; }
   .hero-copy h1 {
     font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
     font-weight: 600;
