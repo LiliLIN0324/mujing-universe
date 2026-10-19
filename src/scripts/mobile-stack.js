@@ -35,6 +35,7 @@ export function mountMobileStack(root) {
     facts: root.querySelector('#m-facts'),
     role: root.querySelector('#m-role'),
     tech: root.querySelector('#m-tech'),
+    view: root.querySelector('#m-view'),
   };
   const data = JSON.parse((dataEl && dataEl.textContent) || '[]');
   const N = Math.min(cards.length, data.length);
@@ -93,7 +94,11 @@ export function mountMobileStack(root) {
     if (el.count) el.count.textContent = `${pad(idx + 1)} / ${pad(N)}`;
     segs.forEach((seg, i) => seg.classList.toggle('on', i === idx));
     cards.forEach((card, i) => card.setAttribute('aria-hidden', i === idx ? 'false' : 'true'));
-    if (el.title) el.title.textContent = w.title;
+    if (el.title) {
+      el.title.textContent = w.title;
+      if (w.href) el.title.setAttribute('href', w.href);
+    }
+    if (el.view && w.href) el.view.setAttribute('href', w.href);
     if (el.meta) { el.meta.textContent = w.meta || ''; el.meta.hidden = !w.meta; }
     if (el.body) { el.body.textContent = w.body || ''; el.body.hidden = !w.body; }
     const role = (w.role || []).filter(Boolean);
@@ -180,7 +185,7 @@ export function mountMobileStack(root) {
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag;
     drag = null;
-    // Tap (no horizontal drag): current card → detail; peek card → bring to front.
+    // Tap (no horizontal drag): peek/edge card → bring to front; current card stays (detail via title / 查看).
     if (d.axis !== 'x') {
       const dx = e.clientX - d.x0;
       const dy = e.clientY - d.y0;
@@ -189,10 +194,7 @@ export function mountMobileStack(root) {
         const card = hit && hit.closest ? hit.closest('.m-card') : null;
         const idx = card ? Number(card.dataset.i) : mod(Math.round(pos), N);
         const cur = mod(Math.round(pos), N);
-        if (idx === cur) {
-          const href = data[cur] && data[cur].href;
-          if (href) location.href = href;
-        } else if (Number.isFinite(idx) && idx >= 0 && idx < N) {
+        if (Number.isFinite(idx) && idx >= 0 && idx < N && idx !== cur) {
           goTo(idx);
         }
       }
@@ -221,7 +223,12 @@ export function mountMobileStack(root) {
   stage.addEventListener('dragstart', (e) => e.preventDefault());
 
   // ---- list ----
-  // Rows are <a href> → native navigation to detail. Only「全部作品」stays a button.
+  // Rows select/bring-to-front only. Detail via title link or「查看作品 →」.
+  rows.forEach((row) => {
+    const btn = row.querySelector('button');
+    if (!btn || btn.id === 'm-all') return;
+    btn.addEventListener('click', () => goTo(Number(row.dataset.i)));
+  });
   if (allBtn) {
     const label = allBtn.querySelector('.t');
     allBtn.addEventListener('click', () => {

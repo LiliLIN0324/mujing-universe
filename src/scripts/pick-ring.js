@@ -359,11 +359,91 @@ export function mountPickRing(root, pickData) {
     applyCardScale();
   }
 
+  const titleLink = introEl && introEl.querySelector('[data-role="title-link"]');
+  const metaEl = introEl && introEl.querySelector('[data-role="meta"]');
+  const tagsEl = introEl && introEl.querySelector('[data-role="tags"]');
+  const bodyEl = introEl && introEl.querySelector('[data-role="body"]');
+  const viewEl = introEl && introEl.querySelector('[data-role="view"]');
+  const rowEls = [...root.querySelectorAll('.pick-row')];
+  const rowBtns = [...root.querySelectorAll('.pick-row-btn')];
+
+  let pinned = -1;
+  let pinScroll = 0;
+  let spinAnim = null; // { from, to, start }
+
+  function syncList(index) {
+    rowEls.forEach((row, i) => {
+      const on = i === index;
+      row.classList.toggle('is-active', on);
+      const btn = row.querySelector('.pick-row-btn');
+      if (btn) {
+        if (on) btn.setAttribute('aria-current', 'true');
+        else btn.removeAttribute('aria-current');
+      }
+    });
+  }
+
+  function fillCopy(work) {
+    if (!work) return;
+    if (titleLink) {
+      titleLink.textContent = work.title || '';
+      if (work.href) titleLink.setAttribute('href', work.href);
+    }
+    if (metaEl) {
+      metaEl.textContent = work.meta || '';
+      metaEl.hidden = !work.meta;
+    }
+    if (tagsEl) {
+      const tags = Array.isArray(work.tags) ? work.tags.filter(Boolean) : [];
+      // Preserve Astro scoped attr so pill styles apply to JS-built <li>s.
+      const scopeAttrs = {};
+      for (const attr of tagsEl.attributes) {
+        if (attr.name.startsWith('data-astro-cid')) scopeAttrs[attr.name] = attr.value;
+      }
+      tagsEl.replaceChildren(...tags.map((t) => {
+        const li = document.createElement('li');
+        li.textContent = t;
+        for (const [k, v] of Object.entries(scopeAttrs)) li.setAttribute(k, v);
+        return li;
+      }));
+      tagsEl.hidden = tags.length === 0;
+    }
+    if (bodyEl) {
+      bodyEl.textContent = work.body || work.intro || '';
+      bodyEl.hidden = !(work.body || work.intro);
+    }
+    if (viewEl && work.href) viewEl.setAttribute('href', work.href);
+  }
+
   function setFront(index) {
     if (index === front) return;
     front = index;
     const work = pickData[index];
-    if (introEl && work) introEl.textContent = work.intro;
+    fillCopy(work);
+    syncList(index);
+  }
+
+  /** Shortest spin (radians) that puts card index at facing peak. */
+  function spinTargetFor(index, spinNow) {
+    const theta = (index / N) * Math.PI * 2;
+    return spinNow + wrapPi(-theta - spinNow);
+  }
+
+  function liveSpin() {
+    return (motion.matches ? 0 : uTime * 0.12) + (motion.matches ? 0 : smoothedDelta);
+  }
+
+  /** Select item: sync left copy + list; rotate ring so card faces front. No navigate. */
+  function select(index) {
+    if (!Number.isFinite(index) || index < 0 || index >= pickData.length) return;
+    pinned = index;
+    pinScroll = scrollTarget;
+    if (!motion.matches && index < meshes.length) {
+      const now = liveSpin();
+      const to = spinTargetFor(index, now);
+      spinAnim = { from: now, to, start: performance.now() };
+    }
+    setFront(index);
   }
 
   function frame(now) {
@@ -392,8 +472,25 @@ export function mountPickRing(root, pickData) {
     smoothedDelta = lerp(smoothedDelta, motion.matches ? 0 : delta, DELTA_LERP);
     lastProgress = progress;
 
-    if (inView && !motion.matches) {
+    // Scroll after a selection releases the pin so idle facing can continue.
+    if (pinned >= 0 && Math.abs(scrollTarget - pinScroll) > 1) {
+      pinned = -1;
+      spinAnim = null;
+    }
+
+    if (spinAnim && !motion.matches) {
+      const t = Math.min(1, (now - spinAnim.start) / 450);
+      const e = 1 - Math.pow(1 - t, 3);
+      const spinWant = spinAnim.from + (spinAnim.to - spinAnim.from) * e;
+      // Hold velocity near 0 while tweening; map desired spin onto uTime.
+      smoothedDelta = lerp(smoothedDelta, 0, 0.35);
+      uTime = (spinWant - smoothedDelta) / 0.12;
+      if (t >= 1) spinAnim = null;
+    } else if (inView && !motion.matches && pinned < 0) {
       uTime += 0.009 * dt + 15 * smoothedDelta;
+    } else if (inView && !motion.matches && pinned >= 0) {
+      // Soft hold: only absorb scroll velocity while pinned.
+      uTime += 15 * smoothedDelta;
     }
 
     shared.uTime.value = motion.matches ? 0 : uTime;
@@ -424,7 +521,7 @@ export function mountPickRing(root, pickData) {
     if (listEl) listEl.style.transform = `translateY(${scrollCurrent}px)`;
     root.dataset.progress = progress.toFixed(3);
     root.classList.toggle('is-end', progress > 0.92);
-    setFront(best);
+    setFront(pinned >= 0 ? pinned : best);
 
     renderer.render({ scene, camera, frustumCull: false });
     requestAnimationFrame(frame);
@@ -439,21 +536,16 @@ export function mountPickRing(root, pickData) {
   watch.observe(root);
   if (motion.matches) root.classList.add('is-reduced');
 
-  // Desktop nav: current ring card (canvas) + right-hand list → work detail.
-  // List rows are <a href>, but we still assign location.href so navigation is
-  // explicit and cannot be swallowed by scroll/transform quirks.
-  function goWork(index) {
-    const work = pickData[index];
-    if (work && work.href) location.href = work.href;
-  }
-  canvas.addEventListener('click', () => goWork(front >= 0 ? front : 0));
-  const rowEls = [...root.querySelectorAll('.pick-row')];
-  rowEls.forEach((row, i) => {
-    row.addEventListener('click', (e) => {
-      e.preventDefault();
-      goWork(i);
-    });
+  // Desktop: canvas / 名录 select only (bring to front + left sync). Detail via「查看作品 →」/ title link.
+  canvas.addEventListener('click', () => {
+    select(front >= 0 ? front : 0);
   });
+  rowBtns.forEach((btn) => {
+    btn.addEventListener('click', () => select(Number(btn.dataset.i)));
+  });
+  listWindow?.addEventListener('scroll', () => { listWindow.scrollTop = 0; });
+
+  root.__pickRing = { select, state: () => ({ front, pinned, progress: shared.uScroll.value }) };
 
   syncRunway();
   resize();
