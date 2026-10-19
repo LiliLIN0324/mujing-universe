@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { allWorks, pickBody, pickIntro, pickMeta, pickTech, workCovers, workFallback } from '../lib';
+import { allWorks, pickBody, pickDeskBody, pickIntro, pickSummary, pickTypeYear, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
@@ -11,6 +11,9 @@ const picks = ws.map((w) => ({
   year: w.yearNum || w.year,
   href: `/works/${w.slug}/`,
   intro: pickIntro(w),
+  summary: pickSummary(w),
+  meta: pickTypeYear(w),
+  body: pickDeskBody(w),
   stills: workCovers(w),
   fallback: workFallback(w),
 }));
@@ -23,10 +26,8 @@ const mobilePicks = ws.slice(0, 10).map((w, i) => ({
   title: w.title,
   year: w.yearNum || w.year,
   href: `/works/${w.slug}/`,
-  meta: pickMeta(w),
+  meta: pickTypeYear(w),
   body: pickBody(w),
-  role: [] as string[],
-  tech: pickTech(w),
   cover: `/ring/${i}.jpg`,
   fallback: workFallback(w) || '/ring/paper.jpg',
 }));
@@ -88,18 +89,15 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     </div>
     <div class="m-bar" id="m-bar" aria-hidden="true">{mobilePicks.map((_, i) => <i class={i === 0 ? 'on' : undefined}></i>)}</div>
     <div class="m-info" aria-live="polite">
-      <h2 class="m-title" id="m-title">{mLead.title}</h2>
+      <h2 class="m-title"><a class="m-title-link" id="m-title" href={mLead.href}>{mLead.title}</a></h2>
       <div class="m-meta" id="m-meta" hidden={!mLead.meta}>{mLead.meta}</div>
       <p class="m-body" id="m-body" hidden={!mLead.body}>{mLead.body}</p>
-      <dl class="m-facts" id="m-facts" hidden={!mLead.role.length && !mLead.tech.length}>
-        <div id="m-role" hidden={!mLead.role.length}><dt>角色</dt><dd>{mLead.role.join(' · ')}</dd></div>
-        <div id="m-tech" hidden={!mLead.tech.length}><dt>技术</dt><dd>{mLead.tech.join(' · ')}</dd></div>
-      </dl>
+      <a class="m-view" id="m-view" href={mLead.href}>查看作品 <span aria-hidden="true">→</span></a>
     </div>
     <ul class="m-list" id="m-list">
       {mobilePicks.map((w, i) => (
         <li class:list={['m-row', { on: i === 0 }]} data-i={i} hidden={i > 3}>
-          <a href={w.href}><span class="no">{w.no}</span><span class="t">{w.title}</span><span class="y">{w.year}</span></a>
+          <button type="button" data-i={i}><span class="no">{w.no}</span><span class="t">{w.title}</span><span class="y">{w.year}</span></button>
         </li>
       ))}
       <li class="m-row m-all"><button type="button" id="m-all" aria-expanded="false" aria-controls="m-list"><span class="t">全部作品</span><span class="y">{mobilePicks.length}</span></button></li>
@@ -111,7 +109,15 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   <div class="picks-layout">
     <div class="picks-copy">
       <h2 class="picks-label">精选</h2>
-      <p class="picks-intro" id="pick-intro">{leadPick.intro}</p>
+      <div class="picks-intro" id="pick-intro" aria-live="polite">
+        <h3 class="pick-intro-title">
+          <a class="pick-intro-title-link" data-role="title-link" href={leadPick.href}>{leadPick.title}</a>
+        </h3>
+        <p class="pick-intro-summary" data-role="summary" hidden={!leadPick.summary}>{leadPick.summary}</p>
+        <p class="pick-intro-meta" data-role="meta" hidden={!leadPick.meta}>{leadPick.meta}</p>
+        <p class="pick-intro-body" data-role="body" hidden={!leadPick.body}>{leadPick.body}</p>
+        <a class="pick-intro-view" data-role="view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
+      </div>
     </div>
     <div class="about__gallery" id="pick-stage">
       <div class="about__gallery__wrapper" id="pick-gallery">
@@ -136,12 +142,12 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     </div>
     <div class="pick-list-window">
       <ol class="pick-list" id="pick-list">
-        {picks.map((p) => (
-          <li>
-            <a class="pick-row" href={p.href}>
+        {picks.map((p, i) => (
+          <li class:list={['pick-row', { 'is-active': i === 0 }]}>
+            <button class="pick-row-btn" type="button" data-i={i} aria-current={i === 0 ? 'true' : undefined}>
               <span class="row-title">{p.title}</span>
               <span class="row-year">{p.year}</span>
-            </a>
+            </button>
           </li>
         ))}
       </ol>
@@ -390,7 +396,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(280px, 1.05fr) minmax(280px, 0.95fr);
+  grid-template-columns: minmax(340px, 1.25fr) minmax(260px, 0.85fr);
   column-gap: 48px;
   row-gap: 8px;
   align-items: start;
@@ -417,14 +423,79 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   border: 0;
 }
 .picks-intro {
-  width: min(380px, 32vw);
+  width: min(480px, 40vw);
   margin: 0;
   color: #1A1A1C;
   font-family: inherit;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 1.65;
 }
+.picks-intro[hidden] { display: none !important; }
+.pick-intro-title {
+  margin: 0;
+  color: #1A1A1C;
+  font-family: inherit;
+  font-size: clamp(28px, 2.2vw, 32px);
+  font-weight: 600;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.pick-intro-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+.pick-intro-title-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+/* 2. one-line summary — muted vs body */
+.pick-intro-summary {
+  margin: 12px 0 0;
+  max-width: 28em;
+  color: #6B6B6B;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 3. meta: 类型 · 年份 only */
+.pick-intro-meta {
+  margin: 10px 0 0;
+  color: #8A8A8A;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+}
+/* 4. body — richer copy, ~2–3 lines */
+.pick-intro-body {
+  margin: 14px 0 0;
+  max-width: 28em;
+  color: #3A3A3C;
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+}
+/* 5. view link */
+.pick-intro-view {
+  display: inline-block;
+  margin-top: 18px;
+  color: #1A1A1C;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(26, 26, 28, 0.55);
+  padding-bottom: 3px;
+}
+.pick-intro-view:hover { border-bottom-color: #1A1A1C; }
+.pick-intro-view span { margin-left: 4px; font-family: Inter, system-ui, sans-serif; }
+.picks-intro [hidden] { display: none !important; }
 .about__gallery {
   position: absolute;
   width: 1px;
@@ -474,6 +545,12 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   will-change: transform;
 }
 .pick-row {
+  margin: 0;
+  padding: 0;
+  border-bottom: 1px solid rgba(26, 26, 28, 0.1);
+  list-style: none;
+}
+.pick-row-btn {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -482,18 +559,22 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   width: 100%;
   height: 48px;
   padding: 0;
-  border-bottom: 1px solid rgba(26, 26, 28, 0.1);
+  border: 0;
   background: transparent;
-  color: #1A1A1C;
+  color: #6B6B6B;
   font-family: inherit;
   font-weight: 400;
+  font-size: inherit;
   text-align: left;
   pointer-events: auto;
   cursor: pointer;
-  text-decoration: none;
-  color: inherit;
   user-select: none;
+  -webkit-tap-highlight-color: transparent;
 }
+.pick-row-btn:hover,
+.pick-row.is-active .pick-row-btn { color: #1A1A1C; }
+.pick-row.is-active .row-title { font-weight: 600; }
+.pick-row-btn:focus-visible { outline: 1px solid rgba(26, 26, 28, 0.35); outline-offset: -1px; }
 .row-title {
   min-width: 0;
   overflow: hidden;
@@ -537,7 +618,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     height: auto;
     aspect-ratio: 16 / 9;
   }
-  .picks-intro { width: min(380px, 100%); }
+  .picks-intro { width: min(480px, 100%); }
   .pick-list-window { grid-column: 1; grid-row: 3; height: auto; max-height: none; overflow: hidden; }
 }
 @media (max-width: 760px) {
@@ -765,17 +846,26 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     line-height: 1.25;
     letter-spacing: 0;
   }
+  .m-title-link { color: inherit; text-decoration: none; }
+  .m-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .m-meta { margin-top: 8px; font-size: 12px; line-height: normal; color: #9a958c; letter-spacing: 0.08em; }
   .m-body { margin: 12px 0 0; font-size: 14px; line-height: 1.75; color: #4a463f; }
-  .m-facts { margin: 14px 0 0; display: flex; gap: 28px; font-size: 12px; line-height: 1.5; }
-  .m-facts dt { color: #9a958c; letter-spacing: 0.08em; margin-bottom: 3px; }
-  .m-facts dd { margin: 0; color: #3d3a35; }
+  .m-view {
+    display: inline-block;
+    margin-top: 16px;
+    color: #1a1a18;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(26, 26, 24, 0.5);
+    padding-bottom: 2px;
+  }
+  .m-view span { margin-left: 4px; }
   .m-feat [hidden] { display: none !important; }
   .m-list { list-style: none; margin: 22px 24px 0; padding: 0; border-top: 1px solid #e3dfd8; }
   .m-row { border-bottom: 1px solid #e3dfd8; }
-  .m-row a { text-decoration: none; color: inherit; cursor: pointer; }
-  .m-row button,
-  .m-row a {
+  .m-row button {
     display: flex;
     align-items: center;
     gap: 14px;
@@ -795,8 +885,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .m-row .no { font-size: 11px; width: 18px; color: #b9b4ab; font-variant-numeric: tabular-nums; }
   .m-row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .m-row .y { font-size: 12px; }
-  .m-row.on button,
-  .m-row.on a { color: #1a1a18; }
+  .m-row.on button { color: #1a1a18; }
   .m-row.on .no { color: #b5432f; }
   .m-row.on .t { font-weight: 600; }
   .m-row.m-all { border-bottom: none; }
