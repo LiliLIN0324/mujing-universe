@@ -439,6 +439,22 @@ export function mountPickRing(root, pickData) {
   watch.observe(root);
   if (motion.matches) root.classList.add('is-reduced');
 
+  // Desktop nav: current ring card (canvas) + right-hand list → work detail.
+  // List rows are <a href>, but we still assign location.href so navigation is
+  // explicit and cannot be swallowed by scroll/transform quirks.
+  function goWork(index) {
+    const work = pickData[index];
+    if (work && work.href) location.href = work.href;
+  }
+  canvas.addEventListener('click', () => goWork(front >= 0 ? front : 0));
+  const rowEls = [...root.querySelectorAll('.pick-row')];
+  rowEls.forEach((row, i) => {
+    row.addEventListener('click', (e) => {
+      e.preventDefault();
+      goWork(i);
+    });
+  });
+
   syncRunway();
   resize();
   window.addEventListener('resize', () => {
