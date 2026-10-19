@@ -5,7 +5,8 @@
   },
   {
     "slug": "litflow",
-    "file": "1.jpg"
+    "file": "1.jpg",
+    "note": "fig/litflow/01.png (was AnyReal duplicate)"
   },
   {
     "slug": "riffle-ai-game-generation-tool",
@@ -23,12 +24,12 @@
   {
     "slug": "genshot-AI-video-generation-tool",
     "file": "5.jpg",
-    "note": "qa-scendance/b-part2-resting.png landscape stand-in (genshot washed)"
+    "note": "fig/genshot/01.jpg (replaced riffle stand-in)"
   },
   {
     "slug": "genstyle",
     "file": "6.jpg",
-    "note": "genstyle02"
+    "note": "fig/genstyle/01.jpg"
   },
   {
     "slug": "anyreal",
@@ -37,7 +38,7 @@
   {
     "slug": "dragon-diffussion",
     "file": "8.jpg",
-    "note": "riffle/02.jpg landscape (dragon 01 washed)"
+    "note": "fig/dragon-diffusion/01.jpg (replaced riffle landscape)"
   },
   {
     "slug": "early-campus-experience",
