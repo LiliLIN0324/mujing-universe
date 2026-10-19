@@ -475,35 +475,31 @@ export function mountPickRing(root, pickData) {
       smoothedDelta = lerp(smoothedDelta, 0, 0.35);
       uTime = (spinWant - smoothedDelta) / 0.12;
       if (t >= 1) spinAnim = null;
-    } else if (inView && !motion.matches && pinned < 0) {
+    } else if (pinned >= 0 && !motion.matches) {
+      // Hard hold: keep selected card geometrically front; idle must not drift away.
+      smoothedDelta = lerp(smoothedDelta, 0, 0.4);
+      const want = spinTargetFor(pinned, liveSpin());
+      uTime = (want - smoothedDelta) / 0.12;
+    } else if (inView && !motion.matches) {
       uTime += 0.009 * dt + 15 * smoothedDelta;
-    } else if (inView && !motion.matches && pinned >= 0) {
-      // Soft hold: only absorb scroll velocity while pinned.
-      uTime += 15 * smoothedDelta;
     }
 
     shared.uTime.value = motion.matches ? 0 : uTime;
     shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
     shared.uScroll.value = progress;
 
-    // Facing for intro: idle spin path only (no uGlobalRotation / drag)
+    // Facing for intro/list: pure geometric front (matches what the eye sees).
+    // coverScore wash stays in the fragment shader — do not bias which index is "front".
     const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
-    const ranked = [];
+    let best = 0;
+    let bestFacing = -Infinity;
     for (let i = 0; i < meshes.length; i++) {
       const theta = (i / N) * Math.PI * 2;
-      let facing = Math.cos(wrapPi(theta + spin));
-      const m = meshes[i];
-      if (m.isPaper || m.coverScore < -20) facing -= 2.0;
-      else facing += Math.min(0.45, Math.max(0, m.coverScore) * 0.005);
-      ranked.push({ i, facing });
-    }
-    ranked.sort((a, b) => b.facing - a.facing);
-    const best = ranked[0]?.i ?? 0;
-    // End: only top-2 non-wash get focus=1 → 严格 1–2 近卡
-    const keep = ranked.filter((r) => !(meshes[r.i].isPaper || meshes[r.i].coverScore < -20));
-    // Intro highlight can prefer top-3; do NOT cull others to a single near card
-    const focusIdx = new Set(keep.slice(0, 3).map((r) => r.i));
-    for (let i = 0; i < meshes.length; i++) {
+      const facing = Math.cos(wrapPi(theta + spin));
+      if (facing > bestFacing) {
+        bestFacing = facing;
+        best = i;
+      }
       meshes[i].uniforms.uFocus.value = 1; // render all; wash handled in frag
     }
 
