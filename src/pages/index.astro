@@ -47,13 +47,13 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
       id="scroll-video"
       class="hero-video"
       muted
-      autoplay
       playsinline
-      loop
-      preload="auto"
+      webkit-playsinline
+      x5-playsinline
+      x5-video-player-type="h5"
+      preload="none"
       disablepictureinpicture
       referrerpolicy="no-referrer"
-      src={SCROLL_VIDEO}
       data-src={SCROLL_VIDEO}
       aria-hidden="true"
     ></video>
@@ -675,7 +675,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 @media (max-width: 768px) {
   .first-screen {
     height: 100vh;
-    height: max(100svh, 844px);
+    height: 100svh;
+    height: 100dvh;
     background: #fff;
   }
   .hero {
@@ -960,8 +961,6 @@ const hero = document.getElementById('scroll-hero');
 const video = document.getElementById('scroll-video');
 const listen = document.getElementById('snd');
 const listenLabel = listen.querySelector('.lb');
-const motion = matchMedia('(prefers-reduced-motion: reduce)');
-// ≤768px: the painting player in scripts/mobile-hero.js owns the button and the video.
 const mobileHeroMq = matchMedia('(max-width: 768px)');
 const heroOnMobile = () => mobileHeroMq.matches;
 let listening = false;
@@ -1008,7 +1007,7 @@ function attachSource() {
   video.playsInline = true;
   video.autoplay = true;
   video.loop = true;
-  video.preload = 'auto';
+  video.preload = 'none';
   if (!listening) {
     video.muted = true;
     video.defaultMuted = true;
@@ -1016,16 +1015,6 @@ function attachSource() {
   }
   if (video.getAttribute('src') !== src) video.src = src;
   return true;
-}
-
-function startVideo() {
-  if (!attachSource()) { failSilent(); return; }
-  const attempt = video.play();
-  if (attempt) attempt.catch((err) => {
-    if (listening) return;
-    if (err && err.name === 'NotAllowedError') return;
-    if (video.error) failSilent();
-  });
 }
 
 video.addEventListener('playing', () => {
@@ -1051,20 +1040,6 @@ listen.addEventListener('click', () => {
     if (video.error) failSilent();
   });
 });
-if (motion.addEventListener) motion.addEventListener('change', () => {
-  if (heroOnMobile()) return;
-  if (!motion.matches) startVideo();
-});
-if (!heroOnMobile()) {
-  startVideo();
-} else {
-  const toDesktop = () => {
-    if (heroOnMobile()) return;
-    mobileHeroMq.removeEventListener?.('change', toDesktop);
-    startVideo();
-  };
-  mobileHeroMq.addEventListener?.('change', toDesktop);
-}
 </script>
 <script>
 // Homepage auto-hide nav + SCROLL cue (layout only; no hero media logic here).

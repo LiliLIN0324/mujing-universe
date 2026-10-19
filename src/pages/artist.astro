@@ -12,8 +12,8 @@ const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
 <section class="wrap ahero"><div class="portrait"><img id="apimg" class="pimg" alt="林丽丽 肖像" width="900" height="1200" decoding="async" fetchpriority="high" /><script is:inline set:html={pickJs}></script><span class="serif">林<br/>丽<br/>丽</span></div>
 <div><p class="kicker cap">Artist · 主理人</p><h1>林丽丽 <small>Lili Lin</small></h1>
 <p class="lead">首尔大学规划与 AI 硕士，建筑学出身。用设计和代码，把城市、AI 与三维做成可看、可交互的作品。</p>
-<p class="links"><a href="https://www.instagram.com/lililin_portfolio/" target="_blank" rel="noopener">Instagram</a><span aria-hidden="true">·</span><a href="https://lililin0324.github.io/" target="_blank" rel="noopener">个人站</a><span aria-hidden="true">·</span><a href="https://github.com/LiliLIN0324" target="_blank" rel="noopener">GitHub</a></p>
-<div class="stats">{[[ws.length-1,'件已收录作品'],[artist.talks.length,'场国际会议报告'],[cities.size,'座城市'],[artist.awards.reduce((n,a)=>n+a.items.length,0),'项荣誉与奖项']].map(([n,l])=><div><span class="serif">{n}</span><span class="cap">{l}</span></div>)}</div></div></section>
+<p class="links"><a href="https://www.instagram.com/lililin_portfolio/" target="_blank" rel="noopener noreferrer">Instagram</a><span aria-hidden="true">·</span><a href="https://lililin0324.github.io/" target="_blank" rel="noopener noreferrer">个人站</a><span aria-hidden="true">·</span><a href="https://github.com/LiliLIN0324" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+<div class="stats">{[[ws.length,'件已收录作品'],[artist.talks.length,'场国际会议报告'],[cities.size,'座城市'],[artist.awards.reduce((n,a)=>n+a.items.length,0),'项荣誉与奖项']].map(([n,l])=><div><span class="serif">{n}</span><span class="cap">{l}</span></div>)}</div></div></section>
 
 <section class="wrap two reveal"><div><p class="kicker cap">Education · 教育</p>
 <ul class="list"><li><span class="serif">首尔大学</span><span>城市与区域规划（硕士）</span></li><li><span class="serif">华中科技大学</span><span>建筑学（本科）</span></li></ul></div>

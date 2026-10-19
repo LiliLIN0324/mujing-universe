@@ -21,19 +21,57 @@
   font-display: swap;
   src: url("/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2") format("woff2");
 }
+/* Wordmark only: latin subset, so the name does not wait on fonts.googleapis.com. */
+@font-face {
+  font-family: "Cormorant SC";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/CormorantSC-600-wordmark.woff2") format("woff2");
+  unicode-range: U+0020, U+0053, U+0061, U+0063-0065, U+006E, U+0070;
+}
+/* Map the old Google family names onto fonts already on Chinese phones. */
+@font-face {
+  font-family: "Noto Sans SC";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("PingFang SC"), local("Noto Sans CJK SC"), local("Microsoft YaHei"), local("Noto Sans SC");
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("Songti SC"), local("STSong"), local("SimSun"), local("Noto Serif SC");
+}
+@font-face {
+  font-family: "Noto Serif CJK SC";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("Noto Serif CJK SC"), local("Source Han Serif SC"), local("Songti SC");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("Inter"), local("Inter Regular");
+}
 :root {
   --bg: #F6F5F3;
   --bg2: #EFEDE9;
   --paper: #FFFFFF;
   --ink: #1A1A1C;
   --ink2: #6B6B6B;
-  --muted: #8A8A8A;
+  --muted: #6A655F;
   --rule: #1A1A1C14;
   --accent: #B23A2A;
   --cta-bg: #1A1A1C;
   --cta-fg: #F6F5F3;
   --radius: 20px;
-  --sans: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  --sans: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
   --en: Inter, -apple-system, system-ui, sans-serif;
   --ivory: var(--ink);
   --ivory-2: var(--ink2);
@@ -47,12 +85,40 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+@media (max-width: 768px) {
+  html { scroll-behavior: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+a, button { touch-action: manipulation; }
+.skip {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+.skip:focus { transform: none; }
 body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
   font-weight: 400;
   font-size: 17px;
   line-height: 1.7;
@@ -60,7 +126,7 @@ body {
 }
 img { max-width: 100%; }
 h1, h2, h3, .serif {
-  font-family: "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
   font-weight: 600;
   letter-spacing: -0.03em;
   color: var(--ink);
@@ -226,7 +292,7 @@ header.top.top--home:focus-within {
 }
 .top--home .wordmark {
   color: #1a1a18;
-  font-family: "Cormorant SC", serif;
+  font-family: "Cormorant SC", Palatino, "Palatino Linotype", "Songti SC", serif;
   font-weight: 600;
   font-size: 20px;
   letter-spacing: 0.16em;
@@ -319,7 +385,10 @@ header.top.top--home:focus-within {
   .top--home.is-menu-open nav { display: flex; }
   .top--home nav a,
   .top--home nav a.pill {
-    padding: 11px 18px;
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 12px 18px;
     background: none;
     color: #1a1a18;
     border-radius: 0;
