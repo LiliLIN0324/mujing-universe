@@ -439,12 +439,20 @@ export function mountPickRing(root, pickData) {
   watch.observe(root);
   if (motion.matches) root.classList.add('is-reduced');
 
-  // Click the WebGL ring (canvas): open the currently front-facing work.
-  // Layout copy/list keep pointer-events; canvas receives clicks in the ring area.
-  canvas.addEventListener('click', () => {
-    const i = front >= 0 ? front : 0;
-    const work = pickData[i];
+  // Desktop nav: current ring card (canvas) + right-hand list → work detail.
+  // List rows are <a href>, but we still assign location.href so navigation is
+  // explicit and cannot be swallowed by scroll/transform quirks.
+  function goWork(index) {
+    const work = pickData[index];
     if (work && work.href) location.href = work.href;
+  }
+  canvas.addEventListener('click', () => goWork(front >= 0 ? front : 0));
+  const rowEls = [...root.querySelectorAll('.pick-row')];
+  rowEls.forEach((row, i) => {
+    row.addEventListener('click', (e) => {
+      e.preventDefault();
+      goWork(i);
+    });
   });
 
   syncRunway();
