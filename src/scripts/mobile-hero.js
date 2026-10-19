@@ -99,10 +99,20 @@ export function mountMobileHero() {
     try { video.currentTime = progress * video.duration; } catch (_) {}
   }
 
+  function ensureSrc() {
+    if (!video) return false;
+    const src = video.dataset.src;
+    if (!src) return false;
+    if (video.getAttribute('src') !== src) video.src = src;
+    video.playsInline = true;
+    return true;
+  }
+
   function play() {
     if (progress >= 0.999) progress = 0;
     playing = true;
     setButton(true);
+    if (source === 'video') ensureSrc();
     if (source === 'video' && videoUsable()) {
       video.loop = false;
       video.muted = false;
