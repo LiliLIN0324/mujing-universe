@@ -142,7 +142,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     </div>
     <div class="pick-list-window">
       <ol class="pick-list" id="pick-list">
-        {picks.map((p, i) => (
+        {/* Desktop list = ring cards only (same 10). Longer picks[] desynced list vs visual front. */}
+        {ringWorks.map((p, i) => (
           <li class:list={['pick-row', { 'is-active': i === 0 }]}>
             <button class="pick-row-btn" type="button" data-i={i} aria-current={i === 0 ? 'true' : undefined}>
               <span class="row-title">{p.title}</span>
@@ -1089,7 +1090,9 @@ let ringMounted = false;
 function mountRingIfDesktop() {
   if (ringMounted || mobileMq.matches || !picksRoot || !pickDataEl) return;
   ringMounted = true;
-  mountPickRing(picksRoot, JSON.parse(pickDataEl.textContent || '[]'));
+  const all = JSON.parse(pickDataEl.textContent || '[]');
+  // Ring renders ≤10 cards; keep pickData length in lockstep so list/copy/front share indices.
+  mountPickRing(picksRoot, all.slice(0, 10));
 }
 mountRingIfDesktop();
 if (!ringMounted) {

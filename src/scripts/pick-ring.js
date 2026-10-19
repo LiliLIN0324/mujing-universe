@@ -412,10 +412,16 @@ export function mountPickRing(root, pickData) {
     syncList(index);
   }
 
-  /** Shortest spin (radians) that puts card index at facing peak. */
+  /**
+   * Shortest spin that puts card index at the CAMERA-facing peak.
+   * Ring param (cosθ, sinθ) → after Y-rot by spin, z′ ∝ sin(θ+spin).
+   * Camera sits at +Z, so visual front is sin(θ+spin)=1 → spin = π/2 − θ.
+   * (Old code targeted cos(θ+spin)=1 / +X, ~N/4 cards off from what the eye sees.)
+   */
   function spinTargetFor(index, spinNow) {
     const theta = (index / N) * Math.PI * 2;
-    return spinNow + wrapPi(-theta - spinNow);
+    const want = Math.PI / 2 - theta;
+    return spinNow + wrapPi(want - spinNow);
   }
 
   function liveSpin() {
@@ -425,14 +431,16 @@ export function mountPickRing(root, pickData) {
   /** Select item: sync left copy + list; rotate ring so card faces front. No navigate. */
   function select(index) {
     if (!Number.isFinite(index) || index < 0 || index >= pickData.length) return;
-    pinned = index;
+    // Ring only has N meshes — never pin past the last card (avoids θ alias desync).
+    const i = Math.min(index, meshes.length - 1);
+    pinned = i;
     pinScroll = scrollTarget;
-    if (!motion.matches && index < meshes.length) {
+    if (!motion.matches && i >= 0) {
       const now = liveSpin();
-      const to = spinTargetFor(index, now);
+      const to = spinTargetFor(i, now);
       spinAnim = { from: now, to, start: performance.now() };
     }
-    setFront(index);
+    setFront(i);
   }
 
   function frame(now) {
@@ -488,14 +496,13 @@ export function mountPickRing(root, pickData) {
     shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
     shared.uScroll.value = progress;
 
-    // Facing for intro/list: pure geometric front (matches what the eye sees).
-    // coverScore wash stays in the fragment shader — do not bias which index is "front".
+    // Facing = camera-front: z′ ∝ sin(θ+spin). Do not use cos (that is +X / side).
     const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
     let best = 0;
     let bestFacing = -Infinity;
     for (let i = 0; i < meshes.length; i++) {
       const theta = (i / N) * Math.PI * 2;
-      const facing = Math.cos(wrapPi(theta + spin));
+      const facing = Math.sin(wrapPi(theta + spin));
       if (facing > bestFacing) {
         bestFacing = facing;
         best = i;
@@ -532,12 +539,10 @@ export function mountPickRing(root, pickData) {
     for (let i = 0; i < meshes.length; i++) {
       const theta = (i / N) * Math.PI * 2;
       const phase = wrapPi(theta + spin);
-      const facing = Math.cos(phase);
+      // sin(phase)=1 → camera front (centered); cos(phase) → screen X
+      const facing = Math.sin(phase);
       if (facing < -0.15) continue; // back of ring
-      const m = meshes[i];
-      if (m.isPaper || m.coverScore < -20) continue;
-      // phase 0 = front-center; sin(phase) spreads left/right across the canvas
-      const approxX = 0.52 + Math.sin(phase) * 0.38;
+      const approxX = 0.52 + Math.cos(phase) * 0.38;
       const score = Math.abs(approxX - nx) - facing * 0.12;
       if (score < bestScore) {
         bestScore = score;
@@ -554,7 +559,10 @@ export function mountPickRing(root, pickData) {
   });
   listWindow?.addEventListener('scroll', () => { listWindow.scrollTop = 0; });
 
-  root.__pickRing = { select, state: () => ({ front, pinned, progress: shared.uScroll.value }) };
+  root.__pickRing = {
+    select,
+    state: () => ({ front, pinned, progress: shared.uScroll.value, n: meshes.length }),
+  };
 
   syncRunway();
   resize();
