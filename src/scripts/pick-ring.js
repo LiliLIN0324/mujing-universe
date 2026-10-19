@@ -439,17 +439,25 @@ export function mountPickRing(root, pickData) {
   }
 
   /**
-   * Visual front ring phase — matches VERT cabin yaw offset (−PI*0.2).
-   * Eye / best / setFront / spinTargetFor all park θ_i here.
+   * Phase of θ+spin where the card is screen-brightest.
+   *
+   * VERT puts the cabin center at (cos(θ+spin), sin(θ+spin)) after rotateY(spin),
+   * with yaw θ − π·0.2 − 15·uVelocity. The normal faces the camera when
+   * θ + spin − 15·uVelocity = π·0.2. Occlusion pulls the visible card a little
+   * closer than that pure yaw peak, and the pull grows as the dolly enlarges
+   * the ring: π·0.2·(1 + 0.4·progress). That is ~0.24π at mid (0.5) and ~0.28π
+   * at 落幅 (0.97). θ−spin and raw π/2 point at the far side of the ring.
    */
-  function frontPhase() {
-    return Math.PI / 2 - Math.PI * 0.2;
+  function eyePhase(progress) {
+    const p = progress == null ? shared.uScroll.value : progress;
+    return Math.PI * 0.2 * (1 + 0.4 * p);
   }
 
-  /** Face-on score: cos(θ − spin − frontPhase). Higher = more cabin-facing the eye. */
+  /** cos(θ + spin − 15·vel − eyePhase). Higher = more of the eye-bright card. */
   function cardFacing(index, spin) {
     const theta = (index / N) * Math.PI * 2;
-    return Math.cos(wrapPi(theta - spin - frontPhase()));
+    const vel = shared.uVelocity.value || 0;
+    return Math.cos(theta + spin - vel * 15 - eyePhase());
   }
 
   /**
@@ -488,10 +496,13 @@ export function mountPickRing(root, pickData) {
     return scored[0].i;
   }
 
-  /** Shortest spin that puts card index at frontPhase (yaw-aware eye front). */
+  /**
+   * Shortest spin that parks card index on eyePhase once velocity settles to 0.
+   * Same phase as cardFacing, so the clicked card becomes the eye-bright one.
+   */
   function spinTargetFor(index, spinNow) {
     const theta = (index / N) * Math.PI * 2;
-    const want = theta - frontPhase();
+    const want = eyePhase() - theta;
     return spinNow + wrapPi(want - spinNow);
   }
 
@@ -569,7 +580,7 @@ export function mountPickRing(root, pickData) {
     shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
     shared.uScroll.value = progress;
 
-    // Yaw-aware eye-hero: argmax cardFacing (cabin −PI*0.2), not heroNX proximity.
+    // Scroll-hero (unpinned): argmax cardFacing — same eye phase as spinTargetFor.
     const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
     let best = 0;
     let bestFacing = -Infinity;
@@ -616,8 +627,8 @@ export function mountPickRing(root, pickData) {
 
   // Desktop: canvas / 名录 select only (bring to front + left sync). Detail via「查看作品 →」/ title link.
   /**
-   * Project ring phase (θ−spin) to normalized canvas X.
-   * Used for click hit-testing (pickIndexAtNX); not for scroll-hero / best.
+   * Project ring phase to normalized canvas X.
+   * Hit-testing only. Phase is θ+spin, matching VERT's rotateY.
    */
   function phaseScreenNX(phase, progress) {
     const R = 3;
@@ -642,7 +653,7 @@ export function mountPickRing(root, pickData) {
 
   function cardScreenNX(index, spin, progress) {
     const theta = (index / N) * Math.PI * 2;
-    return phaseScreenNX(theta - spin, progress);
+    return phaseScreenNX(theta + spin, progress);
   }
 
   /** Map click on canvas to the visible card under the cursor (hit-test only). */
@@ -668,7 +679,7 @@ export function mountPickRing(root, pickData) {
     state: () => {
       const progress = shared.uScroll.value;
       const spin = liveSpin();
-      const fp = frontPhase();
+      const fp = eyePhase(progress);
       const hnx = heroNX(progress);
       let best = 0;
       let bestFacing = -Infinity;
