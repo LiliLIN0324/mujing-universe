@@ -32,9 +32,6 @@ export function mountMobileStack(root) {
     title: root.querySelector('#m-title'),
     meta: root.querySelector('#m-meta'),
     body: root.querySelector('#m-body'),
-    facts: root.querySelector('#m-facts'),
-    role: root.querySelector('#m-role'),
-    tech: root.querySelector('#m-tech'),
     view: root.querySelector('#m-view'),
   };
   const data = JSON.parse((dataEl && dataEl.textContent) || '[]');
@@ -101,11 +98,6 @@ export function mountMobileStack(root) {
     if (el.view && w.href) el.view.setAttribute('href', w.href);
     if (el.meta) { el.meta.textContent = w.meta || ''; el.meta.hidden = !w.meta; }
     if (el.body) { el.body.textContent = w.body || ''; el.body.hidden = !w.body; }
-    const role = (w.role || []).filter(Boolean);
-    const tech = (w.tech || []).filter(Boolean);
-    if (el.role) { el.role.hidden = !role.length; el.role.querySelector('dd').textContent = role.join(' · '); }
-    if (el.tech) { el.tech.hidden = !tech.length; el.tech.querySelector('dd').textContent = tech.join(' · '); }
-    if (el.facts) el.facts.hidden = !role.length && !tech.length;
     syncList();
   }
 

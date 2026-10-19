@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { allWorks, pickBody, pickDeskBody, pickIntro, pickMeta, pickSummary, pickTech, pickTypeYear, workCovers, workFallback } from '../lib';
+import { allWorks, pickBody, pickDeskBody, pickIntro, pickSummary, pickTypeYear, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
@@ -26,10 +26,8 @@ const mobilePicks = ws.slice(0, 10).map((w, i) => ({
   title: w.title,
   year: w.yearNum || w.year,
   href: `/works/${w.slug}/`,
-  meta: pickMeta(w),
+  meta: pickTypeYear(w),
   body: pickBody(w),
-  role: [] as string[],
-  tech: pickTech(w),
   cover: `/ring/${i}.jpg`,
   fallback: workFallback(w) || '/ring/paper.jpg',
 }));
@@ -94,10 +92,6 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
       <h2 class="m-title"><a class="m-title-link" id="m-title" href={mLead.href}>{mLead.title}</a></h2>
       <div class="m-meta" id="m-meta" hidden={!mLead.meta}>{mLead.meta}</div>
       <p class="m-body" id="m-body" hidden={!mLead.body}>{mLead.body}</p>
-      <dl class="m-facts" id="m-facts" hidden={!mLead.role.length && !mLead.tech.length}>
-        <div id="m-role" hidden={!mLead.role.length}><dt>角色</dt><dd>{mLead.role.join(' · ')}</dd></div>
-        <div id="m-tech" hidden={!mLead.tech.length}><dt>技术</dt><dd>{mLead.tech.join(' · ')}</dd></div>
-      </dl>
       <a class="m-view" id="m-view" href={mLead.href}>查看作品 <span aria-hidden="true">→</span></a>
     </div>
     <ul class="m-list" id="m-list">
@@ -868,9 +862,6 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     padding-bottom: 2px;
   }
   .m-view span { margin-left: 4px; }
-  .m-facts { margin: 14px 0 0; display: flex; gap: 28px; font-size: 12px; line-height: 1.5; }
-  .m-facts dt { color: #9a958c; letter-spacing: 0.08em; margin-bottom: 3px; }
-  .m-facts dd { margin: 0; color: #3d3a35; }
   .m-feat [hidden] { display: none !important; }
   .m-list { list-style: none; margin: 22px 24px 0; padding: 0; border-top: 1px solid #e3dfd8; }
   .m-row { border-bottom: 1px solid #e3dfd8; }
