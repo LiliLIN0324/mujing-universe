@@ -64,7 +64,7 @@ void main() {
   p.xyz = rotate(p.xyz, vec3(1.0, 0.0, 0.0), -PI * 0.15 * (1.0 - uScroll));
   p.z -= 20.0 - 12.0 * uScroll;  // end ≈ z-8 (01:37)
   p.x -= 3.7 * uScroll;          // more left than 01:37's 3.2
-  p.y -= 1.55 * uScroll;
+  p.y -= 0.85 * uScroll;
   p.x -= 1.4;                    // more left than 01:37's 1.15
 
   gl_Position = projectionMatrix * viewMatrix * p;
@@ -113,10 +113,11 @@ void main() {
   float cornerDark = smoothstep(1.08, 1.48, corner) * 0.035;
   color *= 1.0 - cornerDark;
 
-  // Soft AO kept; only kill wash/empty boards (no uFocus single-card lock)
+  // Soft AO kept; wash only true paper. uFocus dims non-front so click/落幅 hero reads clearly.
   float washKill = 1.0 - uWash * smoothstep(0.25, 0.65, uScroll);
   if (washKill < 0.2) discard;
   color = mix(vec3(0.945, 0.945, 0.941), color, clamp(washKill, 0.0, 1.0));
+  color *= mix(0.62, 1.0, clamp(uFocus, 0.0, 1.0));
 
   gl_FragColor = vec4(color, 1.0);
 }
@@ -124,6 +125,8 @@ void main() {
 
 const SCROLL_LERP = 0.1;
 const DELTA_LERP = 0.1;
+/** Ring end pose (落幅); list stays still until progress reaches this. */
+const LIST_LOCK = 0.92;
 /** Idle/mid readable size: ~40% frustum width, 16:9 (demalde DOM-scale order). */
 const CARD_FRAC_W = 0.50;
 const TEX_MAX = 1920;
@@ -263,9 +266,9 @@ export function mountPickRing(root, pickData) {
         const std = Math.sqrt(Math.max(0, sum2 / n - mean * mean));
         // Prefer mid-tone, high-contrast covers; punish paper (~230, std<12) & flat white
         let score = std * 1.35 - Math.max(0, mean - 200) * 0.7 - Math.max(0, 40 - mean) * 0.15;
-        // beige / paper / flat white-gray boards
-        if (std < 18 && mean > 195) score = -100;
-        if (std < 35 && mean > 235) score = -80;
+        // Only kill true flat paper. Light UI boards (Genshot/Genstyle) have structure
+        // (std≳25) and must stay visible at 落幅 — else eye reads a neighbor as "front".
+        if (std < 14 && mean > 200) score = -100;
         // stash on mesh entry via uniforms owner — filled by caller
         uniforms._coverScore = score;
         uniforms._isPaper = score < -50;
@@ -383,6 +386,18 @@ export function mountPickRing(root, pickData) {
     });
   }
 
+  /** Scroll `.pick-list-window` so row index is visible (no page scroll). */
+  function ensureRowVisible(index) {
+    const row = rowEls[index];
+    if (!row || !listWindow) return;
+    const rowTop = row.offsetTop;
+    const rowBottom = rowTop + row.offsetHeight;
+    const viewTop = listWindow.scrollTop;
+    const viewBottom = viewTop + listWindow.clientHeight;
+    if (rowTop < viewTop) listWindow.scrollTop = rowTop;
+    else if (rowBottom > viewBottom) listWindow.scrollTop = rowBottom - listWindow.clientHeight;
+  }
+
   function fillCopy(work) {
     if (!work) return;
     if (titleLink) {
@@ -404,25 +419,79 @@ export function mountPickRing(root, pickData) {
     if (viewEl && work.href) viewEl.setAttribute('href', work.href);
   }
 
-  function setFront(index) {
-    if (index === front) return;
+  function setFront(index, opts) {
+    const forceScroll = !!(opts && opts.scrollList);
+    if (index === front) {
+      if (forceScroll) ensureRowVisible(index);
+      return;
+    }
     front = index;
     const work = pickData[index];
     fillCopy(work);
     syncList(index);
+    // After ring 落幅 (or explicit select), keep active row in the catalog window.
+    if (forceScroll || lastProgress >= LIST_LOCK) ensureRowVisible(index);
+  }
+
+  function smoothstep01(t) {
+    const x = Math.min(1, Math.max(0, t));
+    return x * x * (3 - 2 * x);
   }
 
   /**
-   * Shortest spin that puts card index at the VISUAL front slot.
-   * Shader: z′ ∝ sin(θ − s) after rotateY; raw max-z is θ−s = π/2.
-   * After X-tilt + perspective the eye-hero card sits ~one slot earlier
-   * (phase π/2 − 2π/N). Empirically soff=+1 card: AnyReal→橙狗, Dragon→黑板;
-   * raw π/2 left AnyReal on dark / Dragon on orange (prod FAIL class).
+   * Visual front ring phase — matches VERT cabin yaw offset (−PI*0.2).
+   * Eye / best / setFront / spinTargetFor all park θ_i here.
    */
+  function frontPhase() {
+    return Math.PI / 2 - Math.PI * 0.2;
+  }
+
+  /** Face-on score: cos(θ − spin − frontPhase). Higher = more cabin-facing the eye. */
+  function cardFacing(index, spin) {
+    const theta = (index / N) * Math.PI * 2;
+    return Math.cos(wrapPi(theta - spin - frontPhase()));
+  }
+
+  /**
+   * Click hit-test only (not scroll-hero): nearest screen-X among facing cards.
+   * Scroll-hero uses argmax cardFacing — proximity to heroNX disagreed with eye.
+   */
+  function heroNX(progress) {
+    return lerp(0.52, 0.36, smoothstep01(progress));
+  }
+
+  function pickIndexAtNX(nx, spin, progress) {
+    const sp = spin == null ? liveSpin() : spin;
+    const pr = progress == null ? lastProgress : progress;
+    const scored = [];
+    for (let i = 0; i < meshes.length; i++) {
+      const facing = cardFacing(i, sp);
+      if (facing < -0.2) continue;
+      const sx = cardScreenNX(i, sp, pr);
+      if (sx < 0.0 || sx > 1.0) continue;
+      scored.push({ i, facing, sx, d: Math.abs(sx - nx) });
+    }
+    if (!scored.length) {
+      let best = 0;
+      let bestD = Infinity;
+      for (let i = 0; i < meshes.length; i++) {
+        const sx = cardScreenNX(i, sp, pr);
+        const d = Math.abs(sx - nx);
+        if (d < bestD) {
+          bestD = d;
+          best = i;
+        }
+      }
+      return best;
+    }
+    scored.sort((a, b) => a.d - b.d || b.facing - a.facing);
+    return scored[0].i;
+  }
+
+  /** Shortest spin that puts card index at frontPhase (yaw-aware eye front). */
   function spinTargetFor(index, spinNow) {
     const theta = (index / N) * Math.PI * 2;
-    const frontPhase = Math.PI / 2 - (Math.PI * 2) / N;
-    const want = theta - frontPhase;
+    const want = theta - frontPhase();
     return spinNow + wrapPi(want - spinNow);
   }
 
@@ -442,7 +511,7 @@ export function mountPickRing(root, pickData) {
       const to = spinTargetFor(i, now);
       spinAnim = { from: now, to, start: performance.now() };
     }
-    setFront(i);
+    setFront(i, { scrollList: true });
   }
 
   function frame(now) {
@@ -471,8 +540,10 @@ export function mountPickRing(root, pickData) {
     smoothedDelta = lerp(smoothedDelta, motion.matches ? 0 : delta, DELTA_LERP);
     lastProgress = progress;
 
-    // Scroll after a selection releases the pin so idle facing can continue.
-    if (pinned >= 0 && Math.abs(scrollTarget - pinScroll) > 1) {
+    // Release pin only on real page scroll — lerp noise at 落幅 used to be >1px
+    // and dropped the click hold (list said Genstyle while ring drifted).
+    const unpinSlop = Math.max(28, limit * 0.035);
+    if (pinned >= 0 && Math.abs(scrollTarget - pinScroll) > unpinSlop) {
       pinned = -1;
       spinAnim = null;
     }
@@ -498,24 +569,36 @@ export function mountPickRing(root, pickData) {
     shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
     shared.uScroll.value = progress;
 
-    // Visual front ≈ phase π/2 − 2π/N (not raw max-z). Score cos(Δphase).
+    // Yaw-aware eye-hero: argmax cardFacing (cabin −PI*0.2), not heroNX proximity.
     const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
-    const frontPhase = Math.PI / 2 - (Math.PI * 2) / N;
     let best = 0;
     let bestFacing = -Infinity;
+    const facings = new Array(meshes.length);
     for (let i = 0; i < meshes.length; i++) {
-      const theta = (i / N) * Math.PI * 2;
-      const facing = Math.cos(wrapPi(theta - spin - frontPhase));
+      const facing = cardFacing(i, spin);
+      facings[i] = facing;
       if (facing > bestFacing) {
         bestFacing = facing;
         best = i;
       }
-      meshes[i].uniforms.uFocus.value = 1; // render all; wash handled in frag
+    }
+    const hero = pinned >= 0 ? pinned : best;
+    for (let i = 0; i < meshes.length; i++) {
+      const facing = facings[i];
+      const isHero = i === hero;
+      // Stronger dim on non-hero so the visual front reads clearly.
+      meshes[i].uniforms.uFocus.value = isHero ? 1 : Math.max(0.12, facing * 0.45 + 0.02);
+      if (isHero) meshes[i].uniforms.uWash.value = 0;
+      else if (meshes[i].isPaper || meshes[i].coverScore < -20) meshes[i].uniforms.uWash.value = 1;
+      else meshes[i].uniforms.uWash.value = 0;
     }
 
-    if (listEl) listEl.style.transform = `translateY(${scrollCurrent}px)`;
+    // List stays put during approach/zoom; only ring uses progress. After 落幅,
+    // selection (not page scroll) moves the catalog via ensureRowVisible.
+    if (listEl) listEl.style.transform = 'translateY(0px)';
+    if (listWindow && progress < LIST_LOCK) listWindow.scrollTop = 0;
     root.dataset.progress = progress.toFixed(3);
-    root.classList.toggle('is-end', progress > 0.92);
+    root.classList.toggle('is-end', progress > LIST_LOCK);
     setFront(pinned >= 0 ? pinned : best);
 
     renderer.render({ scene, camera, frustumCull: false });
@@ -532,27 +615,41 @@ export function mountPickRing(root, pickData) {
   if (motion.matches) root.classList.add('is-reduced');
 
   // Desktop: canvas / 名录 select only (bring to front + left sync). Detail via「查看作品 →」/ title link.
-  /** Map click X on canvas to nearest visible ring card (approx screen phase). */
+  /**
+   * Project ring phase (θ−spin) to normalized canvas X.
+   * Used for click hit-testing (pickIndexAtNX); not for scroll-hero / best.
+   */
+  function phaseScreenNX(phase, progress) {
+    const R = 3;
+    let x = R * Math.cos(phase);
+    let y = 0;
+    let z = R * Math.sin(phase);
+    const pitch = -Math.PI * 0.15 * (1 - progress);
+    const cp = Math.cos(pitch);
+    const sp = Math.sin(pitch);
+    const y2 = y * cp - z * sp;
+    const z2 = y * sp + z * cp;
+    x -= 3.7 * progress + 1.4;
+    y = y2 - 0.85 * progress;
+    z = z2 - (20 - 12 * progress);
+    const viewZ = z - camera.position.z;
+    const depth = Math.max(0.35, -viewZ);
+    const fovRad = (camera.fov * Math.PI) / 180;
+    const halfW = Math.tan(fovRad / 2) * depth * (camera.aspect || 1);
+    const ndcX = x / Math.max(1e-4, halfW);
+    return ndcX * 0.5 + 0.5;
+  }
+
+  function cardScreenNX(index, spin, progress) {
+    const theta = (index / N) * Math.PI * 2;
+    return phaseScreenNX(theta - spin, progress);
+  }
+
+  /** Map click on canvas to the visible card under the cursor (hit-test only). */
   function pickIndexAtClientX(clientX) {
     const rect = canvas.getBoundingClientRect();
     const nx = (clientX - rect.left) / Math.max(1, rect.width);
-    const spin = liveSpin();
-    let best = front >= 0 ? front : 0;
-    let bestScore = Infinity;
-    for (let i = 0; i < meshes.length; i++) {
-      const theta = (i / N) * Math.PI * 2;
-      const phase = wrapPi(theta - spin);
-      const frontPhase = Math.PI / 2 - (Math.PI * 2) / N;
-      const facing = Math.cos(wrapPi(phase - frontPhase));
-      if (facing < -0.15) continue; // back of ring
-      const approxX = 0.52 + Math.cos(phase) * 0.38;
-      const score = Math.abs(approxX - nx) - facing * 0.12;
-      if (score < bestScore) {
-        bestScore = score;
-        best = i;
-      }
-    }
-    return best;
+    return pickIndexAtNX(nx);
   }
   canvas.addEventListener('click', (e) => {
     select(pickIndexAtClientX(e.clientX));
@@ -560,11 +657,53 @@ export function mountPickRing(root, pickData) {
   rowBtns.forEach((btn) => {
     btn.addEventListener('click', () => select(Number(btn.dataset.i)));
   });
-  listWindow?.addEventListener('scroll', () => { listWindow.scrollTop = 0; });
+  // During approach, pin catalog scroll; after 落幅 allow overflow scroll for selection.
+  listWindow?.addEventListener('scroll', () => {
+    if (lastProgress < LIST_LOCK) listWindow.scrollTop = 0;
+  });
 
   root.__pickRing = {
     select,
-    state: () => ({ front, pinned, progress: shared.uScroll.value, n: meshes.length }),
+    pickAt: pickIndexAtClientX,
+    state: () => {
+      const progress = shared.uScroll.value;
+      const spin = liveSpin();
+      const fp = frontPhase();
+      const hnx = heroNX(progress);
+      let best = 0;
+      let bestFacing = -Infinity;
+      const cards = [];
+      for (let i = 0; i < meshes.length; i++) {
+        const facing = cardFacing(i, spin);
+        const sx = cardScreenNX(i, spin, progress);
+        if (facing > bestFacing) {
+          bestFacing = facing;
+          best = i;
+        }
+        cards.push({
+          i,
+          title: (pickData[i] && pickData[i].title) || '',
+          sx: Math.round(sx * 1000) / 1000,
+          facing: Math.round(facing * 1000) / 1000,
+          dHero: Math.round(Math.abs(sx - hnx) * 1000) / 1000,
+        });
+      }
+      cards.sort((a, b) => b.facing - a.facing || a.dHero - b.dHero);
+      return {
+        front,
+        pinned,
+        progress,
+        frontPhase: fp,
+        heroNX: Math.round(hnx * 1000) / 1000,
+        spin,
+        best,
+        bestFacing: Math.round(bestFacing * 1000) / 1000,
+        bestTitle: (pickData[best] && pickData[best].title) || '',
+        frontTitle: (pickData[front] && pickData[front].title) || '',
+        top: cards.slice(0, 4),
+        n: meshes.length,
+      };
+    },
   };
 
   syncRunway();

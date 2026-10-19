@@ -399,11 +399,15 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   z-index: 1;
   display: grid;
   /* Narrower left column — plate must not sprawl over the ring. */
-  grid-template-columns: minmax(260px, 0.85fr) minmax(260px, 0.9fr);
+  grid-template-columns: minmax(260px, 0.85fr) auto;
   column-gap: 48px;
   row-gap: 8px;
   align-items: start;
   width: 100%;
+  /* Fill sticky viewport so right list can bottom-align at 落幅. */
+  flex: 1;
+  min-height: 0;
+  height: 100%;
   /* Let canvas receive clicks in the ring area; re-enable on copy/list. */
   pointer-events: none;
 }
@@ -544,27 +548,46 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   grid-column: 2;
   grid-row: 1 / span 2;
   align-self: start;
-  height: min(560px, 62vh);
-  overflow: hidden;
-  border-top: 1px solid rgba(26, 26, 28, 0.1);
+  /* Shrink-wrap like left copy — no fixed-height clipped plate over the ring. */
+  width: fit-content;
+  min-width: min(280px, 100%);
+  max-width: min(420px, 36vw);
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  border: 0;
   font-family: inherit;
   position: relative;
   z-index: 2;
-  background: #F6F5F3;
+  background: transparent;
   pointer-events: auto;
+  scrollbar-width: none;
 }
+/* Desktop 落幅: drop catalog so last row bottom ≈ near-card bottoms. Left copy stays top.
+   align-self:end alone overshoots to sticky padding floor (~vh−54); lift with margin-bottom
+   so text bottom sits beside raised ring cards (~y coeff 0.85), not under the viewport. */
+@media (min-width: 861px) {
+  #picks.is-end .pick-list-window {
+    align-self: end;
+    margin-top: auto;
+    margin-bottom: clamp(110px, 15vh, 200px);
+  }
+}
+.pick-list-window::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .pick-list {
   list-style: none;
   margin: 0;
   padding: 0;
-  will-change: transform;
+  background: transparent;
 }
 .pick-row {
   margin: 0;
   padding: 0;
-  border-bottom: 1px solid rgba(26, 26, 28, 0.1);
+  border-bottom: 1px solid rgba(26, 26, 28, 0.08);
   list-style: none;
+  background: transparent;
 }
+.pick-row:last-child { border-bottom: 0; }
 .pick-row-btn {
   display: flex;
   align-items: center;
