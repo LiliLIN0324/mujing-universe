@@ -120,24 +120,19 @@ export function pickSummary(w: { slug: string; description?: string }): string {
   return s;
 }
 
-/** Desktop 精选左侧正文：完整描述；若与 summary 重复则去掉首句，避免叠字。 */
-export function pickDeskBody(w: { slug: string; description?: string }): string {
-  const full = pickBody(w);
-  if (!full) return '';
-  const sum = pickSummary(w);
-  if (!sum) return full;
-  if (full === sum) return '';
-  if (full.startsWith(sum)) {
-    const rest = full.slice(sum.length).trim();
-    return rest;
-  }
-  // summary may be truncated with … — compare without ellipsis
-  const bare = sum.replace(/…$/, '').replace(/。$/, '');
-  if (bare && full.startsWith(bare)) {
-    const rest = full.slice(bare.length).replace(/^[。.!?]\s*/, '').trim();
-    return rest;
-  }
-  return full;
+/** Desktop 精选左侧正文：用偏长的 intro（可含轻量技术点），由 CSS clamp 到 2–3 行。 */
+export function pickDeskBody(w: {
+  slug: string;
+  title: string;
+  yearNum?: number;
+  line: string;
+  description?: string;
+  category?: string;
+  tech?: string[];
+}): string {
+  const intro = pickIntro(w);
+  if (intro) return intro;
+  return pickBody(w);
 }
 
 /* ---- Work detail page helpers ---- */

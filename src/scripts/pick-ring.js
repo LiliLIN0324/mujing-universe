@@ -526,8 +526,32 @@ export function mountPickRing(root, pickData) {
   if (motion.matches) root.classList.add('is-reduced');
 
   // Desktop: canvas / 名录 select only (bring to front + left sync). Detail via「查看作品 →」/ title link.
-  canvas.addEventListener('click', () => {
-    select(front >= 0 ? front : 0);
+  /** Map click X on canvas to nearest visible ring card (approx screen phase). */
+  function pickIndexAtClientX(clientX) {
+    const rect = canvas.getBoundingClientRect();
+    const nx = (clientX - rect.left) / Math.max(1, rect.width);
+    const spin = liveSpin();
+    let best = front >= 0 ? front : 0;
+    let bestScore = Infinity;
+    for (let i = 0; i < meshes.length; i++) {
+      const theta = (i / N) * Math.PI * 2;
+      const phase = wrapPi(theta + spin);
+      const facing = Math.cos(phase);
+      if (facing < -0.15) continue; // back of ring
+      const m = meshes[i];
+      if (m.isPaper || m.coverScore < -20) continue;
+      // phase 0 = front-center; sin(phase) spreads left/right across the canvas
+      const approxX = 0.52 + Math.sin(phase) * 0.38;
+      const score = Math.abs(approxX - nx) - facing * 0.12;
+      if (score < bestScore) {
+        bestScore = score;
+        best = i;
+      }
+    }
+    return best;
+  }
+  canvas.addEventListener('click', (e) => {
+    select(pickIndexAtClientX(e.clientX));
   });
   rowBtns.forEach((btn) => {
     btn.addEventListener('click', () => select(Number(btn.dataset.i)));
