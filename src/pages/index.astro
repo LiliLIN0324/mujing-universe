@@ -408,7 +408,15 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   grid-row: 1;
   position: relative;
   z-index: 1;
+  /* Paper plate so text stays readable over the ring; clicks pass through to canvas. */
   background: #F6F5F3;
+  pointer-events: none;
+  /* Cap height so the opaque plate does not blanket the ring runway. */
+  max-height: min(42vh, 360px);
+  overflow: hidden;
+}
+.picks-copy a,
+.picks-copy button {
   pointer-events: auto;
 }
 .picks-label {
