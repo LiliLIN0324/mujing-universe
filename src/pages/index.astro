@@ -379,8 +379,9 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  padding: clamp(88px, 12vh, 120px) clamp(24px, 4vw, 48px) clamp(48px, 6vh, 72px);
+  /* Top-align: left copy sits above the ring runway, not centered into it. */
+  justify-content: flex-start;
+  padding: clamp(72px, 9vh, 96px) clamp(24px, 4vw, 48px) clamp(40px, 5vh, 64px);
   overflow: hidden;
   background: #F6F5F3;
 }
@@ -396,10 +397,12 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   position: relative;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(340px, 1.25fr) minmax(260px, 0.85fr);
+  /* Narrower left column — plate must not sprawl over the ring. */
+  grid-template-columns: minmax(260px, 0.85fr) minmax(260px, 0.9fr);
   column-gap: 48px;
   row-gap: 8px;
   align-items: start;
+  width: 100%;
   /* Let canvas receive clicks in the ring area; re-enable on copy/list. */
   pointer-events: none;
 }
@@ -408,12 +411,15 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   grid-row: 1;
   position: relative;
   z-index: 1;
-  /* Paper plate so text stays readable over the ring; clicks pass through to canvas. */
+  /* Shrink-wrap plate to text — full column width was blanking left-arc cards. */
+  width: fit-content;
+  max-width: min(340px, 28vw);
   background: #F6F5F3;
   pointer-events: none;
-  /* Cap height so the opaque plate does not blanket the ring runway. */
-  max-height: min(42vh, 360px);
+  max-height: min(34vh, 300px);
   overflow: hidden;
+  padding: 0 8px 8px 0; /* small bleed so glyphs clear the plate edge */
+  box-sizing: border-box;
 }
 .picks-copy a,
 .picks-copy button {
@@ -431,7 +437,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   border: 0;
 }
 .picks-intro {
-  width: min(480px, 40vw);
+  width: min(340px, 28vw);
   margin: 0;
   color: #1A1A1C;
   font-family: inherit;
@@ -478,21 +484,21 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 }
 /* 4. body — richer copy, ~2–3 lines */
 .pick-intro-body {
-  margin: 14px 0 0;
-  max-width: 28em;
+  margin: 12px 0 0;
+  max-width: 26em;
   color: #3A3A3C;
-  font-size: 15.5px;
+  font-size: 15px;
   font-weight: 400;
-  line-height: 1.7;
+  line-height: 1.65;
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   overflow: hidden;
 }
 /* 5. view link */
 .pick-intro-view {
   display: inline-block;
-  margin-top: 18px;
+  margin-top: 14px;
   color: #1A1A1C;
   font-size: 14px;
   font-weight: 500;
@@ -536,8 +542,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 .pick-list-window {
   grid-column: 2;
   grid-row: 1 / span 2;
-  align-self: stretch;
-  height: min(640px, 68vh);
+  align-self: start;
+  height: min(560px, 62vh);
   overflow: hidden;
   border-top: 1px solid rgba(26, 26, 28, 0.1);
   font-family: inherit;
