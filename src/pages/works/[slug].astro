@@ -31,6 +31,9 @@ const facts = [['角色', role], ['技术', tech.join(' · ')], ['年份', year]
 const total = 1 + stills.length;
 const pad = (n: number) => String(n).padStart(2, '0');
 const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' · ');
+const backHref = featured ? '/#picks' : '/works/';
+const backText = featured ? '← 返回精选' : '← 返回作品';
+const backNote = featured ? '精选目录' : '作品目录';
 ---
 <Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
@@ -77,12 +80,12 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 
   <section class="wd-page wd-p3" data-dwell={PAGE_DWELL.next}>
     <nav class="wd-pn" aria-label="作品导航">
-      <div class="wd-back-col"><p class="k">目录</p><a class="wd-back" href="/#picks">← 返回精选</a></div>
+      <div class="wd-back-col"><p class="k">{backNote}</p><a class="wd-back" href={backHref}>{backText}</a></div>
       <a class="wd-next" href={`/works/${next.slug}/`}>
         <p class="k">下一件<span class="d"> →</span></p>
         <span class="row"><span><span class="t">{next.title}</span><span class="nm">{nextMeta}</span></span><span class="ar" aria-hidden="true">→</span></span>
       </a>
-      <a class="wd-back-m" href="/#picks">← 返回精选<span>精选目录</span></a>
+      <a class="wd-back-m" href={backHref}>{backText}<span>{backNote}</span></a>
     </nav>
   </section>
 </div>
