@@ -360,8 +360,8 @@ export function mountPickRing(root, pickData) {
   }
 
   const titleLink = introEl && introEl.querySelector('[data-role="title-link"]');
+  const summaryEl = introEl && introEl.querySelector('[data-role="summary"]');
   const metaEl = introEl && introEl.querySelector('[data-role="meta"]');
-  const tagsEl = introEl && introEl.querySelector('[data-role="tags"]');
   const bodyEl = introEl && introEl.querySelector('[data-role="body"]');
   const viewEl = introEl && introEl.querySelector('[data-role="view"]');
   const rowEls = [...root.querySelectorAll('.pick-row')];
@@ -389,28 +389,17 @@ export function mountPickRing(root, pickData) {
       titleLink.textContent = work.title || '';
       if (work.href) titleLink.setAttribute('href', work.href);
     }
+    if (summaryEl) {
+      summaryEl.textContent = work.summary || '';
+      summaryEl.hidden = !work.summary;
+    }
     if (metaEl) {
       metaEl.textContent = work.meta || '';
       metaEl.hidden = !work.meta;
     }
-    if (tagsEl) {
-      const tags = Array.isArray(work.tags) ? work.tags.filter(Boolean) : [];
-      // Preserve Astro scoped attr so pill styles apply to JS-built <li>s.
-      const scopeAttrs = {};
-      for (const attr of tagsEl.attributes) {
-        if (attr.name.startsWith('data-astro-cid')) scopeAttrs[attr.name] = attr.value;
-      }
-      tagsEl.replaceChildren(...tags.map((t) => {
-        const li = document.createElement('li');
-        li.textContent = t;
-        for (const [k, v] of Object.entries(scopeAttrs)) li.setAttribute(k, v);
-        return li;
-      }));
-      tagsEl.hidden = tags.length === 0;
-    }
     if (bodyEl) {
-      bodyEl.textContent = work.body || work.intro || '';
-      bodyEl.hidden = !(work.body || work.intro);
+      bodyEl.textContent = work.body || '';
+      bodyEl.hidden = !work.body;
     }
     if (viewEl && work.href) viewEl.setAttribute('href', work.href);
   }

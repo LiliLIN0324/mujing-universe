@@ -1,6 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
-import { allWorks, pickBody, pickIntro, pickMeta, pickTech, workCovers, workFallback } from '../lib';
+import { allWorks, pickBody, pickDeskBody, pickIntro, pickMeta, pickSummary, pickTech, pickTypeYear, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
@@ -11,9 +11,9 @@ const picks = ws.map((w) => ({
   year: w.yearNum || w.year,
   href: `/works/${w.slug}/`,
   intro: pickIntro(w),
-  meta: pickMeta(w),
-  body: pickBody(w),
-  tags: pickTech(w).slice(0, 4),
+  summary: pickSummary(w),
+  meta: pickTypeYear(w),
+  body: pickDeskBody(w),
   stills: workCovers(w),
   fallback: workFallback(w),
 }));
@@ -119,10 +119,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
         <h3 class="pick-intro-title">
           <a class="pick-intro-title-link" data-role="title-link" href={leadPick.href}>{leadPick.title}</a>
         </h3>
+        <p class="pick-intro-summary" data-role="summary" hidden={!leadPick.summary}>{leadPick.summary}</p>
         <p class="pick-intro-meta" data-role="meta" hidden={!leadPick.meta}>{leadPick.meta}</p>
-        <ul class="pick-intro-tags" data-role="tags" hidden={!leadPick.tags.length}>
-          {leadPick.tags.map((t) => <li>{t}</li>)}
-        </ul>
         <p class="pick-intro-body" data-role="body" hidden={!leadPick.body}>{leadPick.body}</p>
         <a class="pick-intro-view" data-role="view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
       </div>
@@ -441,55 +439,58 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   margin: 0;
   color: #1A1A1C;
   font-family: inherit;
-  font-size: clamp(28px, 2.4vw, 36px);
+  font-size: clamp(28px, 2.2vw, 32px);
   font-weight: 600;
-  line-height: 1.2;
+  line-height: 1.22;
   letter-spacing: -0.02em;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .pick-intro-title-link {
   color: inherit;
   text-decoration: none;
 }
 .pick-intro-title-link:hover { text-decoration: underline; text-underline-offset: 4px; }
-.pick-intro-meta {
-  margin: 10px 0 0;
-  color: #9A958C;
-  font-size: 12px;
+/* 2. one-line summary — muted vs body */
+.pick-intro-summary {
+  margin: 12px 0 0;
+  max-width: 22em;
+  color: #6B6B6B;
+  font-size: 14px;
   font-weight: 400;
   line-height: 1.5;
-  letter-spacing: 0.1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.pick-intro-tags {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.pick-intro-tags :global(li) {
-  margin: 0;
-  padding: 4px 11px;
-  border: 1px solid rgba(26, 26, 28, 0.22);
-  border-radius: 999px;
-  color: #4A463F;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  line-height: 1.4;
-  background: #EFEDE9;
-}
-.pick-intro-body {
-  margin: 16px 0 0;
-  max-width: 22em;
-  color: #4A463F;
-  font-size: 15px;
+/* 3. meta: 类型 · 年份 only */
+.pick-intro-meta {
+  margin: 10px 0 0;
+  color: #8A8A8A;
+  font-size: 13px;
   font-weight: 400;
-  line-height: 1.75;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
 }
+/* 4. body — max 2 lines */
+.pick-intro-body {
+  margin: 14px 0 0;
+  max-width: 22em;
+  color: #3A3A3C;
+  font-size: 15.5px;
+  font-weight: 400;
+  line-height: 1.7;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+/* 5. view link */
 .pick-intro-view {
   display: inline-block;
-  margin-top: 20px;
+  margin-top: 18px;
   color: #1A1A1C;
   font-size: 14px;
   font-weight: 500;

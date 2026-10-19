@@ -101,6 +101,45 @@ export function pickMeta(w: { line?: string; yearNum?: number; tech?: string[] }
   return [w.line || '', w.yearNum ? String(w.yearNum) : '', tech].filter(Boolean).join(' · ');
 }
 
+/** Desktop 精选左侧：类型 · 年份 only（无 tech）。 */
+export function pickTypeYear(w: { line?: string; yearNum?: number; year?: string | number }): string {
+  const year = w.yearNum ?? w.year;
+  return [w.line || '', year ? String(year) : ''].filter(Boolean).join(' · ');
+}
+
+/** Desktop 精选左侧：一行摘要（比正文略淡）。西湖用副标题；其它取描述首句并收束为一行。 */
+export function pickSummary(w: { slug: string; description?: string }): string {
+  if (w.slug === 'xihu-panorama') return '以宋画长卷重绘当代西湖，画面由声音转译生成。';
+  const raw = stripPlaceholder(w.description || '');
+  if (!raw) return '';
+  let s = (raw.split(/(?<=[。！？.!?])/)[0] || raw).trim();
+  if (!s) return '';
+  if (!/[。！？.!?]$/.test(s)) s += '。';
+  // ~one line at ~22em / 15px
+  if (s.length > 40) s = `${s.slice(0, 39).replace(/[，、,.\s]+$/, '')}…`;
+  return s;
+}
+
+/** Desktop 精选左侧正文：完整描述；若与 summary 重复则去掉首句，避免叠字。 */
+export function pickDeskBody(w: { slug: string; description?: string }): string {
+  const full = pickBody(w);
+  if (!full) return '';
+  const sum = pickSummary(w);
+  if (!sum) return full;
+  if (full === sum) return '';
+  if (full.startsWith(sum)) {
+    const rest = full.slice(sum.length).trim();
+    return rest;
+  }
+  // summary may be truncated with … — compare without ellipsis
+  const bare = sum.replace(/…$/, '').replace(/。$/, '');
+  if (bare && full.startsWith(bare)) {
+    const rest = full.slice(bare.length).replace(/^[。.!?]\s*/, '').trim();
+    return rest;
+  }
+  return full;
+}
+
 /* ---- Work detail page helpers ---- */
 /** 西湖长卷的副标题（与首页同一句）。其它作品没有副标题字段，留空即隐藏。 */
 export function workSubtitle(w: { slug: string }): string {
