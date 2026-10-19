@@ -412,14 +412,14 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   grid-row: 1;
   position: relative;
   z-index: 1;
-  /* Shrink-wrap plate to text — full column width was blanking left-arc cards. */
+  /* Shrink-wrap to text; transparent — no solid/frosted plate over the ring. */
   width: fit-content;
   max-width: min(340px, 28vw);
-  background: #F6F5F3;
+  background: transparent;
   pointer-events: none;
   max-height: min(34vh, 300px);
   overflow: hidden;
-  padding: 0 8px 8px 0; /* small bleed so glyphs clear the plate edge */
+  padding: 0 8px 8px 0;
   box-sizing: border-box;
 }
 .picks-copy a,

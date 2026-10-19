@@ -413,14 +413,16 @@ export function mountPickRing(root, pickData) {
   }
 
   /**
-   * Shortest spin that puts card index at the CAMERA-facing peak.
-   * Ring param (cosθ, sinθ) → after Y-rot by spin, z′ ∝ sin(θ+spin).
-   * Camera sits at +Z, so visual front is sin(θ+spin)=1 → spin = π/2 − θ.
-   * (Old code targeted cos(θ+spin)=1 / +X, ~N/4 cards off from what the eye sees.)
+   * Shortest spin that puts card index at the VISUAL front slot.
+   * Shader: z′ ∝ sin(θ − s) after rotateY; raw max-z is θ−s = π/2.
+   * After X-tilt + perspective the eye-hero card sits ~one slot earlier
+   * (phase π/2 − 2π/N). Empirically soff=+1 card: AnyReal→橙狗, Dragon→黑板;
+   * raw π/2 left AnyReal on dark / Dragon on orange (prod FAIL class).
    */
   function spinTargetFor(index, spinNow) {
     const theta = (index / N) * Math.PI * 2;
-    const want = Math.PI / 2 - theta;
+    const frontPhase = Math.PI / 2 - (Math.PI * 2) / N;
+    const want = theta - frontPhase;
     return spinNow + wrapPi(want - spinNow);
   }
 
@@ -496,13 +498,14 @@ export function mountPickRing(root, pickData) {
     shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
     shared.uScroll.value = progress;
 
-    // Facing = camera-front: z′ ∝ sin(θ+spin). Do not use cos (that is +X / side).
+    // Visual front ≈ phase π/2 − 2π/N (not raw max-z). Score cos(Δphase).
     const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
+    const frontPhase = Math.PI / 2 - (Math.PI * 2) / N;
     let best = 0;
     let bestFacing = -Infinity;
     for (let i = 0; i < meshes.length; i++) {
       const theta = (i / N) * Math.PI * 2;
-      const facing = Math.sin(wrapPi(theta + spin));
+      const facing = Math.cos(wrapPi(theta - spin - frontPhase));
       if (facing > bestFacing) {
         bestFacing = facing;
         best = i;
@@ -538,9 +541,9 @@ export function mountPickRing(root, pickData) {
     let bestScore = Infinity;
     for (let i = 0; i < meshes.length; i++) {
       const theta = (i / N) * Math.PI * 2;
-      const phase = wrapPi(theta + spin);
-      // sin(phase)=1 → camera front (centered); cos(phase) → screen X
-      const facing = Math.sin(phase);
+      const phase = wrapPi(theta - spin);
+      const frontPhase = Math.PI / 2 - (Math.PI * 2) / N;
+      const facing = Math.cos(wrapPi(phase - frontPhase));
       if (facing < -0.15) continue; // back of ring
       const approxX = 0.52 + Math.cos(phase) * 0.38;
       const score = Math.abs(approxX - nx) - facing * 0.12;
