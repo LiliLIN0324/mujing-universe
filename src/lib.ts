@@ -39,6 +39,7 @@ export function workCovers(w: { slug: string; images?: string[]; icon?: string }
 }
 
 export function workFallback(w: { slug: string; icon?: string }) {
+  if (w.slug === 'scendance') return '/ring/_sources/scendance-hero.jpg';
   if (BROKEN_COVERS.has(w.slug)) return LOCAL_COVER;
   const icon = w.icon ?? '';
   if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon) && !icon.includes('scroll-placeholder')) return icon;
@@ -153,9 +154,9 @@ export function workStills(w: { slug: string; images?: string[]; icon?: string }
   if (w.slug === 'xihu-panorama') return workCovers(w).slice(1);
   return (w.images ?? []).slice(1).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
 }
-/** 详情页主图：西湖用 R2 01，其它用第一张图或 icon。 */
+/** 详情页主图：西湖与幕景用精选环同一张静帧，其它用第一张图或 icon。 */
 export function workHero(w: { slug: string; images?: string[]; icon?: string }): string {
-  if (w.slug === 'xihu-panorama') return workCovers(w)[0];
+  if (w.slug === 'xihu-panorama' || w.slug === 'scendance') return workCovers(w)[0];
   return (w.images ?? [])[0] || w.icon || LOCAL_COVER;
 }
 /** 主图两侧的纸色：西湖取自 01.jpg 左右边缘像素均值（≈rgb(174,166,149)），其它作品用默认底色。 */
@@ -197,4 +198,5 @@ export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: nu
   'neurotopia': { src: `${R2_FIG}/neurotopia/01.jpg`, pos: '50% 0%' },
   'chicken-utopia': { src: `${R2_FIG}/chicken-utopia/02.jpg`, pos: '50% 30%' },
   'hongqiqu': { src: `${R2_FIG}/hongqiqu/logo.jpg`, pos: '50% 60%' },
+  'scendance': { src: '/ring/_sources/scendance-hero.jpg' },
 };
