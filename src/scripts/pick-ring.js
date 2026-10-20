@@ -495,8 +495,6 @@ export function mountPickRing(root, pickData) {
   const viewEl = introEl && introEl.querySelector('[data-role="view"]');
   const rowEls = [...root.querySelectorAll('.pick-row')];
   const rowBtns = [...root.querySelectorAll('.pick-row-btn')];
-  const haloEl = root.querySelector('#pick-halo');
-  const haloWash = root.querySelector('.pick-halo-wash');
   const sealEl = root.querySelector('#pick-seal');
   const sealPress = root.querySelector('.pick-seal-press');
   const sealCharEl = root.querySelector('[data-role="seal-char"]');
@@ -516,7 +514,6 @@ export function mountPickRing(root, pickData) {
   let soundOn = false;
   let audioCtx = null;
   let fxIndex = -1;
-  let haloIndex = -1;
   let sealIndex = -1;
 
   /** Cover of the card that just became front. Paper until the section is on screen. */
@@ -737,9 +734,7 @@ export function mountPickRing(root, pickData) {
 
   // 宫商角徵羽, then the same degrees an octave up. Index i → degree i % 5.
   const PENTA = [261.63, 293.66, 329.63, 392.0, 440.0];
-  const HALO_W = 220;
-  const HALO_H = 150;
-  const SEAL = 34;
+  const SEAL = 26;
   // One character per work. Missing slugs fall back to the first CJK in the title.
   const SEAL_CHAR = {
     'xihu-panorama': '西',
@@ -865,42 +860,6 @@ export function mountPickRing(root, pickData) {
     if (slug && !sampleCache.has(slug)) probeSample(slug);
   }
 
-  function bloomWash(retractFirst) {
-    if (!haloWash) return;
-    haloWash.getAnimations().forEach((anim) => anim.cancel());
-    if (motion.matches) {
-      haloIndex = fxIndex;
-      haloWash.style.opacity = '1';
-      haloWash.style.transform = 'scale(1)';
-      return;
-    }
-    const bloom = () => {
-      haloWash.animate(
-        [
-          { opacity: 0, transform: 'scale(0.72)' },
-          { opacity: 1, transform: 'scale(1)' },
-        ],
-        { duration: 520, easing: 'cubic-bezier(0.22, 0.61, 0.18, 1)', fill: 'forwards' },
-      );
-    };
-    if (!retractFirst) {
-      bloom();
-      return;
-    }
-    const retract = haloWash.animate(
-      [
-        { opacity: 1, transform: 'scale(1)' },
-        { opacity: 0, transform: 'scale(0.84)' },
-      ],
-      { duration: 140, easing: 'ease-in', fill: 'forwards' },
-    );
-    retract.onfinish = () => {
-      haloIndex = fxIndex;
-      placeOverlays();
-      bloom();
-    };
-  }
-
   function stampSeal(index) {
     if (!sealPress) return;
     const ch = sealChar(pickData[index]);
@@ -922,45 +881,32 @@ export function mountPickRing(root, pickData) {
   }
 
   function startFx(index) {
-    const prev = haloIndex;
     fxIndex = index;
     sealIndex = index;
     stampSeal(index);
     pluck(index);
-    if (prev >= 0 && prev !== index) bloomWash(true);
-    else {
-      haloIndex = index;
-      bloomWash(false);
-    }
   }
 
-  /** Front-center card the user actually brought around. Load never calls this. */
+  /**
+   * Seal follows the card that is actually facing the camera (best), so the
+   * character always belongs to the picture it sits on. A pinned title can
+   * lead the spring; the seal waits until that same card is the one in front.
+   */
   function maybeFx(index, facing) {
-    if (!userMoved || index < 0 || index === fxIndex) return;
-    if (facing < 0.82) return;
+    if (!userMoved || index < 0) return;
+    if (facing < 0.9) return;
+    const ch = sealChar(pickData[index]);
+    if (index === sealIndex && sealCharEl && sealCharEl.textContent === ch) return;
     startFx(index);
   }
 
   function placeOverlays() {
+    if (!sealEl || sealIndex < 0) return;
     const progress = shared.uScroll.value;
-    const base = liveSpin();
-    if (haloEl && haloIndex >= 0) {
-      const spin = base + lagOf(haloIndex);
-      const c = projectLocal(haloIndex, spin, progress, 0, 0);
-      const left = projectLocal(haloIndex, spin, progress, -0.5, 0);
-      const right = projectLocal(haloIndex, spin, progress, 0.5, 0);
-      const cardW = Math.abs(right.x - left.x);
-      const s = Math.max(0.35, (cardW * 2.35) / HALO_W);
-      const x = c.x - (HALO_W * s) / 2;
-      const y = c.y - (HALO_H * s) / 2;
-      haloEl.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
-    }
-    if (sealEl && sealIndex >= 0) {
-      const corner = projectLocal(sealIndex, base + lagOf(sealIndex), progress, 0.34, 0.32);
-      const x = corner.x - SEAL / 2;
-      const y = corner.y - SEAL / 2;
-      sealEl.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
-    }
+    const corner = projectLocal(sealIndex, liveSpin() + lagOf(sealIndex), progress, 0.3, 0.28);
+    const x = Math.round(corner.x - SEAL / 2);
+    const y = Math.round(corner.y - SEAL / 2);
+    sealEl.style.transform = `translate3d(${x}px, ${y}px, 0)`;
   }
 
   if (soundBtn) {
@@ -1177,8 +1123,9 @@ export function mountPickRing(root, pickData) {
     if (root.dataset.progress !== progLabel) root.dataset.progress = progLabel;
     const active = pinned >= 0 ? pinned : best;
     setFront(active);
-    maybeFx(active, active >= 0 ? facings[active] : -1);
-    placeOverlays(progress, spin);
+    // Seal sits on the picture that faces the camera, not on a pinned card that is still swinging past.
+    maybeFx(best, facings[best]);
+    placeOverlays();
 
     renderer.render({ scene, camera, frustumCull: false });
     if (needsFrame()) raf = requestAnimationFrame(frame);

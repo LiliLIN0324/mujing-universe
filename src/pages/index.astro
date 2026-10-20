@@ -108,7 +108,6 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     <script type="application/json" id="m-pick-data" set:html={JSON.stringify(mobilePicks).replace(/</g, '\\u003c')}></script>
   </div>}
   <div class="picks-sticky">
-  <div class="pick-halo" id="pick-halo" aria-hidden="true"><div class="pick-halo-wash"></div></div>
   <canvas class="pick-canvas" id="pick-canvas" aria-hidden="true"></canvas>
   <div class="pick-seal" id="pick-seal" aria-hidden="true"><span class="pick-seal-press" data-role="seal-char"></span></div>
   <button class="pick-sound" id="pick-sound" type="button" aria-pressed="false" aria-label="声音 关">
@@ -428,38 +427,16 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   pointer-events: auto;
   cursor: pointer;
 }
-/* Ink wash sits under the canvas so the card covers the middle and the rim shows in the clear pixels. */
-.pick-halo {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 0;
-  width: 220px;
-  height: 150px;
-  pointer-events: none;
-  transform-origin: 0 0;
-  transform: translate3d(-9999px, 0, 0);
-  will-change: transform;
-}
-.pick-halo-wash {
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transform-origin: 50% 50%;
-  /* Static wash. A live turbulence filter re-rasterizes every frame and misses 60fps. */
-  background: url('/ring/ink-wash.png') center / 100% 100% no-repeat;
-}
 .pick-seal {
   position: absolute;
   left: 0;
   top: 0;
   z-index: 1;
-  width: 34px;
-  height: 34px;
+  width: 26px;
+  height: 26px;
   pointer-events: none;
   transform-origin: 0 0;
   transform: translate3d(-9999px, 0, 0);
-  will-change: transform;
 }
 .pick-seal-press {
   display: grid;
@@ -467,15 +444,16 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   width: 100%;
   height: 100%;
   box-sizing: border-box;
-  border-radius: 2px;
+  border-radius: 1px;
   background: #b5432f;
   color: #F6F5F3;
   font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0;
   opacity: 0;
+  -webkit-font-smoothing: antialiased;
 }
 .pick-sound {
   position: absolute;
@@ -768,7 +746,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 @media (max-width: 860px) {
   .picks { height: auto; }
   .pick-canvas { display: none; }
-  .pick-halo, .pick-seal, .pick-sound { display: none; }
+  .pick-seal, .pick-sound { display: none; }
   .picks-sticky { position: relative; top: auto; height: auto; padding-top: 72px; }
   .picks-layout { grid-template-columns: 1fr; row-gap: 28px; }
   .picks-copy { grid-column: 1; grid-row: 1; }
