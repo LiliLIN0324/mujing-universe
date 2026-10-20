@@ -530,6 +530,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+.pick-string { display: none; }
 .about__gallery__media__image {
   width: 100%;
   height: 100%;
@@ -542,14 +543,16 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   backface-visibility: hidden;
 }
 @media (min-width: 861px) {
-  .about__gallery.is-arc {
+  /* String band: below the title and the catalog, full width, large cards. */
+  .about__gallery.is-string {
     position: absolute;
-    left: 43%;
-    top: 56%;
-    width: min(860px, 60vw);
-    height: min(420px, 48vh);
+    left: 50%;
+    top: auto;
+    bottom: 12px;
+    width: min(1380px, 96vw);
+    height: 300px;
     margin: 0;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     overflow: visible;
     clip: auto;
     z-index: 0;
@@ -558,18 +561,18 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     cursor: grab;
     background: transparent;
   }
-  .about__gallery.is-arc.is-drag { cursor: grabbing; }
-  .about__gallery.is-arc .about__gallery__wrapper {
+  .about__gallery.is-string.is-drag { cursor: grabbing; }
+  .about__gallery.is-string .about__gallery__wrapper {
     position: absolute;
     inset: 0;
     margin: 0;
     pointer-events: none;
   }
-  .about__gallery.is-arc .about__gallery__link {
+  .about__gallery.is-string .about__gallery__link {
     position: absolute;
     left: 50%;
     top: 50%;
-    width: min(380px, 28vw);
+    width: min(480px, 34vw);
     aspect-ratio: 16 / 9;
     height: auto;
     margin: 0;
@@ -579,13 +582,30 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
   }
-  .about__gallery.is-arc .about__gallery__media {
+  .about__gallery.is-string .about__gallery__media {
     width: 100%;
     height: 100%;
     aspect-ratio: 16 / 9;
     border-radius: 20px;
     overflow: hidden;
     background: #E6E3DE;
+  }
+  .about__gallery.is-string .pick-string {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .about__gallery.is-string .pick-string path {
+    fill: none;
+    stroke: rgba(26, 26, 28, 0.38);
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-linejoin: round;
   }
 }
 .pick-list-window {
@@ -597,8 +617,9 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   min-width: min(280px, 100%);
   max-width: min(420px, 36vw);
   height: auto;
-  max-height: none;
-  overflow: visible;
+  /* Stay above the lower string. Hidden scrollbar; the window still tracks the active row. */
+  max-height: min(480px, calc(100vh - 520px));
+  overflow: auto;
   border: 0;
   font-family: inherit;
   position: relative;
@@ -612,9 +633,9 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
    so text bottom sits beside raised ring cards (~y coeff 0.85), not under the viewport. */
 @media (min-width: 861px) {
   #picks.is-end .pick-list-window {
-    align-self: end;
-    margin-top: auto;
-    margin-bottom: clamp(110px, 15vh, 200px);
+    align-self: start;
+    margin-top: 0;
+    margin-bottom: 0;
   }
 }
 .pick-list-window::-webkit-scrollbar { display: none; width: 0; height: 0; }

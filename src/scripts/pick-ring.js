@@ -1,35 +1,29 @@
 /**
- * Pick arc — one ellipse, one gaussian.
+ * 弦 — cards rest on a straight horizontal line.
  *
- * Profile of the previous WebGL ring (1440×900, Chrome trace):
- * idle ~42fps, drag ~35fps (max frame 100ms). Every animation frame called
- * getBoundingClientRect (800+ forced layouts), uploaded a full WebGL frame of
- * 50×50 segment planes, and kept preserveDrawingBuffer. That was the jank.
+ * Motion engine is unchanged: float `position`, drag velocity, coast, then a
+ * critically damped spring. Transform and opacity only. Nothing runs at rest.
+ * No autoplay.
  *
- * This version writes transform and opacity only, on a cached ellipse.
- * A float `position` (card index) is driven by drag velocity, a short coast,
- * then a critically damped spring onto the nearest card. Nothing runs when
- * the arc is at rest. No autoplay.
+ * A drag or wheel plucks the line. Vertical offset is one standing wave with
+ * the antinode on the active card (sin(kx + π/2) = cos(kx), so the center
+ * actually moves):
+ *   y = A · cos(k·d) · e^{-ζt} · cos(ωt)
+ * A comes from drag velocity. After release, A decays and the cos rings.
+ * Reduced motion keeps A at 0.
  */
 
-const PHI = 1.618033988749895;
-/**
- * Gaussian variance of card index.
- * g(1) ≈ 0.79, g(2) ≈ 0.39 ≈ 1/φ², g(3) ≈ 0.12.
- * One smooth falloff for scale and opacity; wide enough that five cards stay in the arc.
- */
-const SIGMA2 = 2.15;
-/** Radians of ellipse parameter per card. Same step everywhere. */
-const THETA = 0.56;
 const OMEGA = 12;
 const COAST_DRAG = 3.4;
-const VISIBLE = 3.35;
+const VISIBLE = 3.6;
+/** Wave number in card-index units. Neighbors move with the center; d=±2 is a node. */
+const WAVE_K = Math.PI / 4;
+const WAVE_W = 11.2;
+const WAVE_ZETA = 2.6;
+const WAVE_MAX = 36;
+const ANCHOR_Y = 0.5;
 
 const mod = (n, m) => ((n % m) + m) % m;
-
-function gauss(d) {
-  return Math.exp(-(d * d) / (2 * SIGMA2));
-}
 
 function wrapDelta(i, position, n) {
   let d = i - position;
@@ -78,11 +72,17 @@ export function mountPickRing(root, pickData) {
   let mode = 'rest';
   let target = 0;
   let front = -1;
-  /** Explicit selection. Copy tracks this until the arc arrives; drag clears it. */
+  /** Explicit selection. Copy tracks this until the string arrives; drag clears it. */
   let announced = -1;
-  let rx = 320;
-  let ry = 122;
-  let pxPer = 200;
+  let spacing = 540;
+  let pxPer = 540;
+  let cardW = 480;
+  let cardH = 270;
+  let stageW = 1200;
+  let stageH = 300;
+  /** Signed pluck amplitude in px. Zero unless the user has dragged or wheeled. */
+  let waveA = 0;
+  let wavePhase = 0;
   let anchor = 0;
   let runway = 1;
   let scrollY = window.scrollY;
@@ -92,6 +92,27 @@ export function mountPickRing(root, pickData) {
   let raf = 0;
   let lastTick = 0;
   const placed = [];
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const stringSvg = document.createElementNS(svgNS, 'svg');
+  stringSvg.setAttribute('class', 'pick-string');
+  stringSvg.setAttribute('aria-hidden', 'true');
+  // Inline, because Astro scopes stylesheet selectors and this node is created in JS.
+  stringSvg.style.position = 'absolute';
+  stringSvg.style.inset = '0';
+  stringSvg.style.width = '100%';
+  stringSvg.style.height = '100%';
+  stringSvg.style.overflow = 'visible';
+  stringSvg.style.pointerEvents = 'none';
+  stringSvg.style.zIndex = '0';
+  stringSvg.style.display = 'none';
+  const stringPath = document.createElementNS(svgNS, 'path');
+  stringPath.setAttribute('fill', 'none');
+  stringPath.setAttribute('stroke', 'rgba(26, 26, 28, 0.45)');
+  stringPath.setAttribute('stroke-width', '1.25');
+  stringPath.setAttribute('stroke-linecap', 'round');
+  stringPath.setAttribute('stroke-linejoin', 'round');
+  stringSvg.appendChild(stringPath);
+  stage.appendChild(stringSvg);
 
   function activeIndex(pos) {
     return mod(Math.round(pos), N);
@@ -158,29 +179,50 @@ export function mountPickRing(root, pickData) {
     if (announced >= 0 && mode === 'rest' && activeIndex(position) === announced) announced = -1;
   }
 
-  /** Geometry for every card from one float. No DOM reads. */
+  /** Resting line plus the current pluck. No DOM reads. */
+  function bow(d) {
+    if (motion.matches || waveA === 0) return 0;
+    return waveA * Math.cos(wavePhase) * Math.cos(WAVE_K * d);
+  }
+
   function pose(pos) {
     const out = [];
     for (let i = 0; i < N; i++) {
       const d = wrapDelta(i, pos, N);
-      const g = gauss(d);
-      const t = d * THETA;
-      const x = rx * Math.sin(t);
-      const y = -ry * (1 - Math.cos(t));
-      let opacity = (g - 0.05) / 0.48;
-      if (opacity < 0) opacity = 0;
-      else if (opacity > 1) opacity = 1;
+      const ad = Math.abs(d);
+      const x = -d * spacing;
+      const y = bow(d);
+      const scale = 1 - Math.min(ad, 2.8) * 0.06;
+      let opacity = 1;
+      if (ad > 1.35) {
+        const t = Math.min(1, (ad - 1.35) / 1.9);
+        opacity = 1 - t * t;
+      }
       out.push({
         i,
         d,
         x,
         y,
-        scale: g,
+        scale,
         opacity,
-        show: Math.abs(d) <= VISIBLE && opacity > 0.02,
+        show: ad <= VISIBLE && opacity > 0.04,
       });
     }
     return out;
+  }
+
+  function drawString() {
+    const oy = stageH * ANCHOR_Y;
+    const ox = stageW / 2;
+    const steps = 24;
+    let d = '';
+    for (let i = 0; i <= steps; i++) {
+      const x = (i / steps) * stageW;
+      const cardD = -(x - ox) / spacing;
+      const y = oy + bow(cardD);
+      d += `${i === 0 ? 'M' : ' L'}${x.toFixed(1)} ${y.toFixed(1)}`;
+    }
+    if (stringPath.getAttribute('d') !== d) stringPath.setAttribute('d', d);
   }
 
   function apply(pos) {
@@ -189,6 +231,7 @@ export function mountPickRing(root, pickData) {
     const writeZ = key !== zKey;
     if (writeZ) zKey = key;
     const framePose = pose(pos);
+    drawString();
     for (let i = 0; i < N; i++) {
       const p = framePose[i];
       placed[i] = p;
@@ -203,9 +246,9 @@ export function mountPickRing(root, pickData) {
       }
       el.dataset.on = '1';
       el.style.opacity = p.opacity.toFixed(3);
-      el.style.pointerEvents = Math.abs(p.d) < 2.35 ? 'auto' : 'none';
+      el.style.pointerEvents = Math.abs(p.d) < 1.85 ? 'auto' : 'none';
       el.style.transform = `translate3d(calc(-50% + ${p.x.toFixed(2)}px), calc(-50% + ${p.y.toFixed(2)}px), 0) scale(${p.scale.toFixed(4)})`;
-      if (writeZ) el.style.zIndex = String(100 + Math.round(p.scale * 200));
+      if (writeZ) el.style.zIndex = String(220 - Math.round(Math.abs(p.d) * 28));
     }
   }
 
@@ -215,11 +258,12 @@ export function mountPickRing(root, pickData) {
       return;
     }
     const card = cards[0];
-    const cardW = card.offsetWidth || 420;
-    const stageW = stage.clientWidth || 880;
-    rx = Math.min(stageW * 0.34, cardW * 0.58);
-    ry = rx / (PHI * PHI);
-    pxPer = Math.max(120, rx * Math.sin(THETA));
+    cardW = card.offsetWidth || 480;
+    cardH = card.offsetHeight || cardW * 9 / 16;
+    stageW = stage.clientWidth || 1200;
+    stageH = stage.clientHeight || 300;
+    spacing = cardW + 88;
+    pxPer = spacing;
     const limit = listWindow ? Math.max(window.innerHeight * 0.85, (listEl ? listEl.scrollHeight - listWindow.clientHeight : 0)) : window.innerHeight * 0.9;
     root.style.height = `${window.innerHeight + Math.max(window.innerHeight * 0.85, limit)}px`;
     anchor = root.getBoundingClientRect().top + window.scrollY;
@@ -267,13 +311,33 @@ export function mountPickRing(root, pickData) {
     }
   }
 
+  function decayWave(dt) {
+    if (motion.matches) {
+      waveA = 0;
+      wavePhase = 0;
+      return;
+    }
+    if (mode === 'drag') {
+      wavePhase = 0;
+      return;
+    }
+    if (Math.abs(waveA) < 0.4) {
+      waveA = 0;
+      wavePhase = 0;
+      return;
+    }
+    wavePhase += WAVE_W * dt;
+    waveA *= Math.exp(-WAVE_ZETA * dt);
+  }
+
   function frame(now) {
     const dt = Math.min(0.034, (now - lastTick) / 1000 || 0.016);
     lastTick = now;
     step(dt);
+    decayWave(dt);
     apply(position);
     publish(false);
-    if (mode !== 'rest') raf = requestAnimationFrame(frame);
+    if (mode !== 'rest' || Math.abs(waveA) > 0.4) raf = requestAnimationFrame(frame);
     else raf = 0;
   }
 
@@ -293,10 +357,17 @@ export function mountPickRing(root, pickData) {
       position = dest;
       velocity = 0;
       mode = 'rest';
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
+      if (motion.matches) {
+        waveA = 0;
+        wavePhase = 0;
+      }
       apply(position);
       publish(true);
+      if (Math.abs(waveA) > 0.4) kick();
+      else {
+        if (raf) cancelAnimationFrame(raf);
+        raf = 0;
+      }
     } else {
       mode = 'spring';
       kick();
@@ -308,19 +379,32 @@ export function mountPickRing(root, pickData) {
     }
   }
 
+  function pluck() {
+    if (motion.matches) {
+      waveA = 0;
+      wavePhase = 0;
+      return;
+    }
+    wavePhase = 0;
+    waveA = Math.max(-WAVE_MAX, Math.min(WAVE_MAX, velocity * 5.8));
+  }
+
   function pickFromClient(clientX, clientY) {
     const rect = stage.getBoundingClientRect();
     const lx = clientX - (rect.left + rect.width / 2);
-    const ly = clientY - (rect.top + rect.height / 2);
+    const ly = clientY - (rect.top + rect.height * ANCHOR_Y);
     let best = activeIndex(position);
     let bestD = Infinity;
     for (let i = 0; i < N; i++) {
       const p = placed[i];
-      if (!p || !p.show || Math.abs(p.d) > 2.4) continue;
-      const dx = lx - p.x;
-      const dy = ly - p.y;
-      const hit = (dx * dx) / Math.max(1, (rx * 0.18) ** 2) + (dy * dy) / Math.max(1, (ry + 80) ** 2);
-      const d = hit - p.scale * 0.15;
+      if (!p || !p.show || Math.abs(p.d) > 1.85) continue;
+      const hw = Math.max(24, cardW * p.scale * 0.5);
+      const hh = Math.max(24, cardH * p.scale * 0.5);
+      const dx = (lx - p.x) / hw;
+      const dy = (ly - p.y) / hh;
+      const hit = dx * dx + dy * dy;
+      if (hit > 1) continue;
+      const d = hit - p.scale * 0.08;
       if (d < bestD) {
         bestD = d;
         best = i;
@@ -376,6 +460,7 @@ export function mountPickRing(root, pickData) {
     const blended = velocity * 0.55 + inst * 0.45;
     velocity = Math.max(-6.5, Math.min(6.5, blended));
     position = next;
+    pluck();
     drag.lastT = e.timeStamp;
     drag.moved = true;
     apply(position);
@@ -432,6 +517,8 @@ export function mountPickRing(root, pickData) {
     if (e.deltaMode === 1) delta *= 16;
     else if (e.deltaMode === 2) delta *= 120;
     velocity += (delta / pxPer) * 14;
+    velocity = Math.max(-6.5, Math.min(6.5, velocity));
+    pluck();
     if (motion.matches) {
       springTo(settleTarget(position + Math.sign(delta || 1)));
       return;
@@ -483,7 +570,9 @@ export function mountPickRing(root, pickData) {
       el.style.pointerEvents = '';
       delete el.dataset.on;
     });
-    stage.classList.remove('is-arc', 'is-drag');
+    stage.classList.remove('is-string', 'is-drag');
+    stringSvg.style.display = 'none';
+    stringPath.setAttribute('d', '');
   }
 
   function engage() {
@@ -492,7 +581,8 @@ export function mountPickRing(root, pickData) {
       root.style.height = '';
       return;
     }
-    stage.classList.add('is-arc');
+    stage.classList.add('is-string');
+    stringSvg.style.display = 'block';
     measure();
     zKey = null;
     apply(position);
@@ -521,6 +611,7 @@ export function mountPickRing(root, pickData) {
         spin: position,
         mode,
         velocity,
+        wave: Math.round(waveA * 10) / 10,
         best,
         bestTitle: (pickData[best] && pickData[best].title) || '',
         frontTitle: (pickData[front] && pickData[front].title) || '',
