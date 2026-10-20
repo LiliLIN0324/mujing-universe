@@ -170,7 +170,7 @@ export function mountPickRing(root, pickData) {
       const d = wrapDelta(i, pos, N);
       const ad = Math.abs(d);
       const x = -d * spacing;
-      const y = waveAmp * Math.sin(d * 0.58) + waveAmp * 0.42 * Math.sin(d * 1.55 + 0.7);
+      const y = waveAmp * Math.sin(d * 1.05);
       const scale = 1 - Math.min(ad, 3.2) * 0.035;
       let opacity = 1;
       if (ad > 1.05) {
@@ -178,8 +178,8 @@ export function mountPickRing(root, pickData) {
         const s = t * t * (3 - 2 * t);
         opacity = 1 - s;
       }
-      const veilT = ad <= 0.2 ? 0 : Math.min(1, (ad - 0.2) / 2.15);
-      const veil = veilT * 0.66;
+      const veilT = ad <= 0.12 ? 0 : Math.min(1, (ad - 0.12) / 1.85);
+      const veil = veilT * 0.72;
       out.push({
         i,
         d,
@@ -232,7 +232,7 @@ export function mountPickRing(root, pickData) {
     cardH = card.offsetHeight || cardW * 9 / 16;
     spacing = cardW + 64;
     pxPer = spacing;
-    waveAmp = 14;
+    waveAmp = 26;
     const limit = listWindow ? Math.max(window.innerHeight * 0.85, (listEl ? listEl.scrollHeight - listWindow.clientHeight : 0)) : window.innerHeight * 0.9;
     root.style.height = `${window.innerHeight + Math.max(window.innerHeight * 0.85, limit)}px`;
     anchor = root.getBoundingClientRect().top + window.scrollY;
