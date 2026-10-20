@@ -1,0 +1,491 @@
+---
+/** 全站右下角 Mimi。不自动打开、不自动动。密钥不在这里。 */
+---
+<div class="mimi" id="mimi" data-state="idle">
+  <button class="mimi-launch" type="button" aria-expanded="false" aria-controls="mimi-panel" aria-label="打开 Mimi 对话">
+    <span class="mimi-face">
+      <img src="/mimi/avatar.png" alt="" width="56" height="56" />
+      <span class="mimi-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </span>
+  </button>
+  <section class="mimi-panel" id="mimi-panel" role="dialog" aria-modal="false" aria-labelledby="mimi-name" hidden>
+    <header class="mimi-hd">
+      <span class="mimi-face">
+        <img src="/mimi/avatar.png" alt="" width="44" height="44" />
+        <span class="mimi-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      </span>
+      <div class="mimi-id">
+        <strong id="mimi-name">Mimi</strong>
+        <p>幕景的 AI 伙伴，在官网接待访客。</p>
+        <p class="mimi-demo" hidden>本地演示，未接通模型。</p>
+      </div>
+      <button class="mimi-x" type="button" aria-label="关闭对话">×</button>
+    </header>
+    <div class="mimi-log" role="log" aria-live="polite" aria-relevant="additions"></div>
+    <div class="mimi-quick" role="group" aria-label="快捷问题">
+      <button type="button">幕景是做什么的？</button>
+      <button type="button">看看代表作品</button>
+      <button type="button">Mimi 是怎么做出来的？</button>
+      <button type="button">认识终树</button>
+    </div>
+    <form class="mimi-form">
+      <label class="mimi-sr" for="mimi-input">输入问题</label>
+      <input id="mimi-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send" placeholder="想了解幕景，直接问我" />
+      <button class="mimi-send" type="submit">发送</button>
+    </form>
+  </section>
+</div>
+
+<style>
+  .mimi {
+    --mimi-edge: 22px;
+    --mimi-lift: 22px;
+  }
+  /* Homepage painting hint sits on the lower right of a tall first screen.
+     Keep the closed button clear of 聆听图景 on short desktop windows. */
+  :global(body:has(.listen)) .mimi { --mimi-lift: 28px; }
+  .mimi-launch,
+  .mimi-panel {
+    position: fixed;
+    right: var(--mimi-edge);
+    z-index: 160;
+    font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  .mimi-launch {
+    bottom: var(--mimi-lift);
+    width: 56px;
+    height: 56px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: #ff6b0b;
+    box-shadow: 0 0 0 2px #fff, 0 8px 22px rgba(26, 26, 28, 0.18);
+    cursor: pointer;
+  }
+  .mimi-launch:hover { opacity: 0.92; }
+  .mimi.is-open .mimi-launch { display: none; }
+  .mimi-face {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #ff6b0b;
+  }
+  .mimi-face img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .mimi-dots {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: 7%;
+    transform: translateX(-50%);
+    gap: 3px;
+    padding: 3px 5px;
+    border-radius: 999px;
+    background: rgba(26, 26, 28, 0.78);
+  }
+  .mimi[data-state="thinking"] .mimi-dots { display: flex; }
+  .mimi-dots i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fff;
+    animation: mimi-dot 1s infinite;
+  }
+  .mimi-dots i:nth-child(2) { animation-delay: 0.15s; }
+  .mimi-dots i:nth-child(3) { animation-delay: 0.3s; }
+  .mimi[data-state="answering"] .mimi-face {
+    box-shadow: inset 0 0 0 2px #1a1a1c;
+  }
+  .mimi[data-state="error"] .mimi-face {
+    box-shadow: inset 0 0 0 2px #b23a2a;
+    animation: mimi-shake 0.42s ease;
+  }
+  .mimi-panel {
+    bottom: calc(var(--mimi-lift) + 68px);
+    display: none;
+    flex-direction: column;
+    width: min(400px, calc(100vw - 36px));
+    height: min(640px, calc(100dvh - 132px));
+    background: #f6f5f3;
+    color: #1a1a1c;
+    border: 1px solid rgba(26, 26, 28, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 18px 50px rgba(26, 26, 28, 0.14);
+    overflow: hidden;
+  }
+  .mimi.is-open .mimi-panel { display: flex; }
+  .mimi-panel[hidden] { display: none !important; }
+  .mimi-hd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 12px 12px 14px;
+    border-bottom: 1px solid rgba(26, 26, 28, 0.08);
+  }
+  .mimi-hd .mimi-face { width: 44px; height: 44px; flex: none; }
+  .mimi-id { min-width: 0; }
+  .mimi-id strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+  .mimi-id p {
+    margin: 2px 0 0;
+    color: #6b6b6b;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .mimi-demo { color: #6a655f !important; }
+  .mimi-x {
+    margin-left: auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #1a1a1c;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    flex: none;
+  }
+  .mimi-x:hover { background: rgba(26, 26, 28, 0.06); }
+  .mimi-log {
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px 14px 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mimi-msg { margin: 0 0 12px; font-size: 15px; line-height: 1.65; }
+  .mimi-msg p { margin: 0; }
+  .mimi-msg.bot p {
+    background: #fff;
+    border-radius: 16px;
+    padding: 10px 12px;
+  }
+  .mimi-msg.user { display: flex; justify-content: flex-end; }
+  .mimi-msg.user p {
+    max-width: 88%;
+    background: #1a1a1c;
+    color: #f6f5f3;
+    border-radius: 18px;
+    padding: 8px 14px;
+  }
+  .mimi-msg a { color: inherit; }
+  .mimi-msg.bot a { text-decoration: underline; text-underline-offset: 2px; }
+  .mimi-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 14px 12px;
+  }
+  .mimi-quick button {
+    border-radius: 999px;
+    border: 1px solid rgba(26, 26, 28, 0.16);
+    background: transparent;
+    color: #1a1a1c;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.3;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .mimi-quick button:hover { background: #1a1a1c; color: #f6f5f3; }
+  .mimi-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    border-top: 1px solid rgba(26, 26, 28, 0.08);
+  }
+  .mimi-form input {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(26, 26, 28, 0.14);
+    background: #fff;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 16px;
+    color: #1a1a1c;
+  }
+  .mimi-send {
+    height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #1a1a1c;
+    color: #f6f5f3;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    flex: none;
+  }
+  .mimi-send:hover { opacity: 0.86; }
+  .mimi-send:disabled,
+  .mimi-quick button:disabled { opacity: 0.45; cursor: default; }
+  .mimi-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  :global(body:has(#mimi) footer.bot) { padding-bottom: 108px; }
+  @media (max-width: 768px) {
+    .mimi {
+      --mimi-edge: 14px;
+      --mimi-lift: calc(84px + env(safe-area-inset-bottom));
+    }
+    .mimi-launch { width: 52px; height: 52px; }
+    .mimi-panel {
+      left: 8px;
+      right: 8px;
+      width: auto;
+      bottom: calc(8px + env(safe-area-inset-bottom));
+      height: min(680px, calc(100dvh - 76px));
+    }
+    :global(body.mimi-open) { overflow: hidden; }
+    :global(body:has(#mimi) footer.bot) {
+      padding-bottom: calc(128px + env(safe-area-inset-bottom));
+    }
+  }
+  @keyframes mimi-dot {
+    0%, 80%, 100% { opacity: 0.3; }
+    40% { opacity: 1; }
+  }
+  @keyframes mimi-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mimi[data-state="error"] .mimi-face { animation: none; }
+    .mimi-dots i { animation: none; opacity: 1; }
+    .mimi-launch,
+    .mimi-send,
+    .mimi-quick button { transition: none; }
+  }
+</style>
+
+<script>
+  const root = document.getElementById('mimi');
+  const launch = root?.querySelector('.mimi-launch');
+  const panel = document.getElementById('mimi-panel');
+  const log = root?.querySelector('.mimi-log');
+  const form = root?.querySelector('.mimi-form');
+  const input = document.getElementById('mimi-input');
+  const demoNote = root?.querySelector('.mimi-demo');
+  const quick = root?.querySelectorAll('.mimi-quick button');
+  if (root && launch && panel && log && form && input && demoNote && quick) {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const BANNED = /西湖|繁胜全景|xihu-panorama/i;
+    const history = [];
+    let demo = false;
+    let busy = false;
+    let state = 'idle';
+
+    const ANSWERS = {
+      what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做影像、视觉和内容创作。目录在[作品页](/works/)，合作到[合作页](/contact/)。',
+      works: '公开的作品都在[作品页](/works/)。可以先看幕景 Scendance、LitFlow 和 Riffle，点进详情有介绍。',
+      made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是终树开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
+      tree: '终树是丁科智，负责幕景宇宙的经纪与管理，也搭建飞书群智能体。微信 endTree-26，或去[合作页](/contact/)。',
+      price: '报价、档期和版权我这边不给数字，也不能替团队承诺。请到[合作页](/contact/)联系终树（丁科智），微信 endTree-26。',
+      secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
+      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)，合作可以到[合作页](/contact/)找终树。',
+      other: '这个问题我答不准，也不能替团队承诺。请到[合作页](/contact/)找终树（丁科智），微信 endTree-26。',
+      en: 'I can’t answer that precisely, and I can’t promise a price or a date. Please use the [contact page](/contact/) — Ding Kezhi (Zhongshu), WeChat endTree-26.',
+    };
+
+    function localAnswer(q) {
+      const s = q.trim();
+      const flat = s.replace(/\s+/g, '');
+      if (BANNED.test(flat)) return ANSWERS.skip;
+      if (flat === '认识终树' || /终树|丁科智/.test(flat)) return ANSWERS.tree;
+      if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
+      if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么/.test(flat))) return ANSWERS.works;
+      if (flat === '幕景是做什么的？' || ((/幕景|你们/.test(flat)) && /做|是什么|干什么/.test(flat))) return ANSWERS.what;
+      if (/报价|多少钱|价格|档期|合同|版权/.test(flat)) return ANSWERS.price;
+      if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
+      if (/[A-Za-z]/.test(s) && !/[\u4e00-\u9fff]/.test(s)) return ANSWERS.en;
+      return ANSWERS.other;
+    }
+
+    function setState(next) {
+      state = next;
+      root.dataset.state = next;
+      const locked = next === 'thinking';
+      form.querySelector('.mimi-send').disabled = locked;
+      quick.forEach((btn) => { btn.disabled = locked; });
+    }
+
+    function linkify(parent, text) {
+      const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/(?!\/)[A-Za-z0-9/_\-.%]*)\)|(https?:\/\/[^\s<]+)|(\/(?:works|contact|artist|studio)\/[A-Za-z0-9/_\-.]*)/g;
+      let last = 0;
+      let match;
+      while ((match = re.exec(text))) {
+        if (match.index > last) parent.append(text.slice(last, match.index));
+        let href = match[2] || match[3] || match[4] || '';
+        let label = match[1] || href;
+        const trail = href.match(/[.,，。、；;：:！!？?）)]+$/);
+        if (trail && !match[1]) {
+          href = href.slice(0, -trail[0].length);
+          label = href;
+        }
+        const a = document.createElement('a');
+        a.href = href;
+        a.textContent = label;
+        if (/^https?:/i.test(href)) {
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        }
+        parent.append(a);
+        if (trail && !match[1]) parent.append(trail[0]);
+        last = match.index + match[0].length;
+      }
+      if (last < text.length) parent.append(text.slice(last));
+    }
+
+    function append(role, text) {
+      const item = document.createElement('div');
+      item.className = `mimi-msg ${role === 'user' ? 'user' : 'bot'}`;
+      const p = document.createElement('p');
+      if (role === 'user') p.textContent = text;
+      else linkify(p, text);
+      item.append(p);
+      log.append(item);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function fit() {
+      const vv = window.visualViewport;
+      const mobile = window.innerWidth <= 768;
+      if (!root.classList.contains('is-open') || !mobile || !vv) {
+        panel.style.top = '';
+        panel.style.height = '';
+        panel.style.bottom = '';
+        return;
+      }
+      const gap = 8;
+      const available = vv.height - gap * 2;
+      const top = available < 460 ? vv.offsetTop + gap : Math.max(vv.offsetTop + gap, vv.offsetTop + 60);
+      const height = Math.max(220, vv.offsetTop + vv.height - gap - top);
+      panel.style.bottom = 'auto';
+      panel.style.top = `${top}px`;
+      panel.style.height = `${height}px`;
+    }
+
+    function setOpen(open) {
+      root.classList.toggle('is-open', open);
+      panel.hidden = !open;
+      launch.setAttribute('aria-expanded', String(open));
+      launch.setAttribute('aria-label', open ? '关闭 Mimi 对话' : '打开 Mimi 对话');
+      document.body.classList.toggle('mimi-open', open && window.innerWidth <= 768);
+      fit();
+      if (open) {
+        (window.innerWidth > 768 ? input : root.querySelector('.mimi-x')).focus();
+      } else {
+        launch.focus();
+      }
+    }
+
+    append('bot', '你好，我是 Mimi，幕景的 AI 伙伴。想了解我们做什么，还是有项目想聊？');
+
+    launch.addEventListener('click', () => setOpen(!root.classList.contains('is-open')));
+    root.querySelector('.mimi-x').addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && root.classList.contains('is-open')) setOpen(false);
+    });
+    document.addEventListener('click', (e) => {
+      if (!root.classList.contains('is-open') || root.contains(e.target)) return;
+      setOpen(false);
+    });
+    root.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+    async function ask(text) {
+      const q = text.trim().slice(0, 400);
+      if (!q || busy) return;
+      busy = true;
+      append('user', q);
+      history.push({ role: 'user', content: q });
+      input.value = '';
+      setState('thinking');
+      let reply = '';
+      let failed = false;
+      try {
+        if (demo) {
+          reply = localAnswer(q);
+        } else {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ messages: history.slice(-8) }),
+          });
+          if (res.status === 501 || res.status === 404) {
+            demo = true;
+            demoNote.hidden = false;
+            reply = localAnswer(q);
+          } else if (res.status === 429) {
+            failed = true;
+            reply = '提问有点多，我先歇一会儿，稍后再问哦。';
+          } else if (!res.ok) {
+            failed = true;
+            reply = '抱歉，这次没能生成回答，请稍后再试。';
+          } else {
+            const data = await res.json().catch(() => ({}));
+            reply = typeof data.reply === 'string' ? data.reply.trim() : '';
+            if (!reply) {
+              failed = true;
+              reply = '抱歉，这次没能生成回答，请稍后再试。';
+            }
+          }
+        }
+      } catch {
+        demo = true;
+        demoNote.hidden = false;
+        reply = localAnswer(q);
+      }
+      if (BANNED.test(reply)) reply = ANSWERS.skip;
+      setState(failed ? 'error' : 'answering');
+      append('bot', reply);
+      if (!failed) history.push({ role: 'assistant', content: reply });
+      busy = false;
+      const settle = failed ? 'error' : 'answering';
+      window.setTimeout(() => {
+        if (state === settle) setState('idle');
+      }, reduce ? 0 : 700);
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      ask(input.value);
+    });
+    quick.forEach((btn) => btn.addEventListener('click', () => ask(btn.textContent || '')));
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener('resize', fit);
+      vv.addEventListener('scroll', fit);
+    }
+    window.addEventListener('resize', () => {
+      document.body.classList.toggle('mimi-open', root.classList.contains('is-open') && window.innerWidth <= 768);
+      fit();
+    });
+  }
+</script>
