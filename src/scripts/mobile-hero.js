@@ -63,8 +63,8 @@ export function mountMobileHero() {
 
   function setButton(on) {
     button.setAttribute('aria-pressed', String(on));
-    if (label) label.textContent = on ? '暂停' : '聆听图景';
-    button.setAttribute('aria-label', on ? '暂停长卷' : '聆听图景');
+    if (label) label.textContent = on ? '暂停' : '聆听长卷';
+    button.setAttribute('aria-label', on ? '暂停' : '聆听长卷');
   }
 
   function tick(now) {
@@ -105,6 +105,8 @@ export function mountMobileHero() {
     if (!src) return false;
     if (video.getAttribute('src') !== src) video.src = src;
     video.playsInline = true;
+    video.autoplay = false;
+    video.setAttribute('playsinline', '');
     return true;
   }
 
@@ -216,7 +218,7 @@ export function mountMobileHero() {
     scrub = null;
     pan.style.removeProperty('--pan-x');
     still.style.height = '';
-    if (label) label.textContent = '聆听图景';
+    if (label) label.textContent = '聆听长卷';
     button.removeAttribute('aria-label');
     if (nav) nav.classList.remove('on-hero');
     navIo && navIo.disconnect();
