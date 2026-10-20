@@ -1,9 +1,10 @@
 ---
 import Base from '../../layouts/Base.astro'; import WorkCover from '../../components/WorkCover.astro';
-import { allWorks, LINES, WORKS_COVER, splitTitle, clean } from '../../lib';
+import { allWorks, LINES, WORKS_COVER, clean } from '../../lib';
 const ws = (await allWorks()).map(w => ({
   ...w,
-  main: splitTitle(w.title)[0],
+  main: w.title,
+  en: (w.titleEn || '').trim(),
   desc: clean(w.description),
   ym: `${w.line} · ${w.yearNum || w.year}`,
   meta: `${w.line} · ${w.yearNum || w.year}${w.status === '进行中' ? ' · 进行中' : ''}`,
@@ -25,7 +26,7 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
   <div class="wk-list">
     <div class="wk-lh" aria-hidden="true"><span>No.</span><span>作品</span><span>类别 · 年份</span></div>
     <ol id="wk-rows">
-      {ws.map((w, i) => <li data-line={w.line}><a class:list={['wk-row', i === 0 && 'on']} href={`/works/${w.slug}/`} data-slug={w.slug} data-no={w.no} data-title={w.title} data-meta={w.meta} data-desc={w.desc}>
+      {ws.map((w, i) => <li data-line={w.line}><a class:list={['wk-row', i === 0 && 'on']} href={`/works/${w.slug}/`} data-slug={w.slug} data-no={w.no} data-title={w.main} data-en={w.en} data-meta={w.meta} data-desc={w.desc}>
         <span class="no">{w.no}</span><span class="tt">{w.main}</span><span class="mt">{w.ym}</span></a></li>)}
     </ol>
   </div>
@@ -33,7 +34,8 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
     <a class="pv-cv" id="pv-cv" href={`/works/${first.slug}/`} tabindex="-1" aria-hidden="true"><div class="pv-layer"><WorkCover w={first}/></div></a>
     <div class="pv-cap">
       <div class="pv-row"><span class="pv-no" id="pv-no">{first.no}</span><span id="pv-meta">{first.meta}</span></div>
-      <h2 class="pv-t" id="pv-t">{first.title}</h2>
+      <h2 class="pv-t" id="pv-t">{first.main}</h2>
+      <p class="pv-en" id="pv-en" hidden={!first.en}>{first.en}</p>
       <p class="pv-d" id="pv-d" hidden={!first.desc}>{first.desc}</p>
       <a class="more" id="pv-more" href={`/works/${first.slug}/`}>查看作品 <span>→</span></a>
     </div>
@@ -42,7 +44,7 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
   <ol class="wk-m" id="wk-m">
     {ws.map(w => <li data-line={w.line} data-slug={w.slug}><a href={`/works/${w.slug}/`}>
       <WorkCover w={w}/>
-      <div class="mr"><span class="no">{w.no}</span><span class="tt">{w.main}</span></div>
+      <div class="mr"><span class="no">{w.no}</span><span class="tt">{w.main}{w.en && <i class="te">{w.en}</i>}</span></div>
       <p class="mt">{w.meta}</p></a></li>)}
   </ol>
 </section>
@@ -85,6 +87,7 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
 .pv-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); letter-spacing: .04em; }
 .pv-no { font-family: var(--en); color: var(--accent); letter-spacing: .06em; }
 .wk .pv-t { margin: 10px 0 0; font-family: var(--song); font-weight: 600; font-size: 28px; line-height: 1.3; letter-spacing: .02em; color: var(--ink); }
+.pv-en { margin: 6px 0 0; font-family: var(--en); font-size: 13px; letter-spacing: .08em; color: var(--muted); }
 .pv-d { margin: 12px 0 0; font-size: 15px; line-height: 1.75; color: var(--ink2); max-width: 34em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .wk .more { display: inline-block; margin-top: 20px; font-size: 14px; letter-spacing: .08em; border-bottom: 1px solid var(--ink); padding-bottom: 3px; }
 .more span { font-family: var(--en); margin-left: 4px; }
@@ -123,6 +126,7 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
   .mr { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
   .mr .no { flex: none; font-family: var(--en); font-size: 12px; letter-spacing: .06em; color: var(--muted); }
   .mr .tt { font-family: var(--song); font-weight: 600; font-size: 18px; line-height: 1.45; letter-spacing: .02em; color: var(--ink); }
+  .mr .te { display: block; margin-top: 2px; font-family: var(--en); font-style: normal; font-weight: 400; font-size: 12px; letter-spacing: .06em; color: var(--muted); }
   .wk-m .mt { margin: 6px 0 0 29px; font-size: 13px; color: var(--muted); letter-spacing: .03em; }
 }
 </style>
@@ -146,6 +150,7 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
     cur?.classList.remove('on'); row.classList.add('on'); cur = row;
     const d = row.dataset, href = row.getAttribute('href');
     pvNo.textContent = d.no; pvMeta.textContent = d.meta; pvT.textContent = d.title;
+    const pvEn = $('#pv-en'); if (pvEn) { pvEn.textContent = d.en || ''; pvEn.hidden = !d.en; }
     pvD.textContent = d.desc || ''; pvD.hidden = !d.desc;
     pvMore.href = href; pvCv.href = href;
     const src = cards.find((c) => c.dataset.slug === d.slug)?.querySelector('.cv');

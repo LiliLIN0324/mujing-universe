@@ -137,9 +137,9 @@ export function pickDeskBody(w: {
 }
 
 /* ---- Work detail page helpers ---- */
-/** 西湖长卷的副标题（与首页同一句）。其它作品没有副标题字段，留空即隐藏。 */
-export function workSubtitle(w: { slug: string }): string {
-  return w.slug === 'xihu-panorama' ? '以宋画长卷重绘当代西湖，画面由声音转译生成。' : '';
+/** 作品英文名，详情页和大标题下的小字。没有就留空。 */
+export function workSubtitle(w: { titleEn?: string }): string {
+  return (w.titleEn || '').replace(/Dragon Diffussion/gi, 'Dragon Diffusion').trim();
 }
 /** 全卷长条：R2 上只有西湖有整卷静帧（32768×627）。 */
 export function workStrip(w: { slug: string }): string | null {
