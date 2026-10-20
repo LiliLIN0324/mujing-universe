@@ -35,6 +35,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       <button type="button">幕景是做什么的？</button>
       <button type="button">看看代表作品</button>
       <button type="button">Mimi 是怎么做出来的？</button>
+      <button type="button">聊合作</button>
     </div>
     <form class="mimi-form">
       <label class="mimi-sr" for="mimi-input">输入问题</label>
@@ -247,6 +248,92 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   }
   .mimi-msg a { color: inherit; }
   .mimi-msg.bot a { text-decoration: underline; text-underline-offset: 2px; }
+  :global(.mimi-coop) {
+    margin: 0 0 12px;
+    background: #fff;
+    border-radius: 18px;
+    padding: 12px;
+    text-align: center;
+  }
+  :global(.mimi-coop strong) {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  :global(.mimi-qr) {
+    display: block;
+    width: min(168px, 100%);
+    margin: 8px auto 0;
+    padding: 0;
+    border: 0;
+    background: #fff;
+    cursor: zoom-in;
+  }
+  :global(.mimi-qr img) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  :global(.mimi-coop p) {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #3d3a35;
+  }
+  :global(.mimi-hint) { color: #6b6b6b !important; }
+  :global(.mimi-coop a) {
+    display: inline-block;
+    margin-top: 8px;
+    color: #1a1a1c;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  :global(.mimi-wx) { color: #1a1a1c !important; }
+  :global(.mimi-wx button) {
+    border: 0;
+    background: #f6f5f3;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  :global(.mimi-light) {
+    position: fixed;
+    inset: 0;
+    z-index: 180;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    background: rgba(26, 26, 28, 0.72);
+  }
+  :global(.mimi-light[hidden]) { display: none !important; }
+  :global(.mimi-light img) {
+    width: auto;
+    max-width: min(420px, 92vw);
+    max-height: 70vh;
+    background: #fff;
+    border-radius: 16px;
+  }
+  :global(.mimi-light p) {
+    margin: 0;
+    color: #f6f5f3;
+    font-size: 13px;
+    text-align: center;
+  }
+  :global(.mimi-light a) {
+    color: #1a1a1c;
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 16px;
+    text-decoration: none;
+    font-size: 14px;
+  }
   .mimi-quick {
     display: flex;
     flex-wrap: wrap;
@@ -389,28 +476,47 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     const pos = { x: 0, y: 0, side: 'right' };
 
     const ANSWERS = {
-      what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做影像、视觉和内容创作。目录在[作品页](/works/)，合作到[合作页](/contact/)。',
+      what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做影像、视觉和内容创作。目录在[作品页](/works/)。想合作就点「聊合作」。',
       works: '公开的作品都在[作品页](/works/)。可以先看幕景 Scendance、LitFlow 和 Riffle，点进详情有介绍。',
       made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
-      contact: '合作和联系方式在[合作页](/contact/)。',
-      price: '报价、档期和版权我这边不给数字，也不能替团队承诺。请到[合作页](/contact/)联系。',
+      coop: '想合作、咨询或联系，点「聊合作」。下面是飞书名片，扫码时备注一下来意。\n[[COOP]]',
       secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
-      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)，合作可以到[合作页](/contact/)。',
-      other: '这个问题我答不准，也不能替团队承诺。请到[合作页](/contact/)联系。',
-      en: 'I can’t answer that precisely, and I can’t promise a price or a date. Please use the [contact page](/contact/).',
+      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「聊合作」。',
+      other: '这个问题我答不准，也不能替团队承诺。想合作或咨询，点「聊合作」。',
+      en: 'I can’t answer that precisely. If you want to talk about a project, tap “聊合作”.',
+      enCoop: 'I can’t give a price or a date. Tap “聊合作” and leave a note about the project.\n[[COOP]]',
     };
+
+    function splitCoop(text) {
+      const coop = /\[\[\s*COOP\s*\]\]/.test(text);
+      const clean = text.replace(/\[\[\s*COOP\s*\]\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
+      return { clean, coop };
+    }
+    function holdMark(text) {
+      const parsed = splitCoop(text);
+      const token = '[[COOP]]';
+      let shown = parsed.clean;
+      for (let n = Math.min(token.length - 1, shown.length); n > 0; n -= 1) {
+        if (token.startsWith(shown.slice(-n))) {
+          shown = shown.slice(0, -n);
+          break;
+        }
+      }
+      return { shown, coop: parsed.coop };
+    }
 
     function localAnswer(q) {
       const s = q.trim();
       const flat = s.replace(/\s+/g, '');
       if (BANNED.test(flat)) return ANSWERS.skip;
-      if (/终树|丁科智/.test(flat)) return ANSWERS.contact;
+      if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
       if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
       if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么/.test(flat))) return ANSWERS.works;
       if (flat === '幕景是做什么的？' || ((/幕景|你们/.test(flat)) && /做|是什么|干什么/.test(flat))) return ANSWERS.what;
-      if (/报价|多少钱|价格|档期|合同|版权/.test(flat)) return ANSWERS.price;
-      if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
-      if (/[A-Za-z]/.test(s) && !/[\u4e00-\u9fff]/.test(s)) return ANSWERS.en;
+      if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|档期|合同|版权|微信|飞书|终树|丁科智/.test(flat)) return ANSWERS.coop;
+      if (/[A-Za-z]/.test(s) && !/[\u4e00-\u9fff]/.test(s)) {
+        return /collab|cooperat|contact|price|quote|hire|partner/i.test(s) ? ANSWERS.enCoop : ANSWERS.en;
+      }
       return ANSWERS.other;
     }
 
@@ -471,7 +577,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       const margin = 8;
       const gap = 12;
       const maxW = Math.min(400, v.w - margin * 2);
-      const maxH = Math.min(620, v.h - margin * 2);
+      const maxH = Math.min(740, v.h - margin * 2);
       const left = pos.side === 'left' ? v.x + margin : v.x + v.w - margin - maxW;
       let top = pos.y - gap - maxH;
       if (top < v.y + margin) top = pos.y + s + gap;
@@ -576,11 +682,16 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       if (last < text.length) parent.append(text.slice(last));
     }
 
-    function typewrite(p, text) {
+    function finishText(p, text, done) {
+      p.replaceChildren();
+      if (text) linkify(p, text);
+      if (state === 'answering') setState('idle');
+      if (done) done();
+    }
+    function typewrite(p, text, done) {
       window.clearInterval(typer);
-      if (reduce) {
-        linkify(p, text);
-        if (state === 'answering') setState('idle');
+      if (reduce || !text) {
+        finishText(p, text, done);
         return;
       }
       const shown = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
@@ -592,23 +703,90 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         log.scrollTop = log.scrollHeight;
         if (i >= shown.length) {
           window.clearInterval(typer);
-          p.replaceChildren();
-          linkify(p, text);
-          if (state === 'answering') setState('idle');
+          finishText(p, text, done);
         }
       }, 18);
     }
 
-    function append(role, text, typed = true) {
+    function append(role, text, typed = true, done) {
       const item = document.createElement('div');
       item.className = `mimi-msg ${role === 'user' ? 'user' : 'bot'}`;
       const p = document.createElement('p');
       item.append(p);
       log.append(item);
       if (role === 'user') p.textContent = text;
-      else if (typed) typewrite(p, text);
-      else linkify(p, text);
+      else if (typed) typewrite(p, text, done);
+      else finishText(p, text, done);
       log.scrollTop = log.scrollHeight;
+      return p;
+    }
+
+    let light = null;
+    function openLight() {
+      if (!light) {
+        light = document.createElement('div');
+        light.className = 'mimi-light';
+        light.hidden = true;
+        const img = document.createElement('img');
+        img.src = '/mimi/feishu-qr.png';
+        img.alt = '终树的飞书名片二维码';
+        const hint = document.createElement('p');
+        hint.textContent = '手机上长按图片保存';
+        const save = document.createElement('a');
+        save.href = '/mimi/feishu-qr.png';
+        save.download = 'feishu-qr.png';
+        save.textContent = '保存图片';
+        light.append(img, hint, save);
+        light.addEventListener('click', (e) => {
+          if (e.target === light) light.hidden = true;
+        });
+        document.body.append(light);
+      }
+      light.hidden = false;
+    }
+    function appendCoop() {
+      const card = document.createElement('div');
+      card.className = 'mimi-coop';
+      const title = document.createElement('strong');
+      title.textContent = '加终树飞书，聊合作';
+      const zoom = document.createElement('button');
+      zoom.type = 'button';
+      zoom.className = 'mimi-qr';
+      zoom.setAttribute('aria-label', '放大飞书二维码');
+      const img = document.createElement('img');
+      img.src = '/mimi/feishu-qr.png';
+      img.alt = '终树的飞书名片，含头像、名字和二维码';
+      img.width = 431;
+      img.height = 568;
+      zoom.append(img);
+      zoom.addEventListener('click', openLight);
+      const note = document.createElement('p');
+      note.textContent = '用飞书扫码添加，备注来意';
+      const hint = document.createElement('p');
+      hint.className = 'mimi-hint';
+      hint.textContent = '点按放大。手机上长按图片，或点「保存图片」。';
+      const save = document.createElement('a');
+      save.href = '/mimi/feishu-qr.png';
+      save.download = 'feishu-qr.png';
+      save.textContent = '保存图片';
+      const wx = document.createElement('p');
+      wx.className = 'mimi-wx';
+      wx.append('微信备用 ');
+      const id = document.createElement('button');
+      id.type = 'button';
+      id.textContent = 'endTree-26';
+      id.addEventListener('click', () => {
+        const done = () => {
+          id.textContent = '已复制';
+          window.setTimeout(() => { id.textContent = 'endTree-26'; }, 1200);
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText('endTree-26').then(done).catch(() => {});
+      });
+      wx.append(id);
+      card.append(title, zoom, note, hint, save, wx);
+      log.append(card);
+      if (card.offsetHeight <= log.clientHeight) log.scrollTop = log.scrollHeight;
+      else log.scrollTop += card.getBoundingClientRect().top - log.getBoundingClientRect().top;
     }
 
     function hidePanel() {
@@ -758,14 +936,62 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     });
     root.querySelector('.mimi-x').addEventListener('click', () => setOpen(false));
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && root.classList.contains('is-open')) setOpen(false);
+      if (e.key !== 'Escape') return;
+      if (light && !light.hidden) { light.hidden = true; return; }
+      if (root.classList.contains('is-open')) setOpen(false);
     });
     document.addEventListener('click', (e) => {
       if (justDragged) { justDragged = false; return; }
+      if (light && light.contains(e.target)) return;
       if (!root.classList.contains('is-open') || root.contains(e.target)) return;
       setOpen(false);
     });
     root.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+    async function readSse(res, onDelta) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let text = '';
+      let coop = false;
+      let failed = false;
+      const take = (block) => {
+        for (const line of block.split(/\r?\n/)) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) continue;
+          const data = trimmed.slice(5).trim();
+          if (!data || data === '[DONE]') continue;
+          let msg;
+          try { msg = JSON.parse(data); } catch { continue; }
+          if (msg.error) failed = true;
+          if (typeof msg.replace === 'string') {
+            text = msg.replace;
+            coop = false;
+            onDelta(text);
+          } else if (typeof msg.delta === 'string' && msg.delta) {
+            text += msg.delta;
+            const view = holdMark(text);
+            if (view.coop) coop = true;
+            onDelta(view.shown);
+          }
+          if (msg.done) coop = msg.coop === true || coop;
+        }
+      };
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx = buf.indexOf('\n\n');
+        while (idx >= 0) {
+          take(buf.slice(0, idx));
+          buf = buf.slice(idx + 2);
+          idx = buf.indexOf('\n\n');
+        }
+      }
+      if (buf.trim()) take(buf);
+      const view = holdMark(text);
+      return { text: view.shown.trim(), coop: coop || view.coop, failed };
+    }
 
     async function ask(text) {
       const q = text.trim().slice(0, 400);
@@ -779,28 +1005,57 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       const t0 = performance.now();
       let reply = '';
       let failed = false;
+      let showCoop = false;
+      let streamed = false;
+      let bubble = null;
       try {
         if (demo) {
-          reply = localAnswer(q);
+          const parsed = splitCoop(localAnswer(q));
+          reply = parsed.clean;
+          showCoop = parsed.coop;
         } else {
           const res = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ messages: history.slice(-8) }),
           });
+          const ctype = res.headers.get('content-type') || '';
           if (res.status === 501 || res.status === 404) {
             demo = true;
             demoNote.hidden = false;
-            reply = localAnswer(q);
+            const parsed = splitCoop(localAnswer(q));
+            reply = parsed.clean;
+            showCoop = parsed.coop;
           } else if (res.status === 429) {
             failed = true;
             reply = '提问有点多，我先歇一会儿，稍后再问哦。';
           } else if (!res.ok) {
             failed = true;
             reply = '抱歉，这次没能生成回答，请稍后再试。';
+          } else if (ctype.includes('text/event-stream') && res.body) {
+            streamed = true;
+            const result = await readSse(res, (shown) => {
+              if (!bubble) {
+                setState('answering');
+                const item = document.createElement('div');
+                item.className = 'mimi-msg bot';
+                bubble = document.createElement('p');
+                item.append(bubble);
+                log.append(item);
+              }
+              bubble.textContent = shown;
+              log.scrollTop = log.scrollHeight;
+            });
+            reply = result.text;
+            showCoop = result.coop;
+            if (!reply && showCoop) reply = '想合作的话，用下面的名片加就行。';
+            failed = result.failed || !reply;
+            if (failed && !reply) reply = '抱歉，这次没能生成回答，请稍后再试。';
           } else {
             const data = await res.json().catch(() => ({}));
-            reply = typeof data.reply === 'string' ? data.reply.trim() : '';
+            const parsed = splitCoop(typeof data.reply === 'string' ? data.reply.trim() : '');
+            reply = parsed.clean;
+            showCoop = parsed.coop;
             if (!reply) {
               failed = true;
               reply = '抱歉，这次没能生成回答，请稍后再试。';
@@ -808,24 +1063,38 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
           }
         }
       } catch {
+        if (bubble && bubble.parentElement) bubble.parentElement.remove();
         demo = true;
         demoNote.hidden = false;
-        reply = localAnswer(q);
+        const parsed = splitCoop(localAnswer(q));
+        reply = parsed.clean;
+        showCoop = parsed.coop;
+        streamed = false;
+        bubble = null;
       }
-      if (!reduce) {
-        const wait = 360 - (performance.now() - t0);
-        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      if (BANNED.test(reply)) {
+        reply = splitCoop(ANSWERS.skip).clean;
+        showCoop = false;
       }
-      if (BANNED.test(reply)) reply = ANSWERS.skip;
+      const after = () => { if (showCoop) appendCoop(); };
       if (failed) {
         setState('error');
-        append('bot', reply);
+        if (bubble) bubble.textContent = reply;
+        else append('bot', reply, false);
         busy = false;
         window.setTimeout(() => { if (state === 'error') setState('idle'); }, reduce ? 0 : 700);
         return;
       }
-      setState('answering');
-      append('bot', reply);
+      if (!streamed && !reduce) {
+        const wait = 360 - (performance.now() - t0);
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      }
+      if (streamed && bubble) {
+        finishText(bubble, reply, after);
+      } else {
+        setState('answering');
+        append('bot', reply, true, after);
+      }
       history.push({ role: 'assistant', content: reply });
       busy = false;
     }
