@@ -120,6 +120,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
         <p class="pick-intro-meta" data-role="meta" hidden={!leadPick.meta}>{leadPick.meta}</p>
         <p class="pick-intro-body" data-role="body" hidden={!leadPick.body}>{leadPick.body}</p>
         <div class="ink-wave" data-role="wave" aria-hidden="true"></div>
+        <p class="pick-unit-credit">等距丝线</p>
         <a class="pick-intro-view" data-role="view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
       </div>
     </div>
@@ -423,6 +424,14 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   pointer-events: auto;
   cursor: pointer;
 }
+.pick-threads {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
 .picks-layout {
   position: relative;
   z-index: 1;
@@ -557,6 +566,14 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 @keyframes ink-wave-drift { to { stroke-dashoffset: -18; } }
 @media (prefers-reduced-motion: reduce) {
   .ink-wave :global(path) { animation: none; stroke-dasharray: none; }
+}
+.pick-unit-credit {
+  margin: 8px 0 0;
+  color: #B7B3AC;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  line-height: 1;
 }
 .pick-intro-view {
   display: inline-block;
