@@ -101,10 +101,17 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
 .fb-title.long { font-size: 4.6cqw; }
 .fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-family: var(--en), "Noto Sans SC", sans-serif; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .04em; color: var(--muted); }
 .fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .06em; color: var(--muted); }
-#wk-rows > li, #wk-m > li { transform-origin: center center; }
-#wk-rows > li.is-seal, #wk-m > li.is-seal { position: relative; z-index: 3; background: #EFEDE9; }
+.seal-ghost {
+  position: fixed; z-index: 40; box-sizing: border-box; margin: 0;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  padding: 8px; background: #FBFBFA; color: #1A1A1C; text-align: center; pointer-events: none;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", sans-serif; font-weight: 600; font-size: 13px; line-height: 1.2;
+  filter: drop-shadow(.6px 0 0 #1A1A1C) drop-shadow(-.6px 0 0 #1A1A1C) drop-shadow(0 .6px 0 #1A1A1C) drop-shadow(0 -.6px 0 #1A1A1C);
+  transform-origin: center center;
+}
+.seal-ghost span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
-  .pv-layer, #wk-rows > li, #wk-m > li { transition: none !important; }
+  .pv-layer { transition: none !important; }
 }
 /* mobile ≤1023 */
 @media (max-width: 1023px) {
@@ -179,14 +186,9 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
     if (firstRow && firstRow !== cur) show(firstRow);
   }
   // 筛选切换：卡片收成略微倾斜的六边形，落进蜂窝格（像盖一枚印），再展开成筛后的列表。
+  // 用固定定位的小砖，而不是裁切整行，避免宽行在飞行时叠成一大片字。
+  const HEX = 'polygon(50% 4%, 93% 27%, 90% 75%, 50% 97%, 7% 75%, 10% 25%)';
   const RECT = 'polygon(0% 0%, 100% 0%, 100% 50%, 100% 100%, 0% 100%, 0% 50%)';
-  // 六边形按元素自身宽高换算，收在正中，避免宽行被压成扁条。
-  function hexClip(w, h, size) {
-    const S = Math.max(28, Math.min(size, w - 2, h - 2));
-    const left = (w - S) / 2, top = (h - S) / 2;
-    const pts = [[0.5, 0.04], [0.93, 0.27], [0.9, 0.75], [0.5, 0.97], [0.07, 0.75], [0.1, 0.25]];
-    return 'polygon(' + pts.map(([x, y]) => ((left + x * S) / w * 100).toFixed(2) + '% ' + ((top + y * S) / h * 100).toFixed(2) + '%').join(',') + ')';
-  }
   let stampLock = false;
   let stampPending = null;
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -195,34 +197,22 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
     const all = $$(mobile ? '#wk-m > li' : '#wk-rows > li');
     return { all, shown: all.filter((li) => !li.classList.contains('hide')) };
   };
-  const clearSeal = (li) => {
-    li.classList.remove('is-seal');
-    li.style.transition = '';
-    li.style.transform = '';
-    li.style.clipPath = '';
-    li.style.zIndex = '';
-    li.style.background = '';
-    li.style.opacity = '';
-    li.style.willChange = '';
-    li.style.filter = '';
-    delete li.dataset.tilt;
-  };
   function hexLattice(n, bounds) {
-    const gap = 6;
+    const gap = 8;
     let cols = Math.max(1, Math.round(Math.sqrt(n * (bounds.width / Math.max(bounds.height, 1)))));
-    let size = 72;
+    let size = 76;
     const fits = () => {
       const rows = Math.ceil(n / cols);
       const rowW = cols * size + (cols - 1) * gap;
-      const h = size + (rows - 1) * (size * 0.75 + 4);
+      const h = size + (rows - 1) * (size * 0.78);
       return rowW <= bounds.width + 1 && h <= bounds.height + 1;
     };
     for (let i = 0; i < 48 && !fits(); i++) {
-      if (size > 28) size -= 2;
+      if (size > 44) size -= 2;
       else cols += 1;
     }
     const rows = Math.ceil(n / cols);
-    const stepY = size * 0.75 + 4;
+    const stepY = size * 0.78;
     const totalH = size + (rows - 1) * stepY;
     const top = bounds.top + Math.max(0, (bounds.height - totalH) / 2);
     const pts = [];
@@ -237,105 +227,114 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
         i++;
       }
     }
-    return { pts, size: Math.round(size * 0.9) };
+    return { pts, size };
   }
   function packBounds(lis) {
     const parent = lis[0].parentElement.getBoundingClientRect();
     const top = Math.max(parent.top, 88);
     const bottom = Math.min(Math.max(parent.bottom, top + 180), window.innerHeight - 12);
-    return { left: parent.left, top, width: Math.max(parent.width, 120), height: Math.max(160, bottom - top) };
+    return { left: parent.left, top, width: Math.max(parent.width, 140), height: Math.max(180, bottom - top) };
+  }
+  function makeGhost(li, rect, tilt) {
+    const g = document.createElement('div');
+    g.className = 'seal-ghost';
+    const title = (li.querySelector('.tt')?.textContent || '').trim();
+    const span = document.createElement('span');
+    span.textContent = title;
+    g.appendChild(span);
+    const img = li.querySelector('img');
+    if (img && (img.currentSrc || img.src)) {
+      g.style.backgroundImage = 'url("' + (img.currentSrc || img.src) + '")';
+      g.style.backgroundSize = 'cover';
+      g.style.backgroundPosition = 'center';
+      g.style.color = '#fff';
+      g.style.textShadow = '0 1px 6px rgba(0,0,0,.55)';
+    }
+    g.dataset.tilt = String(tilt);
+    g.dataset.line = li.dataset.line || '';
+    g._li = li;
+    g.style.left = rect.left + 'px';
+    g.style.top = rect.top + 'px';
+    g.style.width = rect.width + 'px';
+    g.style.height = rect.height + 'px';
+    g.style.clipPath = RECT;
+    g.style.transform = 'none';
+    document.body.appendChild(g);
+    li.style.visibility = 'hidden';
+    return g;
+  }
+  function placeGhost(g, x, y, w, h, tilt, scale) {
+    g.style.left = (x - w / 2) + 'px';
+    g.style.top = (y - h / 2) + 'px';
+    g.style.width = w + 'px';
+    g.style.height = h + 'px';
+    g.style.transform = 'rotate(' + tilt + 'deg)' + (scale ? ' scale(' + scale + ')' : '');
   }
   async function playStamp(nextLine) {
     const { all, shown } = listNodes();
     if (shown.length < 1) { line = nextLine; apply(); return; }
     stampLock = true;
-    const rects = shown.map((li) => li.getBoundingClientRect());
     const bounds = packBounds(shown);
     const lattice = hexLattice(shown.length, bounds);
-    shown.forEach((li, i) => {
-      const tilt = ((i * 37) % 15) - 7;
-      li.dataset.tilt = String(tilt);
-      li.classList.add('is-seal');
-      li.style.willChange = 'transform, clip-path';
-      li.style.zIndex = '3';
-      li.style.background = '#FBFBFA';
-      li.style.filter = 'drop-shadow(.7px 0 0 #1A1A1C) drop-shadow(-.7px 0 0 #1A1A1C) drop-shadow(0 .7px 0 #1A1A1C) drop-shadow(0 -.7px 0 #1A1A1C)';
-      li.style.transition = 'none';
-      li.style.clipPath = RECT;
-      li.style.transform = 'none';
-    });
-    shown[0].getBoundingClientRect();
-    const easeIn = 'cubic-bezier(.2,.7,.2,1)';
-    shown.forEach((li, i) => {
-      const r = rects[i];
-      const delay = Math.min(i * 8, 80);
-      li.dataset.hex = hexClip(r.width, r.height, lattice.size);
-      li.style.transition = `transform .26s ${easeIn} ${delay}ms, clip-path .26s ease ${delay}ms`;
-      li.style.clipPath = li.dataset.hex;
-      li.style.transform = `rotate(${li.dataset.tilt}deg)`;
-    });
-    await wait(300);
-    if (!stampLock) return;
-    shown.forEach((li, i) => {
-      const r = rects[i];
+    const ghosts = shown.map((li, i) => makeGhost(li, li.getBoundingClientRect(), ((i * 37) % 15) - 7));
+    ghosts[0].getBoundingClientRect();
+    const ease = 'cubic-bezier(.2,.75,.2,1)';
+    ghosts.forEach((g, i) => {
       const p = lattice.pts[i];
-      const dx = p.x - (r.left + r.width / 2);
-      const dy = p.y - (r.top + r.height / 2);
-      li.dataset.dx = String(dx);
-      li.dataset.dy = String(dy);
-      const delay = Math.min(i * 6, 70);
-      li.style.transition = `transform .32s cubic-bezier(.18,.7,.2,1) ${delay}ms`;
-      li.style.transform = `translate(${dx}px, ${dy}px) rotate(${li.dataset.tilt}deg)`;
+      const delay = Math.min(i * 10, 120);
+      g.style.transition = 'left .36s ' + ease + ' ' + delay + 'ms, top .36s ' + ease + ' ' + delay + 'ms, width .36s ' + ease + ' ' + delay + 'ms, height .36s ' + ease + ' ' + delay + 'ms, clip-path .28s ease ' + delay + 'ms, transform .36s ' + ease + ' ' + delay + 'ms';
+      g.style.clipPath = HEX;
+      placeGhost(g, p.x, p.y, lattice.size, lattice.size, g.dataset.tilt, 1);
     });
-    await wait(400);
+    await wait(520);
     if (!stampLock) return;
     const target = stampPending || nextLine;
-    shown.forEach((li) => {
-      const keep = target === '全部' || li.dataset.line === target;
-      li.style.transition = `transform .1s ease-out${keep ? '' : ', opacity .16s linear'}`;
-      li.style.transform = `translate(${li.dataset.dx}px, ${Number(li.dataset.dy) + 5}px) rotate(${li.dataset.tilt}deg) scale(.9)`;
-      if (!keep) li.style.opacity = '0';
+    ghosts.forEach((g) => {
+      const keep = target === '全部' || g.dataset.line === target;
+      g.style.transition = 'transform .12s ease-out' + (keep ? '' : ', opacity .16s linear');
+      g.style.transform = 'translateY(5px) rotate(' + g.dataset.tilt + 'deg) scale(.9)';
+      if (!keep) g.style.opacity = '0';
     });
-    await wait(150);
+    await wait(460);
     if (!stampLock) return;
-    const visual = new Map();
-    shown.forEach((li) => {
-      const r = li.getBoundingClientRect();
-      visual.set(li, { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, tilt: li.dataset.tilt || '0' });
-    });
-    all.forEach((li) => { li.style.transition = 'none'; li.style.transform = 'none'; li.style.clipPath = RECT; });
     line = stampPending || nextLine;
     stampPending = null;
     history.replaceState(null, '', line === '全部' ? '/works/' : '?line=' + encodeURIComponent(line));
     apply();
+    all.forEach((li) => { li.style.visibility = 'hidden'; });
     const now = listNodes().shown;
+    const byLi = new Map(ghosts.map((g) => [g._li, g]));
     const cluster = lattice.pts[Math.floor((lattice.pts.length - 1) / 2)] || lattice.pts[0];
     now.forEach((li, i) => {
       const r = li.getBoundingClientRect();
-      const from = visual.get(li);
-      const p = lattice.pts[i % lattice.pts.length] || cluster;
-      const src = from || { x: p.x, y: p.y, w: lattice.size, h: lattice.size, tilt: String(((i * 37) % 15) - 7) };
-      li.classList.add('is-seal');
-      li.style.willChange = 'transform, clip-path';
-      li.style.zIndex = '3';
-      li.style.background = '#FBFBFA';
-      li.style.filter = 'drop-shadow(.7px 0 0 #1A1A1C) drop-shadow(-.7px 0 0 #1A1A1C) drop-shadow(0 .7px 0 #1A1A1C) drop-shadow(0 -.7px 0 #1A1A1C)';
-      li.style.opacity = '';
-      li.style.clipPath = hexClip(r.width, r.height, Math.round(lattice.size * 0.9));
-      li.style.transform = `translate(${src.x - (r.left + r.width / 2)}px, ${src.y - (r.top + r.height / 2)}px) rotate(${src.tilt}deg) scale(.9)`;
+      let g = byLi.get(li);
+      if (!g) {
+        const p = lattice.pts[i % lattice.pts.length] || cluster;
+        g = makeGhost(li, { left: p.x - lattice.size / 2, top: p.y - lattice.size / 2, width: lattice.size, height: lattice.size }, ((i * 37) % 15) - 7);
+        g.style.clipPath = HEX;
+        g.style.transform = 'rotate(' + g.dataset.tilt + 'deg) scale(.9)';
+        ghosts.push(g);
+      }
+      g._to = r;
+      g.style.opacity = '1';
     });
-    all.forEach((li) => { if (li.classList.contains('hide')) clearSeal(li); });
-    if (now[0]) now[0].getBoundingClientRect();
+    ghosts[0].getBoundingClientRect();
     requestAnimationFrame(() => {
-      now.forEach((li, i) => {
-        const delay = Math.min(i * 8, 90);
-        li.style.transition = `transform .42s cubic-bezier(.16,1,.3,1) ${delay}ms, clip-path .42s cubic-bezier(.16,1,.3,1) ${delay}ms`;
-        li.style.transform = 'none';
-        li.style.clipPath = RECT;
+      ghosts.forEach((g) => {
+        if (!g._to) return;
+        const r = g._to;
+        g.style.transition = 'left .44s cubic-bezier(.16,1,.3,1), top .44s cubic-bezier(.16,1,.3,1), width .44s cubic-bezier(.16,1,.3,1), height .44s cubic-bezier(.16,1,.3,1), clip-path .44s cubic-bezier(.16,1,.3,1), transform .44s cubic-bezier(.16,1,.3,1)';
+        g.style.clipPath = RECT;
+        g.style.transform = 'none';
+        g.style.left = r.left + 'px';
+        g.style.top = r.top + 'px';
+        g.style.width = r.width + 'px';
+        g.style.height = r.height + 'px';
       });
     });
-    await wait(540);
-    all.forEach(clearSeal);
+    await wait(500);
+    ghosts.forEach((g) => g.remove());
+    all.forEach((li) => { li.style.visibility = ''; });
     stampLock = false;
     if (stampPending) {
       const queued = stampPending;
