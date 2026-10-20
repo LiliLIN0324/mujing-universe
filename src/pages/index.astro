@@ -793,7 +793,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     background: #fff;
   }
   .hero {
-    height: 490px;
+    height: 450px;
     touch-action: pan-y;
     user-select: none;
     -webkit-user-select: none;
@@ -871,8 +871,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   }
   .hero-copy .sub { margin-top: 10px; font-size: 15px; line-height: 1.6; color: #3d3a35; letter-spacing: 0; }
   .hero-copy .meta { margin-top: 10px; font-size: 12px; color: #9a958c; letter-spacing: 0.06em; }
-  .hero-act { margin-top: 30px; justify-content: center; }
-  .listen { padding: 13px 24px; font-size: 15px; letter-spacing: 0.08em; }
+  .hero-act { margin-top: 12px; justify-content: center; }
+  .listen { position: relative; z-index: 2; padding: 13px 24px; font-size: 15px; letter-spacing: 0.08em; }
   .m-down {
     position: absolute;
     left: 50%;
@@ -1099,6 +1099,7 @@ const listenLabel = listen.querySelector('.lb');
 const mobileHeroMq = matchMedia('(max-width: 768px)');
 const heroOnMobile = () => mobileHeroMq.matches;
 let listening = false;
+let wantPlay = false;
 
 function setVolume(value) {
   try { video.volume = value; } catch (err) { /* iOS keeps volume read-only */ }
@@ -1112,6 +1113,7 @@ function setPlayButton(on) {
 
 function failSilent() {
   listening = false;
+  wantPlay = false;
   hero.classList.remove('is-listening', 'is-started', 'is-playing');
   try { video.pause(); } catch (err) { /* already stopped */ }
   video.muted = true;
@@ -1155,12 +1157,13 @@ video.addEventListener('playing', () => {
   setPlayButton(true);
 });
 video.addEventListener('pause', () => {
-  if (heroOnMobile()) return;
+  if (heroOnMobile() || wantPlay) return;
   hero.classList.remove('is-playing');
   setPlayButton(false);
 });
 video.addEventListener('ended', () => {
   if (heroOnMobile()) return;
+  wantPlay = false;
   hero.classList.remove('is-playing');
   setPlayButton(false);
 });
@@ -1171,18 +1174,24 @@ video.addEventListener('error', () => {
 listen.addEventListener('click', () => {
   if (heroOnMobile()) return;
   if (listen.disabled) return;
-  if (!video.paused) {
+  if (wantPlay || !video.paused) {
+    wantPlay = false;
     video.pause();
+    setPlayButton(false);
     return;
   }
   if (!attachSource()) { failSilent(); return; }
+  wantPlay = true;
   setAudible(true);
+  setPlayButton(true);
   if (video.ended) {
     try { video.currentTime = 0; } catch (err) { /* play() restarts */ }
   }
   const attempt = video.play();
   if (attempt) attempt.catch((err) => {
     if (err && err.name === 'AbortError') return;
+    if (!wantPlay) return;
+    wantPlay = false;
     setAudible(false);
     setPlayButton(false);
     if (video.error) failSilent();
