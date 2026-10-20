@@ -89,6 +89,13 @@ export function mountPickRing(root, pickData) {
       veil = document.createElement('span');
       veil.className = 'pick-mist';
       veil.setAttribute('aria-hidden', 'true');
+      // Inline: Astro scopes CSS, and this node is created in JS.
+      veil.style.position = 'absolute';
+      veil.style.inset = '0';
+      veil.style.borderRadius = '20px';
+      veil.style.background = '#F6F5F3';
+      veil.style.pointerEvents = 'none';
+      veil.style.opacity = '0';
       card.appendChild(veil);
     }
     return veil;
@@ -499,7 +506,7 @@ export function mountPickRing(root, pickData) {
       el.style.pointerEvents = '';
       delete el.dataset.on;
     });
-    veils.forEach((veil) => { veil.style.opacity = ''; });
+    veils.forEach((veil) => { veil.style.display = 'none'; });
     stage.classList.remove('is-scroll', 'is-drag');
   }
 
@@ -510,6 +517,7 @@ export function mountPickRing(root, pickData) {
       return;
     }
     stage.classList.add('is-scroll');
+    veils.forEach((veil) => { veil.style.display = 'block'; });
     measure();
     zKey = null;
     apply(position);
