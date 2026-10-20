@@ -1,5 +1,6 @@
 ---
 import Base from '../../layouts/Base.astro';
+import Cooperate from '../../components/Cooperate.astro';
 import { allWorks, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
@@ -31,8 +32,11 @@ const facts = [['角色', role], ['技术', tech.join(' · ')], ['年份', year]
 const total = 1 + stills.length;
 const pad = (n: number) => String(n).padStart(2, '0');
 const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' · ');
+const backHref = featured ? '/#picks' : '/works/';
+const backText = featured ? '← 返回精选' : '← 返回作品';
+const backNote = featured ? '精选目录' : '作品目录';
 ---
-<Base title={`${w.title} · 幕景宇宙`} active="/works/" home navClass="top--work">
+<Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
   <section class="wd-page wd-p1" data-dwell={PAGE_DWELL.intro}>
     <figure class="wd-hero" style={paper ? `--wd-paper:${paper}` : undefined}>
@@ -54,7 +58,7 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
           {intro && <p class="wd-intro">{intro}</p>}
           {abstract && <p class="wd-more">{abstract}</p>}
           {w.note && <p class="wd-more">{w.note}</p>}
-          {w.link && <p class="wd-more"><a href={w.link} target="_blank" rel="noopener">相关报道 / 链接 ↗</a></p>}
+          {w.link && <p class="wd-more"><a href={w.link} target="_blank" rel="noopener noreferrer">相关报道 / 链接 ↗</a></p>}
         </div>
         {facts.length > 0 && <dl class="wd-facts">{facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
       </div>
@@ -77,20 +81,22 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 
   <section class="wd-page wd-p3" data-dwell={PAGE_DWELL.next}>
     <nav class="wd-pn" aria-label="作品导航">
-      <div class="wd-back-col"><p class="k">目录</p><a class="wd-back" href="/#picks">← 返回精选</a></div>
+      <div class="wd-back-col"><p class="k">{backNote}</p><a class="wd-back" href={backHref}>{backText}</a></div>
       <a class="wd-next" href={`/works/${next.slug}/`}>
         <p class="k">下一件<span class="d"> →</span></p>
         <span class="row"><span><span class="t">{next.title}</span><span class="nm">{nextMeta}</span></span><span class="ar" aria-hidden="true">→</span></span>
       </a>
-      <a class="wd-back-m" href="/#picks">← 返回精选<span>精选目录</span></a>
+      <a class="wd-back-m" href={backHref}>{backText}<span>{backNote}</span></a>
     </nav>
+    <Cooperate />
   </section>
 </div>
-{audio && <audio id="wd-audio" data-src={audio} preload="none" playsinline></audio>}
+{audio && <video id="wd-audio" class="wd-sound" data-src={audio} preload="none" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" aria-hidden="true"></video>}
 
 <style>
 :global(body) { background: #fff; }
-.wd { color: #1a1a18; font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif; -webkit-font-smoothing: antialiased; }
+.wd-sound { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.wd { color: #1a1a18; font-family: "PingFang SC", "Noto Sans SC", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif; -webkit-font-smoothing: antialiased; }
 .wd p { margin: 0; }
 .wd-hero { position: relative; height: 568px; margin: 0; overflow: hidden; background: var(--wd-paper, #d8d2c4); }
 .wd-hero img {
@@ -108,7 +114,7 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 .wd-head { display: grid; grid-template-columns: 1fr auto; align-items: end; padding-top: 56px; }
 .wd-crumb { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: #9a958c; margin-bottom: 22px !important; }
 .wd-crumb a { color: inherit; text-decoration: none; }
-.wd h1 { margin: 0; font-family: "Noto Serif SC", "Noto Serif CJK SC", serif; font-weight: 600; font-size: 60px; line-height: 1.08; letter-spacing: 0.03em; color: #1a1a18; }
+.wd h1 { margin: 0; font-family: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif; font-weight: 600; font-size: 60px; line-height: 1.08; letter-spacing: 0.03em; color: #1a1a18; }
 .wd-sub { margin-top: 14px !important; font-size: 18px; line-height: normal; color: #3d3a35; letter-spacing: 0.03em; }
 .wd-meta { margin-top: 16px !important; font-size: 13px; line-height: normal; letter-spacing: 0.06em; color: #9a958c; }
 .wd-meta b { color: #b5432f; font-weight: 400; margin-right: 14px; }
@@ -171,7 +177,7 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 .wd-back { display: inline-block; font-size: 14px; line-height: normal; letter-spacing: 0.12em; color: #1a1a18; text-decoration: none; border-bottom: 1px solid #1a1a18; padding-bottom: 3px; }
 .wd-next { text-align: right; color: inherit; text-decoration: none; }
 .wd-next .row { display: block; }
-.wd-next .t { display: block; font-family: "Noto Serif SC", "Noto Serif CJK SC", serif; font-size: 26px; font-weight: 600; line-height: 1.3; letter-spacing: 0.02em; }
+.wd-next .t { display: block; font-family: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif; font-size: 26px; font-weight: 600; line-height: 1.3; letter-spacing: 0.02em; }
 .wd-next .nm { display: block; margin-top: 8px; font-size: 13px; line-height: normal; color: #9a958c; letter-spacing: 0.06em; }
 .wd-next .ar, .wd-back-m { display: none; }
 .wd-next:hover .t { opacity: 0.7; }

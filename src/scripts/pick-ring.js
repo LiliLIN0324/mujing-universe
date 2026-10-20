@@ -1,4 +1,5 @@
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
+import { INK_MS, paintWave } from './ink-layer.js';
 
 /**
  * Pick ring — Ferris / demalde About geometry (bv + cabinMatrix).
@@ -19,6 +20,12 @@ uniform float uTime;
 uniform float uScroll;
 uniform float uVelocity;
 uniform float uFocus;
+uniform float uLag;
+uniform float uBend;
+uniform float uFit;
+uniform float uBreath;
+uniform float uTilt;
+uniform float uClock;
 
 varying vec2 vUv;
 
@@ -57,15 +64,25 @@ void main() {
   vec2 ring = vec2(cos(angle * PI * 2.0), sin(angle * PI * 2.0)) * radius;
   float yaw0 = angle * PI * 2.0 - PI * 0.2 - position.x * 0.3 - uVelocity * 15.0;
 
+  // Ribbon bend is 0 at the card center, so hit-tests and the settled pose stay put.
+  vec3 pos = position;
+  pos.z += sin(position.x * PI) * uBend;
+
   // Back to ~01:37 end dose (~3 near), then nudge MORE LEFT than that round
   float grow = 1.0 + 0.5 * uScroll * uScroll;
-  vec4 p = cabinMatrix(vec3(ring.x, 0.0, ring.y), yaw0, vec3(uScale.x * grow, uScale.y * grow, 1.0)) * vec4(position, 1.0);
-  p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), uTime * 0.12 + uVelocity);
+  float fit = max(uFit, 0.2);
+  vec4 p = cabinMatrix(vec3(ring.x, 0.0, ring.y), yaw0, vec3(uScale.x * grow * fit, uScale.y * grow * fit, 1.0)) * vec4(pos, 1.0);
+  p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), uTime * 0.12 + uVelocity + uLag);
   p.xyz = rotate(p.xyz, vec3(1.0, 0.0, 0.0), -PI * 0.15 * (1.0 - uScroll));
   p.z -= 20.0 - 12.0 * uScroll;  // end ≈ z-8 (01:37)
   p.x -= 3.7 * uScroll;          // more left than 01:37's 3.2
   p.y -= 0.85 * uScroll;
   p.x -= 1.4;                    // more left than 01:37's 1.15
+
+  // Idle float. Exactly 0 at 落幅, and uBreath/uTilt are 0 under reduced motion.
+  float settle = 1.0 - smoothstep(0.62, 1.0, uScroll);
+  p.y += uBreath * settle * sin(uClock * 0.5 + angle * PI * 2.0);
+  p.xyz = rotate(p.xyz, vec3(0.0, 0.0, 1.0), uTilt * settle);
 
   gl_Position = projectionMatrix * viewMatrix * p;
   vUv = uv;
@@ -83,6 +100,11 @@ uniform float uReady;
 uniform float uFocus;
 uniform float uWash;
 uniform float uScroll;
+uniform float uInk;
+float inkBlob(vec2 p, vec2 c, float r) {
+  vec2 d = (p - c) * vec2(1.0, 1.18);
+  return 1.0 - smoothstep(r * 0.62, r, length(d));
+}
 void main() {
   vec2 uv = vUv;
   if (uImage.x > 1.0 && uImage.y > 1.0) {
@@ -119,20 +141,80 @@ void main() {
   color = mix(vec3(0.945, 0.945, 0.941), color, clamp(washKill, 0.0, 1.0));
   color *= mix(0.62, 1.0, clamp(uFocus, 0.0, 1.0));
 
+  // Ink bloom layered on the cover. Geometry is unchanged.
+  // uInk 0 = paper, about 1.6 = the photograph fully open (~600ms).
+  float spread = max(uInk, 0.0);
+  float ink = inkBlob(vUv, vec2(0.50, 0.48), spread * 0.95);
+  ink = max(ink, inkBlob(vUv, vec2(0.68, 0.38), spread * 0.58));
+  ink = max(ink, inkBlob(vUv, vec2(0.33, 0.64), spread * 0.5));
+  color = mix(vec3(0.965, 0.961, 0.953), color, clamp(ink, 0.0, 1.0));
+
   gl_FragColor = vec4(color, 1.0);
 }
 `;
 
-const SCROLL_LERP = 0.1;
-const DELTA_LERP = 0.1;
+/** VERT: world yaw added as `uTime * 0.12 + uVelocity + uLag`. */
+const SPIN_RATE = 0.12;
+/** VERT cabin yaw at card center: `θ - PI*0.2 - uVelocity*15` (position.x bend is 0 at center). */
+const CABIN_YAW = Math.PI * 0.2;
+const VEL_YAW = 15;
 /** Ring end pose (落幅); list stays still until progress reaches this. */
 const LIST_LOCK = 0.92;
 /** Idle/mid readable size: ~40% frustum width, 16:9 (demalde DOM-scale order). */
 const CARD_FRAC_W = 0.50;
 const TEX_MAX = 1920;
+/** Underdamped, but the first crossing may not pass 3% of that step's error. */
+const ZETA = 0.75;
+const OVERSHOOT = 0.03;
+const SNAP_X = 1.5e-4;
+const SNAP_V = 2e-3;
+const SCROLL_OMEGA = 8;
+const SPIN_OMEGA = 10;
+const VEL_OMEGA = 14;
+const TILT_OMEGA = 7;
+const TILT_MAX = (4 * Math.PI) / 180;
+/** Breathing stays off. A visible bob read as the ring moving by itself. */
+const BREATH_AMP = 0;
+const BREATH_PERIOD = Math.PI * 4;
+const BEND_SCALE = 0.05;
+const BEND_MAX = 0.16;
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
+}
+
+/**
+ * Semi-implicit damped spring. dt is seconds.
+ * trackVel damps (v − targetVel) so a constant ramp has no steady lag.
+ * Absolute damping (scroll, spin, tilt) uses targetVel 0.
+ */
+function springStep(spring, target, omega, dt, targetVel = 0, trackVel = false) {
+  if (!(dt > 0) || !(omega > 0)) return false;
+  const err0 = spring.x - target;
+  const damp = trackVel ? spring.v - targetVel : spring.v;
+  const accel = -omega * omega * err0 - 2 * ZETA * omega * damp;
+  spring.v += accel * dt;
+  spring.x += spring.v * dt;
+
+  const err1 = spring.x - target;
+  if (err0 * err1 < 0) {
+    const cap = OVERSHOOT * Math.abs(err0);
+    if (Math.abs(err1) > cap) {
+      spring.x = target + Math.sign(err1) * cap;
+      spring.v *= 0.25;
+    }
+  }
+
+  const step = Math.abs(targetVel) * dt;
+  const posTol = trackVel ? Math.max(SNAP_X, step * 2 + 1e-5) : SNAP_X;
+  const velTol = trackVel ? Math.max(SNAP_V, Math.abs(targetVel) * 0.05 + 1e-4) : SNAP_V;
+  const vErr = spring.v - (trackVel ? targetVel : 0);
+  if (Math.abs(spring.x - target) < posTol && Math.abs(vErr) < velTol) {
+    spring.x = target;
+    spring.v = trackVel ? targetVel : 0;
+    return true;
+  }
+  return false;
 }
 
 function wrapPi(rad) {
@@ -191,8 +273,8 @@ export function mountPickRing(root, pickData) {
   const geometry = new Plane(gl, {
     width: 1,
     height: 1,
-    widthSegments: 50,
-    heightSegments: 50,
+    widthSegments: 16,
+    heightSegments: 16,
   });
 
   const N = Math.min(10, images.length);
@@ -202,6 +284,9 @@ export function mountPickRing(root, pickData) {
     uVelocity: { value: 0 },
     uScroll: { value: 0 },
     uScale: { value: [1.52, 0.855] },
+    uBreath: { value: 0 },
+    uTilt: { value: 0 },
+    uClock: { value: 0 },
   };
 
   function frustumSizes() {
@@ -294,7 +379,13 @@ export function mountPickRing(root, pickData) {
       uReady: { value: 0 },
       uFocus: { value: 1 },
       uWash: { value: 0 },
-      uScroll: shared.uScroll,
+      uInk: { value: 1.6 },
+      uLag: { value: 0 },
+      uBend: { value: 0 },
+      uFit: { value: 1 },
+      uBreath: shared.uBreath,
+      uTilt: shared.uTilt,
+      uClock: shared.uClock,
     };
 
     const program = new Program(gl, {
@@ -313,7 +404,7 @@ export function mountPickRing(root, pickData) {
     const loader = new Image();
     loader.crossOrigin = 'anonymous';
     loader.decoding = 'async';
-    const entry = { mesh, img, uniforms, texture, coverScore: 0, isPaper: false };
+    const entry = { mesh, program, img, uniforms, texture, coverScore: 0, isPaper: false };
     const afterPaint = () => {
       entry.coverScore = uniforms._coverScore ?? 0;
       entry.isPaper = !!uniforms._isPaper;
@@ -331,13 +422,27 @@ export function mountPickRing(root, pickData) {
   });
 
   let scrollTarget = 0;
-  let scrollCurrent = 0;
   let lastProgress = 0;
   let smoothedDelta = 0;
   let uTime = 0;
   let inView = true;
   let front = -1;
   let lastNow = performance.now();
+  const progressSpring = { x: 0, v: 0 };
+  const velHold = { x: 0, v: 0 };
+  const spinSpring = { x: 0, v: 0, hold: false };
+  const tiltSpring = { x: 0, v: 0 };
+  const cardSprings = meshes.map(() => ({ x: 0, v: 0 }));
+  let cardsReady = false;
+  let prevSharedSpinVel = 0;
+  let tiltTarget = 0;
+  let breathClock = 0;
+
+  /** Softer springs trail, so the ring opens into a ribbon while it moves. */
+  function cardOmega(i) {
+    const t = meshes.length <= 1 ? 0 : i / (meshes.length - 1);
+    return 18 - 10 * t;
+  }
 
   function listOverflow() {
     if (!listEl || !listWindow) return window.innerHeight * 0.9;
@@ -362,6 +467,7 @@ export function mountPickRing(root, pickData) {
     applyCardScale();
   }
 
+  const waveEl = introEl && introEl.querySelector('[data-role="wave"]');
   const titleLink = introEl && introEl.querySelector('[data-role="title-link"]');
   const summaryEl = introEl && introEl.querySelector('[data-role="summary"]');
   const metaEl = introEl && introEl.querySelector('[data-role="meta"]');
@@ -372,7 +478,29 @@ export function mountPickRing(root, pickData) {
 
   let pinned = -1;
   let pinScroll = 0;
-  let spinAnim = null; // { from, to, start }
+  let inkJob = null; // { index, start }
+  let inkHold = -1;
+  let picksSeen = false;
+
+  /** Cover of the card that just became front. Paper until the section is on screen. */
+  function beginInk(index) {
+    const entry = meshes[index];
+    if (!entry) return;
+    if (motion.matches) {
+      entry.uniforms.uInk.value = 1.6;
+      inkJob = null;
+      inkHold = -1;
+      return;
+    }
+    entry.uniforms.uInk.value = 0;
+    if (!picksSeen) {
+      inkHold = index;
+      inkJob = null;
+      return;
+    }
+    inkHold = -1;
+    inkJob = { index, start: performance.now() };
+  }
 
   function syncList(index) {
     rowEls.forEach((row, i) => {
@@ -428,6 +556,8 @@ export function mountPickRing(root, pickData) {
     front = index;
     const work = pickData[index];
     fillCopy(work);
+    paintWave(waveEl, index);
+    beginInk(index);
     syncList(index);
     // After ring 落幅 (or explicit select), keep active row in the catalog window.
     if (forceScroll || lastProgress >= LIST_LOCK) ensureRowVisible(index);
@@ -439,17 +569,22 @@ export function mountPickRing(root, pickData) {
   }
 
   /**
-   * Visual front ring phase — matches VERT cabin yaw offset (−PI*0.2).
-   * Eye / best / setFront / spinTargetFor all park θ_i here.
+   * Eye yaw of card center. VERT writes the rotation matrix in column-major order,
+   * so it is transposed: world Z of the normal is cos(yaw0 + spin) either way.
+   * yaw0 = θ - CABIN_YAW - VEL_YAW*vel, spin = uTime*SPIN_RATE + vel.
+   * The old front (θ - spin - (π/2 - π*0.2)) only matched this at rest (both pick i=1).
+   * Once spin or uVelocity moved, list/copy followed the old score and the card
+   * facing the camera was a different slot — about a quarter turn on click.
+   * Faces the camera when eyeYaw ≡ 0.
    */
-  function frontPhase() {
-    return Math.PI / 2 - Math.PI * 0.2;
+  function eyeYaw(index, spin, vel) {
+    const theta = (index / N) * Math.PI * 2;
+    return theta - CABIN_YAW - (vel || 0) * VEL_YAW + spin;
   }
 
-  /** Face-on score: cos(θ − spin − frontPhase). Higher = more cabin-facing the eye. */
-  function cardFacing(index, spin) {
-    const theta = (index / N) * Math.PI * 2;
-    return Math.cos(wrapPi(theta - spin - frontPhase()));
+  /** Face-on score. Higher = card center normal toward the camera. */
+  function cardFacing(index, spin, vel) {
+    return Math.cos(wrapPi(eyeYaw(index, spin, vel)));
   }
 
   /**
@@ -461,11 +596,13 @@ export function mountPickRing(root, pickData) {
   }
 
   function pickIndexAtNX(nx, spin, progress) {
-    const sp = spin == null ? liveSpin() : spin;
-    const pr = progress == null ? lastProgress : progress;
+    const base = spin == null ? liveSpin() : spin;
+    const pr = progress == null ? shared.uScroll.value : progress;
+    const vel = motion.matches ? 0 : shared.uVelocity.value;
     const scored = [];
     for (let i = 0; i < meshes.length; i++) {
-      const facing = cardFacing(i, sp);
+      const sp = base + lagOf(i);
+      const facing = cardFacing(i, sp, vel);
       if (facing < -0.2) continue;
       const sx = cardScreenNX(i, sp, pr);
       if (sx < 0.0 || sx > 1.0) continue;
@@ -475,7 +612,7 @@ export function mountPickRing(root, pickData) {
       let best = 0;
       let bestD = Infinity;
       for (let i = 0; i < meshes.length; i++) {
-        const sx = cardScreenNX(i, sp, pr);
+        const sx = cardScreenNX(i, base + lagOf(i), pr);
         const d = Math.abs(sx - nx);
         if (d < bestD) {
           bestD = d;
@@ -488,28 +625,73 @@ export function mountPickRing(root, pickData) {
     return scored[0].i;
   }
 
-  /** Shortest spin that puts card index at frontPhase (yaw-aware eye front). */
-  function spinTargetFor(index, spinNow) {
+  /** Absolute world spin that puts card index face-on at this velocity. */
+  function spinForFront(index, vel) {
     const theta = (index / N) * Math.PI * 2;
-    const want = theta - frontPhase();
-    return spinNow + wrapPi(want - spinNow);
+    return -theta + CABIN_YAW + (vel || 0) * VEL_YAW;
   }
 
   function liveSpin() {
-    return (motion.matches ? 0 : uTime * 0.12) + (motion.matches ? 0 : smoothedDelta);
+    return uTime * SPIN_RATE + (motion.matches ? 0 : smoothedDelta);
   }
 
-  /** Select item: sync left copy + list; rotate ring so card faces front. No navigate. */
+  function lagOf(i) {
+    if (motion.matches) return 0;
+    const u = meshes[i] && meshes[i].uniforms.uLag;
+    return u ? u.value : 0;
+  }
+
+  function cardSpin(i, base) {
+    return (base == null ? liveSpin() : base) + lagOf(i);
+  }
+
+  /** 1 at rest, exactly 0 at uScroll = 1. Matches the shader smoothstep. */
+  function settleOf(progress) {
+    const t = Math.min(1, Math.max(0, (progress - 0.62) / 0.38));
+    const s = t * t * (3 - 2 * t);
+    return 1 - s;
+  }
+
+  function visualTilt(progress) {
+    if (motion.matches) return 0;
+    return tiltSpring.x * settleOf(progress);
+  }
+
+  function snapCards(spin) {
+    for (let i = 0; i < meshes.length; i++) {
+      cardSprings[i].x = spin;
+      cardSprings[i].v = 0;
+      meshes[i].uniforms.uLag.value = 0;
+      meshes[i].uniforms.uBend.value = 0;
+    }
+  }
+
+  /** Select item: sync left copy + list; rotate ring so that card's center faces the camera. No navigate. */
   function select(index) {
     if (!Number.isFinite(index) || index < 0 || index >= pickData.length) return;
     // Ring only has N meshes — never pin past the last card (avoids θ alias desync).
     const i = Math.min(index, meshes.length - 1);
     pinned = i;
     pinScroll = scrollTarget;
-    if (!motion.matches && i >= 0) {
-      const now = liveSpin();
-      const to = spinTargetFor(i, now);
-      spinAnim = { from: now, to, start: performance.now() };
+    const vel = motion.matches ? 0 : smoothedDelta;
+    const now = liveSpin();
+    if (motion.matches) {
+      // Snap. Reduced motion skips the spring, but the face-on card must still match the list.
+      smoothedDelta = 0;
+      velHold.x = 0;
+      velHold.v = 0;
+      progressSpring.v = 0;
+      uTime = spinForFront(i, 0) / SPIN_RATE;
+      spinSpring.hold = false;
+      spinSpring.x = spinForFront(i, 0);
+      spinSpring.v = 0;
+      snapCards(uTime * SPIN_RATE);
+    } else {
+      // Spring the velocity-free part of spin. Each frame adds VEL_YAW*vel back so eye yaw
+      // stays on the curve while scroll velocity dies (see frame).
+      spinSpring.x = now - VEL_YAW * vel;
+      spinSpring.v = 0;
+      spinSpring.hold = true;
     }
     setFront(i, { scrollList: true });
   }
@@ -528,77 +710,186 @@ export function mountPickRing(root, pickData) {
     const passed = Math.min(runway, Math.max(0, -rect.top));
     scrollTarget = -passed * (limit / runway);
 
-    const follow = motion.matches ? 1 : SCROLL_LERP;
-    scrollCurrent = lerp(scrollCurrent, scrollTarget, follow);
-    if (scrollCurrent > -0.4) scrollCurrent = 0;
+    // Page progress, not the spring. LIST_LOCK / unpin stay on this so a 3%
+    // overshoot cannot toggle 落幅 or drop a click hold.
+    let pageProgress = runway > 0 ? passed / runway : 0;
+    if (pageProgress < 0.0008) pageProgress = 0;
+    if (pageProgress > 1) pageProgress = 1;
+    pageProgress = Math.round(pageProgress * 1e4) / 1e4;
+    lastProgress = pageProgress;
 
-    let progress = limit > 0 ? Math.abs(scrollCurrent) / limit : 0;
-    if (progress > 1) progress = 1;
-    progress = Math.round(progress * 1e4) / 1e4;
+    const dtSec = Math.min(0.05, Math.max(0, dt / 1000));
+    if (motion.matches) {
+      progressSpring.x = pageProgress;
+      progressSpring.v = 0;
+      velHold.x = 0;
+      velHold.v = 0;
+      smoothedDelta = 0;
+    } else {
+      springStep(progressSpring, pageProgress, SCROLL_OMEGA, dtSec);
+      if (pageProgress === 0 && Math.abs(progressSpring.x) < 0.004 && Math.abs(progressSpring.v) < 0.08) {
+        progressSpring.x = 0;
+        progressSpring.v = 0;
+      }
+    }
 
-    const delta = progress - lastProgress;
-    smoothedDelta = lerp(smoothedDelta, motion.matches ? 0 : delta, DELTA_LERP);
-    lastProgress = progress;
-
-    // Release pin only on real page scroll — lerp noise at 落幅 used to be >1px
-    // and dropped the click hold (list said Genstyle while ring drifted).
+    // Release pin only on real page scroll — spring noise at 落幅 must not
+    // drop the click hold (list said one work while the ring drifted).
     const unpinSlop = Math.max(28, limit * 0.035);
     if (pinned >= 0 && Math.abs(scrollTarget - pinScroll) > unpinSlop) {
       pinned = -1;
-      spinAnim = null;
+      spinSpring.hold = false;
     }
 
-    if (spinAnim && !motion.matches) {
-      const t = Math.min(1, (now - spinAnim.start) / 450);
+    if (!motion.matches) {
+      const frameDelta = progressSpring.v * dtSec;
+      if (pinned < 0) {
+        velHold.x = frameDelta;
+        velHold.v = 0;
+        smoothedDelta = frameDelta;
+      } else {
+        springStep(velHold, 0, VEL_OMEGA, dtSec);
+        smoothedDelta = Math.abs(velHold.x) < 1e-5 ? 0 : velHold.x;
+      }
+    }
+
+    let progress = progressSpring.x;
+    if (progress < 0) progress = 0;
+    else if (progress > 1) progress = 1;
+    progress = Math.round(progress * 1e4) / 1e4;
+
+    if (pinned >= 0 && !motion.matches) {
+      const goal = spinForFront(pinned, 0);
+      if (spinSpring.hold) {
+        if (springStep(spinSpring, goal, SPIN_OMEGA, dtSec)) spinSpring.hold = false;
+      } else {
+        spinSpring.x = goal;
+        spinSpring.v = 0;
+      }
+      // visual is the vel=0 spin. Shader still subtracts VEL_YAW*vel, so add it back.
+      const visual = spinSpring.x;
+      const want = visual + VEL_YAW * smoothedDelta;
+      uTime = (want - smoothedDelta) / SPIN_RATE;
+    } else if (inView && !motion.matches && Math.abs(smoothedDelta) > 1e-5) {
+      // Scroll flings the ring. Nothing is added while the page is still,
+      // so the ring does not spin on its own.
+      uTime += 15 * smoothedDelta;
+    }
+
+    breathClock = (breathClock + 0.009 * dt) % BREATH_PERIOD;
+    shared.uBreath.value = motion.matches ? 0 : BREATH_AMP;
+    if (motion.matches) {
+      tiltSpring.x = 0;
+      tiltSpring.v = 0;
+      shared.uTilt.value = 0;
+    } else {
+      springStep(tiltSpring, tiltTarget, TILT_OMEGA, dtSec);
+      shared.uTilt.value = tiltSpring.x;
+    }
+    shared.uClock.value = breathClock;
+
+    if (inkJob && !motion.matches) {
+      const t = Math.min(1, (now - inkJob.start) / INK_MS);
       const e = 1 - Math.pow(1 - t, 3);
-      const spinWant = spinAnim.from + (spinAnim.to - spinAnim.from) * e;
-      // Hold velocity near 0 while tweening; map desired spin onto uTime.
-      smoothedDelta = lerp(smoothedDelta, 0, 0.35);
-      uTime = (spinWant - smoothedDelta) / 0.12;
-      if (t >= 1) spinAnim = null;
-    } else if (pinned >= 0 && !motion.matches) {
-      // Hard hold: keep selected card geometrically front; idle must not drift away.
-      smoothedDelta = lerp(smoothedDelta, 0, 0.4);
-      const want = spinTargetFor(pinned, liveSpin());
-      uTime = (want - smoothedDelta) / 0.12;
-    } else if (inView && !motion.matches) {
-      uTime += 0.009 * dt + 15 * smoothedDelta;
+      const entry = meshes[inkJob.index];
+      if (entry) entry.uniforms.uInk.value = e * 1.6;
+      if (t >= 1) inkJob = null;
     }
 
-    shared.uTime.value = motion.matches ? 0 : uTime;
-    shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
+    const vel = motion.matches ? 0 : smoothedDelta;
+    shared.uTime.value = uTime;
+    shared.uVelocity.value = vel;
     shared.uScroll.value = progress;
 
-    // Yaw-aware eye-hero: argmax cardFacing (cabin −PI*0.2), not heroNX proximity.
-    const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
+    const spin = uTime * SPIN_RATE + vel;
+    // No idle cruise. Velocity is only the scroll fling or the click spring.
+    let sharedSpinVel = 0;
+    if (!motion.matches && pinned >= 0) {
+      sharedSpinVel = spinSpring.v + VEL_YAW * velHold.v;
+    } else if (!motion.matches && Math.abs(progressSpring.v) > 1e-3) {
+      sharedSpinVel = SPIN_RATE * 15 * progressSpring.v;
+    }
+    const spinAccel = dtSec > 0 ? Math.abs(sharedSpinVel - prevSharedSpinVel) / dtSec : 0;
+    prevSharedSpinVel = sharedSpinVel;
+    // Constant cruise has no stagger. Glue once the tails are close so a settled
+    // ring matches the single shared angle exactly (list / caption / front card).
+    const coasting = spinAccel < 1.5;
+    if (motion.matches) {
+      snapCards(spin);
+      cardsReady = true;
+    } else if (!cardsReady) {
+      for (let i = 0; i < meshes.length; i++) {
+        cardSprings[i].x = spin;
+        cardSprings[i].v = sharedSpinVel;
+        meshes[i].uniforms.uLag.value = 0;
+        meshes[i].uniforms.uBend.value = 0;
+      }
+      cardsReady = true;
+    } else {
+      for (let i = 0; i < meshes.length; i++) {
+        const s = cardSprings[i];
+        springStep(s, spin, cardOmega(i), dtSec, sharedSpinVel, true);
+        let lag = s.x - spin;
+        let relV = s.v - sharedSpinVel;
+        if (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05)) {
+          lag = 0;
+          relV = 0;
+          s.x = spin;
+          s.v = sharedSpinVel;
+        } else if (Math.abs(lag) < 1e-4) {
+          lag = 0;
+          s.x = spin;
+        }
+        meshes[i].uniforms.uLag.value = lag;
+        let bend = relV * BEND_SCALE;
+        if (bend > BEND_MAX) bend = BEND_MAX;
+        else if (bend < -BEND_MAX) bend = -BEND_MAX;
+        if (Math.abs(bend) < 1e-3) bend = 0;
+        meshes[i].uniforms.uBend.value = bend;
+      }
+    }
+
+    // Per-card angle, so a trailing card can be the one actually facing the camera.
     let best = 0;
     let bestFacing = -Infinity;
     const facings = new Array(meshes.length);
     for (let i = 0; i < meshes.length; i++) {
-      const facing = cardFacing(i, spin);
+      const facing = cardFacing(i, spin + meshes[i].uniforms.uLag.value, vel);
       facings[i] = facing;
       if (facing > bestFacing) {
         bestFacing = facing;
         best = i;
       }
     }
+    // Near a crossover, keep the current row so ribbon lag does not flicker the caption.
+    if (pinned < 0 && front >= 0 && front < meshes.length && best !== front) {
+      if (facings[front] > bestFacing - 0.035) best = front;
+    }
     const hero = pinned >= 0 ? pinned : best;
     for (let i = 0; i < meshes.length; i++) {
       const facing = facings[i];
       const isHero = i === hero;
-      // Stronger dim on non-hero so the visual front reads clearly.
-      meshes[i].uniforms.uFocus.value = isHero ? 1 : Math.max(0.12, facing * 0.45 + 0.02);
+      // Draw the facing card last, without a depth test, so a neighbor's near
+      // edge cannot cover it. Pinned neighbors also shrink and step back.
+      meshes[i].mesh.renderOrder = isHero ? 2 : 0;
+      meshes[i].program.depthTest = !isHero;
+      meshes[i].uniforms.uFit.value = pinned >= 0 && !isHero ? 0.82 : 1;
+      meshes[i].uniforms.uFocus.value = isHero
+        ? 1
+        : pinned >= 0
+          ? 0.36
+          : Math.max(0.12, facing * 0.45 + 0.02);
       if (isHero) meshes[i].uniforms.uWash.value = 0;
       else if (meshes[i].isPaper || meshes[i].coverScore < -20) meshes[i].uniforms.uWash.value = 1;
       else meshes[i].uniforms.uWash.value = 0;
     }
 
-    // List stays put during approach/zoom; only ring uses progress. After 落幅,
-    // selection (not page scroll) moves the catalog via ensureRowVisible.
+    // List stays put during approach/zoom; only the ring uses sprung progress.
+    // 落幅 follows the page, so spring overshoot cannot toggle the catalog.
     if (listEl) listEl.style.transform = 'translateY(0px)';
-    if (listWindow && progress < LIST_LOCK) listWindow.scrollTop = 0;
+    if (listWindow && pageProgress < LIST_LOCK) listWindow.scrollTop = 0;
     root.dataset.progress = progress.toFixed(3);
-    root.classList.toggle('is-end', progress > LIST_LOCK);
+    root.classList.toggle('is-end', pageProgress > LIST_LOCK);
     setFront(pinned >= 0 ? pinned : best);
 
     renderer.render({ scene, camera, frustumCull: false });
@@ -608,6 +899,9 @@ export function mountPickRing(root, pickData) {
   const watch = new IntersectionObserver(
     (entries) => {
       inView = entries.some((entry) => entry.isIntersecting);
+      if (!inView) return;
+      picksSeen = true;
+      if (inkHold >= 0) beginInk(inkHold);
     },
     { threshold: 0.12 },
   );
@@ -632,6 +926,16 @@ export function mountPickRing(root, pickData) {
     x -= 3.7 * progress + 1.4;
     y = y2 - 0.85 * progress;
     z = z2 - (20 - 12 * progress);
+    // Same transposed Z rotation as the shader (column-major matrix is stored transposed).
+    const tilt = visualTilt(progress);
+    if (tilt !== 0) {
+      const ct = Math.cos(tilt);
+      const st = Math.sin(tilt);
+      const xt = x * ct + y * st;
+      const yt = -x * st + y * ct;
+      x = xt;
+      y = yt;
+    }
     const viewZ = z - camera.position.z;
     const depth = Math.max(0.35, -viewZ);
     const fovRad = (camera.fov * Math.PI) / 180;
@@ -642,7 +946,8 @@ export function mountPickRing(root, pickData) {
 
   function cardScreenNX(index, spin, progress) {
     const theta = (index / N) * Math.PI * 2;
-    return phaseScreenNX(theta - spin, progress);
+    // Transposed Y rotation sends the ring angle to θ+spin (not θ−spin).
+    return phaseScreenNX(theta + spin, progress);
   }
 
   /** Map click on canvas to the visible card under the cursor (hit-test only). */
@@ -657,6 +962,13 @@ export function mountPickRing(root, pickData) {
   rowBtns.forEach((btn) => {
     btn.addEventListener('click', () => select(Number(btn.dataset.i)));
   });
+  window.addEventListener('pointermove', (e) => {
+    const nx = e.clientX / Math.max(1, window.innerWidth);
+    tiltTarget = (Math.min(1, Math.max(0, nx)) - 0.5) * 2 * TILT_MAX;
+  });
+  window.addEventListener('pointerleave', () => {
+    tiltTarget = 0;
+  });
   // During approach, pin catalog scroll; after 落幅 allow overflow scroll for selection.
   listWindow?.addEventListener('scroll', () => {
     if (lastProgress < LIST_LOCK) listWindow.scrollTop = 0;
@@ -668,14 +980,21 @@ export function mountPickRing(root, pickData) {
     state: () => {
       const progress = shared.uScroll.value;
       const spin = liveSpin();
-      const fp = frontPhase();
+      const vel = motion.matches ? 0 : smoothedDelta;
       const hnx = heroNX(progress);
       let best = 0;
       let bestFacing = -Infinity;
+      let maxLag = 0;
+      let maxBend = 0;
       const cards = [];
       for (let i = 0; i < meshes.length; i++) {
-        const facing = cardFacing(i, spin);
-        const sx = cardScreenNX(i, spin, progress);
+        const lag = lagOf(i);
+        const bend = meshes[i].uniforms.uBend.value;
+        if (Math.abs(lag) > maxLag) maxLag = Math.abs(lag);
+        if (Math.abs(bend) > maxBend) maxBend = Math.abs(bend);
+        const card = spin + lag;
+        const facing = cardFacing(i, card, vel);
+        const sx = cardScreenNX(i, card, progress);
         if (facing > bestFacing) {
           bestFacing = facing;
           best = i;
@@ -685,17 +1004,27 @@ export function mountPickRing(root, pickData) {
           title: (pickData[i] && pickData[i].title) || '',
           sx: Math.round(sx * 1000) / 1000,
           facing: Math.round(facing * 1000) / 1000,
+          lag: Math.round(lag * 1000) / 1000,
           dHero: Math.round(Math.abs(sx - hnx) * 1000) / 1000,
         });
       }
       cards.sort((a, b) => b.facing - a.facing || a.dHero - b.dHero);
+      const frontSpin = spin + lagOf(Math.max(0, front));
       return {
         front,
         pinned,
         progress,
-        frontPhase: fp,
+        page: lastProgress,
+        vel,
+        uTime,
+        eye: front < 0 ? null : Math.round(wrapPi(eyeYaw(front, frontSpin, vel)) * 1000) / 1000,
         heroNX: Math.round(hnx * 1000) / 1000,
         spin,
+        maxLag: Math.round(maxLag * 1e4) / 1e4,
+        maxBend: Math.round(maxBend * 1e4) / 1e4,
+        tilt: Math.round(visualTilt(progress) * 1e4) / 1e4,
+        breath: motion.matches ? 0 : Math.round(BREATH_AMP * settleOf(progress) * 1e4) / 1e4,
+        heroDepthTest: front >= 0 ? meshes[front].program.depthTest : null,
         best,
         bestFacing: Math.round(bestFacing * 1000) / 1000,
         bestTitle: (pickData[best] && pickData[best].title) || '',

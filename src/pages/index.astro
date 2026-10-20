@@ -47,13 +47,13 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
       id="scroll-video"
       class="hero-video"
       muted
-      autoplay
       playsinline
-      loop
-      preload="auto"
+      webkit-playsinline
+      x5-playsinline
+      x5-video-player-type="h5"
+      preload="none"
       disablepictureinpicture
       referrerpolicy="no-referrer"
-      src={SCROLL_VIDEO}
       data-src={SCROLL_VIDEO}
       aria-hidden="true"
     ></video>
@@ -64,6 +64,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 </section>
 <div class="hero-info">
   <div class="hero-copy">
+    <p class="by"><a href="/artist/">林丽丽</a><span lang="en">Lili Lin</span></p>
+    <p class="stance">以艺术家林丽丽为核心的 AIGC 文化艺术工作室</p>
     <h1>当代西湖繁胜全景图</h1>
     <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
     <p class="meta">古画新绘　·　进行中　·　2026</p>
@@ -92,6 +94,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
       <h2 class="m-title"><a class="m-title-link" id="m-title" href={mLead.href}>{mLead.title}</a></h2>
       <div class="m-meta" id="m-meta" hidden={!mLead.meta}>{mLead.meta}</div>
       <p class="m-body" id="m-body" hidden={!mLead.body}>{mLead.body}</p>
+      <div class="ink-wave" id="m-wave" aria-hidden="true"></div>
       <a class="m-view" id="m-view" href={mLead.href}>查看作品 <span aria-hidden="true">→</span></a>
     </div>
     <ul class="m-list" id="m-list">
@@ -116,6 +119,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
         <p class="pick-intro-summary" data-role="summary" hidden={!leadPick.summary}>{leadPick.summary}</p>
         <p class="pick-intro-meta" data-role="meta" hidden={!leadPick.meta}>{leadPick.meta}</p>
         <p class="pick-intro-body" data-role="body" hidden={!leadPick.body}>{leadPick.body}</p>
+        <div class="ink-wave" data-role="wave" aria-hidden="true"></div>
         <a class="pick-intro-view" data-role="view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
       </div>
     </div>
@@ -168,7 +172,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 .first-screen {
   --hh: max(420px, min(660px, 73.4vh));
   position: relative;
-  height: max(100vh, calc(var(--hh) + 240px));
+  height: max(100vh, calc(var(--hh) + 340px));
   background: #fff;
   color: #1a1a18;
   font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
@@ -265,6 +269,31 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   justify-content: space-between;
   align-items: center;
   gap: 32px;
+}
+.hero-copy .by {
+  margin: 0;
+  font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
+  font-weight: 600;
+  font-size: 36px;
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: #1a1a18;
+}
+.hero-copy .by a { color: inherit; text-decoration: none; }
+.hero-copy .by a:hover { opacity: 0.7; }
+.hero-copy .by span {
+  margin-left: 12px;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #3d3a35;
+}
+.hero-copy .stance {
+  margin: 8px 0 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #3d3a35;
 }
 .hero-copy h1 {
   margin: 0;
@@ -501,6 +530,34 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   overflow: hidden;
 }
 /* 5. view link */
+.ink-wave {
+  height: 16px;
+  margin-top: 16px;
+  overflow: hidden;
+  max-width: 100%;
+  color: #B7B3AC;
+  pointer-events: none;
+}
+.ink-wave :global(svg) {
+  display: block;
+  width: 100%;
+  height: 16px;
+  overflow: hidden;
+}
+.ink-wave :global(path) {
+  fill: none;
+  stroke: #B7B3AC;
+  stroke-width: 1.25px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+  stroke-dasharray: 2 7;
+  animation: ink-wave-drift 6s linear infinite;
+}
+@keyframes ink-wave-drift { to { stroke-dashoffset: -18; } }
+@media (prefers-reduced-motion: reduce) {
+  .ink-wave :global(path) { animation: none; stroke-dasharray: none; }
+}
 .pick-intro-view {
   display: inline-block;
   margin-top: 14px;
@@ -629,7 +686,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   font-weight: inherit;
   font-variant-numeric: tabular-nums;
 }
-.cta { text-align: center; margin-top: 280px; padding-top: 48px; }
+.cta { text-align: center; margin-top: 0; padding-top: 48px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
 @media (max-width: 860px) {
@@ -675,7 +732,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 @media (max-width: 768px) {
   .first-screen {
     height: 100vh;
-    height: max(100svh, 844px);
+    height: 100svh;
+    height: 100dvh;
     background: #fff;
   }
   .hero {
@@ -744,6 +802,9 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     display: block;
     text-align: center;
   }
+  .hero-copy .by { font-size: 28px; }
+  .hero-copy .by span { font-size: 14px; }
+  .hero-copy .stance { margin-bottom: 12px; font-size: 14px; }
   .hero-copy h1 {
     font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
     font-weight: 600;
@@ -871,6 +932,19 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     max-width: none;
     pointer-events: none;
   }
+  .m-card.is-ink img {
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><filter id='b'><feGaussianBlur stdDeviation='1.6'/></filter><g filter='url(%23b)' fill='black'><ellipse cx='50' cy='48' rx='26' ry='22'/><ellipse cx='66' cy='40' rx='15' ry='13'/><ellipse cx='34' cy='62' rx='13' ry='12'/></g></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><filter id='b'><feGaussianBlur stdDeviation='1.6'/></filter><g filter='url(%23b)' fill='black'><ellipse cx='50' cy='48' rx='26' ry='22'/><ellipse cx='66' cy='40' rx='15' ry='13'/><ellipse cx='34' cy='62' rx='13' ry='12'/></g></svg>");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    animation: ink-bloom 600ms ease-out forwards;
+  }
+  @keyframes ink-bloom {
+    from { -webkit-mask-size: 16% 16%; mask-size: 16% 16%; }
+    to { -webkit-mask-size: 250% 250%; mask-size: 250% 250%; }
+  }
   .m-bar { display: flex; gap: 6px; padding: 0 24px; }
   .m-bar i { flex: 1; height: 2px; background: #e1ddd6; transition: background 0.25s ease; }
   .m-bar i.on { background: #1a1a18; }
@@ -888,6 +962,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .m-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .m-meta { margin-top: 8px; font-size: 12px; line-height: normal; color: #9a958c; letter-spacing: 0.08em; }
   .m-body { margin: 12px 0 0; font-size: 14px; line-height: 1.75; color: #4a463f; }
+  .m-info .ink-wave { margin-top: 14px; }
   .m-view {
     display: inline-block;
     margin-top: 16px;
@@ -953,6 +1028,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .about__gallery__wrapper,
   .about__gallery__media,
   .pick-list { transition: none; }
+  .m-card.is-ink img { animation: none; -webkit-mask-image: none; mask-image: none; }
 }
 </style>
 <script>
@@ -960,8 +1036,6 @@ const hero = document.getElementById('scroll-hero');
 const video = document.getElementById('scroll-video');
 const listen = document.getElementById('snd');
 const listenLabel = listen.querySelector('.lb');
-const motion = matchMedia('(prefers-reduced-motion: reduce)');
-// ≤768px: the painting player in scripts/mobile-hero.js owns the button and the video.
 const mobileHeroMq = matchMedia('(max-width: 768px)');
 const heroOnMobile = () => mobileHeroMq.matches;
 let listening = false;
@@ -1008,7 +1082,7 @@ function attachSource() {
   video.playsInline = true;
   video.autoplay = true;
   video.loop = true;
-  video.preload = 'auto';
+  video.preload = 'none';
   if (!listening) {
     video.muted = true;
     video.defaultMuted = true;
@@ -1016,16 +1090,6 @@ function attachSource() {
   }
   if (video.getAttribute('src') !== src) video.src = src;
   return true;
-}
-
-function startVideo() {
-  if (!attachSource()) { failSilent(); return; }
-  const attempt = video.play();
-  if (attempt) attempt.catch((err) => {
-    if (listening) return;
-    if (err && err.name === 'NotAllowedError') return;
-    if (video.error) failSilent();
-  });
 }
 
 video.addEventListener('playing', () => {
@@ -1051,20 +1115,6 @@ listen.addEventListener('click', () => {
     if (video.error) failSilent();
   });
 });
-if (motion.addEventListener) motion.addEventListener('change', () => {
-  if (heroOnMobile()) return;
-  if (!motion.matches) startVideo();
-});
-if (!heroOnMobile()) {
-  startVideo();
-} else {
-  const toDesktop = () => {
-    if (heroOnMobile()) return;
-    mobileHeroMq.removeEventListener?.('change', toDesktop);
-    startVideo();
-  };
-  mobileHeroMq.addEventListener?.('change', toDesktop);
-}
 </script>
 <script>
 // Homepage auto-hide nav + SCROLL cue (layout only; no hero media logic here).

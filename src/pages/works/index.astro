@@ -13,7 +13,6 @@ const preload = [...new Set(ws.map(w => WORKS_COVER[w.slug]?.src).filter(Boolean
 const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line === l).length])] as [string, number][];
 ---
 <Base title="作品 · 幕景宇宙" active="/works/">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&display=swap"/>
 <main class="wk">
 <section class="wk-head">
   <div class="wk-hl"><p class="wk-kick">Works · {ws.length}</p><h1>作品</h1></div>
@@ -51,7 +50,7 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
 <script is:inline type="application/json" id="wk-preload" set:html={JSON.stringify(preload)}></script>
 
 <style is:global>
-.wk { --rule1: rgba(26,26,28,.10); --rule2: rgba(26,26,28,.16); --fbpaper: #F1EEE6; --song: "Noto Serif SC", "Noto Serif CJK SC", serif;
+.wk { --rule1: rgba(26,26,28,.10); --rule2: rgba(26,26,28,.16); --fbpaper: #F1EEE6; --song: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif;
   width: min(1312px, calc(100% - 128px)); margin: 0 auto; }
 .wk a { color: inherit; text-decoration: none; }
 .wk [hidden], .wk .hide { display: none !important; }
@@ -183,7 +182,10 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
   apply();
 
   // 预取所有封面，悬停时不闪白
-  const pre = () => { try { JSON.parse($('#wk-preload').textContent).forEach((u) => { const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = u; }); } catch (e) {} };
+  const pre = () => {
+    if (!matchMedia('(min-width: 1024px) and (hover: hover)').matches) return;
+    try { JSON.parse($('#wk-preload').textContent).forEach((u) => { const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = u; }); } catch (e) {}
+  };
   if (document.readyState === 'complete') pre(); else addEventListener('load', pre, { once: true });
 })();
 </script>

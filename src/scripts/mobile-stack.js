@@ -14,6 +14,8 @@ const LEFT = 24;          // current card left margin
 const SETTLE_MS = 450;
 const AXIS_SLOP = 8;
 
+import { bloomCard, paintWave } from './ink-layer.js';
+
 const mod = (n, m) => ((n % m) + m) % m;
 const pad = (n) => String(n).padStart(2, '0');
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
@@ -33,6 +35,7 @@ export function mountMobileStack(root) {
     meta: root.querySelector('#m-meta'),
     body: root.querySelector('#m-body'),
     view: root.querySelector('#m-view'),
+    wave: root.querySelector('#m-wave'),
   };
   const data = JSON.parse((dataEl && dataEl.textContent) || '[]');
   const N = Math.min(cards.length, data.length);
@@ -53,6 +56,7 @@ export function mountMobileStack(root) {
 
   let pos = 0;
   let current = -1;
+  let viewed = false;
   let expanded = false;
   let anim = 0;
   let cardW = 300;
@@ -98,6 +102,8 @@ export function mountMobileStack(root) {
     if (el.view && w.href) el.view.setAttribute('href', w.href);
     if (el.meta) { el.meta.textContent = w.meta || ''; el.meta.hidden = !w.meta; }
     if (el.body) { el.body.textContent = w.body || ''; el.body.hidden = !w.body; }
+    paintWave(el.wave, idx);
+    if (viewed) bloomCard(cards[idx]);
     syncList();
   }
 
@@ -241,6 +247,14 @@ export function mountMobileStack(root) {
   motion.addEventListener?.('change', () => mq.matches && layout());
 
   if (mq.matches) { measure(); layout(); }
+  const seen = new IntersectionObserver((entries) => {
+    if (!entries.some((entry) => entry.isIntersecting)) return;
+    viewed = true;
+    const idx = current >= 0 ? current : 0;
+    bloomCard(cards[idx]);
+    seen.disconnect();
+  }, { threshold: 0.35 });
+  seen.observe(root);
   root.dataset.ready = '1';
 
   // dwell controller (mobile-pager.js, data-dwell="on"): vertical swipes walk 01 → N, then flip the page
