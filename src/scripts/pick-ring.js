@@ -143,11 +143,14 @@ void main() {
 
   // Ink bloom layered on the cover. Geometry is unchanged.
   // uInk 0 = paper, about 1.6 = the photograph fully open (~600ms).
-  float spread = max(uInk, 0.0);
-  float ink = inkBlob(vUv, vec2(0.50, 0.48), spread * 0.95);
-  ink = max(ink, inkBlob(vUv, vec2(0.68, 0.38), spread * 0.58));
-  ink = max(ink, inkBlob(vUv, vec2(0.33, 0.64), spread * 0.5));
-  color = mix(vec3(0.965, 0.961, 0.953), color, clamp(ink, 0.0, 1.0));
+  // At 1.5 the three blobs already cover the whole card, so the mix is a no-op.
+  if (uInk < 1.5) {
+    float spread = max(uInk, 0.0);
+    float ink = inkBlob(vUv, vec2(0.50, 0.48), spread * 0.95);
+    ink = max(ink, inkBlob(vUv, vec2(0.68, 0.38), spread * 0.58));
+    ink = max(ink, inkBlob(vUv, vec2(0.33, 0.64), spread * 0.5));
+    color = mix(vec3(0.965, 0.961, 0.953), color, clamp(ink, 0.0, 1.0));
+  }
 
   gl_FragColor = vec4(color, 1.0);
 }
@@ -255,7 +258,7 @@ export function mountPickRing(root, pickData) {
     antialias: true,
     dpr: Math.min(2, window.devicePixelRatio || 1),
     webgl: 1,
-    preserveDrawingBuffer: true,
+    preserveDrawingBuffer: false,
   });
   const gl = renderer.gl;
   gl.clearColor(0, 0, 0, 0);
@@ -392,7 +395,7 @@ export function mountPickRing(root, pickData) {
       vertex: VERT,
       fragment: FRAG,
       uniforms,
-      cullFace: false,
+      cullFace: gl.BACK,
       depthTest: true,
       depthWrite: true,
     });
@@ -449,6 +452,20 @@ export function mountPickRing(root, pickData) {
     return Math.max(window.innerHeight * 0.85, listEl.scrollHeight - listWindow.clientHeight);
   }
 
+  // Scroll geometry is cached. Reading it inside the frame forced layout every tick.
+  let anchor = 0;
+  let runway = 1;
+  let limit = 1;
+  let scrollY = window.scrollY;
+  let raf = 0;
+
+  function measure() {
+    if (narrow.matches) return;
+    limit = listOverflow();
+    runway = Math.max(1, root.offsetHeight - window.innerHeight);
+    anchor = root.getBoundingClientRect().top + window.scrollY;
+  }
+
   function syncRunway() {
     if (narrow.matches) {
       root.style.height = '';
@@ -456,6 +473,7 @@ export function mountPickRing(root, pickData) {
     }
     // runway keeps progress≈1 inside #picks (精选), not into CTA「合作」
     root.style.height = `${window.innerHeight + listOverflow()}px`;
+    measure();
   }
 
   function resize() {
@@ -694,20 +712,18 @@ export function mountPickRing(root, pickData) {
       spinSpring.hold = true;
     }
     setFront(i, { scrollList: true });
+    kick();
   }
 
   function frame(now) {
     const dt = Math.min(34, now - lastNow);
     lastNow = now;
     if (narrow.matches) {
-      requestAnimationFrame(frame);
+      raf = 0;
       return;
     }
 
-    const limit = listOverflow();
-    const rect = root.getBoundingClientRect();
-    const runway = Math.max(1, root.offsetHeight - window.innerHeight);
-    const passed = Math.min(runway, Math.max(0, -rect.top));
+    const passed = Math.min(runway, Math.max(0, scrollY - anchor));
     scrollTarget = -passed * (limit / runway);
 
     // Page progress, not the spring. LIST_LOCK / unpin stay on this so a 3%
@@ -886,14 +902,34 @@ export function mountPickRing(root, pickData) {
 
     // List stays put during approach/zoom; only the ring uses sprung progress.
     // 落幅 follows the page, so spring overshoot cannot toggle the catalog.
-    if (listEl) listEl.style.transform = 'translateY(0px)';
-    if (listWindow && pageProgress < LIST_LOCK) listWindow.scrollTop = 0;
-    root.dataset.progress = progress.toFixed(3);
-    root.classList.toggle('is-end', pageProgress > LIST_LOCK);
+    const end = pageProgress > LIST_LOCK;
+    if (root.classList.contains('is-end') !== end) root.classList.toggle('is-end', end);
+    const progLabel = progress.toFixed(3);
+    if (root.dataset.progress !== progLabel) root.dataset.progress = progLabel;
     setFront(pinned >= 0 ? pinned : best);
 
     renderer.render({ scene, camera, frustumCull: false });
-    requestAnimationFrame(frame);
+    if (needsFrame()) raf = requestAnimationFrame(frame);
+    else raf = 0;
+  }
+
+  function needsFrame() {
+    if (inkJob) return true;
+    if (Math.abs(progressSpring.x - lastProgress) > 2e-4 || Math.abs(progressSpring.v) > 2e-3) return true;
+    if (Math.abs(tiltSpring.x - tiltTarget) > 1e-4 || Math.abs(tiltSpring.v) > 2e-3) return true;
+    if (pinned >= 0 && spinSpring.hold) return true;
+    if (Math.abs(smoothedDelta) > 1e-4 || Math.abs(velHold.v) > 2e-3) return true;
+    for (let i = 0; i < meshes.length; i++) {
+      if (Math.abs(meshes[i].uniforms.uLag.value) > 1e-4) return true;
+      if (Math.abs(meshes[i].uniforms.uBend.value) > 1e-4) return true;
+    }
+    return false;
+  }
+
+  function kick() {
+    if (raf || narrow.matches) return;
+    lastNow = performance.now();
+    raf = requestAnimationFrame(frame);
   }
 
   const watch = new IntersectionObserver(
@@ -902,6 +938,7 @@ export function mountPickRing(root, pickData) {
       if (!inView) return;
       picksSeen = true;
       if (inkHold >= 0) beginInk(inkHold);
+      kick();
     },
     { threshold: 0.12 },
   );
@@ -964,10 +1001,15 @@ export function mountPickRing(root, pickData) {
   });
   window.addEventListener('pointermove', (e) => {
     const nx = e.clientX / Math.max(1, window.innerWidth);
-    tiltTarget = (Math.min(1, Math.max(0, nx)) - 0.5) * 2 * TILT_MAX;
+    const next = (Math.min(1, Math.max(0, nx)) - 0.5) * 2 * TILT_MAX;
+    if (Math.abs(next - tiltTarget) < 1e-4) return;
+    tiltTarget = next;
+    kick();
   });
   window.addEventListener('pointerleave', () => {
+    if (tiltTarget === 0) return;
     tiltTarget = 0;
+    kick();
   });
   // During approach, pin catalog scroll; after 落幅 allow overflow scroll for selection.
   listWindow?.addEventListener('scroll', () => {
@@ -1037,9 +1079,18 @@ export function mountPickRing(root, pickData) {
 
   syncRunway();
   resize();
+  window.addEventListener('scroll', () => {
+    scrollY = window.scrollY;
+    kick();
+  }, { passive: true });
   window.addEventListener('resize', () => {
     syncRunway();
     resize();
+    kick();
   });
-  requestAnimationFrame(frame);
+  window.addEventListener('load', () => {
+    syncRunway();
+    kick();
+  });
+  kick();
 }
