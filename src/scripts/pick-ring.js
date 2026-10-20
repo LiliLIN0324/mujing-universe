@@ -1,4 +1,5 @@
 import { Camera, Mesh, Plane, Program, Renderer, Texture, Transform } from 'ogl';
+import { INK_MS, paintWave } from './ink-layer.js';
 
 /**
  * Pick ring — Ferris / demalde About geometry (bv + cabinMatrix).
@@ -83,6 +84,11 @@ uniform float uReady;
 uniform float uFocus;
 uniform float uWash;
 uniform float uScroll;
+uniform float uInk;
+float inkBlob(vec2 p, vec2 c, float r) {
+  vec2 d = (p - c) * vec2(1.0, 1.18);
+  return 1.0 - smoothstep(r * 0.62, r, length(d));
+}
 void main() {
   vec2 uv = vUv;
   if (uImage.x > 1.0 && uImage.y > 1.0) {
@@ -118,6 +124,14 @@ void main() {
   if (washKill < 0.2) discard;
   color = mix(vec3(0.945, 0.945, 0.941), color, clamp(washKill, 0.0, 1.0));
   color *= mix(0.62, 1.0, clamp(uFocus, 0.0, 1.0));
+
+  // Ink bloom layered on the cover. Geometry is unchanged.
+  // uInk 0 = paper, about 1.6 = the photograph fully open (~600ms).
+  float spread = max(uInk, 0.0);
+  float ink = inkBlob(vUv, vec2(0.50, 0.48), spread * 0.95);
+  ink = max(ink, inkBlob(vUv, vec2(0.68, 0.38), spread * 0.58));
+  ink = max(ink, inkBlob(vUv, vec2(0.33, 0.64), spread * 0.5));
+  color = mix(vec3(0.965, 0.961, 0.953), color, clamp(ink, 0.0, 1.0));
 
   gl_FragColor = vec4(color, 1.0);
 }
@@ -299,6 +313,7 @@ export function mountPickRing(root, pickData) {
       uReady: { value: 0 },
       uFocus: { value: 1 },
       uWash: { value: 0 },
+      uInk: { value: 1.6 },
       uScroll: shared.uScroll,
     };
 
@@ -367,6 +382,7 @@ export function mountPickRing(root, pickData) {
     applyCardScale();
   }
 
+  const waveEl = introEl && introEl.querySelector('[data-role="wave"]');
   const titleLink = introEl && introEl.querySelector('[data-role="title-link"]');
   const summaryEl = introEl && introEl.querySelector('[data-role="summary"]');
   const metaEl = introEl && introEl.querySelector('[data-role="meta"]');
@@ -377,7 +393,30 @@ export function mountPickRing(root, pickData) {
 
   let pinned = -1;
   let pinScroll = 0;
-  let spinAnim = null; // { from, to, start }
+  let spinAnim = null; // { from, start }
+  let inkJob = null; // { index, start }
+  let inkHold = -1;
+  let picksSeen = false;
+
+  /** Cover of the card that just became front. Paper until the section is on screen. */
+  function beginInk(index) {
+    const entry = meshes[index];
+    if (!entry) return;
+    if (motion.matches) {
+      entry.uniforms.uInk.value = 1.6;
+      inkJob = null;
+      inkHold = -1;
+      return;
+    }
+    entry.uniforms.uInk.value = 0;
+    if (!picksSeen) {
+      inkHold = index;
+      inkJob = null;
+      return;
+    }
+    inkHold = -1;
+    inkJob = { index, start: performance.now() };
+  }
 
   function syncList(index) {
     rowEls.forEach((row, i) => {
@@ -433,6 +472,8 @@ export function mountPickRing(root, pickData) {
     front = index;
     const work = pickData[index];
     fillCopy(work);
+    paintWave(waveEl, index);
+    beginInk(index);
     syncList(index);
     // After ring 落幅 (or explicit select), keep active row in the catalog window.
     if (forceScroll || lastProgress >= LIST_LOCK) ensureRowVisible(index);
@@ -581,6 +622,14 @@ export function mountPickRing(root, pickData) {
       uTime += 0.009 * dt + 15 * smoothedDelta;
     }
 
+    if (inkJob && !motion.matches) {
+      const t = Math.min(1, (now - inkJob.start) / INK_MS);
+      const e = 1 - Math.pow(1 - t, 3);
+      const entry = meshes[inkJob.index];
+      if (entry) entry.uniforms.uInk.value = e * 1.6;
+      if (t >= 1) inkJob = null;
+    }
+
     const vel = motion.matches ? 0 : smoothedDelta;
     shared.uTime.value = uTime;
     shared.uVelocity.value = vel;
@@ -625,6 +674,9 @@ export function mountPickRing(root, pickData) {
   const watch = new IntersectionObserver(
     (entries) => {
       inView = entries.some((entry) => entry.isIntersecting);
+      if (!inView) return;
+      picksSeen = true;
+      if (inkHold >= 0) beginInk(inkHold);
     },
     { threshold: 0.12 },
   );

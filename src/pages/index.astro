@@ -94,6 +94,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
       <h2 class="m-title"><a class="m-title-link" id="m-title" href={mLead.href}>{mLead.title}</a></h2>
       <div class="m-meta" id="m-meta" hidden={!mLead.meta}>{mLead.meta}</div>
       <p class="m-body" id="m-body" hidden={!mLead.body}>{mLead.body}</p>
+      <div class="ink-wave" id="m-wave" aria-hidden="true"></div>
       <a class="m-view" id="m-view" href={mLead.href}>查看作品 <span aria-hidden="true">→</span></a>
     </div>
     <ul class="m-list" id="m-list">
@@ -118,6 +119,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
         <p class="pick-intro-summary" data-role="summary" hidden={!leadPick.summary}>{leadPick.summary}</p>
         <p class="pick-intro-meta" data-role="meta" hidden={!leadPick.meta}>{leadPick.meta}</p>
         <p class="pick-intro-body" data-role="body" hidden={!leadPick.body}>{leadPick.body}</p>
+        <div class="ink-wave" data-role="wave" aria-hidden="true"></div>
         <a class="pick-intro-view" data-role="view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
       </div>
     </div>
@@ -528,6 +530,22 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   overflow: hidden;
 }
 /* 5. view link */
+.ink-wave { height: 26px; margin-top: 12px; color: #1a1a18; }
+.ink-wave svg { display: block; width: 100%; height: 26px; }
+.ink-wave path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.5;
+  stroke-dasharray: 5 8;
+  animation: ink-wave-drift 3.2s linear infinite;
+}
+@keyframes ink-wave-drift { to { stroke-dashoffset: -26; } }
+@media (prefers-reduced-motion: reduce) {
+  .ink-wave path { animation: none; stroke-dasharray: none; opacity: 0.62; }
+}
 .pick-intro-view {
   display: inline-block;
   margin-top: 14px;
@@ -902,6 +920,19 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     max-width: none;
     pointer-events: none;
   }
+  .m-card.is-ink img {
+    -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><filter id='b'><feGaussianBlur stdDeviation='1.6'/></filter><g filter='url(%23b)' fill='black'><ellipse cx='50' cy='48' rx='26' ry='22'/><ellipse cx='66' cy='40' rx='15' ry='13'/><ellipse cx='34' cy='62' rx='13' ry='12'/></g></svg>");
+    mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><filter id='b'><feGaussianBlur stdDeviation='1.6'/></filter><g filter='url(%23b)' fill='black'><ellipse cx='50' cy='48' rx='26' ry='22'/><ellipse cx='66' cy='40' rx='15' ry='13'/><ellipse cx='34' cy='62' rx='13' ry='12'/></g></svg>");
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+    animation: ink-bloom 600ms ease-out forwards;
+  }
+  @keyframes ink-bloom {
+    from { -webkit-mask-size: 16% 16%; mask-size: 16% 16%; }
+    to { -webkit-mask-size: 250% 250%; mask-size: 250% 250%; }
+  }
   .m-bar { display: flex; gap: 6px; padding: 0 24px; }
   .m-bar i { flex: 1; height: 2px; background: #e1ddd6; transition: background 0.25s ease; }
   .m-bar i.on { background: #1a1a18; }
@@ -919,6 +950,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .m-title-link:hover { text-decoration: underline; text-underline-offset: 3px; }
   .m-meta { margin-top: 8px; font-size: 12px; line-height: normal; color: #9a958c; letter-spacing: 0.08em; }
   .m-body { margin: 12px 0 0; font-size: 14px; line-height: 1.75; color: #4a463f; }
+  .m-info .ink-wave { margin-top: 14px; }
   .m-view {
     display: inline-block;
     margin-top: 16px;
@@ -984,6 +1016,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .about__gallery__wrapper,
   .about__gallery__media,
   .pick-list { transition: none; }
+  .m-card.is-ink img { animation: none; -webkit-mask-image: none; mask-image: none; }
 }
 </style>
 <script>
