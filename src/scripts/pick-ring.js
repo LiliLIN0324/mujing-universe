@@ -1,35 +1,24 @@
 /**
- * Pick arc — one ellipse, one gaussian.
+ * 散点长卷 — cards along one undulating ground line.
  *
- * Profile of the previous WebGL ring (1440×900, Chrome trace):
- * idle ~42fps, drag ~35fps (max frame 100ms). Every animation frame called
- * getBoundingClientRect (800+ forced layouts), uploaded a full WebGL frame of
- * 50×50 segment planes, and kept preserveDrawingBuffer. That was the jank.
+ * Motion is the same 60fps engine as the arc: a float `position` (card index),
+ * drag velocity, a short coast, then a critically damped spring. Each frame
+ * writes transform and opacity only. Nothing runs at rest. No autoplay.
  *
- * This version writes transform and opacity only, on a cached ellipse.
- * A float `position` (card index) is driven by drag velocity, a short coast,
- * then a critically damped spring onto the nearest card. Nothing runs when
- * the arc is at rest. No autoplay.
+ * Layout is a handscroll, not a vanishing-point ring. Spacing is constant
+ * (dragging unrolls one card per card-width). Scale barely changes. Distance
+ * is mist: the card fades, and a paper-colored veil (#F6F5F3) washes over it.
+ * No filter, no blur, no per-frame layout read.
  */
 
-const PHI = 1.618033988749895;
-/**
- * Gaussian variance of card index.
- * g(1) ≈ 0.79, g(2) ≈ 0.39 ≈ 1/φ², g(3) ≈ 0.12.
- * One smooth falloff for scale and opacity; wide enough that five cards stay in the arc.
- */
-const SIGMA2 = 2.15;
-/** Radians of ellipse parameter per card. Same step everywhere. */
-const THETA = 0.56;
 const OMEGA = 12;
 const COAST_DRAG = 3.4;
-const VISIBLE = 3.35;
+/** Cards farther than this are fully in the mist and not drawn. */
+const VISIBLE = 4.15;
+/** Vertical anchor inside the stage. Must match CSS `top` on the links. */
+const ANCHOR_Y = 0.5;
 
 const mod = (n, m) => ((n % m) + m) % m;
-
-function gauss(d) {
-  return Math.exp(-(d * d) / (2 * SIGMA2));
-}
 
 function wrapDelta(i, position, n) {
   let d = i - position;
@@ -78,11 +67,13 @@ export function mountPickRing(root, pickData) {
   let mode = 'rest';
   let target = 0;
   let front = -1;
-  /** Explicit selection. Copy tracks this until the arc arrives; drag clears it. */
+  /** Explicit selection. Copy tracks this until the scroll arrives; drag clears it. */
   let announced = -1;
-  let rx = 320;
-  let ry = 122;
-  let pxPer = 200;
+  let spacing = 512;
+  let waveAmp = 14;
+  let pxPer = 512;
+  let cardW = 440;
+  let cardH = 248;
   let anchor = 0;
   let runway = 1;
   let scrollY = window.scrollY;
@@ -92,6 +83,16 @@ export function mountPickRing(root, pickData) {
   let raf = 0;
   let lastTick = 0;
   const placed = [];
+  const veils = cards.map((card) => {
+    let veil = card.querySelector('.pick-mist');
+    if (!veil) {
+      veil = document.createElement('span');
+      veil.className = 'pick-mist';
+      veil.setAttribute('aria-hidden', 'true');
+      card.appendChild(veil);
+    }
+    return veil;
+  });
 
   function activeIndex(pos) {
     return mod(Math.round(pos), N);
@@ -158,26 +159,36 @@ export function mountPickRing(root, pickData) {
     if (announced >= 0 && mode === 'rest' && activeIndex(position) === announced) announced = -1;
   }
 
-  /** Geometry for every card from one float. No DOM reads. */
+  /**
+   * One ground line. x is linear in card index (unrolling, no vanishing point).
+   * y is a slow landscape wave. Scale falls only a little. Mist is a separate
+   * paper veil, not a blur.
+   */
   function pose(pos) {
     const out = [];
     for (let i = 0; i < N; i++) {
       const d = wrapDelta(i, pos, N);
-      const g = gauss(d);
-      const t = d * THETA;
-      const x = rx * Math.sin(t);
-      const y = -ry * (1 - Math.cos(t));
-      let opacity = (g - 0.05) / 0.48;
-      if (opacity < 0) opacity = 0;
-      else if (opacity > 1) opacity = 1;
+      const ad = Math.abs(d);
+      const x = -d * spacing;
+      const y = waveAmp * Math.sin(d * 0.58) + waveAmp * 0.42 * Math.sin(d * 1.55 + 0.7);
+      const scale = 1 - Math.min(ad, 3.2) * 0.035;
+      let opacity = 1;
+      if (ad > 1.05) {
+        const t = Math.min(1, (ad - 1.05) / 2.35);
+        const s = t * t * (3 - 2 * t);
+        opacity = 1 - s;
+      }
+      const veilT = ad <= 0.2 ? 0 : Math.min(1, (ad - 0.2) / 2.15);
+      const veil = veilT * 0.66;
       out.push({
         i,
         d,
         x,
         y,
-        scale: g,
+        scale,
         opacity,
-        show: Math.abs(d) <= VISIBLE && opacity > 0.02,
+        veil,
+        show: ad <= VISIBLE && opacity > 0.035,
       });
     }
     return out;
@@ -197,15 +208,17 @@ export function mountPickRing(root, pickData) {
         if (el.dataset.on !== '0') {
           el.dataset.on = '0';
           el.style.opacity = '0';
+          veils[i].style.opacity = '0';
           el.style.pointerEvents = 'none';
         }
         continue;
       }
       el.dataset.on = '1';
       el.style.opacity = p.opacity.toFixed(3);
-      el.style.pointerEvents = Math.abs(p.d) < 2.35 ? 'auto' : 'none';
+      veils[i].style.opacity = p.veil.toFixed(3);
+      el.style.pointerEvents = Math.abs(p.d) < 1.85 ? 'auto' : 'none';
       el.style.transform = `translate3d(calc(-50% + ${p.x.toFixed(2)}px), calc(-50% + ${p.y.toFixed(2)}px), 0) scale(${p.scale.toFixed(4)})`;
-      if (writeZ) el.style.zIndex = String(100 + Math.round(p.scale * 200));
+      if (writeZ) el.style.zIndex = String(240 - Math.round(Math.abs(p.d) * 28));
     }
   }
 
@@ -215,11 +228,11 @@ export function mountPickRing(root, pickData) {
       return;
     }
     const card = cards[0];
-    const cardW = card.offsetWidth || 420;
-    const stageW = stage.clientWidth || 880;
-    rx = Math.min(stageW * 0.34, cardW * 0.58);
-    ry = rx / (PHI * PHI);
-    pxPer = Math.max(120, rx * Math.sin(THETA));
+    cardW = card.offsetWidth || 440;
+    cardH = card.offsetHeight || cardW * 9 / 16;
+    spacing = cardW + 64;
+    pxPer = spacing;
+    waveAmp = 14;
     const limit = listWindow ? Math.max(window.innerHeight * 0.85, (listEl ? listEl.scrollHeight - listWindow.clientHeight : 0)) : window.innerHeight * 0.9;
     root.style.height = `${window.innerHeight + Math.max(window.innerHeight * 0.85, limit)}px`;
     anchor = root.getBoundingClientRect().top + window.scrollY;
@@ -311,16 +324,19 @@ export function mountPickRing(root, pickData) {
   function pickFromClient(clientX, clientY) {
     const rect = stage.getBoundingClientRect();
     const lx = clientX - (rect.left + rect.width / 2);
-    const ly = clientY - (rect.top + rect.height / 2);
+    const ly = clientY - (rect.top + rect.height * ANCHOR_Y);
     let best = activeIndex(position);
     let bestD = Infinity;
     for (let i = 0; i < N; i++) {
       const p = placed[i];
-      if (!p || !p.show || Math.abs(p.d) > 2.4) continue;
-      const dx = lx - p.x;
-      const dy = ly - p.y;
-      const hit = (dx * dx) / Math.max(1, (rx * 0.18) ** 2) + (dy * dy) / Math.max(1, (ry + 80) ** 2);
-      const d = hit - p.scale * 0.15;
+      if (!p || !p.show || Math.abs(p.d) > 1.85) continue;
+      const hw = Math.max(24, cardW * p.scale * 0.5);
+      const hh = Math.max(24, cardH * p.scale * 0.5);
+      const dx = (lx - p.x) / hw;
+      const dy = (ly - p.y) / hh;
+      const hit = dx * dx + dy * dy;
+      if (hit > 1) continue;
+      const d = hit - p.scale * 0.08;
       if (d < bestD) {
         bestD = d;
         best = i;
@@ -483,7 +499,8 @@ export function mountPickRing(root, pickData) {
       el.style.pointerEvents = '';
       delete el.dataset.on;
     });
-    stage.classList.remove('is-arc', 'is-drag');
+    veils.forEach((veil) => { veil.style.opacity = ''; });
+    stage.classList.remove('is-scroll', 'is-drag');
   }
 
   function engage() {
@@ -492,7 +509,7 @@ export function mountPickRing(root, pickData) {
       root.style.height = '';
       return;
     }
-    stage.classList.add('is-arc');
+    stage.classList.add('is-scroll');
     measure();
     zKey = null;
     apply(position);
