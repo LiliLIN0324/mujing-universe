@@ -1,7 +1,9 @@
 {
  "id": "07",
  "slug": "cluster-visualizer-3d",
- "title": "Cluster Visualizer 3D",
+ "title": "三维聚类可视化",
+ "titleEn": "Cluster Visualizer 3D",
+ "summaryZh": "三维聚类可视化是一个可以互动的三维工具，用来查看已经分好类的高维数据。它用 PCA 把维度降下来，再用 K-Means 找出聚类。复杂的数据样子因此可以直接看。",
  "category": "Global heat mapping",
  "year": "2024-present",
  "description": "基于PCA和K-Means的高维数据聚类3D探索",

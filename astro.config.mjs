@@ -7,4 +7,8 @@ export default defineConfig({
   site,
   trailingSlash: 'always',
   server: { port: 4471, host: true },
+  redirects: {
+    '/about': '/studio/',
+    '/services': '/contact/',
+  },
 });

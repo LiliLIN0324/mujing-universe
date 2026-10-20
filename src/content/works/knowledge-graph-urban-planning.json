@@ -2,6 +2,8 @@
  "id": "02",
  "slug": "knowledge-graph-urban-planning",
  "title": "城市规划文本知识图谱生成与多模型评测",
+ "titleEn": "Knowledge Graphs for Planning",
+ "summaryZh": "这项研究把纽约和上海的总体规划做成知识图谱，用来对照两座城市如何写气候适应。图谱依据专家定下的十个核心概念，再用传统自然语言处理和大型语言模型分别抽出概念之间的关系。比较下来，纽约更强调韧性和公平，上海更强调可持续发展和均衡的城市化。",
  "category": "Knowledge Graph",
  "year": "2025-present",
  "description": "纽约和上海总体规划中气候变化适应的比较分析",

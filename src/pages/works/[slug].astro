@@ -20,6 +20,7 @@ const stills = workStills(w);
 const strip = workStrip(w);
 const audio = workAudio(w);
 const sub = workSubtitle(w);
+const summary = (w.summaryZh || '').trim();
 const intro = pickBody(w);
 const tech = pickTech(w);
 const year = w.yearNum ? String(w.yearNum) : w.year;
@@ -36,7 +37,7 @@ const backHref = featured ? '/#picks' : '/works/';
 const backText = featured ? '← 返回精选' : '← 返回作品';
 const backNote = featured ? '精选目录' : '作品目录';
 ---
-<Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
+<Base title={`${w.title} · 幕景宇宙`} description={(summary || intro) ? (summary || intro).slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
   <section class="wd-page wd-p1" data-dwell={PAGE_DWELL.intro}>
     <figure class="wd-hero" style={paper ? `--wd-paper:${paper}` : undefined}>
@@ -55,7 +56,8 @@ const backNote = featured ? '精选目录' : '作品目录';
       </div>
       <div class="wd-body">
         <div class="wd-text">
-          {intro && <p class="wd-intro">{intro}</p>}
+          {summary && <p class="wd-intro">{summary}</p>}
+          {intro && !summary && <p class="wd-intro">{intro}</p>}
           {abstract && <p class="wd-more">{abstract}</p>}
           {w.note && <p class="wd-more">{w.note}</p>}
           {w.link && <p class="wd-more"><a href={w.link} target="_blank" rel="noopener noreferrer">相关报道 / 链接 ↗</a></p>}
@@ -115,7 +117,7 @@ const backNote = featured ? '精选目录' : '作品目录';
 .wd-crumb { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: #9a958c; margin-bottom: 22px !important; }
 .wd-crumb a { color: inherit; text-decoration: none; }
 .wd h1 { margin: 0; font-family: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif; font-weight: 600; font-size: 60px; line-height: 1.08; letter-spacing: 0.03em; color: #1a1a18; }
-.wd-sub { margin-top: 14px !important; font-size: 18px; line-height: normal; color: #3d3a35; letter-spacing: 0.03em; }
+.wd-sub { margin-top: 10px !important; font-family: Inter, "Noto Sans SC", system-ui, sans-serif; font-size: 14px; line-height: 1.4; color: #8a847a; letter-spacing: 0.08em; }
 .wd-meta { margin-top: 16px !important; font-size: 13px; line-height: normal; letter-spacing: 0.06em; color: #9a958c; }
 .wd-meta b { color: #b5432f; font-weight: 400; margin-right: 14px; }
 .wd-meta .m { display: none; }
@@ -192,7 +194,7 @@ const backNote = featured ? '精选目录' : '作品目录';
   .wd-head { display: block; padding-top: 0; }
   .wd-crumb { margin: 28px 0 0 !important; font-size: 11px; }
   .wd h1 { margin-top: 12px; font-size: 30px; line-height: 1.22; letter-spacing: 0.02em; }
-  .wd-sub { margin-top: 10px !important; font-size: 15px; line-height: 1.6; letter-spacing: 0; }
+  .wd-sub { margin-top: 8px !important; font-size: 13px; line-height: 1.4; letter-spacing: 0.04em; }
   .wd-meta { margin-top: 10px !important; font-size: 12px; letter-spacing: 0.08em; }
   .wd-meta b { margin-right: 10px; }
   .wd-meta .d { display: none; }

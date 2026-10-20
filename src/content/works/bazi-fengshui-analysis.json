@@ -1,7 +1,9 @@
 {
  "id": "06",
  "slug": "bazi-fengshui-analysis",
- "title": "Bazi - Fengshui Analysis Application",
+ "title": "八字风水",
+ "titleEn": "Bazi",
+ "summaryZh": "八字风水是一套风水分析应用的界面设计，中文和韩文各做了一套。它根据使用者的出生数据和环境因素，用 AI 给出个人化的说明。复杂的风水概念被放进更好上手的操作里。",
  "category": "UI&UX Design",
  "year": "2025",
  "description": "基于用户出生数据与环境因素提供个性化AI风水洞察的应用。",

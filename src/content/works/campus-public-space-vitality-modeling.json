@@ -1,7 +1,9 @@
 {
  "id": "05",
  "slug": "campus-public-space-vitality-modeling",
- "title": "校园公共空间活力建模：基于对户外环境与人群活动的实时跟踪",
+ "title": "校园公共空间活力建模",
+ "titleEn": "Campus Public Space Vitality",
+ "summaryZh": "这项研究用狩猎相机，长时间、比较精细地记录校园户外环境和人的活动，用来描述人本尺度的公共空间活力。它也看风和热怎样影响人的走动。分析用的是这些记录排成的时间序列。",
  "category": "Computer Vision · Urban Sensing",
  "year": "2023.06",
  "description": "通过狩猎相机长时段高精度追踪校园户外环境与人群活动，建模人本尺度公共空间活力",

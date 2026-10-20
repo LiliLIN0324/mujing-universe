@@ -1,7 +1,9 @@
 {
  "id": "01",
  "slug": "neurotopia",
- "title": "neurotopia",
+ "title": "神经托邦",
+ "titleEn": "Neurotopia",
+ "summaryZh": "神经托邦是武汉汉阳一块旧工业用地上的城市设计，主要给年轻人同住和做事。它希望用动画相关的工作空间，让这片场地重新热闹起来。设计把空间分成节点、连接和留白：节点上是竖向交通，模块化单元接在节点上，留白里放可以随规模变化的孵化单元。",
  "category": "planning",
  "year": "2023",
  "description": "",

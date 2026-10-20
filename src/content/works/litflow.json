@@ -1,7 +1,9 @@
 {
  "id": "01",
  "slug": "litflow",
- "title": "LitFlow - Research Hub",
+ "title": "论文可视化",
+ "titleEn": "LitFlow",
+ "summaryZh": "论文可视化是给研究人员查找和分享论文的平台。成果以摘要和关键词气泡呈现，也可以按条件搜索和筛选。研究者可以把论文链接放上来，供别人找到。",
  "category": "Platform",
  "year": "2026-1-13 ongoing",
  "description": "面向研究人员的论文可视化平台，以摘要与关键词气泡形式展示研究成果。",

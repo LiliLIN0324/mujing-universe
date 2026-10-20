@@ -1,7 +1,9 @@
 {
  "id": "05",
  "slug": "riffle-ai-game-generation-tool",
- "title": "Riffle - AI game Generation Tool",
+ "title": "AI 游戏生成",
+ "titleEn": "Riffle",
+ "summaryZh": "Riffle 是一款用 AI 生成游戏的工具。用户给出一个词，就能得到游戏概念、角色和故事。它希望没有太多开发经验的人，也能做出自己想做的游戏。",
  "category": "UI&UX Design",
  "year": "2026",
  "description": "一款基于AI的游戏生成工具",

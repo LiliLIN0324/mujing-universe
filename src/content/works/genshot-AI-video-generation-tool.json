@@ -1,10 +1,11 @@
 {
  "id": "03",
  "slug": "genshot-AI-video-generation-tool",
- "title": "Genshot - AI videos Generation Tool",
+ "title": "AI 视频生成",
+ "titleEn": "Genshot",
  "category": "UI&UX Design",
  "year": "2025",
- "description": "一款基于AI的图像生成工具，可将文本提示转化为高质量视觉内容的平台。",
+ "description": "这是一件 AI 视频生成工具的界面设计。使用者用文字提示得到视频。",
  "abstract": "",
  "challenge": "",
  "solution": "",

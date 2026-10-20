@@ -1,7 +1,9 @@
 {
  "id": "04",
  "slug": "participatory-urban-regeneration-empowered-by-artificial-intelligence",
- "title": "人工智能赋能下的参与式城市更新 Participatory Urban Regeneration Empowered by Artificial Intelligence",
+ "title": "参与式城市更新",
+ "titleEn": "Participatory Urban Regeneration",
+ "summaryZh": "这个项目用生成式 AI，包括扩散模型，再加上会分工的语言模型，做了一个让公众和多方一起参与城市更新的框架。案例取自上海吴淞创新城起步区周边。框架把空间形态、人的活动方式和热岛指标放进设计导则的早期讨论。",
  "category": "Urban regeneration, participatory urban planning",
  "year": "2025-present",
  "description": "利用AI技术构建平台以鼓励利益相关者参与城市更新",

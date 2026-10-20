@@ -1,7 +1,9 @@
 {
  "id": "08",
  "slug": "heatmapper",
- "title": "HeatMapper - Global Heat Monitoring",
+ "title": "全球热监测",
+ "titleEn": "HeatMapper",
+ "summaryZh": "全球热监测是一个查看各地热量的网页。它展示城市热岛、极端高温和不同地区的温度趋势，数据按实时更新。目的是让热相关的问题更可见，也方便城市规划和气候适应时参考。",
  "category": "urban heat island, extreme heat, participation",
  "year": "2025-present",
  "description": "面向全球热监测与可视化的Web平台",
