@@ -16,24 +16,31 @@ function mulberry(seed) {
   };
 }
 
-/** Deterministic voiceprint. Same index always draws the same line. */
+/**
+ * Quiet voiceprint under the caption. Attributes live on the path because the
+ * SVG is injected from script and does not receive scoped page CSS — without
+ * fill="none" the browser paints the default black fill over the ring.
+ * Same index always draws the same line.
+ */
 export function waveSVG(index) {
   const rand = mulberry(index * 17 + 3);
-  const phases = [rand(), rand(), rand()];
-  const amps = [0.55 + rand() * 0.4, 0.22 + rand() * 0.3, 0.08 + rand() * 0.16];
-  const freqs = [2 + Math.floor(rand() * 3), 5 + Math.floor(rand() * 4), 10 + Math.floor(rand() * 4)];
+  const phases = [rand(), rand()];
+  const amps = [0.34, 0.14];
+  const freqs = [1.4 + rand() * 0.6, 2.8 + rand() * 0.8];
   let d = '';
-  const n = 56;
+  const n = 48;
+  const mid = H / 2;
+  const amp = H * 0.18;
   for (let i = 0; i <= n; i++) {
     const t = i / n;
     const env = Math.sin(t * Math.PI);
     let y = 0;
-    for (let k = 0; k < 3; k++) y += Math.sin((t * freqs[k] + phases[k]) * Math.PI * 2) * amps[k];
+    for (let k = 0; k < 2; k++) y += Math.sin((t * freqs[k] + phases[k]) * Math.PI * 2) * amps[k];
     const px = (t * W).toFixed(1);
-    const py = (H / 2 + y * env * (H * 0.42)).toFixed(1);
+    const py = (mid + y * env * amp).toFixed(1);
     d += i ? `L${px} ${py}` : `M${px} ${py}`;
   }
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" focusable="false"><path vector-effect="non-scaling-stroke" d="${d}"/></svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none" focusable="false" aria-hidden="true"><path fill="none" stroke="#B7B3AC" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke" d="${d}"/></svg>`;
 }
 
 export function paintWave(host, index) {
