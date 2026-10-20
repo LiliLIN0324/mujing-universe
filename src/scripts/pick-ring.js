@@ -495,9 +495,6 @@ export function mountPickRing(root, pickData) {
   const viewEl = introEl && introEl.querySelector('[data-role="view"]');
   const rowEls = [...root.querySelectorAll('.pick-row')];
   const rowBtns = [...root.querySelectorAll('.pick-row-btn')];
-  const sealEl = root.querySelector('#pick-seal');
-  const sealPress = root.querySelector('.pick-seal-press');
-  const sealCharEl = root.querySelector('[data-role="seal-char"]');
   const soundBtn = root.querySelector('#pick-sound');
   const soundLabel = root.querySelector('[data-role="sound-label"]');
 
@@ -514,7 +511,6 @@ export function mountPickRing(root, pickData) {
   let soundOn = false;
   let audioCtx = null;
   let fxIndex = -1;
-  let sealIndex = -1;
 
   /** Cover of the card that just became front. Paper until the section is on screen. */
   function beginInk(index) {
@@ -734,32 +730,8 @@ export function mountPickRing(root, pickData) {
 
   // 宫商角徵羽, then the same degrees an octave up. Index i → degree i % 5.
   const PENTA = [261.63, 293.66, 329.63, 392.0, 440.0];
-  const SEAL = 26;
-  // One character per work. Missing slugs fall back to the first CJK in the title.
-  const SEAL_CHAR = {
-    'xihu-panorama': '西',
-    litflow: '流',
-    'riffle-ai-game-generation-tool': '戏',
-    scendance: '幕',
-    'bazi-fengshui-analysis': '风',
-    'genshot-AI-video-generation-tool': '镜',
-    genstyle: '衣',
-    anyreal: '影',
-    'dragon-diffussion': '龙',
-    'early-campus-experience': '校',
-  };
   // slug → AudioBuffer, Promise, or 'miss'. A file at /ring-sounds/<slug>.mp3 replaces the pluck.
   const sampleCache = new Map();
-
-  function sealChar(work) {
-    if (!work) return '';
-    if (work.slug && SEAL_CHAR[work.slug]) return SEAL_CHAR[work.slug];
-    const title = work.title || '';
-    const cjk = title.match(/[\u4e00-\u9fff]/);
-    if (cjk) return cjk[0];
-    const trimmed = title.trim();
-    return trimmed ? trimmed[0] : '';
-  }
 
   function degreeFreq(index) {
     const deg = ((index % 5) + 5) % 5;
@@ -860,53 +832,16 @@ export function mountPickRing(root, pickData) {
     if (slug && !sampleCache.has(slug)) probeSample(slug);
   }
 
-  function stampSeal(index) {
-    if (!sealPress) return;
-    const ch = sealChar(pickData[index]);
-    if (sealCharEl) sealCharEl.textContent = ch;
-    sealPress.getAnimations().forEach((anim) => anim.cancel());
-    if (motion.matches) {
-      sealPress.style.opacity = '1';
-      sealPress.style.transform = 'scale(1)';
-      return;
-    }
-    sealPress.animate(
-      [
-        { transform: 'scale(1.45)', opacity: 0 },
-        { transform: 'scale(0.9)', opacity: 1, offset: 0.55 },
-        { transform: 'scale(1)', opacity: 1 },
-      ],
-      { duration: 280, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)', fill: 'forwards' },
-    );
-  }
-
   function startFx(index) {
     fxIndex = index;
-    sealIndex = index;
-    stampSeal(index);
     pluck(index);
   }
 
-  /**
-   * Seal follows the card that is actually facing the camera (best), so the
-   * character always belongs to the picture it sits on. A pinned title can
-   * lead the spring; the seal waits until that same card is the one in front.
-   */
+  /** One note when a card the user brought around sits at front-center. */
   function maybeFx(index, facing) {
-    if (!userMoved || index < 0) return;
+    if (!userMoved || index < 0 || index === fxIndex) return;
     if (facing < 0.9) return;
-    const ch = sealChar(pickData[index]);
-    if (index === sealIndex && sealCharEl && sealCharEl.textContent === ch) return;
     startFx(index);
-  }
-
-  function placeOverlays() {
-    if (!sealEl || sealIndex < 0) return;
-    const progress = shared.uScroll.value;
-    const corner = projectLocal(sealIndex, liveSpin() + lagOf(sealIndex), progress, 0.3, 0.28);
-    const x = Math.round(corner.x - SEAL / 2);
-    const y = Math.round(corner.y - SEAL / 2);
-    sealEl.style.transform = `translate3d(${x}px, ${y}px, 0)`;
   }
 
   if (soundBtn) {
@@ -1123,9 +1058,7 @@ export function mountPickRing(root, pickData) {
     if (root.dataset.progress !== progLabel) root.dataset.progress = progLabel;
     const active = pinned >= 0 ? pinned : best;
     setFront(active);
-    // Seal sits on the picture that faces the camera, not on a pinned card that is still swinging past.
     maybeFx(best, facings[best]);
-    placeOverlays();
 
     renderer.render({ scene, camera, frustumCull: false });
     if (needsFrame()) raf = requestAnimationFrame(frame);
@@ -1169,60 +1102,6 @@ export function mountPickRing(root, pickData) {
    * Project ring phase (θ−spin) to normalized canvas X.
    * Used for click hit-testing (pickIndexAtNX); not for scroll-hero / best.
    */
-  /** Same column-major mat4 the vertex shader builds (row-written, so transposed). */
-  function shaderRotate(axis, angle, v) {
-    const ax = axis[0];
-    const ay = axis[1];
-    const az = axis[2];
-    const s = Math.sin(angle);
-    const c = Math.cos(angle);
-    const oc = 1 - c;
-    const m0 = oc * ax * ax + c;
-    const m1 = oc * ax * ay - az * s;
-    const m2 = oc * az * ax + ay * s;
-    const m4 = oc * ax * ay + az * s;
-    const m5 = oc * ay * ay + c;
-    const m6 = oc * ay * az - ax * s;
-    const m8 = oc * az * ax - ay * s;
-    const m9 = oc * ay * az + ax * s;
-    const m10 = oc * az * az + c;
-    const x = v[0];
-    const y = v[1];
-    const z = v[2];
-    return [
-      m0 * x + m4 * y + m8 * z,
-      m1 * x + m5 * y + m9 * z,
-      m2 * x + m6 * y + m10 * z,
-    ];
-  }
-
-  /** Screen pixels of a point on the card. localX/localY are -0.5..0.5 in the plane. */
-  function projectLocal(index, spin, progress, localX, localY) {
-    const theta = (index / N) * Math.PI * 2;
-    const grow = 1 + 0.5 * progress * progress;
-    const scale = shared.uScale.value;
-    const vel = motion.matches ? 0 : shared.uVelocity.value;
-    const yaw0 = theta - Math.PI * 0.2 - localX * 0.3 - vel * 15;
-    let p = shaderRotate([0, 1, 0], yaw0, [localX * scale[0] * grow, localY * scale[1] * grow, 0]);
-    p[0] += 3 * Math.cos(theta);
-    p[2] += 3 * Math.sin(theta);
-    p = shaderRotate([0, 1, 0], spin, p);
-    p = shaderRotate([1, 0, 0], -Math.PI * 0.15 * (1 - progress), p);
-    p[0] -= 3.7 * progress + 1.4;
-    p[1] -= 0.85 * progress;
-    p[2] -= 20 - 12 * progress;
-    const tilt = visualTilt(progress);
-    if (tilt) p = shaderRotate([0, 0, 1], tilt, p);
-    const depth = Math.max(0.35, -(p[2] - camera.position.z));
-    const fovRad = (camera.fov * Math.PI) / 180;
-    const halfH = Math.tan(fovRad / 2) * depth;
-    const halfW = halfH * (camera.aspect || 1);
-    return {
-      x: ((p[0] / Math.max(1e-4, halfW)) * 0.5 + 0.5) * viewW,
-      y: (0.5 - (p[1] / Math.max(1e-4, halfH)) * 0.5) * viewH,
-    };
-  }
-
   function phaseScreen(phase, progress, fit) {
     const R = 3;
     let x = R * Math.cos(phase);
@@ -1364,7 +1243,6 @@ export function mountPickRing(root, pickData) {
         n: meshes.length,
         sound: soundOn,
         fx: fxIndex,
-        seal: sealCharEl ? sealCharEl.textContent : '',
         userMoved,
       };
     },
