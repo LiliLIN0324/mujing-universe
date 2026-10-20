@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Cooperate from '../../components/Cooperate.astro';
+import ChairMotif from '../../components/ChairMotif.astro';
 import { allWorks, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
@@ -62,6 +63,7 @@ const backNote = featured ? '精选目录' : '作品目录';
         </div>
         {facts.length > 0 && <dl class="wd-facts">{facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
       </div>
+      {w.slug === 'scendance' && <ChairMotif />}
     </div>
   </section>
 
