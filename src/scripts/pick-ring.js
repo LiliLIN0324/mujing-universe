@@ -241,19 +241,12 @@ function wrapPi(rad) {
 }
 
 export function mountPickRing(root, pickData) {
-  // Mockup switch. Empty string is the shipped ring; a–d never run unless asked.
-  const variant = (() => {
-    try {
-      const v = new URLSearchParams(window.location.search).get('variant');
-      return v === 'a' || v === 'b' || v === 'c' || v === 'd' ? v : '';
-    } catch (err) {
-      return '';
-    }
-  })();
-  const ringRadius = variant === 'a' ? 3.32 : 3;
-  const yawScale = variant === 'a' ? 0.74 : 1;
-  // a–d share one drag path so each mock can be flicked. Default (no param) never enters it.
-  const silky = variant !== '';
+  // Spacing, depth, drag, and hover are the ring. No address switch.
+  const ringRadius = 3.32;
+  const yawScale = 0.74;
+  const silky = true;
+  const CAPTION_STRIP = 56;
+  const LIFT = 0.26;
   const COAST_FRICTION = 2.05;
   const SNAP_SPEED = 0.2;
   const SNAP_OMEGA = 5.2;
@@ -513,7 +506,7 @@ export function mountPickRing(root, pickData) {
   function resize() {
     const host = canvas.parentElement || root;
     const width = host.clientWidth || window.innerWidth;
-    const height = host.clientHeight || window.innerHeight;
+    const height = Math.max(1, (host.clientHeight || window.innerHeight) - CAPTION_STRIP);
     viewW = width;
     viewH = height;
     renderer.setSize(width, height);
@@ -633,6 +626,9 @@ export function mountPickRing(root, pickData) {
     paintWave(waveEl, index);
     beginInk(index);
     syncList(index);
+    root.dispatchEvent(new CustomEvent('ring:change', {
+      detail: { index, title: (work && work.title) || '' },
+    }));
     // After ring 落幅 (or explicit select), keep active row in the catalog window.
     if (forceScroll || lastProgress >= LIST_LOCK) ensureRowVisible(index);
   }
@@ -1181,26 +1177,15 @@ export function mountPickRing(root, pickData) {
       // edge cannot cover it. Pinned neighbors also shrink and step back.
       meshes[i].mesh.renderOrder = isHero ? 2 : 0;
       meshes[i].program.depthTest = !isHero;
-      let fit = pinned >= 0 && !isHero ? 0.82 : 1;
-      let focus = isHero
-        ? 1
-        : pinned >= 0
-          ? 0.36
-          : Math.max(0.12, facing * 0.45 + 0.02);
-      let recede = 0;
-      let lift = 0;
-      if (variant === 'b') {
-        if (isHero) {
-          fit = 1;
-          focus = 1;
-        } else {
-          fit = 0.86;
-          focus = 1;
-          recede = 0.42;
-        }
-      }
-      if (variant === 'd' && coastMode === 'idle' && i === hoverIndex && facing > 0.4) lift = 0.7;
-      if (variant === 'a') meshes[i].mesh.visible = facing > 0.16;
+      const fit = isHero ? 1 : 0.86;
+      const focus = 1;
+      const recede = isHero ? 0 : 0.42;
+      const liftTarget = coastMode === 'idle' && i === hoverIndex && facing > 0.45 ? LIFT : 0;
+      const liftCur = meshes[i].uniforms.uLift.value;
+      let lift = liftCur + (liftTarget - liftCur) * (1 - Math.exp(-12 * dtSec));
+      if (Math.abs(lift - liftTarget) < 0.004) lift = liftTarget;
+      meshes[i].liftTarget = liftTarget;
+      meshes[i].mesh.visible = facing > 0.16;
       meshes[i].uniforms.uFit.value = fit;
       meshes[i].uniforms.uFocus.value = focus;
       meshes[i].uniforms.uRecede.value = recede;
@@ -1219,7 +1204,6 @@ export function mountPickRing(root, pickData) {
     const active = pinned >= 0 ? pinned : best;
     setFront(active);
     maybeFx(best, facings[best]);
-    if (variant === 'd') placeVariantChrome(hero, spin, progress, facings);
 
     renderer.render({ scene, camera, frustumCull: false });
     if (needsFrame()) raf = requestAnimationFrame(frame);
@@ -1236,6 +1220,7 @@ export function mountPickRing(root, pickData) {
     for (let i = 0; i < meshes.length; i++) {
       if (Math.abs(meshes[i].uniforms.uLag.value) > 1e-4) return true;
       if (Math.abs(meshes[i].uniforms.uBend.value) > 1e-4) return true;
+      if (Math.abs(meshes[i].uniforms.uLift.value - (meshes[i].liftTarget || 0)) > 0.008) return true;
     }
     return false;
   }
@@ -1333,89 +1318,39 @@ export function mountPickRing(root, pickData) {
 
   let dragOriginX = 0;
   let dragMoved = false;
-  let captionEl = null;
-  let shadowEl = null;
-
-  function placeVariantChrome(hero, spin, progress) {
-    if (!captionEl) return;
-    const fit = meshes[hero] ? meshes[hero].uniforms.uFit.value : 1;
-    const scr = cardScreen(hero, spin, progress, fit);
-    const copy = root.querySelector('.picks-copy');
-    const list = root.querySelector('.pick-list-window');
-    const copyR = copy ? copy.getBoundingClientRect() : { right: 0 };
-    const listL = list ? list.getBoundingClientRect() : { left: viewW };
-    const host = canvas.getBoundingClientRect();
-    const stage = (root.querySelector('.picks-sticky') || root).getBoundingClientRect();
-    const work = pickData[hero];
-    const title = (work && work.title) || '';
-    if (captionEl.textContent !== title) captionEl.textContent = title;
-    const maxW = Math.max(80, listL.left - copyR.right - 36);
-    captionEl.style.maxWidth = `${maxW}px`;
-    const capW = Math.min(maxW, captionEl.offsetWidth || 160);
-    let x = host.left + scr.nx * viewW - capW / 2;
-    const minX = copyR.right + 16;
-    const maxX = listL.left - capW - 16;
-    if (x < minX) x = minX;
-    if (x > maxX) x = maxX;
-    const y = host.top + scr.ny * viewH + scr.pxH * 0.5 + 12;
-    captionEl.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
-
-    if (!shadowEl) return;
-    const show = hoverIndex >= 0 && hoverIndex < meshes.length && meshes[hoverIndex].uniforms.uLift.value > 0;
-    shadowEl.hidden = !show;
-    if (!show) return;
-    const hFit = meshes[hoverIndex].uniforms.uFit.value;
-    const hs = cardScreen(hoverIndex, spin + (meshes[hoverIndex].uniforms.uLag.value || 0), progress, hFit);
-    const sw = Math.min(hs.pxW * 0.62, maxW);
-    const sx = host.left + hs.nx * viewW - sw / 2;
-    const sy = host.top - stage.top + hs.ny * viewH + hs.pxH * 0.5 - 10;
-    shadowEl.style.width = `${Math.round(sw)}px`;
-    shadowEl.style.transform = `translate3d(${Math.round(Math.min(Math.max(sx, minX), maxX))}px, ${Math.round(sy)}px, 0)`;
-  }
-
-  if (variant === 'd') {
-    captionEl = document.createElement('div');
-    captionEl.setAttribute('data-variant-caption', '');
-    captionEl.style.cssText = [
-      'position:absolute',
-      'left:0',
-      'top:0',
-      'z-index:1',
-      'pointer-events:none',
-      'color:#1A1A1C',
-      'font:500 13px/1.35 "Alibaba PuHuiTi 3.0","Noto Sans SC",system-ui,sans-serif',
-      'letter-spacing:0.01em',
-      'white-space:nowrap',
-      'overflow:hidden',
-      'text-overflow:ellipsis',
-    ].join(';');
-    shadowEl = document.createElement('div');
-    shadowEl.hidden = true;
-    shadowEl.setAttribute('data-variant-shadow', '');
-    shadowEl.style.cssText = [
-      'position:absolute',
-      'left:0',
-      'top:0',
-      'z-index:0',
-      'height:28px',
-      'pointer-events:none',
-      'background:radial-gradient(closest-side, rgba(26,26,28,0.20), rgba(26,26,28,0) 72%)',
-    ].join(';');
-    const stage = root.querySelector('.picks-sticky') || root;
-    stage.insertBefore(shadowEl, canvas);
-    stage.append(captionEl);
-    canvas.addEventListener('pointermove', (e) => {
-      const next = pickIndexAtClientX(e.clientX);
-      if (next === hoverIndex) return;
-      hoverIndex = next;
-      kick();
-    });
-    canvas.addEventListener('pointerleave', () => {
-      if (hoverIndex < 0) return;
-      hoverIndex = -1;
-      kick();
+  const captionEl = root.querySelector('#pick-caption');
+  if (captionEl) {
+    const lines = [...captionEl.querySelectorAll('.pick-caption-line')];
+    root.addEventListener('ring:change', (event) => {
+      const title = (event.detail && event.detail.title) || '';
+      const on = lines.find((el) => el.classList.contains('is-on'));
+      if (on && on.textContent === title) return;
+      if (!on || !on.textContent) {
+        const first = on || lines[0];
+        if (!first) return;
+        first.textContent = title;
+        first.classList.add('is-on');
+        return;
+      }
+      const off = lines.find((el) => el !== on);
+      if (!off) return;
+      off.textContent = title;
+      off.classList.add('is-on');
+      on.classList.remove('is-on');
     });
   }
+  canvas.addEventListener('pointermove', (e) => {
+    if (dragPointer) return;
+    const next = pickIndexAtClientX(e.clientX);
+    if (next === hoverIndex) return;
+    hoverIndex = next;
+    kick();
+  });
+  canvas.addEventListener('pointerleave', () => {
+    if (hoverIndex < 0) return;
+    hoverIndex = -1;
+    kick();
+  });
 
   if (silky) {
     canvas.addEventListener('pointerdown', (e) => {
