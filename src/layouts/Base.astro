@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import MimiChat from '../components/MimiChat.astro';
 const {
   title = '幕景宇宙 · 林丽丽艺术工作室',
   description = '幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。',
@@ -110,5 +111,6 @@ document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('e
   img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
 }));
 </script>
+<MimiChat />
 </body>
 </html>
