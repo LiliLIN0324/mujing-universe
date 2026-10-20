@@ -480,6 +480,8 @@ export function mountPickRing(root, pickData) {
     const host = canvas.parentElement || root;
     const width = host.clientWidth || window.innerWidth;
     const height = host.clientHeight || window.innerHeight;
+    viewW = width;
+    viewH = height;
     renderer.setSize(width, height);
     camera.perspective({ aspect: width / Math.max(1, height), fov: 45 });
     applyCardScale();
@@ -493,12 +495,29 @@ export function mountPickRing(root, pickData) {
   const viewEl = introEl && introEl.querySelector('[data-role="view"]');
   const rowEls = [...root.querySelectorAll('.pick-row')];
   const rowBtns = [...root.querySelectorAll('.pick-row-btn')];
+  const haloEl = root.querySelector('#pick-halo');
+  const haloWash = root.querySelector('.pick-halo-wash');
+  const sealEl = root.querySelector('#pick-seal');
+  const sealPress = root.querySelector('.pick-seal-press');
+  const sealCharEl = root.querySelector('[data-role="seal-char"]');
+  const soundBtn = root.querySelector('#pick-sound');
+  const soundLabel = root.querySelector('[data-role="sound-label"]');
 
   let pinned = -1;
   let pinScroll = 0;
   let inkJob = null; // { index, start }
   let inkHold = -1;
   let picksSeen = false;
+  let viewW = 1;
+  let viewH = 1;
+  // Effects stay quiet until a click or a real scroll. The first setFront on load does not count.
+  let userMoved = false;
+  let gestureScroll = window.scrollY;
+  let soundOn = false;
+  let audioCtx = null;
+  let fxIndex = -1;
+  let haloIndex = -1;
+  let sealIndex = -1;
 
   /** Cover of the card that just became front. Paper until the section is on screen. */
   function beginInk(index) {
@@ -689,6 +708,7 @@ export function mountPickRing(root, pickData) {
     if (!Number.isFinite(index) || index < 0 || index >= pickData.length) return;
     // Ring only has N meshes — never pin past the last card (avoids θ alias desync).
     const i = Math.min(index, meshes.length - 1);
+    userMoved = true;
     pinned = i;
     pinScroll = scrollTarget;
     const vel = motion.matches ? 0 : smoothedDelta;
@@ -713,6 +733,255 @@ export function mountPickRing(root, pickData) {
     }
     setFront(i, { scrollList: true });
     kick();
+  }
+
+  // 宫商角徵羽, then the same degrees an octave up. Index i → degree i % 5.
+  const PENTA = [261.63, 293.66, 329.63, 392.0, 440.0];
+  const HALO_W = 220;
+  const HALO_H = 150;
+  const SEAL = 34;
+  // One character per work. Missing slugs fall back to the first CJK in the title.
+  const SEAL_CHAR = {
+    'xihu-panorama': '西',
+    litflow: '流',
+    'riffle-ai-game-generation-tool': '戏',
+    scendance: '幕',
+    'bazi-fengshui-analysis': '风',
+    'genshot-AI-video-generation-tool': '镜',
+    genstyle: '衣',
+    anyreal: '影',
+    'dragon-diffussion': '龙',
+    'early-campus-experience': '校',
+  };
+  // slug → AudioBuffer, Promise, or 'miss'. A file at /ring-sounds/<slug>.mp3 replaces the pluck.
+  const sampleCache = new Map();
+
+  function sealChar(work) {
+    if (!work) return '';
+    if (work.slug && SEAL_CHAR[work.slug]) return SEAL_CHAR[work.slug];
+    const title = work.title || '';
+    const cjk = title.match(/[\u4e00-\u9fff]/);
+    if (cjk) return cjk[0];
+    const trimmed = title.trim();
+    return trimmed ? trimmed[0] : '';
+  }
+
+  function degreeFreq(index) {
+    const deg = ((index % 5) + 5) % 5;
+    const oct = Math.floor(index / 5);
+    return PENTA[deg] * 2 ** oct;
+  }
+
+  function ensureCtx() {
+    if (audioCtx) {
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      return audioCtx;
+    }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      audioCtx = new AC();
+    } catch (err) {
+      return null;
+    }
+    return audioCtx;
+  }
+
+  function pluckKS(freq) {
+    const ctx = audioCtx;
+    if (!ctx) return;
+    const sr = ctx.sampleRate;
+    const n = Math.max(2, Math.round(sr / freq));
+    const dur = 0.9;
+    const len = Math.floor(sr * dur);
+    const buf = ctx.createBuffer(1, len, sr);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) data[i] = Math.random() * 2 - 1;
+    const damp = 0.996;
+    for (let i = n; i < len; i++) {
+      const a = data[i - n];
+      const b = data[i - n + 1] || a;
+      data[i] = (a + b) * 0.5 * damp;
+    }
+    const attack = Math.floor(sr * 0.008);
+    for (let i = 0; i < attack; i++) data[i] *= i / attack;
+    const tail = Math.floor(sr * 0.08);
+    for (let i = 0; i < tail; i++) data[len - 1 - i] *= i / tail;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.2;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start();
+  }
+
+  function playBuffer(buffer) {
+    if (!audioCtx || !buffer) return;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.8;
+    src.connect(gain);
+    gain.connect(audioCtx.destination);
+    src.start();
+  }
+
+  function probeSample(slug) {
+    if (!slug || sampleCache.has(slug)) return;
+    const url = `/ring-sounds/${encodeURIComponent(slug)}.mp3`;
+    const job = fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error('miss');
+        return res.arrayBuffer();
+      })
+      .then((ab) => {
+        const ctx = audioCtx;
+        if (!ctx) throw new Error('noctx');
+        return ctx.decodeAudioData(ab.slice(0));
+      })
+      .then((buffer) => {
+        sampleCache.set(slug, buffer);
+      })
+      .catch(() => {
+        sampleCache.set(slug, 'miss');
+      });
+    sampleCache.set(slug, job);
+  }
+
+  function pluck(index) {
+    if (!soundOn) return;
+    const ctx = ensureCtx();
+    if (!ctx) return;
+    const work = pickData[index];
+    const slug = work && work.slug;
+    const cached = slug ? sampleCache.get(slug) : null;
+    if (cached && cached !== 'miss' && typeof cached.then !== 'function') {
+      playBuffer(cached);
+      return;
+    }
+    // Don't wait on the file. The pluck stands in until a buffer is cached.
+    pluckKS(degreeFreq(index));
+    if (slug && !sampleCache.has(slug)) probeSample(slug);
+  }
+
+  function bloomWash(retractFirst) {
+    if (!haloWash) return;
+    haloWash.getAnimations().forEach((anim) => anim.cancel());
+    if (motion.matches) {
+      haloIndex = fxIndex;
+      haloWash.style.opacity = '1';
+      haloWash.style.transform = 'scale(1)';
+      return;
+    }
+    const bloom = () => {
+      haloWash.animate(
+        [
+          { opacity: 0, transform: 'scale(0.72)' },
+          { opacity: 1, transform: 'scale(1)' },
+        ],
+        { duration: 520, easing: 'cubic-bezier(0.22, 0.61, 0.18, 1)', fill: 'forwards' },
+      );
+    };
+    if (!retractFirst) {
+      bloom();
+      return;
+    }
+    const retract = haloWash.animate(
+      [
+        { opacity: 1, transform: 'scale(1)' },
+        { opacity: 0, transform: 'scale(0.84)' },
+      ],
+      { duration: 140, easing: 'ease-in', fill: 'forwards' },
+    );
+    retract.onfinish = () => {
+      haloIndex = fxIndex;
+      placeOverlays();
+      bloom();
+    };
+  }
+
+  function stampSeal(index) {
+    if (!sealPress) return;
+    const ch = sealChar(pickData[index]);
+    if (sealCharEl) sealCharEl.textContent = ch;
+    sealPress.getAnimations().forEach((anim) => anim.cancel());
+    if (motion.matches) {
+      sealPress.style.opacity = '1';
+      sealPress.style.transform = 'scale(1)';
+      return;
+    }
+    sealPress.animate(
+      [
+        { transform: 'scale(1.45)', opacity: 0 },
+        { transform: 'scale(0.9)', opacity: 1, offset: 0.55 },
+        { transform: 'scale(1)', opacity: 1 },
+      ],
+      { duration: 280, easing: 'cubic-bezier(0.2, 0.7, 0.2, 1)', fill: 'forwards' },
+    );
+  }
+
+  function startFx(index) {
+    const prev = haloIndex;
+    fxIndex = index;
+    sealIndex = index;
+    stampSeal(index);
+    pluck(index);
+    if (prev >= 0 && prev !== index) bloomWash(true);
+    else {
+      haloIndex = index;
+      bloomWash(false);
+    }
+  }
+
+  /** Front-center card the user actually brought around. Load never calls this. */
+  function maybeFx(index, facing) {
+    if (!userMoved || index < 0 || index === fxIndex) return;
+    if (facing < 0.82) return;
+    startFx(index);
+  }
+
+  function placeOverlays() {
+    const progress = shared.uScroll.value;
+    const base = liveSpin();
+    if (haloEl && haloIndex >= 0) {
+      const spin = base + lagOf(haloIndex);
+      const c = projectLocal(haloIndex, spin, progress, 0, 0);
+      const left = projectLocal(haloIndex, spin, progress, -0.5, 0);
+      const right = projectLocal(haloIndex, spin, progress, 0.5, 0);
+      const cardW = Math.abs(right.x - left.x);
+      const s = Math.max(0.35, (cardW * 2.35) / HALO_W);
+      const x = c.x - (HALO_W * s) / 2;
+      const y = c.y - (HALO_H * s) / 2;
+      haloEl.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${s.toFixed(4)})`;
+    }
+    if (sealEl && sealIndex >= 0) {
+      const corner = projectLocal(sealIndex, base + lagOf(sealIndex), progress, 0.34, 0.32);
+      const x = corner.x - SEAL / 2;
+      const y = corner.y - SEAL / 2;
+      sealEl.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0)`;
+    }
+  }
+
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      soundOn = !soundOn;
+      soundBtn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+      soundBtn.setAttribute('aria-label', soundOn ? '声音 开' : '声音 关');
+      if (soundLabel) soundLabel.textContent = soundOn ? '开' : '关';
+      if (!soundOn) return;
+      // This click is the gesture that may create the audio context.
+      ensureCtx();
+      for (let i = 0; i < pickData.length; i++) {
+        const slug = pickData[i] && pickData[i].slug;
+        if (slug) probeSample(slug);
+      }
+      // The card already resting at front-center plays once. A later spin continues the melody.
+      if (front >= 0) {
+        const facing = cardFacing(front, liveSpin() + lagOf(front), motion.matches ? 0 : smoothedDelta);
+        if (facing > 0.82) pluck(front);
+      }
+    });
   }
 
   function frame(now) {
@@ -906,7 +1175,10 @@ export function mountPickRing(root, pickData) {
     if (root.classList.contains('is-end') !== end) root.classList.toggle('is-end', end);
     const progLabel = progress.toFixed(3);
     if (root.dataset.progress !== progLabel) root.dataset.progress = progLabel;
-    setFront(pinned >= 0 ? pinned : best);
+    const active = pinned >= 0 ? pinned : best;
+    setFront(active);
+    maybeFx(active, active >= 0 ? facings[active] : -1);
+    placeOverlays(progress, spin);
 
     renderer.render({ scene, camera, frustumCull: false });
     if (needsFrame()) raf = requestAnimationFrame(frame);
@@ -950,7 +1222,61 @@ export function mountPickRing(root, pickData) {
    * Project ring phase (θ−spin) to normalized canvas X.
    * Used for click hit-testing (pickIndexAtNX); not for scroll-hero / best.
    */
-  function phaseScreenNX(phase, progress) {
+  /** Same column-major mat4 the vertex shader builds (row-written, so transposed). */
+  function shaderRotate(axis, angle, v) {
+    const ax = axis[0];
+    const ay = axis[1];
+    const az = axis[2];
+    const s = Math.sin(angle);
+    const c = Math.cos(angle);
+    const oc = 1 - c;
+    const m0 = oc * ax * ax + c;
+    const m1 = oc * ax * ay - az * s;
+    const m2 = oc * az * ax + ay * s;
+    const m4 = oc * ax * ay + az * s;
+    const m5 = oc * ay * ay + c;
+    const m6 = oc * ay * az - ax * s;
+    const m8 = oc * az * ax - ay * s;
+    const m9 = oc * ay * az + ax * s;
+    const m10 = oc * az * az + c;
+    const x = v[0];
+    const y = v[1];
+    const z = v[2];
+    return [
+      m0 * x + m4 * y + m8 * z,
+      m1 * x + m5 * y + m9 * z,
+      m2 * x + m6 * y + m10 * z,
+    ];
+  }
+
+  /** Screen pixels of a point on the card. localX/localY are -0.5..0.5 in the plane. */
+  function projectLocal(index, spin, progress, localX, localY) {
+    const theta = (index / N) * Math.PI * 2;
+    const grow = 1 + 0.5 * progress * progress;
+    const scale = shared.uScale.value;
+    const vel = motion.matches ? 0 : shared.uVelocity.value;
+    const yaw0 = theta - Math.PI * 0.2 - localX * 0.3 - vel * 15;
+    let p = shaderRotate([0, 1, 0], yaw0, [localX * scale[0] * grow, localY * scale[1] * grow, 0]);
+    p[0] += 3 * Math.cos(theta);
+    p[2] += 3 * Math.sin(theta);
+    p = shaderRotate([0, 1, 0], spin, p);
+    p = shaderRotate([1, 0, 0], -Math.PI * 0.15 * (1 - progress), p);
+    p[0] -= 3.7 * progress + 1.4;
+    p[1] -= 0.85 * progress;
+    p[2] -= 20 - 12 * progress;
+    const tilt = visualTilt(progress);
+    if (tilt) p = shaderRotate([0, 0, 1], tilt, p);
+    const depth = Math.max(0.35, -(p[2] - camera.position.z));
+    const fovRad = (camera.fov * Math.PI) / 180;
+    const halfH = Math.tan(fovRad / 2) * depth;
+    const halfW = halfH * (camera.aspect || 1);
+    return {
+      x: ((p[0] / Math.max(1e-4, halfW)) * 0.5 + 0.5) * viewW,
+      y: (0.5 - (p[1] / Math.max(1e-4, halfH)) * 0.5) * viewH,
+    };
+  }
+
+  function phaseScreen(phase, progress, fit) {
     const R = 3;
     let x = R * Math.cos(phase);
     let y = 0;
@@ -958,8 +1284,9 @@ export function mountPickRing(root, pickData) {
     const pitch = -Math.PI * 0.15 * (1 - progress);
     const cp = Math.cos(pitch);
     const sp = Math.sin(pitch);
-    const y2 = y * cp - z * sp;
-    const z2 = y * sp + z * cp;
+    // Shader's mat4 constructor is column-major, so this X pitch is transposed.
+    const y2 = y * cp + z * sp;
+    const z2 = -y * sp + z * cp;
     x -= 3.7 * progress + 1.4;
     y = y2 - 0.85 * progress;
     z = z2 - (20 - 12 * progress);
@@ -976,15 +1303,30 @@ export function mountPickRing(root, pickData) {
     const viewZ = z - camera.position.z;
     const depth = Math.max(0.35, -viewZ);
     const fovRad = (camera.fov * Math.PI) / 180;
-    const halfW = Math.tan(fovRad / 2) * depth * (camera.aspect || 1);
-    const ndcX = x / Math.max(1e-4, halfW);
-    return ndcX * 0.5 + 0.5;
+    const halfH = Math.tan(fovRad / 2) * depth;
+    const halfW = halfH * (camera.aspect || 1);
+    const nx = (x / Math.max(1e-4, halfW)) * 0.5 + 0.5;
+    const ny = 0.5 - (y / Math.max(1e-4, halfH)) * 0.5;
+    const grow = 1 + 0.5 * progress * progress;
+    const scale = shared.uScale.value;
+    const f = fit == null ? 1 : fit;
+    const pxW = ((scale[0] * grow * f * 0.5) / Math.max(1e-4, halfW)) * viewW;
+    const pxH = ((scale[1] * grow * f * 0.5) / Math.max(1e-4, halfH)) * viewH;
+    return { nx, ny, pxW, pxH };
+  }
+
+  function phaseScreenNX(phase, progress) {
+    return phaseScreen(phase, progress, 1).nx;
+  }
+
+  function cardScreen(index, spin, progress, fit) {
+    const theta = (index / N) * Math.PI * 2;
+    // Transposed Y rotation sends the ring angle to θ+spin (not θ−spin).
+    return phaseScreen(theta + spin, progress, fit);
   }
 
   function cardScreenNX(index, spin, progress) {
-    const theta = (index / N) * Math.PI * 2;
-    // Transposed Y rotation sends the ring angle to θ+spin (not θ−spin).
-    return phaseScreenNX(theta + spin, progress);
+    return cardScreen(index, spin, progress, 1).nx;
   }
 
   /** Map click on canvas to the visible card under the cursor (hit-test only). */
@@ -1073,6 +1415,10 @@ export function mountPickRing(root, pickData) {
         frontTitle: (pickData[front] && pickData[front].title) || '',
         top: cards.slice(0, 4),
         n: meshes.length,
+        sound: soundOn,
+        fx: fxIndex,
+        seal: sealCharEl ? sealCharEl.textContent : '',
+        userMoved,
       };
     },
   };
@@ -1080,7 +1426,12 @@ export function mountPickRing(root, pickData) {
   syncRunway();
   resize();
   window.addEventListener('scroll', () => {
-    scrollY = window.scrollY;
+    const y = window.scrollY;
+    if (Math.abs(y - gestureScroll) > 8) {
+      userMoved = true;
+      gestureScroll = y;
+    }
+    scrollY = y;
     kick();
   }, { passive: true });
   window.addEventListener('resize', () => {
