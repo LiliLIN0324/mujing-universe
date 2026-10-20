@@ -1,0 +1,1285 @@
+---
+/** 全站 Mimi。不自动打开、不自动播放动效。密钥不在这里。 */
+const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avatar-216.webp 216w, /mimi/avatar.webp 357w';
+---
+<div class="mimi" id="mimi" data-state="idle" data-side="right">
+  <button class="mimi-launch" type="button" aria-expanded="false" aria-controls="mimi-panel" aria-label="打开 Mimi 对话">
+    <span class="mimi-halo" aria-hidden="true"></span>
+    <span class="mimi-face">
+      <picture>
+        <source type="image/webp" srcset={srcset} sizes="(max-width: 768px) 60px, 72px" />
+        <img src="/mimi/avatar.png" alt="" width="72" height="72" decoding="async" draggable="false" />
+      </picture>
+      <span class="mimi-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    </span>
+    <span class="mimi-hi" role="tooltip">嗨，我是 Mimi</span>
+  </button>
+  <section class="mimi-panel" id="mimi-panel" role="dialog" aria-modal="false" aria-labelledby="mimi-name" hidden>
+    <header class="mimi-hd">
+      <span class="mimi-face">
+        <picture>
+          <source type="image/webp" srcset={srcset} sizes="44px" />
+          <img src="/mimi/avatar.png" alt="" width="44" height="44" decoding="async" draggable="false" />
+        </picture>
+        <span class="mimi-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      </span>
+      <div class="mimi-id">
+        <strong id="mimi-name">Mimi</strong>
+        <p>幕景的 AI 伙伴，在官网接待访客。</p>
+        <p class="mimi-demo" hidden>本地演示，未接通模型。</p>
+      </div>
+      <button class="mimi-x" type="button" aria-label="关闭对话">×</button>
+    </header>
+    <div class="mimi-log" role="log" aria-live="polite" aria-relevant="additions"></div>
+    <div class="mimi-quick" role="group" aria-label="快捷问题">
+      <button type="button">幕景是做什么的？</button>
+      <button type="button">看看代表作品</button>
+      <button type="button">Mimi 是怎么做出来的？</button>
+      <button type="button">聊合作</button>
+    </div>
+    <form class="mimi-form">
+      <label class="mimi-sr" for="mimi-input">输入问题</label>
+      <input id="mimi-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send" placeholder="想了解幕景，直接问我" />
+      <button class="mimi-send" type="submit">发送</button>
+    </form>
+  </section>
+</div>
+
+<style>
+  .mimi-launch,
+  .mimi-panel {
+    position: fixed;
+    z-index: 160;
+    font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  .mimi-launch {
+    right: 22px;
+    bottom: 22px;
+    z-index: 162;
+    width: 72px;
+    height: 72px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    cursor: grab;
+    touch-action: none;
+    perspective: 240px;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+  .mimi-launch.is-drag { cursor: grabbing; }
+  .mimi-launch.is-drag .mimi-face {
+    box-shadow: 0 0 0 2px #fff, 0 18px 40px rgba(26, 26, 28, 0.42);
+  }
+  .mimi-launch.is-hot .mimi-face {
+    box-shadow: 0 0 0 2px #fff, 0 14px 32px rgba(255, 106, 19, 0.45);
+  }
+  .mimi-halo {
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    border-top-color: #ff6a13;
+    border-right-color: #ff6a13;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .mimi[data-state="thinking"] .mimi-halo {
+    opacity: 1;
+    animation: mimi-spin 0.9s linear infinite;
+  }
+  .mimi-launch.is-flash .mimi-halo {
+    opacity: 1;
+    border-color: #ff6a13;
+    animation: mimi-flash 0.45s ease-out;
+  }
+  .mimi-face {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #ff6a13;
+    box-shadow: 0 0 0 2px #fff, 0 8px 22px rgba(26, 26, 28, 0.18);
+    transition: transform 0.16s ease;
+    transform-style: preserve-3d;
+  }
+  .mimi-launch.is-drag .mimi-face { transition: none; }
+  .mimi-face img,
+  .mimi-launch img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    -webkit-user-drag: none;
+    -webkit-touch-callout: none;
+    user-select: none;
+    pointer-events: none;
+  }
+  .mimi-hi {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%) translateY(4px);
+    background: #1a1a1c;
+    color: #f6f5f3;
+    font-size: 13px;
+    line-height: 1;
+    padding: 8px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.16s ease, transform 0.16s ease;
+  }
+  .mimi-launch.is-hot .mimi-hi {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  .mimi-launch.is-below .mimi-hi { bottom: auto; top: calc(100% + 10px); }
+  .mimi-dots {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: 8%;
+    transform: translateX(-50%);
+    gap: 3px;
+    padding: 3px 6px;
+    border-radius: 999px;
+    background: rgba(26, 26, 28, 0.78);
+  }
+  .mimi[data-state="thinking"] .mimi-dots { display: flex; }
+  .mimi-dots i {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fff;
+    animation: mimi-dot 1s infinite;
+  }
+  .mimi-dots i:nth-child(2) { animation-delay: 0.15s; }
+  .mimi-dots i:nth-child(3) { animation-delay: 0.3s; }
+  .mimi[data-state="answering"] .mimi-launch .mimi-face,
+  .mimi[data-state="answering"] .mimi-hd .mimi-face {
+    outline: 2px solid #1a1a1c;
+    outline-offset: 2px;
+  }
+  .mimi[data-state="error"] .mimi-face {
+    outline: 2px solid #b23a2a;
+    outline-offset: 2px;
+    animation: mimi-shake 0.42s ease;
+  }
+  .mimi-panel {
+    right: 22px;
+    bottom: 108px;
+    display: flex;
+    flex-direction: column;
+    width: min(400px, calc(100vw - 36px));
+    height: min(620px, calc(100dvh - 120px));
+    background: #f6f5f3;
+    color: #1a1a1c;
+    border: 1px solid rgba(26, 26, 28, 0.08);
+    border-radius: 24px;
+    box-shadow: 0 18px 50px rgba(26, 26, 28, 0.14);
+    overflow: hidden;
+    transform: scale(0.12);
+    opacity: 0;
+    pointer-events: none;
+    transform-origin: 100% 100%;
+    transition: transform 0.48s cubic-bezier(0.22, 1.35, 0.36, 1), opacity 0.2s ease;
+  }
+  .mimi.is-open .mimi-panel {
+    transform: scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .mimi-panel[hidden] { display: none !important; }
+  .mimi-hd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 12px 12px 14px;
+    border-bottom: 1px solid rgba(26, 26, 28, 0.08);
+  }
+  .mimi-hd .mimi-face {
+    width: 44px;
+    height: 44px;
+    flex: none;
+    box-shadow: none;
+  }
+  .mimi-id { min-width: 0; }
+  .mimi-id strong {
+    display: block;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.2;
+  }
+  .mimi-id p {
+    margin: 2px 0 0;
+    color: #6b6b6b;
+    font-size: 12px;
+    line-height: 1.45;
+  }
+  .mimi-demo { color: #6a655f !important; }
+  .mimi-x {
+    margin-left: auto;
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: #1a1a1c;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    flex: none;
+  }
+  .mimi-x:hover { background: rgba(26, 26, 28, 0.06); }
+  .mimi-hd,
+  .mimi-quick,
+  .mimi-form { flex: none; }
+  .mimi-log {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 14px 14px 6px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mimi-msg { margin: 0 0 12px; font-size: 15px; line-height: 1.65; }
+  .mimi-msg p { margin: 0; }
+  .mimi-msg.bot p {
+    background: #fff;
+    border-radius: 16px;
+    padding: 10px 12px;
+  }
+  .mimi-msg.user { display: flex; justify-content: flex-end; }
+  .mimi-msg.user p {
+    max-width: 88%;
+    background: #1a1a1c;
+    color: #f6f5f3;
+    border-radius: 18px;
+    padding: 8px 14px;
+  }
+  .mimi-msg a { color: inherit; }
+  .mimi-msg.bot a { text-decoration: underline; text-underline-offset: 2px; }
+  :global(.mimi-coop) {
+    margin: 0 0 12px;
+    background: #fff;
+    border-radius: 18px;
+    padding: 12px;
+    text-align: center;
+  }
+  :global(.mimi-coop strong) {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  :global(.mimi-qr) {
+    display: block;
+    width: min(168px, 100%);
+    margin: 8px auto 0;
+    padding: 0;
+    border: 0;
+    background: #fff;
+    cursor: zoom-in;
+  }
+  :global(.mimi-qr img) {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  :global(.mimi-coop p) {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #3d3a35;
+  }
+  :global(.mimi-hint) { color: #6b6b6b !important; }
+  :global(.mimi-coop a) {
+    display: inline-block;
+    margin-top: 8px;
+    color: #1a1a1c;
+    font-size: 13px;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  :global(.mimi-wx) { color: #1a1a1c !important; }
+  :global(.mimi-wx button) {
+    border: 0;
+    background: #f6f5f3;
+    border-radius: 999px;
+    padding: 2px 8px;
+    font: inherit;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  :global(.mimi-light) {
+    position: fixed;
+    inset: 0;
+    z-index: 180;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    background: rgba(26, 26, 28, 0.72);
+  }
+  :global(.mimi-light[hidden]) { display: none !important; }
+  :global(.mimi-light img) {
+    width: auto;
+    max-width: min(420px, 92vw);
+    max-height: 70vh;
+    background: #fff;
+    border-radius: 16px;
+  }
+  :global(.mimi-light p) {
+    margin: 0;
+    color: #f6f5f3;
+    font-size: 13px;
+    text-align: center;
+  }
+  :global(.mimi-light a) {
+    color: #1a1a1c;
+    background: #fff;
+    border-radius: 999px;
+    padding: 8px 16px;
+    text-decoration: none;
+    font-size: 14px;
+  }
+  .mimi-quick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 4px 14px 12px;
+  }
+  .mimi-quick button {
+    border-radius: 999px;
+    border: 1px solid rgba(26, 26, 28, 0.16);
+    background: transparent;
+    color: #1a1a1c;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1.3;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .mimi-quick button:hover { background: #1a1a1c; color: #f6f5f3; }
+  .mimi-form {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 12px;
+    border-top: 1px solid rgba(26, 26, 28, 0.08);
+  }
+  .mimi-form input {
+    flex: 1;
+    min-width: 0;
+    height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(26, 26, 28, 0.14);
+    background: #fff;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 16px;
+    color: #1a1a1c;
+  }
+  .mimi-send {
+    height: 40px;
+    padding: 0 16px;
+    border: 0;
+    border-radius: 999px;
+    background: #1a1a1c;
+    color: #f6f5f3;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    flex: none;
+  }
+  .mimi-send:hover { opacity: 0.86; }
+  .mimi-send:disabled,
+  .mimi-quick button:disabled { opacity: 0.45; cursor: default; }
+  .mimi-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  :global(.mimi-crumb) {
+    position: fixed;
+    z-index: 161;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ff6a13;
+    pointer-events: none;
+    animation: mimi-crumb 0.7s ease-out forwards;
+  }
+  :global(body:has(#mimi) footer.bot) { padding-bottom: 120px; }
+  :global(body:has(#mimi):has(.listen) footer.bot) { padding-bottom: 210px; }
+  @media (max-width: 768px) {
+    .mimi-launch { width: 60px; height: 60px; right: 14px; bottom: 88px; }
+    :global(body.mimi-open) { overflow: hidden; }
+    :global(body:has(#mimi) footer.bot),
+    :global(body:has(#mimi):has(.listen) footer.bot) {
+      padding-bottom: calc(170px + env(safe-area-inset-bottom));
+    }
+  }
+  @keyframes mimi-dot {
+    0%, 80%, 100% { opacity: 0.3; }
+    40% { opacity: 1; }
+  }
+  @keyframes mimi-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-2px); }
+    75% { transform: translateX(2px); }
+  }
+  @keyframes mimi-spin { to { transform: rotate(360deg); } }
+  @keyframes mimi-flash {
+    0% { opacity: 1; transform: scale(0.9); }
+    100% { opacity: 0; transform: scale(1.35); }
+  }
+  @keyframes mimi-nod {
+    0%, 100% { transform: rotate(0deg) scale(0.92); }
+    35% { transform: rotate(-14deg) scale(0.92); }
+    70% { transform: rotate(14deg) scale(0.92); }
+  }
+  .mimi-launch.is-nod .mimi-face { animation: mimi-nod 0.48s ease; }
+  @keyframes mimi-crumb {
+    to { opacity: 0; transform: scale(0.3); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mimi[data-state="error"] .mimi-face,
+    .mimi-dots i,
+    .mimi-halo,
+    .mimi-hi,
+    .mimi-face,
+    .mimi-panel { animation: none; transition: none; }
+    .mimi[data-state="thinking"] .mimi-halo {
+      animation: none;
+      border-color: #ff6a13;
+    }
+    :global(.mimi-crumb) { display: none; }
+  }
+</style>
+
+<script>
+  const root = document.getElementById('mimi');
+  const launch = root?.querySelector('.mimi-launch');
+  const face = launch?.querySelector('.mimi-face');
+  const panel = document.getElementById('mimi-panel');
+  const log = root?.querySelector('.mimi-log');
+  const form = root?.querySelector('.mimi-form');
+  const input = document.getElementById('mimi-input');
+  const demoNote = root?.querySelector('.mimi-demo');
+  const quick = root?.querySelectorAll('.mimi-quick button');
+  const hi = launch?.querySelector('.mimi-hi');
+  if (root && launch && face && panel && log && form && input && demoNote && quick && hi) {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const BANNED = /西湖|繁胜全景|xihu-panorama/i;
+    const STORE = 'mimi-dock';
+    const history = [];
+    let demo = false;
+    let busy = false;
+    let state = 'idle';
+    let custom = false;
+    let pointer = null;
+    let suppressClick = false;
+    let justDragged = false;
+    let springRaf = 0;
+    let typer = 0;
+    let closeTimer = 0;
+    const vel = { x: 0, y: 0 };
+    const pos = { x: 0, y: 0, side: 'right' };
+
+    const ANSWERS = {
+      what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做影像、视觉和内容创作。目录在[作品页](/works/)。想合作就点「聊合作」。',
+      works: '公开的作品都在[作品页](/works/)。可以先看幕景 Scendance、LitFlow 和 Riffle，点进详情有介绍。',
+      made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
+      coop: '想合作、咨询或联系，点「聊合作」。下面是飞书名片，扫码时备注一下来意。\n[[COOP]]',
+      secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
+      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「聊合作」。',
+      other: '这个问题我答不准，也不能替团队承诺。想合作或咨询，点「聊合作」。',
+      en: 'I can’t answer that precisely. If you want to talk about a project, tap “聊合作”.',
+      enCoop: 'I can’t give a price or a date. Tap “聊合作” and leave a note about the project.\n[[COOP]]',
+    };
+
+    function splitCoop(text) {
+      const coop = /\[\[\s*COOP\s*\]\]/.test(text);
+      const clean = text.replace(/\[\[\s*COOP\s*\]\]/g, '').replace(/\n{3,}/g, '\n\n').trim();
+      return { clean, coop };
+    }
+    function holdMark(text) {
+      const parsed = splitCoop(text);
+      const token = '[[COOP]]';
+      let shown = parsed.clean;
+      for (let n = Math.min(token.length - 1, shown.length); n > 0; n -= 1) {
+        if (token.startsWith(shown.slice(-n))) {
+          shown = shown.slice(0, -n);
+          break;
+        }
+      }
+      return { shown, coop: parsed.coop };
+    }
+
+    function localAnswer(q) {
+      const s = q.trim();
+      const flat = s.replace(/\s+/g, '');
+      if (BANNED.test(flat)) return ANSWERS.skip;
+      if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
+      if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
+      if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么/.test(flat))) return ANSWERS.works;
+      if (flat === '幕景是做什么的？' || ((/幕景|你们/.test(flat)) && /做|是什么|干什么/.test(flat))) return ANSWERS.what;
+      if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|档期|合同|版权|微信|飞书|终树|丁科智/.test(flat)) return ANSWERS.coop;
+      if (/[A-Za-z]/.test(s) && !/[\u4e00-\u9fff]/.test(s)) {
+        return /collab|cooperat|contact|price|quote|hire|partner/i.test(s) ? ANSWERS.enCoop : ANSWERS.en;
+      }
+      return ANSWERS.other;
+    }
+
+    function btnSize() { return window.innerWidth <= 768 ? 60 : 72; }
+    function edge() { return window.innerWidth <= 768 ? 14 : 22; }
+    function view() {
+      const vv = window.visualViewport;
+      if (!vv) return { x: 0, y: 0, w: window.innerWidth, h: window.innerHeight };
+      return { x: vv.offsetLeft, y: vv.offsetTop, w: vv.width, h: vv.height };
+    }
+    function clamp(x, y) {
+      const v = view();
+      const s = btnSize();
+      const m = 8;
+      return {
+        x: Math.min(Math.max(v.x + m, x), v.x + v.w - s - m),
+        y: Math.min(Math.max(v.y + m, y), v.y + v.h - s - m),
+      };
+    }
+    function defaultPos() {
+      const s = btnSize();
+      const v = view();
+      const m = edge();
+      let y = v.y + v.h - (window.innerWidth <= 768 ? 88 : m) - s;
+      const x = v.x + v.w - m - s;
+      if (window.innerWidth > 768) {
+        const listen = document.querySelector('.listen');
+        if (listen) {
+          const r = listen.getBoundingClientRect();
+          const hit = r.width > 0 && r.right > x - 12 && r.left < x + s + 12 && r.bottom > y - 8 && r.top < y + s;
+          if (hit) y = r.top - s - 16;
+        }
+      }
+      const c = clamp(x, y);
+      return { x: c.x, y: c.y, side: 'right' };
+    }
+    function readStore() {
+      try {
+        const data = JSON.parse(localStorage.getItem(STORE) || '');
+        if (!data) return null;
+        if (typeof data.x === 'number' && typeof data.y === 'number') return data;
+        if ((data.side === 'left' || data.side === 'right') && typeof data.y === 'number') return data;
+        return null;
+      } catch { return null; }
+    }
+    function save() {
+      try { localStorage.setItem(STORE, JSON.stringify({ x: pos.x, y: pos.y })); } catch { /* private mode */ }
+    }
+    function setSide() {
+      const v = view();
+      pos.side = pos.x + btnSize() / 2 < v.x + v.w / 2 ? 'left' : 'right';
+    }
+    function paint() {
+      launch.style.left = `${pos.x}px`;
+      launch.style.top = `${pos.y}px`;
+      launch.style.right = 'auto';
+      launch.style.bottom = 'auto';
+      root.dataset.side = pos.side;
+      if (!panel.hidden) placePanel();
+    }
+    function topLimit() {
+      const v = view();
+      let top = v.y + 8;
+      if (window.innerWidth <= 768) {
+        const header = document.querySelector('header.top');
+        if (header) {
+          const r = header.getBoundingClientRect();
+          if (r.width > 0 && r.bottom > top) top = r.bottom + 8;
+        }
+      }
+      return top;
+    }
+    function placePanel() {
+      const v = view();
+      const s = btnSize();
+      const margin = 8;
+      const gap = 12;
+      const minTop = topLimit();
+      const maxW = Math.min(400, v.w - margin * 2);
+      const maxH = Math.min(740, Math.max(240, v.y + v.h - margin - minTop));
+      const cx = pos.x + s / 2;
+      const roomL = cx - v.x;
+      const roomR = v.x + v.w - cx;
+      let left = roomR >= roomL ? pos.x + s + gap : pos.x - gap - maxW;
+      left = Math.min(Math.max(v.x + margin, left), v.x + v.w - margin - maxW);
+      let top = pos.y - gap - maxH;
+      if (top < minTop) top = pos.y + s + gap;
+      if (top + maxH > v.y + v.h - margin) top = Math.max(minTop, v.y + v.h - margin - maxH);
+      if (top < minTop) top = minTop;
+      panel.style.left = `${left}px`;
+      panel.style.top = `${top}px`;
+      panel.style.right = 'auto';
+      panel.style.bottom = 'auto';
+      panel.style.width = `${maxW}px`;
+      panel.style.height = `${maxH}px`;
+      panel.style.transformOrigin = `${cx - left}px ${pos.y + s / 2 - top}px`;
+    }
+    function dockFromStore() {
+      const saved = readStore();
+      custom = !!saved;
+      if (!saved) {
+        const d = defaultPos();
+        pos.x = d.x; pos.y = d.y; pos.side = d.side;
+        return;
+      }
+      if (typeof saved.x === 'number') {
+        const c = clamp(saved.x, saved.y);
+        pos.x = c.x; pos.y = c.y;
+      } else {
+        const s = btnSize();
+        const v = view();
+        const m = edge();
+        const x = saved.side === 'left' ? v.x + m : v.x + v.w - m - s;
+        const c = clamp(x, saved.y);
+        pos.x = c.x; pos.y = c.y;
+      }
+      setSide();
+    }
+    function springTo(tx, ty) {
+      cancelAnimationFrame(springRaf);
+      vel.x = vel.y = 0;
+      try { localStorage.setItem(STORE, JSON.stringify({ x: tx, y: ty })); } catch { /* private mode */ }
+      if (reduce) {
+        pos.x = tx; pos.y = ty;
+        setSide(); paint();
+        return;
+      }
+      let last = performance.now();
+      const step = (now) => {
+        const dt = Math.min(0.032, (now - last) / 1000);
+        last = now;
+        vel.x += (220 * (tx - pos.x) - 16 * vel.x) * dt;
+        vel.y += (220 * (ty - pos.y) - 16 * vel.y) * dt;
+        pos.x += vel.x * dt;
+        pos.y += vel.y * dt;
+        setSide();
+        paint();
+        if (Math.hypot(tx - pos.x, ty - pos.y) < 0.6 && Math.hypot(vel.x, vel.y) < 14) {
+          pos.x = tx; pos.y = ty; vel.x = vel.y = 0;
+          setSide(); paint();
+          return;
+        }
+        springRaf = requestAnimationFrame(step);
+      };
+      springRaf = requestAnimationFrame(step);
+    }
+    function releasePlace() {
+      const v = view();
+      const s = btnSize();
+      const m = edge();
+      const c = clamp(pos.x, pos.y);
+      let x = c.x;
+      let y = c.y;
+      const distL = x - v.x;
+      const distR = v.x + v.w - (x + s);
+      const distT = y - v.y;
+      const distB = v.y + v.h - (y + s);
+      if (Math.min(distL, distR) < 80) x = distL <= distR ? v.x + m : v.x + v.w - m - s;
+      if (Math.min(distT, distB) < 80) y = distT <= distB ? v.y + m : v.y + v.h - m - s;
+      const next = clamp(x, y);
+      pos.side = next.x + s / 2 < v.x + v.w / 2 ? 'left' : 'right';
+      if (Math.hypot(next.x - pos.x, next.y - pos.y) > 1) springTo(next.x, next.y);
+      else {
+        pos.x = next.x; pos.y = next.y;
+        setSide(); paint(); save();
+      }
+    }
+
+    dockFromStore();
+    paint();
+
+    function setState(next) {
+      state = next;
+      root.dataset.state = next;
+      const locked = next === 'thinking';
+      form.querySelector('.mimi-send').disabled = locked;
+      quick.forEach((btn) => { btn.disabled = locked; });
+    }
+
+    function linkify(parent, text) {
+      const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/(?!\/)[A-Za-z0-9/_\-.%]*)\)|(https?:\/\/[^\s<]+)|(\/(?:works|contact|artist|studio)\/[A-Za-z0-9/_\-.]*)/g;
+      let last = 0;
+      let match;
+      while ((match = re.exec(text))) {
+        if (match.index > last) parent.append(text.slice(last, match.index));
+        let href = match[2] || match[3] || match[4] || '';
+        let label = match[1] || href;
+        const trail = href.match(/[.,，。、；;：:！!？?）)]+$/);
+        if (trail && !match[1]) {
+          href = href.slice(0, -trail[0].length);
+          label = href;
+        }
+        const a = document.createElement('a');
+        a.href = href;
+        a.textContent = label;
+        if (/^https?:/i.test(href)) {
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+        }
+        parent.append(a);
+        if (trail && !match[1]) parent.append(trail[0]);
+        last = match.index + match[0].length;
+      }
+      if (last < text.length) parent.append(text.slice(last));
+    }
+
+    function finishText(p, text, done) {
+      p.replaceChildren();
+      if (text) linkify(p, text);
+      if (state === 'answering') setState('idle');
+      if (done) done();
+    }
+    function typewrite(p, text, done) {
+      window.clearInterval(typer);
+      if (reduce || !text) {
+        finishText(p, text, done);
+        return;
+      }
+      const shown = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+      let i = 0;
+      const step = shown.length > 70 ? 2 : 1;
+      typer = window.setInterval(() => {
+        i = Math.min(shown.length, i + step);
+        p.textContent = shown.slice(0, i);
+        log.scrollTop = log.scrollHeight;
+        if (i >= shown.length) {
+          window.clearInterval(typer);
+          finishText(p, text, done);
+        }
+      }, 18);
+    }
+
+    function append(role, text, typed = true, done) {
+      const item = document.createElement('div');
+      item.className = `mimi-msg ${role === 'user' ? 'user' : 'bot'}`;
+      const p = document.createElement('p');
+      item.append(p);
+      log.append(item);
+      if (role === 'user') p.textContent = text;
+      else if (typed) typewrite(p, text, done);
+      else finishText(p, text, done);
+      log.scrollTop = log.scrollHeight;
+      return p;
+    }
+
+    let light = null;
+    function openLight() {
+      if (!light) {
+        light = document.createElement('div');
+        light.className = 'mimi-light';
+        light.hidden = true;
+        const img = document.createElement('img');
+        img.src = '/mimi/feishu-qr.png';
+        img.alt = '终树的飞书名片二维码';
+        img.draggable = false;
+        const hint = document.createElement('p');
+        hint.textContent = '手机上长按图片保存';
+        const save = document.createElement('a');
+        save.href = '/mimi/feishu-qr.png';
+        save.download = 'feishu-qr.png';
+        save.textContent = '保存图片';
+        light.append(img, hint, save);
+        light.addEventListener('click', (e) => {
+          if (e.target === light) light.hidden = true;
+        });
+        document.body.append(light);
+      }
+      light.hidden = false;
+    }
+    function appendCoop() {
+      const card = document.createElement('div');
+      card.className = 'mimi-coop';
+      const title = document.createElement('strong');
+      title.textContent = '加终树飞书，聊合作';
+      const zoom = document.createElement('button');
+      zoom.type = 'button';
+      zoom.className = 'mimi-qr';
+      zoom.setAttribute('aria-label', '放大飞书二维码');
+      const img = document.createElement('img');
+      img.src = '/mimi/feishu-qr.png';
+      img.alt = '终树的飞书名片，含头像、名字和二维码';
+      img.draggable = false;
+      img.width = 431;
+      img.height = 568;
+      zoom.append(img);
+      zoom.addEventListener('click', openLight);
+      const note = document.createElement('p');
+      note.textContent = '用飞书扫码添加，备注来意';
+      const hint = document.createElement('p');
+      hint.className = 'mimi-hint';
+      hint.textContent = '点按放大。手机上长按图片，或点「保存图片」。';
+      const save = document.createElement('a');
+      save.href = '/mimi/feishu-qr.png';
+      save.download = 'feishu-qr.png';
+      save.textContent = '保存图片';
+      const wx = document.createElement('p');
+      wx.className = 'mimi-wx';
+      wx.append('微信备用 ');
+      const id = document.createElement('button');
+      id.type = 'button';
+      id.textContent = 'endTree-26';
+      id.addEventListener('click', () => {
+        const done = () => {
+          id.textContent = '已复制';
+          window.setTimeout(() => { id.textContent = 'endTree-26'; }, 1200);
+        };
+        if (navigator.clipboard) navigator.clipboard.writeText('endTree-26').then(done).catch(() => {});
+      });
+      wx.append(id);
+      card.append(title, zoom, note, hint, save, wx);
+      log.append(card);
+      if (card.offsetHeight <= log.clientHeight) log.scrollTop = log.scrollHeight;
+      else log.scrollTop += card.getBoundingClientRect().top - log.getBoundingClientRect().top;
+    }
+
+    function hidePanel() {
+      panel.hidden = true;
+      window.clearTimeout(closeTimer);
+    }
+    function setOpen(open) {
+      window.clearTimeout(closeTimer);
+      if (open) {
+        panel.hidden = false;
+        placePanel();
+        root.classList.remove('is-open');
+        requestAnimationFrame(() => {
+          panel.getBoundingClientRect();
+          requestAnimationFrame(() => root.classList.add('is-open'));
+        });
+        launch.setAttribute('aria-expanded', 'true');
+        document.body.classList.toggle('mimi-open', window.innerWidth <= 768);
+        if (window.innerWidth > 768) input.focus();
+        else root.querySelector('.mimi-x').focus();
+      } else {
+        root.classList.remove('is-open');
+        launch.setAttribute('aria-expanded', 'false');
+        document.body.classList.remove('mimi-open');
+        if (reduce) hidePanel();
+        else closeTimer = window.setTimeout(hidePanel, 520);
+        launch.focus();
+      }
+    }
+
+    append('bot', '你好，我是 Mimi，幕景的 AI 伙伴。想了解我们做什么，还是有项目想聊？', false);
+
+    function tilt(e) {
+      if (pointer) return;
+      const r = launch.getBoundingClientRect();
+      const dx = (e.clientX - r.left - r.width / 2) / (r.width / 2);
+      const dy = (e.clientY - r.top - r.height / 2) / (r.height / 2);
+      face.style.transform = `scale(1.14) rotateX(${(-dy * 12).toFixed(2)}deg) rotateY(${(dx * 16).toFixed(2)}deg)`;
+    }
+    function placeBubble() {
+      hi.style.marginLeft = '0px';
+      const r = hi.getBoundingClientRect();
+      if (r.left < 8) hi.style.marginLeft = `${Math.round(8 - r.left)}px`;
+      else if (r.right > window.innerWidth - 8) hi.style.marginLeft = `${Math.round(window.innerWidth - 8 - r.right)}px`;
+      launch.classList.toggle('is-below', launch.getBoundingClientRect().top < 52);
+    }
+    launch.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'touch') return;
+      launch.classList.add('is-hot');
+      if (!pointer) face.style.transform = 'scale(1.14)';
+      placeBubble();
+    });
+    launch.addEventListener('pointerleave', () => {
+      launch.classList.remove('is-hot');
+      if (!pointer) face.style.transform = '';
+    });
+
+    let lastCrumb = 0;
+    function crumb(x, y, vx, vy) {
+      if (reduce) return;
+      const now = performance.now();
+      if (now - lastCrumb < 16) return;
+      lastCrumb = now;
+      const speed = Math.hypot(vx, vy) || 1;
+      const ux = vx / speed;
+      const uy = vy / speed;
+      [10, 28].forEach((back, i) => {
+        const el = document.createElement('i');
+        el.className = 'mimi-crumb';
+        const size = i === 0 ? 22 : 14;
+        el.style.width = `${size}px`;
+        el.style.height = `${size}px`;
+        el.style.left = `${x - ux * back - size / 2}px`;
+        el.style.top = `${y - uy * back - size / 2}px`;
+        document.body.append(el);
+        el.addEventListener('animationend', () => el.remove());
+      });
+    }
+    function stretch(vx, vy) {
+      if (reduce) {
+        face.style.transform = '';
+        return;
+      }
+      const speed = Math.hypot(vx, vy);
+      const mag = Math.min(0.35, speed * 0.5);
+      if (speed < 0.05) {
+        face.style.transform = 'scale(1.15)';
+        return;
+      }
+      const ang = Math.atan2(vy, vx) * 180 / Math.PI;
+      face.style.transform = `rotate(${ang.toFixed(1)}deg) scale(${(1.15 + mag).toFixed(3)}, ${Math.max(0.8, 1.15 - mag).toFixed(3)})`;
+    }
+    function bounceBack() {
+      launch.classList.remove('is-press');
+      if (reduce) {
+        face.style.transform = '';
+        return;
+      }
+      launch.classList.add('is-flash');
+      face.style.transform = 'scale(1.08)';
+      window.setTimeout(() => {
+        if (!pointer) face.style.transform = '';
+      }, 170);
+      window.setTimeout(() => launch.classList.remove('is-flash'), 460);
+    }
+    function squash() {
+      if (reduce) {
+        face.style.transform = '';
+        return;
+      }
+      face.style.transition = 'transform .14s ease';
+      face.style.transform = 'scale(1.22, 0.78)';
+      window.setTimeout(() => { face.style.transform = 'scale(0.94, 1.08)'; }, 140);
+      window.setTimeout(() => {
+        face.style.transform = '';
+        face.style.transition = '';
+      }, 300);
+    }
+
+    launch.addEventListener('dragstart', (e) => e.preventDefault());
+    launch.addEventListener('pointerdown', (e) => {
+      if (e.button != null && e.button !== 0) return;
+      if (e.cancelable) e.preventDefault();
+      cancelAnimationFrame(springRaf);
+      launch.setPointerCapture?.(e.pointerId);
+      pointer = {
+        id: e.pointerId,
+        type: e.pointerType,
+        x: e.clientX,
+        y: e.clientY,
+        ox: pos.x,
+        oy: pos.y,
+        lx: e.clientX,
+        ly: e.clientY,
+        lt: performance.now(),
+        moved: false,
+        held: false,
+        holdTimer: 0,
+      };
+      if (e.pointerType === 'touch') {
+        launch.classList.add('is-press');
+        if (!reduce) face.style.transform = 'scale(0.92)';
+        pointer.holdTimer = window.setTimeout(() => {
+          if (!pointer || pointer.moved) return;
+          pointer.held = true;
+          launch.classList.add('is-hot', 'is-nod');
+          if (!reduce) face.style.transform = '';
+          placeBubble();
+        }, 300);
+      }
+    });
+    launch.addEventListener('pointermove', (e) => {
+      if (!pointer || e.pointerId !== pointer.id) {
+        if (e.pointerType === 'mouse') tilt(e);
+        return;
+      }
+      const dx = e.clientX - pointer.x;
+      const dy = e.clientY - pointer.y;
+      if (!pointer.moved && Math.hypot(dx, dy) > 6) {
+        pointer.moved = true;
+        window.clearTimeout(pointer.holdTimer);
+        launch.classList.add('is-drag');
+        launch.classList.remove('is-hot', 'is-press', 'is-nod');
+        try { if (navigator.vibrate) navigator.vibrate(10); } catch { /* 桌面浏览器没有振动 */ }
+      }
+      if (!pointer.moved) return;
+      if (e.cancelable) e.preventDefault();
+      const now = performance.now();
+      const dt = Math.max(16, now - pointer.lt);
+      const vx = (e.clientX - pointer.lx) / dt;
+      const vy = (e.clientY - pointer.ly) / dt;
+      pointer.lx = e.clientX; pointer.ly = e.clientY; pointer.lt = now;
+      const c = clamp(pointer.ox + dx, pointer.oy + dy);
+      pos.x = c.x; pos.y = c.y;
+      setSide();
+      paint();
+      stretch(vx, vy);
+      crumb(pos.x + btnSize() / 2, pos.y + btnSize() / 2, vx, vy);
+    });
+    function endPointer(e) {
+      if (!pointer || (e && e.pointerId !== pointer.id)) return;
+      const moved = pointer.moved;
+      const held = pointer.held;
+      const kind = pointer.type;
+      window.clearTimeout(pointer.holdTimer);
+      pointer = null;
+      launch.classList.remove('is-drag', 'is-press');
+      if (moved) {
+        suppressClick = true;
+        justDragged = true;
+        custom = true;
+        launch.classList.remove('is-hot', 'is-nod');
+        squash();
+        releasePlace();
+        window.setTimeout(() => { suppressClick = false; justDragged = false; }, 400);
+        return;
+      }
+      if (held && kind === 'touch') {
+        suppressClick = true;
+        bounceBack();
+        window.setTimeout(() => launch.classList.remove('is-hot', 'is-nod'), 700);
+        window.setTimeout(() => { suppressClick = false; }, 400);
+        return;
+      }
+      if (kind === 'touch') bounceBack();
+      else if (!launch.matches(':hover')) face.style.transform = '';
+      suppressClick = true;
+      setOpen(!root.classList.contains('is-open'));
+      window.setTimeout(() => { suppressClick = false; }, 400);
+    }
+    launch.addEventListener('pointerup', endPointer);
+    launch.addEventListener('pointercancel', endPointer);
+    launch.addEventListener('click', (e) => {
+      if (suppressClick) {
+        suppressClick = false;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      setOpen(!root.classList.contains('is-open'));
+    });
+    root.querySelector('.mimi-x').addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (light && !light.hidden) { light.hidden = true; return; }
+      if (root.classList.contains('is-open')) setOpen(false);
+    });
+    document.addEventListener('click', (e) => {
+      if (justDragged) { justDragged = false; return; }
+      if (light && light.contains(e.target)) return;
+      if (!root.classList.contains('is-open') || root.contains(e.target)) return;
+      setOpen(false);
+    });
+    root.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
+
+    async function readSse(res, onDelta) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let text = '';
+      let coop = false;
+      let failed = false;
+      const take = (block) => {
+        for (const line of block.split(/\r?\n/)) {
+          const trimmed = line.trim();
+          if (!trimmed.startsWith('data:')) continue;
+          const data = trimmed.slice(5).trim();
+          if (!data || data === '[DONE]') continue;
+          let msg;
+          try { msg = JSON.parse(data); } catch { continue; }
+          if (msg.error) failed = true;
+          if (typeof msg.replace === 'string') {
+            text = msg.replace;
+            coop = false;
+            onDelta(text);
+          } else if (typeof msg.delta === 'string' && msg.delta) {
+            text += msg.delta;
+            const view = holdMark(text);
+            if (view.coop) coop = true;
+            onDelta(view.shown);
+          }
+          if (msg.done) coop = msg.coop === true || coop;
+        }
+      };
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let idx = buf.indexOf('\n\n');
+        while (idx >= 0) {
+          take(buf.slice(0, idx));
+          buf = buf.slice(idx + 2);
+          idx = buf.indexOf('\n\n');
+        }
+      }
+      if (buf.trim()) take(buf);
+      const view = holdMark(text);
+      return { text: view.shown.trim(), coop: coop || view.coop, failed };
+    }
+
+    async function ask(text) {
+      const q = text.trim().slice(0, 400);
+      if (!q || busy) return;
+      busy = true;
+      window.clearInterval(typer);
+      append('user', q);
+      history.push({ role: 'user', content: q });
+      input.value = '';
+      setState('thinking');
+      const t0 = performance.now();
+      let reply = '';
+      let failed = false;
+      let showCoop = false;
+      let streamed = false;
+      let bubble = null;
+      try {
+        if (demo) {
+          const parsed = splitCoop(localAnswer(q));
+          reply = parsed.clean;
+          showCoop = parsed.coop;
+        } else {
+          const res = await fetch('/api/chat', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ messages: history.slice(-8) }),
+          });
+          const ctype = res.headers.get('content-type') || '';
+          if (res.status === 501 || res.status === 404) {
+            demo = true;
+            demoNote.hidden = false;
+            const parsed = splitCoop(localAnswer(q));
+            reply = parsed.clean;
+            showCoop = parsed.coop;
+          } else if (res.status === 429) {
+            failed = true;
+            reply = '提问有点多，我先歇一会儿，稍后再问哦。';
+          } else if (!res.ok) {
+            failed = true;
+            reply = '抱歉，这次没能生成回答，请稍后再试。';
+          } else if (ctype.includes('text/event-stream') && res.body) {
+            streamed = true;
+            const result = await readSse(res, (shown) => {
+              if (!bubble) {
+                setState('answering');
+                const item = document.createElement('div');
+                item.className = 'mimi-msg bot';
+                bubble = document.createElement('p');
+                item.append(bubble);
+                log.append(item);
+              }
+              bubble.textContent = shown;
+              log.scrollTop = log.scrollHeight;
+            });
+            reply = result.text;
+            showCoop = result.coop;
+            if (!reply && showCoop) reply = '想合作的话，用下面的名片加就行。';
+            failed = result.failed || !reply;
+            if (failed && !reply) reply = '抱歉，这次没能生成回答，请稍后再试。';
+          } else {
+            const data = await res.json().catch(() => ({}));
+            const parsed = splitCoop(typeof data.reply === 'string' ? data.reply.trim() : '');
+            reply = parsed.clean;
+            showCoop = parsed.coop;
+            if (!reply) {
+              failed = true;
+              reply = '抱歉，这次没能生成回答，请稍后再试。';
+            }
+          }
+        }
+      } catch {
+        if (bubble && bubble.parentElement) bubble.parentElement.remove();
+        demo = true;
+        demoNote.hidden = false;
+        const parsed = splitCoop(localAnswer(q));
+        reply = parsed.clean;
+        showCoop = parsed.coop;
+        streamed = false;
+        bubble = null;
+      }
+      if (BANNED.test(reply)) {
+        reply = splitCoop(ANSWERS.skip).clean;
+        showCoop = false;
+      }
+      const after = () => { if (showCoop) appendCoop(); };
+      if (failed) {
+        setState('error');
+        if (bubble) bubble.textContent = reply;
+        else append('bot', reply, false);
+        busy = false;
+        window.setTimeout(() => { if (state === 'error') setState('idle'); }, reduce ? 0 : 700);
+        return;
+      }
+      if (!streamed && !reduce) {
+        const wait = 360 - (performance.now() - t0);
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      }
+      if (streamed && bubble) {
+        finishText(bubble, reply, after);
+      } else {
+        setState('answering');
+        append('bot', reply, true, after);
+      }
+      history.push({ role: 'assistant', content: reply });
+      busy = false;
+    }
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      ask(input.value);
+    });
+    quick.forEach((btn) => btn.addEventListener('click', () => ask(btn.textContent || '')));
+
+    const refit = () => {
+      cancelAnimationFrame(springRaf);
+      if (!custom) {
+        const d = defaultPos();
+        pos.x = d.x; pos.y = d.y; pos.side = d.side;
+      } else {
+        const c = clamp(pos.x, pos.y);
+        pos.x = c.x; pos.y = c.y;
+        setSide();
+        save();
+      }
+      paint();
+      document.body.classList.toggle('mimi-open', root.classList.contains('is-open') && window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', refit);
+    window.addEventListener('load', () => { if (!custom) refit(); });
+    if (document.fonts) document.fonts.ready.then(() => { if (!custom) refit(); });
+    const vv = window.visualViewport;
+    if (vv) {
+      const keepInView = () => {
+        const c = clamp(pos.x, pos.y);
+        if (c.x !== pos.x || c.y !== pos.y) {
+          pos.x = c.x; pos.y = c.y;
+          setSide();
+          if (custom) save();
+        }
+        paint();
+      };
+      vv.addEventListener('resize', keepInView);
+      vv.addEventListener('scroll', keepInView);
+    }
+  }
+</script>

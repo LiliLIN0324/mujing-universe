@@ -1,5 +1,5 @@
 ---
-import Base from '../layouts/Base.astro'; import artist from '../data/artist.json'; import { allWorks, LINES } from '../lib'; import portraits from '../data/portraits.json';
+import Base from '../layouts/Base.astro'; import Cooperate from '../components/Cooperate.astro'; import artist from '../data/artist.json'; import { allWorks, LINES } from '../lib'; import portraits from '../data/portraits.json';
 const ws = await allWorks();
 const skills=['城市气候与韧性','AI 辅助城市规划','机器学习与数据分析','空间统计与 GIS','React / Next.js','TypeScript','WebGL / Three.js','UI 设计系统'];
 // One random portrait per page load, picked by an inline script right after the <img> is parsed (before first paint).
@@ -12,8 +12,8 @@ const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
 <section class="wrap ahero"><div class="portrait"><img id="apimg" class="pimg" alt="林丽丽 肖像" width="900" height="1200" decoding="async" fetchpriority="high" /><script is:inline set:html={pickJs}></script><span class="serif">林<br/>丽<br/>丽</span></div>
 <div><p class="kicker cap">Artist · 主理人</p><h1>林丽丽 <small>Lili Lin</small></h1>
 <p class="lead">首尔大学规划与 AI 硕士，建筑学出身。用设计和代码，把城市、AI 与三维做成可看、可交互的作品。</p>
-<p class="links"><a href="https://www.instagram.com/lililin_portfolio/" target="_blank" rel="noopener">Instagram</a><span aria-hidden="true">·</span><a href="https://lililin0324.github.io/" target="_blank" rel="noopener">个人站</a><span aria-hidden="true">·</span><a href="https://github.com/LiliLIN0324" target="_blank" rel="noopener">GitHub</a></p>
-<div class="stats">{[[ws.length-1,'件已收录作品'],[artist.talks.length,'场国际会议报告'],[cities.size,'座城市'],[artist.awards.reduce((n,a)=>n+a.items.length,0),'项荣誉与奖项']].map(([n,l])=><div><span class="serif">{n}</span><span class="cap">{l}</span></div>)}</div></div></section>
+<p class="links"><a href="https://www.instagram.com/lililin_portfolio/" target="_blank" rel="noopener noreferrer">Instagram</a><span aria-hidden="true">·</span><a href="https://lililin0324.github.io/" target="_blank" rel="noopener noreferrer">个人站</a><span aria-hidden="true">·</span><a href="https://github.com/LiliLIN0324" target="_blank" rel="noopener noreferrer">GitHub</a></p>
+<div class="stats">{[[ws.length,'件已收录作品'],[artist.talks.length,'场国际会议报告'],[cities.size,'座城市'],[artist.awards.reduce((n,a)=>n+a.items.length,0),'项荣誉与奖项']].map(([n,l])=><div><span class="serif">{n}</span><span class="cap">{l}</span></div>)}</div></div></section>
 
 <section class="wrap two reveal"><div><p class="kicker cap">Education · 教育</p>
 <ul class="list"><li><span class="serif">首尔大学</span><span>城市与区域规划（硕士）</span></li><li><span class="serif">华中科技大学</span><span>建筑学（本科）</span></li></ul></div>
@@ -24,7 +24,7 @@ const cities=new Set(artist.talks.map(t=>t.location.split(',')[0]));
 
 <section class="wrap reveal"><p class="kicker cap">Awards · 荣誉与奖项</p><div class="awards">
 {artist.awards.map(a=><div><h3>{a.category.split(' · ')[0]}</h3><ul>{a.items.slice().sort((x,y)=>+y.year-+x.year).map(it=><li><span class="mono">{it.year}</span>{it.name}</li>)}</ul></div>)}</div></section>
-<section class="narrow endcap reveal"><a class="btn" href="/works/">浏览作品 →</a> <a class="btn solid" href="/contact/">经纪合作</a></section>
+<section class="narrow endcap reveal"><a class="btn" href="/works/">浏览作品 →</a><Cooperate /></section>
 <style>
 .ahero { display: grid; grid-template-columns: minmax(240px, 340px) 1fr; gap: 5vw; padding-top: 20px; align-items: start; }
 .portrait {

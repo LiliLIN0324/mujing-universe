@@ -64,8 +64,8 @@ export function mountMobilePager(pages) {
   window.addEventListener('scroll', () => {
     if (!fence || !mq.matches) return;
     const y = window.scrollY;
-    if (y < fence.lo - 1) window.scrollTo({ top: fence.lo, behavior: 'instant' });
-    else if (y > fence.hi + 1) window.scrollTo({ top: fence.hi, behavior: 'instant' });
+    if (y < fence.lo - 1) window.scrollTo(0, fence.lo);
+    else if (y > fence.hi + 1) window.scrollTo(0, fence.hi);
     releaseLater();
   }, { passive: true });
 

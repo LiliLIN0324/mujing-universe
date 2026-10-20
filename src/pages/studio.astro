@@ -1,29 +1,54 @@
 ---
 import Base from '../layouts/Base.astro';
+import Cooperate from '../components/Cooperate.astro';
+// TODO: 终树个人页 /studio/zhongshu/ 等文案确认后再建。卡片暂链 /contact/。未确认的项目细节不要写进页面。
 ---
-<Base title="工作室 · 幕景宇宙" active="/studio/"><main class="narrow studio">
+<Base title="工作室 · 幕景宇宙" active="/studio/"><main class="studio">
 <p class="kicker cap">Studio · 幕景宇宙</p><h1>以艺术家为核心的工作室</h1>
 <p class="lead serif">幕景宇宙（Mujing Universe）是杭州的 AIGC 文化艺术团队：艺术家负责创作，经纪与管理负责让作品抵达展厅、城市与公众。</p>
-<p class="cap">工作室名称“幕景”源自艺术家作品《幕景 Scendance》（AI 活动布置工作台）<span class="ph">命名缘由待确认</span></p>
+<p class="cap">工作室名称“幕景”源自艺术家作品《幕景 Scendance》（AI 活动布置工作台）</p>
 <h2>团队</h2>
-<div class="member main"><span class="cap">艺术家 · 主理人</span><h3>林丽丽</h3><p>创作与作品版权所有者；首尔大学城市与区域规划，华中科技大学建筑学。未来 OPC 主体。<span class="ph">主体信息待注册</span></p><a href="/artist/">艺术家页 →</a></div>
-<div class="member"><span class="cap">经纪人 · 管理</span><h3>丁科智（终树）</h3><p>艺术家经纪、项目统筹、展览与商务对接；浙江音乐学院硕士在读，参与音画线的声音部分。<span class="ph">分工待确认</span></p></div>
+<div class="members">
+  <a class="member main" href="/artist/">
+    <span class="cap">艺术家 · 创作</span>
+    <h3>林丽丽</h3>
+    <p>创作与作品版权所有者；首尔大学城市与区域规划，华中科技大学建筑学。未来 OPC 主体。</p>
+    <span class="go">艺术家页 →</span>
+  </a>
+  <a class="member" href="/contact/">
+    <span class="cap">经纪 · 制作管理 · 团队系统</span>
+    <h3>丁科智（终树）</h3>
+    <p>艺术家经纪、项目统筹、展览与商务对接；浙江音乐学院硕士在读，参与音画线的声音部分。</p>
+    <span class="go">微信 endTree-26 · 合作页 →</span>
+  </a>
+</div>
 <h2>我们做什么</h2><ul><li>AIGC 音画创作与展陈（新线，进行中）</li><li>AIGC 产品与交互设计</li><li>游戏与数字场景</li><li>空间研究与数据可视化</li></ul>
+<Cooperate />
 </main>
 <style>
-.studio { padding-top: 88px; }
-.studio { text-align: center; }
+.studio { width: min(960px, calc(100% - 96px)); margin: 0 auto; padding-top: 88px; text-align: center; }
 .studio h1 { font-size: clamp(36px, 4vw, 48px); margin: 0 0 18px; font-weight: 600; letter-spacing: -0.03em; }
 .lead { font-size: 1.2rem; color: var(--ivory-2); }
-.studio h2 { margin: 72px 0 0; font-size: 1.2rem; letter-spacing: 0.18em; font-weight: 500; }
-.member { padding: 22px 0 8px; border-top: 1px solid var(--line); margin-top: 18px; }
-.member.main { border-top-color: var(--rule); }
-.studio h2, .member, .studio ul { text-align: left; }
+.studio h2 { margin: 72px 0 0; font-size: 1.2rem; letter-spacing: 0.18em; font-weight: 500; text-align: left; }
+.members { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 18px; text-align: left; }
+.member {
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-radius: var(--radius);
+  padding: 28px 24px;
+  color: inherit;
+  text-decoration: none;
+}
 .member h3 { font-size: 1.55rem; margin: 6px 0; }
-.member p { color: var(--ivory-2); }
-.member a { color: var(--gold); text-decoration: none; letter-spacing: 0.06em; }
-.member a:hover { color: var(--ivory); }
-.studio ul { margin: 16px 0 0; padding-left: 1.1em; color: var(--ivory-2); }
+.member p { color: var(--ivory-2); margin: 0; }
+.member .go { margin-top: 16px; color: var(--gold); letter-spacing: 0.06em; }
+.member:hover .go { color: var(--ivory); }
+.studio ul { margin: 16px 0 0; padding-left: 1.1em; color: var(--ivory-2); text-align: left; }
 .studio li { padding: 6px 0; }
+@media (max-width: 720px) {
+  .studio { width: calc(100% - 32px); }
+  .members { grid-template-columns: 1fr; }
+}
 </style>
 </Base>
