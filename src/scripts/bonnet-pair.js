@@ -51,6 +51,9 @@ export function mountBonnet(root = document) {
   const draw = (phaseA, liftA, phaseB, liftB) => {
     pathA.setAttribute("d", bonnetPath(0, phaseA, liftA));
     pathB.setAttribute("d", bonnetPath(1, phaseB, liftB));
+    const dx = phaseA - phaseB;
+    const dy = liftA - liftB;
+    pathB.setAttribute("transform", `translate(${(dx * 0.85).toFixed(3)} ${(dy * 0.45).toFixed(3)})`);
   };
 
   draw(0, 0, 0, 0);
@@ -71,9 +74,19 @@ export function mountBonnet(root = document) {
     ay += (ty - ay) * 0.2;
     bx += (ax - bx) * 0.1;
     by += (ay - by) * 0.1;
+    const lead = Math.hypot(tx - ax, ty - ay);
+    const lag = Math.hypot(ax - bx, ay - by);
+    if (lead < 0.004 && lag < 0.004) {
+      ax = tx;
+      ay = ty;
+      bx = tx;
+      by = ty;
+      draw(ax, ay, bx, by);
+      raf = 0;
+      return;
+    }
     draw(ax, ay, bx, by);
-    const idle = Math.hypot(tx - ax, ty - ay) < 0.002 && Math.hypot(ax - bx, ay - by) < 0.002;
-    raf = idle ? 0 : requestAnimationFrame(step);
+    raf = requestAnimationFrame(step);
   };
 
   const kick = () => {
