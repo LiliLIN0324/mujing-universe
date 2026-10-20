@@ -26,6 +26,9 @@ uniform float uFit;
 uniform float uBreath;
 uniform float uTilt;
 uniform float uClock;
+uniform float uRadius;
+uniform float uYaw;
+uniform float uLift;
 
 varying vec2 vUv;
 
@@ -59,10 +62,16 @@ mat4 cabinMatrix(vec3 ringPos, float yaw, vec3 scale) {
 
 void main() {
   const float PI = 3.141592653589793;
-  float radius = 3.0;
+  float radius = uRadius;
   float angle = uAngle;
   vec2 ring = vec2(cos(angle * PI * 2.0), sin(angle * PI * 2.0)) * radius;
-  float yaw0 = angle * PI * 2.0 - PI * 0.2 - position.x * 0.3 - uVelocity * 15.0;
+  float spinAdd = uTime * 0.12 + uVelocity + uLag;
+  // uYaw is 1 on the default ring, and a full turn is the same pose.
+  // Below 1, only the wrapped facing shrinks, so the front card stays front.
+  float yawBase = angle * PI * 2.0 - PI * 0.2 - position.x * 0.3 - uVelocity * 15.0;
+  float combined = yawBase + spinAdd;
+  float wrapped = atan(sin(combined), cos(combined));
+  float yaw0 = uYaw * wrapped - spinAdd;
 
   // Ribbon bend is 0 at the card center, so hit-tests and the settled pose stay put.
   vec3 pos = position;
@@ -72,12 +81,13 @@ void main() {
   float grow = 1.0 + 0.5 * uScroll * uScroll;
   float fit = max(uFit, 0.2);
   vec4 p = cabinMatrix(vec3(ring.x, 0.0, ring.y), yaw0, vec3(uScale.x * grow * fit, uScale.y * grow * fit, 1.0)) * vec4(pos, 1.0);
-  p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), uTime * 0.12 + uVelocity + uLag);
+  p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), spinAdd);
   p.xyz = rotate(p.xyz, vec3(1.0, 0.0, 0.0), -PI * 0.15 * (1.0 - uScroll));
   p.z -= 20.0 - 12.0 * uScroll;  // end ≈ z-8 (01:37)
   p.x -= 3.7 * uScroll;          // more left than 01:37's 3.2
   p.y -= 0.85 * uScroll;
   p.x -= 1.4;                    // more left than 01:37's 1.15
+  p.z += uLift;
 
   // Idle float. Exactly 0 at 落幅, and uBreath/uTilt are 0 under reduced motion.
   float settle = 1.0 - smoothstep(0.62, 1.0, uScroll);
@@ -101,6 +111,7 @@ uniform float uFocus;
 uniform float uWash;
 uniform float uScroll;
 uniform float uInk;
+uniform float uRecede;
 float inkBlob(vec2 p, vec2 c, float r) {
   vec2 d = (p - c) * vec2(1.0, 1.18);
   return 1.0 - smoothstep(r * 0.62, r, length(d));
@@ -140,14 +151,19 @@ void main() {
   if (washKill < 0.2) discard;
   color = mix(vec3(0.945, 0.945, 0.941), color, clamp(washKill, 0.0, 1.0));
   color *= mix(0.62, 1.0, clamp(uFocus, 0.0, 1.0));
+  // uRecede is 0 on the default ring, so this mix is a no-op there.
+  color = mix(color, vec3(0.965, 0.961, 0.953), uRecede);
 
   // Ink bloom layered on the cover. Geometry is unchanged.
   // uInk 0 = paper, about 1.6 = the photograph fully open (~600ms).
-  float spread = max(uInk, 0.0);
-  float ink = inkBlob(vUv, vec2(0.50, 0.48), spread * 0.95);
-  ink = max(ink, inkBlob(vUv, vec2(0.68, 0.38), spread * 0.58));
-  ink = max(ink, inkBlob(vUv, vec2(0.33, 0.64), spread * 0.5));
-  color = mix(vec3(0.965, 0.961, 0.953), color, clamp(ink, 0.0, 1.0));
+  // At 1.5 the three blobs already cover the whole card, so the mix is a no-op.
+  if (uInk < 1.5) {
+    float spread = max(uInk, 0.0);
+    float ink = inkBlob(vUv, vec2(0.50, 0.48), spread * 0.95);
+    ink = max(ink, inkBlob(vUv, vec2(0.68, 0.38), spread * 0.58));
+    ink = max(ink, inkBlob(vUv, vec2(0.33, 0.64), spread * 0.5));
+    color = mix(vec3(0.965, 0.961, 0.953), color, clamp(ink, 0.0, 1.0));
+  }
 
   gl_FragColor = vec4(color, 1.0);
 }
@@ -225,6 +241,16 @@ function wrapPi(rad) {
 }
 
 export function mountPickRing(root, pickData) {
+  // Spacing, depth, drag, and hover are the ring. No address switch.
+  const ringRadius = 3.32;
+  const yawScale = 0.74;
+  const silky = true;
+  const CAPTION_STRIP = 56;
+  const LIFT = 0.26;
+  const COAST_FRICTION = 2.05;
+  const SNAP_SPEED = 0.2;
+  const SNAP_OMEGA = 5.2;
+  const SNAP_ZETA = 1;
   const canvas = root.querySelector('#pick-canvas');
   const introEl = root.querySelector('#pick-intro');
   const listEl = root.querySelector('#pick-list');
@@ -255,7 +281,7 @@ export function mountPickRing(root, pickData) {
     antialias: true,
     dpr: Math.min(2, window.devicePixelRatio || 1),
     webgl: 1,
-    preserveDrawingBuffer: true,
+    preserveDrawingBuffer: false,
   });
   const gl = renderer.gl;
   gl.clearColor(0, 0, 0, 0);
@@ -383,6 +409,10 @@ export function mountPickRing(root, pickData) {
       uLag: { value: 0 },
       uBend: { value: 0 },
       uFit: { value: 1 },
+      uRadius: { value: ringRadius },
+      uYaw: { value: yawScale },
+      uLift: { value: 0 },
+      uRecede: { value: 0 },
       uBreath: shared.uBreath,
       uTilt: shared.uTilt,
       uClock: shared.uClock,
@@ -392,7 +422,7 @@ export function mountPickRing(root, pickData) {
       vertex: VERT,
       fragment: FRAG,
       uniforms,
-      cullFace: false,
+      cullFace: gl.BACK,
       depthTest: true,
       depthWrite: true,
     });
@@ -449,6 +479,20 @@ export function mountPickRing(root, pickData) {
     return Math.max(window.innerHeight * 0.85, listEl.scrollHeight - listWindow.clientHeight);
   }
 
+  // Scroll geometry is cached. Reading it inside the frame forced layout every tick.
+  let anchor = 0;
+  let runway = 1;
+  let limit = 1;
+  let scrollY = window.scrollY;
+  let raf = 0;
+
+  function measure() {
+    if (narrow.matches) return;
+    limit = listOverflow();
+    runway = Math.max(1, root.offsetHeight - window.innerHeight);
+    anchor = root.getBoundingClientRect().top + window.scrollY;
+  }
+
   function syncRunway() {
     if (narrow.matches) {
       root.style.height = '';
@@ -456,12 +500,15 @@ export function mountPickRing(root, pickData) {
     }
     // runway keeps progress≈1 inside #picks (精选), not into CTA「合作」
     root.style.height = `${window.innerHeight + listOverflow()}px`;
+    measure();
   }
 
   function resize() {
     const host = canvas.parentElement || root;
     const width = host.clientWidth || window.innerWidth;
-    const height = host.clientHeight || window.innerHeight;
+    const height = Math.max(1, (host.clientHeight || window.innerHeight) - CAPTION_STRIP);
+    viewW = width;
+    viewH = height;
     renderer.setSize(width, height);
     camera.perspective({ aspect: width / Math.max(1, height), fov: 45 });
     applyCardScale();
@@ -475,12 +522,32 @@ export function mountPickRing(root, pickData) {
   const viewEl = introEl && introEl.querySelector('[data-role="view"]');
   const rowEls = [...root.querySelectorAll('.pick-row')];
   const rowBtns = [...root.querySelectorAll('.pick-row-btn')];
+  const soundBtn = root.querySelector('#pick-sound');
+  const soundLabel = root.querySelector('[data-role="sound-label"]');
 
   let pinned = -1;
   let pinScroll = 0;
   let inkJob = null; // { index, start }
   let inkHold = -1;
   let picksSeen = false;
+  let viewW = 1;
+  let viewH = 1;
+  // Effects stay quiet until a click or a real scroll. The first setFront on load does not count.
+  let userMoved = false;
+  let gestureScroll = window.scrollY;
+  let soundOn = false;
+  let audioCtx = null;
+  let fxIndex = -1;
+  // Variant C only. Default ring leaves both at rest.
+  let dragPointer = null;
+  let hoverIndex = -1;
+  let coastMode = 'idle';
+  let coastVel = 0;
+  let snapSpin = 0;
+  let snapVel = 0;
+  let snapTarget = 0;
+  let snapOmega = SNAP_OMEGA;
+  const dragSamples = [];
 
   /** Cover of the card that just became front. Paper until the section is on screen. */
   function beginInk(index) {
@@ -559,6 +626,9 @@ export function mountPickRing(root, pickData) {
     paintWave(waveEl, index);
     beginInk(index);
     syncList(index);
+    root.dispatchEvent(new CustomEvent('ring:change', {
+      detail: { index, title: (work && work.title) || '' },
+    }));
     // After ring 落幅 (or explicit select), keep active row in the catalog window.
     if (forceScroll || lastProgress >= LIST_LOCK) ensureRowVisible(index);
   }
@@ -579,7 +649,8 @@ export function mountPickRing(root, pickData) {
    */
   function eyeYaw(index, spin, vel) {
     const theta = (index / N) * Math.PI * 2;
-    return theta - CABIN_YAW - (vel || 0) * VEL_YAW + spin;
+    const raw = theta - CABIN_YAW - (vel || 0) * VEL_YAW + spin;
+    return wrapPi(raw) * yawScale;
   }
 
   /** Face-on score. Higher = card center normal toward the camera. */
@@ -631,6 +702,47 @@ export function mountPickRing(root, pickData) {
     return -theta + CABIN_YAW + (vel || 0) * VEL_YAW;
   }
 
+  function nearestFrontIndex(spin) {
+    let best = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < meshes.length; i++) {
+      const d = Math.abs(wrapPi(spin - spinForFront(i, 0)));
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function beginSnap(spin, vel, reduced) {
+    const rest = reduced ? spin : spin + vel / COAST_FRICTION;
+    const base = spinForFront(nearestFrontIndex(rest), 0);
+    snapTarget = spin - wrapPi(spin - base);
+    snapSpin = spin;
+    snapVel = reduced ? 0 : vel;
+    snapOmega = reduced ? 18 : SNAP_OMEGA;
+    coastVel = snapVel;
+    coastMode = 'snap';
+  }
+
+  function sampleVelocity(now, spin, allowStill) {
+    const prev = dragSamples[dragSamples.length - 1];
+    const still = prev && Math.abs(spin - prev.s) < 1e-4;
+    // A short gap before pointerup must not replace the flick with a zero sample.
+    if (!(still && !allowStill && now - prev.t < 180)) dragSamples.push({ t: now, s: spin });
+    const cutoff = now - 140;
+    while (dragSamples.length > 2 && dragSamples[0].t < cutoff) dragSamples.shift();
+    const a = dragSamples[0];
+    const b = dragSamples[dragSamples.length - 1];
+    const dt = (b.t - a.t) / 1000;
+    if (!(dt > 0.016)) return coastVel;
+    let inst = (b.s - a.s) / dt;
+    if (inst > 2.6) inst = 2.6;
+    else if (inst < -2.6) inst = -2.6;
+    return inst;
+  }
+
   function liveSpin() {
     return uTime * SPIN_RATE + (motion.matches ? 0 : smoothedDelta);
   }
@@ -669,8 +781,15 @@ export function mountPickRing(root, pickData) {
   /** Select item: sync left copy + list; rotate ring so that card's center faces the camera. No navigate. */
   function select(index) {
     if (!Number.isFinite(index) || index < 0 || index >= pickData.length) return;
+    if (silky) {
+      coastMode = 'idle';
+      coastVel = 0;
+      dragPointer = null;
+      dragSamples.length = 0;
+    }
     // Ring only has N meshes — never pin past the last card (avoids θ alias desync).
     const i = Math.min(index, meshes.length - 1);
+    userMoved = true;
     pinned = i;
     pinScroll = scrollTarget;
     const vel = motion.matches ? 0 : smoothedDelta;
@@ -694,20 +813,155 @@ export function mountPickRing(root, pickData) {
       spinSpring.hold = true;
     }
     setFront(i, { scrollList: true });
+    kick();
+  }
+
+  // 宫商角徵羽, then the same degrees an octave up. Index i → degree i % 5.
+  const PENTA = [261.63, 293.66, 329.63, 392.0, 440.0];
+  // slug → AudioBuffer, Promise, or 'miss'. A file at /ring-sounds/<slug>.mp3 replaces the pluck.
+  const sampleCache = new Map();
+
+  function degreeFreq(index) {
+    const deg = ((index % 5) + 5) % 5;
+    const oct = Math.floor(index / 5);
+    return PENTA[deg] * 2 ** oct;
+  }
+
+  function ensureCtx() {
+    if (audioCtx) {
+      if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+      return audioCtx;
+    }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      audioCtx = new AC();
+    } catch (err) {
+      return null;
+    }
+    return audioCtx;
+  }
+
+  function pluckKS(freq) {
+    const ctx = audioCtx;
+    if (!ctx) return;
+    const sr = ctx.sampleRate;
+    const n = Math.max(2, Math.round(sr / freq));
+    const dur = 0.9;
+    const len = Math.floor(sr * dur);
+    const buf = ctx.createBuffer(1, len, sr);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < n; i++) data[i] = Math.random() * 2 - 1;
+    const damp = 0.996;
+    for (let i = n; i < len; i++) {
+      const a = data[i - n];
+      const b = data[i - n + 1] || a;
+      data[i] = (a + b) * 0.5 * damp;
+    }
+    const attack = Math.floor(sr * 0.008);
+    for (let i = 0; i < attack; i++) data[i] *= i / attack;
+    const tail = Math.floor(sr * 0.08);
+    for (let i = 0; i < tail; i++) data[len - 1 - i] *= i / tail;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    const gain = ctx.createGain();
+    gain.gain.value = 0.2;
+    src.connect(gain);
+    gain.connect(ctx.destination);
+    src.start();
+  }
+
+  function playBuffer(buffer) {
+    if (!audioCtx || !buffer) return;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buffer;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.8;
+    src.connect(gain);
+    gain.connect(audioCtx.destination);
+    src.start();
+  }
+
+  function probeSample(slug) {
+    if (!slug || sampleCache.has(slug)) return;
+    const url = `/ring-sounds/${encodeURIComponent(slug)}.mp3`;
+    const job = fetch(url)
+      .then((res) => {
+        if (!res.ok) throw new Error('miss');
+        return res.arrayBuffer();
+      })
+      .then((ab) => {
+        const ctx = audioCtx;
+        if (!ctx) throw new Error('noctx');
+        return ctx.decodeAudioData(ab.slice(0));
+      })
+      .then((buffer) => {
+        sampleCache.set(slug, buffer);
+      })
+      .catch(() => {
+        sampleCache.set(slug, 'miss');
+      });
+    sampleCache.set(slug, job);
+  }
+
+  function pluck(index) {
+    if (!soundOn) return;
+    const ctx = ensureCtx();
+    if (!ctx) return;
+    const work = pickData[index];
+    const slug = work && work.slug;
+    const cached = slug ? sampleCache.get(slug) : null;
+    if (cached && cached !== 'miss' && typeof cached.then !== 'function') {
+      playBuffer(cached);
+      return;
+    }
+    // Don't wait on the file. The pluck stands in until a buffer is cached.
+    pluckKS(degreeFreq(index));
+    if (slug && !sampleCache.has(slug)) probeSample(slug);
+  }
+
+  function startFx(index) {
+    fxIndex = index;
+    pluck(index);
+  }
+
+  /** One note when a card the user brought around sits at front-center. */
+  function maybeFx(index, facing) {
+    if (!userMoved || index < 0 || index === fxIndex) return;
+    if (facing < 0.9) return;
+    startFx(index);
+  }
+
+  if (soundBtn) {
+    soundBtn.addEventListener('click', () => {
+      soundOn = !soundOn;
+      soundBtn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+      soundBtn.setAttribute('aria-label', soundOn ? '声音 开' : '声音 关');
+      if (soundLabel) soundLabel.textContent = soundOn ? '开' : '关';
+      if (!soundOn) return;
+      // This click is the gesture that may create the audio context.
+      ensureCtx();
+      for (let i = 0; i < pickData.length; i++) {
+        const slug = pickData[i] && pickData[i].slug;
+        if (slug) probeSample(slug);
+      }
+      // The card already resting at front-center plays once. A later spin continues the melody.
+      if (front >= 0) {
+        const facing = cardFacing(front, liveSpin() + lagOf(front), motion.matches ? 0 : smoothedDelta);
+        if (facing > 0.82) pluck(front);
+      }
+    });
   }
 
   function frame(now) {
     const dt = Math.min(34, now - lastNow);
     lastNow = now;
     if (narrow.matches) {
-      requestAnimationFrame(frame);
+      raf = 0;
       return;
     }
 
-    const limit = listOverflow();
-    const rect = root.getBoundingClientRect();
-    const runway = Math.max(1, root.offsetHeight - window.innerHeight);
-    const passed = Math.min(runway, Math.max(0, -rect.top));
+    const passed = Math.min(runway, Math.max(0, scrollY - anchor));
     scrollTarget = -passed * (limit / runway);
 
     // Page progress, not the spring. LIST_LOCK / unpin stay on this so a 3%
@@ -770,7 +1024,7 @@ export function mountPickRing(root, pickData) {
       const visual = spinSpring.x;
       const want = visual + VEL_YAW * smoothedDelta;
       uTime = (want - smoothedDelta) / SPIN_RATE;
-    } else if (inView && !motion.matches && Math.abs(smoothedDelta) > 1e-5) {
+    } else if (inView && !motion.matches && Math.abs(smoothedDelta) > 1e-5 && !(silky && coastMode !== 'idle')) {
       // Scroll flings the ring. Nothing is added while the page is still,
       // so the ring does not spin on its own.
       uTime += 15 * smoothedDelta;
@@ -796,6 +1050,36 @@ export function mountPickRing(root, pickData) {
       if (t >= 1) inkJob = null;
     }
 
+    if (silky && coastMode === 'drag') {
+      const idleFor = dragPointer ? (performance.now() - dragPointer.t) / 1000 : 1;
+      if (idleFor > 0.045) {
+        coastVel *= Math.exp(-12 * dtSec);
+        if (Math.abs(coastVel) < 1e-3) coastVel = 0;
+      }
+    } else if (silky && coastMode === 'coast') {
+      const prev = coastVel;
+      const decay = Math.exp(-COAST_FRICTION * dtSec);
+      coastVel = prev * decay;
+      const moved = (prev - coastVel) / COAST_FRICTION;
+      uTime += moved / SPIN_RATE;
+      if (Math.abs(coastVel) < SNAP_SPEED) beginSnap(uTime * SPIN_RATE + smoothedDelta, coastVel, false);
+    } else if (silky && coastMode === 'snap') {
+      const err = snapSpin - snapTarget;
+      const accel = -snapOmega * snapOmega * err - 2 * SNAP_ZETA * snapOmega * snapVel;
+      const v0 = snapVel;
+      snapVel += accel * dtSec;
+      snapSpin += ((v0 + snapVel) * 0.5) * dtSec;
+      uTime = (snapSpin - smoothedDelta) / SPIN_RATE;
+      coastVel = snapVel;
+      if (Math.abs(snapSpin - snapTarget) < 8e-4 && Math.abs(snapVel) < 0.015) {
+        snapSpin = snapTarget;
+        snapVel = 0;
+        coastVel = 0;
+        uTime = (snapTarget - smoothedDelta) / SPIN_RATE;
+        coastMode = 'idle';
+      }
+    }
+
     const vel = motion.matches ? 0 : smoothedDelta;
     shared.uTime.value = uTime;
     shared.uVelocity.value = vel;
@@ -809,6 +1093,7 @@ export function mountPickRing(root, pickData) {
     } else if (!motion.matches && Math.abs(progressSpring.v) > 1e-3) {
       sharedSpinVel = SPIN_RATE * 15 * progressSpring.v;
     }
+    if (silky) sharedSpinVel += coastVel;
     const spinAccel = dtSec > 0 ? Math.abs(sharedSpinVel - prevSharedSpinVel) / dtSec : 0;
     prevSharedSpinVel = sharedSpinVel;
     // Constant cruise has no stagger. Glue once the tails are close so a settled
@@ -828,10 +1113,28 @@ export function mountPickRing(root, pickData) {
     } else {
       for (let i = 0; i < meshes.length; i++) {
         const s = cardSprings[i];
-        springStep(s, spin, cardOmega(i), dtSec, sharedSpinVel, true);
+        const follow = silky && coastMode !== 'idle';
+        if (follow) {
+          const omega = cardOmega(i);
+          const err = s.x - spin;
+          const damp = s.v - sharedSpinVel;
+          const accel = -omega * omega * err - 2 * 0.92 * omega * damp;
+          s.v += accel * dtSec;
+          s.x += s.v * dtSec;
+        } else {
+          springStep(s, spin, cardOmega(i), dtSec, sharedSpinVel, true);
+        }
         let lag = s.x - spin;
         let relV = s.v - sharedSpinVel;
-        if (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05)) {
+        const silkySettle = silky && coastMode === 'idle';
+        if (silkySettle) {
+          if (Math.abs(lag) < 0.004 && Math.abs(relV) < 0.02 && Math.abs(sharedSpinVel) < 0.02) {
+            lag = 0;
+            relV = 0;
+            s.x = spin;
+            s.v = sharedSpinVel;
+          }
+        } else if (!follow && (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05))) {
           lag = 0;
           relV = 0;
           s.x = spin;
@@ -841,9 +1144,10 @@ export function mountPickRing(root, pickData) {
           s.x = spin;
         }
         meshes[i].uniforms.uLag.value = lag;
-        let bend = relV * BEND_SCALE;
-        if (bend > BEND_MAX) bend = BEND_MAX;
-        else if (bend < -BEND_MAX) bend = -BEND_MAX;
+        let bend = relV * (follow ? 0.09 : BEND_SCALE);
+        const bendCap = follow ? 0.1 : BEND_MAX;
+        if (bend > bendCap) bend = bendCap;
+        else if (bend < -bendCap) bend = -bendCap;
         if (Math.abs(bend) < 1e-3) bend = 0;
         meshes[i].uniforms.uBend.value = bend;
       }
@@ -873,12 +1177,19 @@ export function mountPickRing(root, pickData) {
       // edge cannot cover it. Pinned neighbors also shrink and step back.
       meshes[i].mesh.renderOrder = isHero ? 2 : 0;
       meshes[i].program.depthTest = !isHero;
-      meshes[i].uniforms.uFit.value = pinned >= 0 && !isHero ? 0.82 : 1;
-      meshes[i].uniforms.uFocus.value = isHero
-        ? 1
-        : pinned >= 0
-          ? 0.36
-          : Math.max(0.12, facing * 0.45 + 0.02);
+      const fit = isHero ? 1 : 0.86;
+      const focus = 1;
+      const recede = isHero ? 0 : 0.42;
+      const liftTarget = coastMode === 'idle' && i === hoverIndex && facing > 0.45 ? LIFT : 0;
+      const liftCur = meshes[i].uniforms.uLift.value;
+      let lift = liftCur + (liftTarget - liftCur) * (1 - Math.exp(-12 * dtSec));
+      if (Math.abs(lift - liftTarget) < 0.004) lift = liftTarget;
+      meshes[i].liftTarget = liftTarget;
+      meshes[i].mesh.visible = facing > 0.16;
+      meshes[i].uniforms.uFit.value = fit;
+      meshes[i].uniforms.uFocus.value = focus;
+      meshes[i].uniforms.uRecede.value = recede;
+      meshes[i].uniforms.uLift.value = lift;
       if (isHero) meshes[i].uniforms.uWash.value = 0;
       else if (meshes[i].isPaper || meshes[i].coverScore < -20) meshes[i].uniforms.uWash.value = 1;
       else meshes[i].uniforms.uWash.value = 0;
@@ -886,14 +1197,38 @@ export function mountPickRing(root, pickData) {
 
     // List stays put during approach/zoom; only the ring uses sprung progress.
     // 落幅 follows the page, so spring overshoot cannot toggle the catalog.
-    if (listEl) listEl.style.transform = 'translateY(0px)';
-    if (listWindow && pageProgress < LIST_LOCK) listWindow.scrollTop = 0;
-    root.dataset.progress = progress.toFixed(3);
-    root.classList.toggle('is-end', pageProgress > LIST_LOCK);
-    setFront(pinned >= 0 ? pinned : best);
+    const end = pageProgress > LIST_LOCK;
+    if (root.classList.contains('is-end') !== end) root.classList.toggle('is-end', end);
+    const progLabel = progress.toFixed(3);
+    if (root.dataset.progress !== progLabel) root.dataset.progress = progLabel;
+    const active = pinned >= 0 ? pinned : best;
+    setFront(active);
+    maybeFx(best, facings[best]);
 
     renderer.render({ scene, camera, frustumCull: false });
-    requestAnimationFrame(frame);
+    if (needsFrame()) raf = requestAnimationFrame(frame);
+    else raf = 0;
+  }
+
+  function needsFrame() {
+    if (inkJob) return true;
+    if (Math.abs(progressSpring.x - lastProgress) > 2e-4 || Math.abs(progressSpring.v) > 2e-3) return true;
+    if (Math.abs(tiltSpring.x - tiltTarget) > 1e-4 || Math.abs(tiltSpring.v) > 2e-3) return true;
+    if (pinned >= 0 && spinSpring.hold) return true;
+    if (Math.abs(smoothedDelta) > 1e-4 || Math.abs(velHold.v) > 2e-3) return true;
+    if (silky && coastMode !== 'idle') return true;
+    for (let i = 0; i < meshes.length; i++) {
+      if (Math.abs(meshes[i].uniforms.uLag.value) > 1e-4) return true;
+      if (Math.abs(meshes[i].uniforms.uBend.value) > 1e-4) return true;
+      if (Math.abs(meshes[i].uniforms.uLift.value - (meshes[i].liftTarget || 0)) > 0.008) return true;
+    }
+    return false;
+  }
+
+  function kick() {
+    if (raf || narrow.matches) return;
+    lastNow = performance.now();
+    raf = requestAnimationFrame(frame);
   }
 
   const watch = new IntersectionObserver(
@@ -902,6 +1237,7 @@ export function mountPickRing(root, pickData) {
       if (!inView) return;
       picksSeen = true;
       if (inkHold >= 0) beginInk(inkHold);
+      kick();
     },
     { threshold: 0.12 },
   );
@@ -913,16 +1249,17 @@ export function mountPickRing(root, pickData) {
    * Project ring phase (θ−spin) to normalized canvas X.
    * Used for click hit-testing (pickIndexAtNX); not for scroll-hero / best.
    */
-  function phaseScreenNX(phase, progress) {
-    const R = 3;
+  function phaseScreen(phase, progress, fit) {
+    const R = ringRadius;
     let x = R * Math.cos(phase);
     let y = 0;
     let z = R * Math.sin(phase);
     const pitch = -Math.PI * 0.15 * (1 - progress);
     const cp = Math.cos(pitch);
     const sp = Math.sin(pitch);
-    const y2 = y * cp - z * sp;
-    const z2 = y * sp + z * cp;
+    // Shader's mat4 constructor is column-major, so this X pitch is transposed.
+    const y2 = y * cp + z * sp;
+    const z2 = -y * sp + z * cp;
     x -= 3.7 * progress + 1.4;
     y = y2 - 0.85 * progress;
     z = z2 - (20 - 12 * progress);
@@ -939,15 +1276,30 @@ export function mountPickRing(root, pickData) {
     const viewZ = z - camera.position.z;
     const depth = Math.max(0.35, -viewZ);
     const fovRad = (camera.fov * Math.PI) / 180;
-    const halfW = Math.tan(fovRad / 2) * depth * (camera.aspect || 1);
-    const ndcX = x / Math.max(1e-4, halfW);
-    return ndcX * 0.5 + 0.5;
+    const halfH = Math.tan(fovRad / 2) * depth;
+    const halfW = halfH * (camera.aspect || 1);
+    const nx = (x / Math.max(1e-4, halfW)) * 0.5 + 0.5;
+    const ny = 0.5 - (y / Math.max(1e-4, halfH)) * 0.5;
+    const grow = 1 + 0.5 * progress * progress;
+    const scale = shared.uScale.value;
+    const f = fit == null ? 1 : fit;
+    const pxW = ((scale[0] * grow * f * 0.5) / Math.max(1e-4, halfW)) * viewW;
+    const pxH = ((scale[1] * grow * f * 0.5) / Math.max(1e-4, halfH)) * viewH;
+    return { nx, ny, pxW, pxH };
+  }
+
+  function phaseScreenNX(phase, progress) {
+    return phaseScreen(phase, progress, 1).nx;
+  }
+
+  function cardScreen(index, spin, progress, fit) {
+    const theta = (index / N) * Math.PI * 2;
+    // Transposed Y rotation sends the ring angle to θ+spin (not θ−spin).
+    return phaseScreen(theta + spin, progress, fit);
   }
 
   function cardScreenNX(index, spin, progress) {
-    const theta = (index / N) * Math.PI * 2;
-    // Transposed Y rotation sends the ring angle to θ+spin (not θ−spin).
-    return phaseScreenNX(theta + spin, progress);
+    return cardScreen(index, spin, progress, 1).nx;
   }
 
   /** Map click on canvas to the visible card under the cursor (hit-test only). */
@@ -957,17 +1309,110 @@ export function mountPickRing(root, pickData) {
     return pickIndexAtNX(nx);
   }
   canvas.addEventListener('click', (e) => {
+    if (silky && dragMoved) {
+      dragMoved = false;
+      return;
+    }
     select(pickIndexAtClientX(e.clientX));
   });
+
+  let dragOriginX = 0;
+  let dragMoved = false;
+  const captionEl = root.querySelector('#pick-caption');
+  if (captionEl) {
+    const lines = [...captionEl.querySelectorAll('.pick-caption-line')];
+    root.addEventListener('ring:change', (event) => {
+      const title = (event.detail && event.detail.title) || '';
+      const on = lines.find((el) => el.classList.contains('is-on'));
+      if (on && on.textContent === title) return;
+      if (!on || !on.textContent) {
+        const first = on || lines[0];
+        if (!first) return;
+        first.textContent = title;
+        first.classList.add('is-on');
+        return;
+      }
+      const off = lines.find((el) => el !== on);
+      if (!off) return;
+      off.textContent = title;
+      off.classList.add('is-on');
+      on.classList.remove('is-on');
+    });
+  }
+  canvas.addEventListener('pointermove', (e) => {
+    if (dragPointer) return;
+    const next = pickIndexAtClientX(e.clientX);
+    if (next === hoverIndex) return;
+    hoverIndex = next;
+    kick();
+  });
+  canvas.addEventListener('pointerleave', () => {
+    if (hoverIndex < 0) return;
+    hoverIndex = -1;
+    kick();
+  });
+
+  if (silky) {
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      dragOriginX = e.clientX;
+      dragMoved = false;
+      const now = performance.now();
+      const spin = liveSpin();
+      dragPointer = { id: e.pointerId, x: e.clientX, t: now };
+      dragSamples.length = 0;
+      dragSamples.push({ t: now, s: spin });
+      coastMode = 'drag';
+      pinned = -1;
+      spinSpring.hold = false;
+      userMoved = true;
+      canvas.setPointerCapture?.(e.pointerId);
+      kick();
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragPointer || e.pointerId !== dragPointer.id) return;
+      const dx = e.clientX - dragPointer.x;
+      if (dx === 0) return;
+      if (Math.abs(e.clientX - dragOriginX) > 6) dragMoved = true;
+      const now = performance.now();
+      const dSpin = -dx / (Math.max(1, viewW) * 0.34);
+      uTime += dSpin / SPIN_RATE;
+      dragPointer.x = e.clientX;
+      dragPointer.t = now;
+      coastVel = sampleVelocity(now, uTime * SPIN_RATE, true);
+      kick();
+    });
+    const endDrag = (e) => {
+      if (!dragPointer || (e && e.pointerId !== dragPointer.id)) return;
+      const now = performance.now();
+      const spin = liveSpin();
+      const moving = dragPointer && now - dragPointer.t < 180;
+      const measured = sampleVelocity(now, uTime * SPIN_RATE, false);
+      if (!(moving && Math.abs(measured) + 0.05 < Math.abs(coastVel))) coastVel = measured;
+      dragPointer = null;
+      dragSamples.length = 0;
+      if (motion.matches) beginSnap(spin, 0, true);
+      else if (Math.abs(coastVel) < SNAP_SPEED) beginSnap(spin, coastVel, false);
+      else coastMode = 'coast';
+      kick();
+    };
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+  }
   rowBtns.forEach((btn) => {
     btn.addEventListener('click', () => select(Number(btn.dataset.i)));
   });
   window.addEventListener('pointermove', (e) => {
     const nx = e.clientX / Math.max(1, window.innerWidth);
-    tiltTarget = (Math.min(1, Math.max(0, nx)) - 0.5) * 2 * TILT_MAX;
+    const next = (Math.min(1, Math.max(0, nx)) - 0.5) * 2 * TILT_MAX;
+    if (Math.abs(next - tiltTarget) < 1e-4) return;
+    tiltTarget = next;
+    kick();
   });
   window.addEventListener('pointerleave', () => {
+    if (tiltTarget === 0) return;
     tiltTarget = 0;
+    kick();
   });
   // During approach, pin catalog scroll; after 落幅 allow overflow scroll for selection.
   listWindow?.addEventListener('scroll', () => {
@@ -1031,15 +1476,34 @@ export function mountPickRing(root, pickData) {
         frontTitle: (pickData[front] && pickData[front].title) || '',
         top: cards.slice(0, 4),
         n: meshes.length,
+        sound: soundOn,
+        fx: fxIndex,
+        userMoved,
+        coast: coastMode,
+        coastVel: Math.round(coastVel * 1000) / 1000,
       };
     },
   };
 
   syncRunway();
   resize();
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    if (Math.abs(y - gestureScroll) > 8) {
+      userMoved = true;
+      gestureScroll = y;
+    }
+    scrollY = y;
+    kick();
+  }, { passive: true });
   window.addEventListener('resize', () => {
     syncRunway();
     resize();
+    kick();
   });
-  requestAnimationFrame(frame);
+  window.addEventListener('load', () => {
+    syncRunway();
+    kick();
+  });
+  kick();
 }
