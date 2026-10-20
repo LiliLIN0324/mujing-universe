@@ -22,6 +22,7 @@ uniform float uVelocity;
 uniform float uFocus;
 uniform float uLag;
 uniform float uBend;
+uniform float uFit;
 uniform float uBreath;
 uniform float uTilt;
 uniform float uClock;
@@ -69,7 +70,8 @@ void main() {
 
   // Back to ~01:37 end dose (~3 near), then nudge MORE LEFT than that round
   float grow = 1.0 + 0.5 * uScroll * uScroll;
-  vec4 p = cabinMatrix(vec3(ring.x, 0.0, ring.y), yaw0, vec3(uScale.x * grow, uScale.y * grow, 1.0)) * vec4(pos, 1.0);
+  float fit = max(uFit, 0.2);
+  vec4 p = cabinMatrix(vec3(ring.x, 0.0, ring.y), yaw0, vec3(uScale.x * grow * fit, uScale.y * grow * fit, 1.0)) * vec4(pos, 1.0);
   p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), uTime * 0.12 + uVelocity + uLag);
   p.xyz = rotate(p.xyz, vec3(1.0, 0.0, 0.0), -PI * 0.15 * (1.0 - uScroll));
   p.z -= 20.0 - 12.0 * uScroll;  // end ≈ z-8 (01:37)
@@ -171,11 +173,11 @@ const SPIN_OMEGA = 10;
 const VEL_OMEGA = 14;
 const TILT_OMEGA = 7;
 const TILT_MAX = (4 * Math.PI) / 180;
-const BREATH_AMP = 0.1;
-/** sin(uClock * 0.5) period. Wrapped so a long session does not lose the wave. */
+/** Breathing stays off. A visible bob read as the ring moving by itself. */
+const BREATH_AMP = 0;
 const BREATH_PERIOD = Math.PI * 4;
-const BEND_SCALE = 0.12;
-const BEND_MAX = 0.45;
+const BEND_SCALE = 0.05;
+const BEND_MAX = 0.16;
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
@@ -380,6 +382,7 @@ export function mountPickRing(root, pickData) {
       uInk: { value: 1.6 },
       uLag: { value: 0 },
       uBend: { value: 0 },
+      uFit: { value: 1 },
       uBreath: shared.uBreath,
       uTilt: shared.uTilt,
       uClock: shared.uClock,
@@ -401,7 +404,7 @@ export function mountPickRing(root, pickData) {
     const loader = new Image();
     loader.crossOrigin = 'anonymous';
     loader.decoding = 'async';
-    const entry = { mesh, img, uniforms, texture, coverScore: 0, isPaper: false };
+    const entry = { mesh, program, img, uniforms, texture, coverScore: 0, isPaper: false };
     const afterPaint = () => {
       entry.coverScore = uniforms._coverScore ?? 0;
       entry.isPaper = !!uniforms._isPaper;
@@ -767,19 +770,20 @@ export function mountPickRing(root, pickData) {
       const visual = spinSpring.x;
       const want = visual + VEL_YAW * smoothedDelta;
       uTime = (want - smoothedDelta) / SPIN_RATE;
-    } else if (inView && !motion.matches) {
-      uTime += 0.009 * dt + 15 * smoothedDelta;
+    } else if (inView && !motion.matches && Math.abs(smoothedDelta) > 1e-5) {
+      // Scroll flings the ring. Nothing is added while the page is still,
+      // so the ring does not spin on its own.
+      uTime += 15 * smoothedDelta;
     }
 
     breathClock = (breathClock + 0.009 * dt) % BREATH_PERIOD;
+    shared.uBreath.value = motion.matches ? 0 : BREATH_AMP;
     if (motion.matches) {
       tiltSpring.x = 0;
       tiltSpring.v = 0;
-      shared.uBreath.value = 0;
       shared.uTilt.value = 0;
     } else {
       springStep(tiltSpring, tiltTarget, TILT_OMEGA, dtSec);
-      shared.uBreath.value = BREATH_AMP;
       shared.uTilt.value = tiltSpring.x;
     }
     shared.uClock.value = breathClock;
@@ -798,12 +802,12 @@ export function mountPickRing(root, pickData) {
     shared.uScroll.value = progress;
 
     const spin = uTime * SPIN_RATE + vel;
-    // Match the spin we actually integrated. Idle cruise is 0.009 rad/ms * SPIN_RATE.
+    // No idle cruise. Velocity is only the scroll fling or the click spring.
     let sharedSpinVel = 0;
     if (!motion.matches && pinned >= 0) {
       sharedSpinVel = spinSpring.v + VEL_YAW * velHold.v;
-    } else if (!motion.matches && inView) {
-      sharedSpinVel = SPIN_RATE * (9 + 15 * progressSpring.v);
+    } else if (!motion.matches && Math.abs(progressSpring.v) > 1e-3) {
+      sharedSpinVel = SPIN_RATE * 15 * progressSpring.v;
     }
     const spinAccel = dtSec > 0 ? Math.abs(sharedSpinVel - prevSharedSpinVel) / dtSec : 0;
     prevSharedSpinVel = sharedSpinVel;
@@ -827,7 +831,7 @@ export function mountPickRing(root, pickData) {
         springStep(s, spin, cardOmega(i), dtSec, sharedSpinVel, true);
         let lag = s.x - spin;
         let relV = s.v - sharedSpinVel;
-        if (coasting && Math.abs(lag) < 0.05) {
+        if (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05)) {
           lag = 0;
           relV = 0;
           s.x = spin;
@@ -865,8 +869,16 @@ export function mountPickRing(root, pickData) {
     for (let i = 0; i < meshes.length; i++) {
       const facing = facings[i];
       const isHero = i === hero;
-      // Stronger dim on non-hero so the visual front reads clearly.
-      meshes[i].uniforms.uFocus.value = isHero ? 1 : Math.max(0.12, facing * 0.45 + 0.02);
+      // Draw the facing card last, without a depth test, so a neighbor's near
+      // edge cannot cover it. Pinned neighbors also shrink and step back.
+      meshes[i].mesh.renderOrder = isHero ? 2 : 0;
+      meshes[i].program.depthTest = !isHero;
+      meshes[i].uniforms.uFit.value = pinned >= 0 && !isHero ? 0.82 : 1;
+      meshes[i].uniforms.uFocus.value = isHero
+        ? 1
+        : pinned >= 0
+          ? 0.36
+          : Math.max(0.12, facing * 0.45 + 0.02);
       if (isHero) meshes[i].uniforms.uWash.value = 0;
       else if (meshes[i].isPaper || meshes[i].coverScore < -20) meshes[i].uniforms.uWash.value = 1;
       else meshes[i].uniforms.uWash.value = 0;
@@ -1012,6 +1024,7 @@ export function mountPickRing(root, pickData) {
         maxBend: Math.round(maxBend * 1e4) / 1e4,
         tilt: Math.round(visualTilt(progress) * 1e4) / 1e4,
         breath: motion.matches ? 0 : Math.round(BREATH_AMP * settleOf(progress) * 1e4) / 1e4,
+        heroDepthTest: front >= 0 ? meshes[front].program.depthTest : null,
         best,
         bestFacing: Math.round(bestFacing * 1000) / 1000,
         bestTitle: (pickData[best] && pickData[best].title) || '',
