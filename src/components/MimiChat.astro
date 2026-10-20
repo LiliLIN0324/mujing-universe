@@ -41,9 +41,6 @@
     --mimi-edge: 22px;
     --mimi-lift: 22px;
   }
-  /* Homepage painting hint sits on the lower right of a tall first screen.
-     Keep the closed button clear of 聆听图景 on short desktop windows. */
-  :global(body:has(.listen)) .mimi { --mimi-lift: 28px; }
   .mimi-launch,
   .mimi-panel {
     position: fixed;
@@ -101,14 +98,16 @@
   .mimi-dots i:nth-child(2) { animation-delay: 0.15s; }
   .mimi-dots i:nth-child(3) { animation-delay: 0.3s; }
   .mimi[data-state="answering"] .mimi-face {
-    box-shadow: inset 0 0 0 2px #1a1a1c;
+    outline: 2px solid #1a1a1c;
+    outline-offset: 2px;
   }
   .mimi[data-state="error"] .mimi-face {
-    box-shadow: inset 0 0 0 2px #b23a2a;
+    outline: 2px solid #b23a2a;
+    outline-offset: 2px;
     animation: mimi-shake 0.42s ease;
   }
   .mimi-panel {
-    bottom: calc(var(--mimi-lift) + 68px);
+    bottom: 90px;
     display: none;
     flex-direction: column;
     width: min(400px, calc(100vw - 36px));
@@ -159,8 +158,12 @@
     flex: none;
   }
   .mimi-x:hover { background: rgba(26, 26, 28, 0.06); }
+  .mimi-hd,
+  .mimi-quick,
+  .mimi-form { flex: none; }
   .mimi-log {
     flex: 1;
+    min-height: 0;
     overflow: auto;
     overscroll-behavior: contain;
     padding: 14px 14px 6px;
@@ -248,10 +251,11 @@
     border: 0;
   }
   :global(body:has(#mimi) footer.bot) { padding-bottom: 108px; }
+  :global(body:has(#mimi):has(.listen) footer.bot) { padding-bottom: 200px; }
   @media (max-width: 768px) {
     .mimi {
       --mimi-edge: 14px;
-      --mimi-lift: calc(84px + env(safe-area-inset-bottom));
+      --mimi-lift: calc(88px + env(safe-area-inset-bottom));
     }
     .mimi-launch { width: 52px; height: 52px; }
     .mimi-panel {
@@ -262,8 +266,9 @@
       height: min(680px, calc(100dvh - 76px));
     }
     :global(body.mimi-open) { overflow: hidden; }
-    :global(body:has(#mimi) footer.bot) {
-      padding-bottom: calc(128px + env(safe-area-inset-bottom));
+    :global(body:has(#mimi) footer.bot),
+    :global(body:has(#mimi):has(.listen) footer.bot) {
+      padding-bottom: calc(156px + env(safe-area-inset-bottom));
     }
   }
   @keyframes mimi-dot {
@@ -478,6 +483,29 @@
     });
     quick.forEach((btn) => btn.addEventListener('click', () => ask(btn.textContent || '')));
 
+    function placeLaunch() {
+      if (window.innerWidth <= 768) {
+        root.style.removeProperty('--mimi-lift');
+        return;
+      }
+      const listen = document.querySelector('.listen');
+      const edge = 22;
+      const size = 56;
+      let lift = edge;
+      if (listen) {
+        const r = listen.getBoundingClientRect();
+        const launchLeft = window.innerWidth - edge - size;
+        const overlaps = r.width > 0 && r.bottom > 0 && r.top < window.innerHeight
+          && r.right > launchLeft - 12 && r.left < window.innerWidth - 8
+          && r.bottom > window.innerHeight - edge - size - 12 && r.top < window.innerHeight - edge;
+        if (overlaps) lift = Math.min(Math.ceil(window.innerHeight - r.top + 16), Math.round(window.innerHeight * 0.4));
+      }
+      root.style.setProperty('--mimi-lift', `${lift}px`);
+    }
+    placeLaunch();
+    window.addEventListener('load', placeLaunch);
+    if (document.fonts) document.fonts.ready.then(placeLaunch);
+
     const vv = window.visualViewport;
     if (vv) {
       vv.addEventListener('resize', fit);
@@ -485,6 +513,7 @@
     }
     window.addEventListener('resize', () => {
       document.body.classList.toggle('mimi-open', root.classList.contains('is-open') && window.innerWidth <= 768);
+      placeLaunch();
       fit();
     });
   }
