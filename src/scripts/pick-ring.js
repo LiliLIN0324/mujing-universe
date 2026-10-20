@@ -254,8 +254,8 @@ export function mountPickRing(root, pickData) {
   const yawScale = variant === 'a' ? 0.74 : 1;
   // a–d share one drag path so each mock can be flicked. Default (no param) never enters it.
   const silky = variant !== '';
-  const COAST_FRICTION = 2.4;
-  const SNAP_SPEED = 0.32;
+  const COAST_FRICTION = 2.05;
+  const SNAP_SPEED = 0.2;
   const SNAP_OMEGA = 5.2;
   const SNAP_ZETA = 1;
   const canvas = root.querySelector('#pick-canvas');
@@ -730,17 +730,20 @@ export function mountPickRing(root, pickData) {
     coastMode = 'snap';
   }
 
-  function sampleVelocity(now, spin) {
-    dragSamples.push({ t: now, s: spin });
-    const cutoff = now - 90;
+  function sampleVelocity(now, spin, allowStill) {
+    const prev = dragSamples[dragSamples.length - 1];
+    const still = prev && Math.abs(spin - prev.s) < 1e-4;
+    // A short gap before pointerup must not replace the flick with a zero sample.
+    if (!(still && !allowStill && now - prev.t < 180)) dragSamples.push({ t: now, s: spin });
+    const cutoff = now - 140;
     while (dragSamples.length > 2 && dragSamples[0].t < cutoff) dragSamples.shift();
     const a = dragSamples[0];
     const b = dragSamples[dragSamples.length - 1];
     const dt = (b.t - a.t) / 1000;
     if (!(dt > 0.016)) return coastVel;
-    const inst = (b.s - a.s) / dt;
-    if (inst > 2.6) return 2.6;
-    if (inst < -2.6) return -2.6;
+    let inst = (b.s - a.s) / dt;
+    if (inst > 2.6) inst = 2.6;
+    else if (inst < -2.6) inst = -2.6;
     return inst;
   }
 
@@ -1025,7 +1028,7 @@ export function mountPickRing(root, pickData) {
       const visual = spinSpring.x;
       const want = visual + VEL_YAW * smoothedDelta;
       uTime = (want - smoothedDelta) / SPIN_RATE;
-    } else if (inView && !motion.matches && Math.abs(smoothedDelta) > 1e-5) {
+    } else if (inView && !motion.matches && Math.abs(smoothedDelta) > 1e-5 && !(silky && coastMode !== 'idle')) {
       // Scroll flings the ring. Nothing is added while the page is still,
       // so the ring does not spin on its own.
       uTime += 15 * smoothedDelta;
@@ -1441,14 +1444,16 @@ export function mountPickRing(root, pickData) {
       uTime += dSpin / SPIN_RATE;
       dragPointer.x = e.clientX;
       dragPointer.t = now;
-      coastVel = sampleVelocity(now, liveSpin());
+      coastVel = sampleVelocity(now, uTime * SPIN_RATE, true);
       kick();
     });
     const endDrag = (e) => {
       if (!dragPointer || (e && e.pointerId !== dragPointer.id)) return;
       const now = performance.now();
       const spin = liveSpin();
-      coastVel = sampleVelocity(now, spin);
+      const moving = dragPointer && now - dragPointer.t < 180;
+      const measured = sampleVelocity(now, uTime * SPIN_RATE, false);
+      if (!(moving && Math.abs(measured) + 0.05 < Math.abs(coastVel))) coastVel = measured;
       dragPointer = null;
       dragSamples.length = 0;
       if (motion.matches) beginSnap(spin, 0, true);
