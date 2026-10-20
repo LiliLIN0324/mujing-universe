@@ -70,7 +70,26 @@ const backNote = featured ? '精选目录' : '作品目录';
       <div class="wd-wrap"><div class="wd-sec"><b>全卷</b><span class="d">横向拖动浏览</span><span class="m">左右滑动</span></div></div>
       <div class="wd-strip" id="wd-strip"><img src={strip} alt={`${w.title} · 全卷`} referrerpolicy="no-referrer" loading="lazy" draggable="false"/></div>
       <div class="wd-prog" id="wd-prog" aria-hidden="true"></div>
+      {w.slug === 'xihu-panorama' && (
+        <figure class="math-curve" data-elliptic aria-label="椭圆曲线弦图。滚动页面或拖动长卷，直线与曲线的交点标出当前一段。">
+          <div class="math-panel">
+            <svg viewBox="0 0 400 460" preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false"></svg>
+          </div>
+          <figcaption>
+            <span class="math-cap"><span>弦 · y<sup>2</sup> = x<sup>3</sup> + ax + b</span><span data-elliptic-sec>第 1 / 6 段</span></span>
+            <span class="math-note">a = -1，b = 0 · 拖动长卷或滚动页面 · 秩 ≥ 31 · 2026</span>
+          </figcaption>
+        </figure>
+      )}
     </>}
+    {w.slug === 'hongqiqu' && (
+      <div class="math-hull-track">
+        <figure class="math-hull" data-hull="scroll" aria-label="散落的墨点随页面滚动收成一个凸包。">
+          <div class="math-hull-stage"><canvas aria-hidden="true"></canvas></div>
+          <figcaption class="math-cap"><span>凸包</span><span>散点随滚动收束</span></figcaption>
+        </figure>
+      </div>
+    )}
     {stills.map((src, i) => (
       <figure class="wd-fig" data-hide-on-err>
         <img data-r2 src={src} alt={`${w.title} · 静帧 ${pad(i + 2)}`} referrerpolicy="no-referrer" loading="lazy"/>
@@ -181,6 +200,46 @@ const backNote = featured ? '精选目录' : '作品目录';
 .wd-next .nm { display: block; margin-top: 8px; font-size: 13px; line-height: normal; color: #9a958c; letter-spacing: 0.06em; }
 .wd-next .ar, .wd-back-m { display: none; }
 .wd-next:hover .t { opacity: 0.7; }
+.math-curve { width: min(720px, calc(100% - 128px)); margin: 36px auto 0; }
+.math-panel {
+  height: 380px;
+  background: #F6F5F3;
+  border-radius: 20px;
+  overflow: hidden;
+}
+.math-panel svg { width: 100%; height: 100%; display: block; }
+.math-curve figcaption, .math-hull figcaption { margin: 0; }
+.math-cap {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.12em;
+  color: #9a958c;
+}
+.math-cap sup { font-size: 0.72em; line-height: 0; }
+.math-note {
+  display: block;
+  margin-top: 6px;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", system-ui, sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #b9b4ab;
+}
+.math-hull-track { height: 180vh; }
+.math-hull { position: sticky; top: 88px; margin: 0 64px; }
+.math-hull-stage {
+  height: 260px;
+  background: #F6F5F3;
+  border-radius: 20px;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.math-hull-stage canvas { width: 100%; height: 100%; display: block; }
 
 @media (max-width: 768px) {
   :global(html) { scroll-snap-type: y mandatory; scroll-padding-top: 52px; }
@@ -213,6 +272,12 @@ const backNote = featured ? '精选目录' : '作品目录';
   .wd-sec .m { display: inline; }
   .wd-strip { margin-top: 14px; height: 200px; cursor: auto; }
   .wd-prog { margin: 12px 24px 0; }
+  .math-curve { width: calc(100% - 48px); margin-top: 20px; }
+  .math-panel { height: 250px; border-radius: 20px; }
+  .math-cap, .math-note { font-size: 11px; letter-spacing: 0.08em; }
+  .math-hull-track { height: 160vh; }
+  .math-hull { top: 64px; margin: 0 24px; }
+  .math-hull-stage { height: 210px; }
   .wd-prog::after { width: 8%; transform: translateX(calc(var(--p) * (100% / 0.08 - 100%))); }
   .wd-fig { margin: 44px 0 0; }
   .wd-fig figcaption { margin: 10px 24px 0; font-size: 11px; }
@@ -228,12 +293,23 @@ const backNote = featured ? '精选目录' : '作品目录';
   .wd-back-m { display: flex; justify-content: space-between; margin-top: 28px; padding: 16px 0; border-top: 1px solid #f0ede8; border-bottom: 1px solid #f0ede8; font-size: 14px; line-height: normal; letter-spacing: 0.1em; color: #1a1a18; text-decoration: none; }
   .wd-back-m span { color: #9a958c; font-size: 12px; }
 }
+@media (prefers-reduced-motion: reduce) {
+  .math-hull-track { height: auto; }
+  .math-hull { position: static; top: auto; margin: 36px 64px 0; }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .math-hull { margin: 28px 24px 0; }
+}
 </style>
 <script>
 import { mountAutohideNav } from '../../scripts/autohide-nav.js';
 import { mountWorkDetail } from '../../scripts/work-detail.js';
+import { mountEllipticChord } from '../../scripts/elliptic-chord.js';
+import { mountConvexHull } from '../../scripts/convex-hull.js';
 mountAutohideNav(document.getElementById('home-nav'));
 mountWorkDetail();
+mountEllipticChord();
+mountConvexHull();
 const heroImg = document.querySelector('.wd-hero img');
 if (heroImg) heroImg.addEventListener('error', () => {
   const next = heroImg.dataset.fallback;
