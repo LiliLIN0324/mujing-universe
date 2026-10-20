@@ -125,6 +125,11 @@ void main() {
 
 const SCROLL_LERP = 0.1;
 const DELTA_LERP = 0.1;
+/** VERT: world yaw added as `uTime * 0.12 + uVelocity`. */
+const SPIN_RATE = 0.12;
+/** VERT cabin yaw at card center: `θ - PI*0.2 - uVelocity*15` (position.x bend is 0 at center). */
+const CABIN_YAW = Math.PI * 0.2;
+const VEL_YAW = 15;
 /** Ring end pose (落幅); list stays still until progress reaches this. */
 const LIST_LOCK = 0.92;
 /** Idle/mid readable size: ~40% frustum width, 16:9 (demalde DOM-scale order). */
@@ -439,17 +444,22 @@ export function mountPickRing(root, pickData) {
   }
 
   /**
-   * Visual front ring phase — matches VERT cabin yaw offset (−PI*0.2).
-   * Eye / best / setFront / spinTargetFor all park θ_i here.
+   * Eye yaw of card center. VERT writes the rotation matrix in column-major order,
+   * so it is transposed: world Z of the normal is cos(yaw0 + spin) either way.
+   * yaw0 = θ - CABIN_YAW - VEL_YAW*vel, spin = uTime*SPIN_RATE + vel.
+   * The old front (θ - spin - (π/2 - π*0.2)) only matched this at rest (both pick i=1).
+   * Once spin or uVelocity moved, list/copy followed the old score and the card
+   * facing the camera was a different slot — about a quarter turn on click.
+   * Faces the camera when eyeYaw ≡ 0.
    */
-  function frontPhase() {
-    return Math.PI / 2 - Math.PI * 0.2;
+  function eyeYaw(index, spin, vel) {
+    const theta = (index / N) * Math.PI * 2;
+    return theta - CABIN_YAW - (vel || 0) * VEL_YAW + spin;
   }
 
-  /** Face-on score: cos(θ − spin − frontPhase). Higher = more cabin-facing the eye. */
-  function cardFacing(index, spin) {
-    const theta = (index / N) * Math.PI * 2;
-    return Math.cos(wrapPi(theta - spin - frontPhase()));
+  /** Face-on score. Higher = card center normal toward the camera. */
+  function cardFacing(index, spin, vel) {
+    return Math.cos(wrapPi(eyeYaw(index, spin, vel)));
   }
 
   /**
@@ -465,7 +475,7 @@ export function mountPickRing(root, pickData) {
     const pr = progress == null ? lastProgress : progress;
     const scored = [];
     for (let i = 0; i < meshes.length; i++) {
-      const facing = cardFacing(i, sp);
+      const facing = cardFacing(i, sp, motion.matches ? 0 : shared.uVelocity.value);
       if (facing < -0.2) continue;
       const sx = cardScreenNX(i, sp, pr);
       if (sx < 0.0 || sx > 1.0) continue;
@@ -488,28 +498,34 @@ export function mountPickRing(root, pickData) {
     return scored[0].i;
   }
 
-  /** Shortest spin that puts card index at frontPhase (yaw-aware eye front). */
-  function spinTargetFor(index, spinNow) {
+  /** Absolute world spin that puts card index face-on at this velocity. */
+  function spinForFront(index, vel) {
     const theta = (index / N) * Math.PI * 2;
-    const want = theta - frontPhase();
-    return spinNow + wrapPi(want - spinNow);
+    return -theta + CABIN_YAW + (vel || 0) * VEL_YAW;
   }
 
   function liveSpin() {
-    return (motion.matches ? 0 : uTime * 0.12) + (motion.matches ? 0 : smoothedDelta);
+    return uTime * SPIN_RATE + (motion.matches ? 0 : smoothedDelta);
   }
 
-  /** Select item: sync left copy + list; rotate ring so card faces front. No navigate. */
+  /** Select item: sync left copy + list; rotate ring so that card's center faces the camera. No navigate. */
   function select(index) {
     if (!Number.isFinite(index) || index < 0 || index >= pickData.length) return;
     // Ring only has N meshes — never pin past the last card (avoids θ alias desync).
     const i = Math.min(index, meshes.length - 1);
     pinned = i;
     pinScroll = scrollTarget;
-    if (!motion.matches && i >= 0) {
-      const now = liveSpin();
-      const to = spinTargetFor(i, now);
-      spinAnim = { from: now, to, start: performance.now() };
+    const vel = motion.matches ? 0 : smoothedDelta;
+    const now = liveSpin();
+    if (motion.matches) {
+      // Snap. Reduced motion skips the tween, but the face-on card must still match the list.
+      smoothedDelta = 0;
+      uTime = spinForFront(i, 0) / SPIN_RATE;
+      spinAnim = null;
+    } else {
+      // Ease the velocity-free part of spin. Each frame adds 15*vel back so eye yaw
+      // stays on the curve while scroll velocity dies (see frame).
+      spinAnim = { from: now - VEL_YAW * vel, start: performance.now() };
     }
     setFront(i, { scrollList: true });
   }
@@ -548,34 +564,35 @@ export function mountPickRing(root, pickData) {
       spinAnim = null;
     }
 
-    if (spinAnim && !motion.matches) {
-      const t = Math.min(1, (now - spinAnim.start) / 450);
-      const e = 1 - Math.pow(1 - t, 3);
-      const spinWant = spinAnim.from + (spinAnim.to - spinAnim.from) * e;
-      // Hold velocity near 0 while tweening; map desired spin onto uTime.
-      smoothedDelta = lerp(smoothedDelta, 0, 0.35);
-      uTime = (spinWant - smoothedDelta) / 0.12;
-      if (t >= 1) spinAnim = null;
-    } else if (pinned >= 0 && !motion.matches) {
-      // Hard hold: keep selected card geometrically front; idle must not drift away.
-      smoothedDelta = lerp(smoothedDelta, 0, 0.4);
-      const want = spinTargetFor(pinned, liveSpin());
-      uTime = (want - smoothedDelta) / 0.12;
+    if (pinned >= 0 && !motion.matches) {
+      smoothedDelta = lerp(smoothedDelta, 0, spinAnim ? 0.35 : 0.4);
+      const vel = smoothedDelta;
+      let visual = spinForFront(pinned, 0);
+      if (spinAnim) {
+        const t = Math.min(1, (now - spinAnim.start) / 450);
+        const e = 1 - Math.pow(1 - t, 3);
+        visual = spinAnim.from + (spinForFront(pinned, 0) - spinAnim.from) * e;
+        if (t >= 1) spinAnim = null;
+      }
+      // visual is the vel=0 spin. Shader still subtracts VEL_YAW*vel, so add it back.
+      const want = visual + VEL_YAW * vel;
+      uTime = (want - vel) / SPIN_RATE;
     } else if (inView && !motion.matches) {
       uTime += 0.009 * dt + 15 * smoothedDelta;
     }
 
-    shared.uTime.value = motion.matches ? 0 : uTime;
-    shared.uVelocity.value = motion.matches ? 0 : smoothedDelta;
+    const vel = motion.matches ? 0 : smoothedDelta;
+    shared.uTime.value = uTime;
+    shared.uVelocity.value = vel;
     shared.uScroll.value = progress;
 
-    // Yaw-aware eye-hero: argmax cardFacing (cabin −PI*0.2), not heroNX proximity.
-    const spin = motion.matches ? 0 : uTime * 0.12 + smoothedDelta;
+    // Same yaw the shader uses, so the highlighted row is the card facing the camera.
+    const spin = uTime * SPIN_RATE + vel;
     let best = 0;
     let bestFacing = -Infinity;
     const facings = new Array(meshes.length);
     for (let i = 0; i < meshes.length; i++) {
-      const facing = cardFacing(i, spin);
+      const facing = cardFacing(i, spin, vel);
       facings[i] = facing;
       if (facing > bestFacing) {
         bestFacing = facing;
@@ -642,7 +659,8 @@ export function mountPickRing(root, pickData) {
 
   function cardScreenNX(index, spin, progress) {
     const theta = (index / N) * Math.PI * 2;
-    return phaseScreenNX(theta - spin, progress);
+    // Transposed Y rotation sends the ring angle to θ+spin (not θ−spin).
+    return phaseScreenNX(theta + spin, progress);
   }
 
   /** Map click on canvas to the visible card under the cursor (hit-test only). */
@@ -668,13 +686,13 @@ export function mountPickRing(root, pickData) {
     state: () => {
       const progress = shared.uScroll.value;
       const spin = liveSpin();
-      const fp = frontPhase();
+      const vel = motion.matches ? 0 : smoothedDelta;
       const hnx = heroNX(progress);
       let best = 0;
       let bestFacing = -Infinity;
       const cards = [];
       for (let i = 0; i < meshes.length; i++) {
-        const facing = cardFacing(i, spin);
+        const facing = cardFacing(i, spin, vel);
         const sx = cardScreenNX(i, spin, progress);
         if (facing > bestFacing) {
           bestFacing = facing;
@@ -693,7 +711,9 @@ export function mountPickRing(root, pickData) {
         front,
         pinned,
         progress,
-        frontPhase: fp,
+        vel,
+        uTime,
+        eye: Math.round(wrapPi(eyeYaw(front, spin, vel)) * 1000) / 1000,
         heroNX: Math.round(hnx * 1000) / 1000,
         spin,
         best,
