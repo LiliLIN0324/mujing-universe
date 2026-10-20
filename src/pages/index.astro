@@ -52,13 +52,14 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
       x5-playsinline
       x5-video-player-type="h5"
       preload="none"
+      poster={SCROLL_STILL}
       disablepictureinpicture
       referrerpolicy="no-referrer"
       data-src={SCROLL_VIDEO}
       aria-hidden="true"
     ></video>
   </div>
-  <div class="hero-cue" aria-hidden="true">长卷 · 自动展开<i></i>01 / 12</div>
+  <div class="hero-cue" aria-hidden="true">点击展开<i></i>01 / 12</div>
   <div class="hero-seal" aria-hidden="true">滑动或拖动 · 浏览全卷</div>
   <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
 </section>
@@ -71,7 +72,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     <p class="meta">古画新绘　·　进行中　·　2026</p>
   </div>
   <div class="hero-act">
-    <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+    <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video" aria-label="聆听长卷"><span class="ic" aria-hidden="true"></span><span class="lb">聆听长卷</span></button>
   </div>
 </div>
 <a class="scroll-cue" id="scroll-cue" href="#picks" aria-label="向下滚动至精选"><span>SCROLL</span><i></i></a>
@@ -191,21 +192,14 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   overflow: hidden;
   background: #d8d2c4;
 }
-/* Mock framing: still scaled to 1180/660 of the frame height, anchored top-left,
-   lifted 100px so only pavilions / willows / blossoms / shoreline show.
-   Pans very slowly left-to-right across the scroll. */
+/* Still poster: first frame, anchored top-left and lifted so pavilions show.
+   The scroll plays only after 聆听长卷. */
 .hero-pan {
   position: absolute;
   top: calc(var(--hh) * -100 / 660);
   left: -6vw;
   height: calc(var(--hh) * 1180 / 660);
   width: max(calc(var(--hh) * 1180 / 660 * 1920 / 760), 112vw);
-  animation: hero-pan 140s ease-in-out infinite alternate;
-  will-change: transform;
-}
-@keyframes hero-pan {
-  from { transform: translateX(0); }
-  to { transform: translateX(calc(-97% + 106vw)); }
 }
 .hero-still,
 .hero-video {
@@ -222,6 +216,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   opacity: 0;
   pointer-events: none;
 }
+.hero.is-started .hero-video { opacity: 1; }
 .hero::after {
   content: "";
   position: absolute;
@@ -329,7 +324,10 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 .listen {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 10px;
+  box-sizing: border-box;
+  min-width: 148px;
   border: 0;
   background: #1a1a18;
   color: #fff;
@@ -808,6 +806,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     animation: none;
     transform: translate3d(var(--pan-x, 0px), 0, 0);
   }
+  .hero.is-started .hero-video { opacity: 0; }
   .hero-still {
     position: relative;
     inset: auto;
@@ -1079,8 +1078,11 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 }
 @media (prefers-reduced-motion: reduce) {
   .hero-video { opacity: 0; }
-  .hero-pan { animation: none; }
+  .hero.is-started .hero-video { opacity: 1; }
   .scroll-cue i::after { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 768px) {
+  .hero.is-started .hero-video { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .about__gallery__wrapper,
@@ -1102,16 +1104,22 @@ function setVolume(value) {
   try { video.volume = value; } catch (err) { /* iOS keeps volume read-only */ }
 }
 
+function setPlayButton(on) {
+  listen.setAttribute('aria-pressed', on ? 'true' : 'false');
+  listen.setAttribute('aria-label', on ? '暂停' : '聆听长卷');
+  listenLabel.textContent = on ? '暂停' : '聆听长卷';
+}
+
 function failSilent() {
   listening = false;
-  hero.classList.remove('is-listening');
+  hero.classList.remove('is-listening', 'is-started', 'is-playing');
+  try { video.pause(); } catch (err) { /* already stopped */ }
   video.muted = true;
   video.defaultMuted = true;
   video.setAttribute('muted', '');
   setVolume(0);
   listen.disabled = false;
-  listen.setAttribute('aria-pressed', 'false');
-  listenLabel.textContent = '聆听图景';
+  setPlayButton(false);
 }
 
 function setAudible(on) {
@@ -1122,15 +1130,11 @@ function setAudible(on) {
     video.defaultMuted = false;
     video.removeAttribute('muted');
     setVolume(1);
-    listen.setAttribute('aria-pressed', 'true');
-    listenLabel.textContent = '静音';
   } else {
     video.muted = true;
     video.defaultMuted = true;
     video.setAttribute('muted', '');
     setVolume(0);
-    listen.setAttribute('aria-pressed', 'false');
-    listenLabel.textContent = '聆听图景';
   }
 }
 
@@ -1138,20 +1142,27 @@ function attachSource() {
   const src = video.dataset.src;
   if (!src) return false;
   video.playsInline = true;
-  video.autoplay = true;
-  video.loop = true;
-  video.preload = 'none';
-  if (!listening) {
-    video.muted = true;
-    video.defaultMuted = true;
-    video.setAttribute('muted', '');
-  }
+  video.autoplay = false;
+  video.loop = false;
+  video.preload = 'metadata';
   if (video.getAttribute('src') !== src) video.src = src;
   return true;
 }
 
 video.addEventListener('playing', () => {
-  hero.classList.add('is-playing');
+  if (heroOnMobile()) return;
+  hero.classList.add('is-playing', 'is-started');
+  setPlayButton(true);
+});
+video.addEventListener('pause', () => {
+  if (heroOnMobile()) return;
+  hero.classList.remove('is-playing');
+  setPlayButton(false);
+});
+video.addEventListener('ended', () => {
+  if (heroOnMobile()) return;
+  hero.classList.remove('is-playing');
+  setPlayButton(false);
 });
 video.addEventListener('error', () => {
   if (heroOnMobile()) return;
@@ -1160,16 +1171,20 @@ video.addEventListener('error', () => {
 listen.addEventListener('click', () => {
   if (heroOnMobile()) return;
   if (listen.disabled) return;
-  if (listening) {
-    setAudible(false);
+  if (!video.paused) {
+    video.pause();
     return;
   }
   if (!attachSource()) { failSilent(); return; }
   setAudible(true);
+  if (video.ended) {
+    try { video.currentTime = 0; } catch (err) { /* play() restarts */ }
+  }
   const attempt = video.play();
   if (attempt) attempt.catch((err) => {
     if (err && err.name === 'AbortError') return;
     setAudible(false);
+    setPlayButton(false);
     if (video.error) failSilent();
   });
 });
