@@ -252,6 +252,12 @@ export function mountPickRing(root, pickData) {
   })();
   const ringRadius = variant === 'a' ? 3.32 : 3;
   const yawScale = variant === 'a' ? 0.74 : 1;
+  // a–d share one drag path so each mock can be flicked. Default (no param) never enters it.
+  const silky = variant !== '';
+  const COAST_FRICTION = 2.4;
+  const SNAP_SPEED = 0.32;
+  const SNAP_OMEGA = 5.2;
+  const SNAP_ZETA = 1;
   const canvas = root.querySelector('#pick-canvas');
   const introEl = root.querySelector('#pick-intro');
   const listEl = root.querySelector('#pick-list');
@@ -541,8 +547,14 @@ export function mountPickRing(root, pickData) {
   let fxIndex = -1;
   // Variant C only. Default ring leaves both at rest.
   let dragPointer = null;
-  let extraVel = 0;
   let hoverIndex = -1;
+  let coastMode = 'idle';
+  let coastVel = 0;
+  let snapSpin = 0;
+  let snapVel = 0;
+  let snapTarget = 0;
+  let snapOmega = SNAP_OMEGA;
+  const dragSamples = [];
 
   /** Cover of the card that just became front. Paper until the section is on screen. */
   function beginInk(index) {
@@ -694,6 +706,44 @@ export function mountPickRing(root, pickData) {
     return -theta + CABIN_YAW + (vel || 0) * VEL_YAW;
   }
 
+  function nearestFrontIndex(spin) {
+    let best = 0;
+    let bestD = Infinity;
+    for (let i = 0; i < meshes.length; i++) {
+      const d = Math.abs(wrapPi(spin - spinForFront(i, 0)));
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
+  function beginSnap(spin, vel, reduced) {
+    const rest = reduced ? spin : spin + vel / COAST_FRICTION;
+    const base = spinForFront(nearestFrontIndex(rest), 0);
+    snapTarget = spin - wrapPi(spin - base);
+    snapSpin = spin;
+    snapVel = reduced ? 0 : vel;
+    snapOmega = reduced ? 18 : SNAP_OMEGA;
+    coastVel = snapVel;
+    coastMode = 'snap';
+  }
+
+  function sampleVelocity(now, spin) {
+    dragSamples.push({ t: now, s: spin });
+    const cutoff = now - 90;
+    while (dragSamples.length > 2 && dragSamples[0].t < cutoff) dragSamples.shift();
+    const a = dragSamples[0];
+    const b = dragSamples[dragSamples.length - 1];
+    const dt = (b.t - a.t) / 1000;
+    if (!(dt > 0.016)) return coastVel;
+    const inst = (b.s - a.s) / dt;
+    if (inst > 2.6) return 2.6;
+    if (inst < -2.6) return -2.6;
+    return inst;
+  }
+
   function liveSpin() {
     return uTime * SPIN_RATE + (motion.matches ? 0 : smoothedDelta);
   }
@@ -732,6 +782,12 @@ export function mountPickRing(root, pickData) {
   /** Select item: sync left copy + list; rotate ring so that card's center faces the camera. No navigate. */
   function select(index) {
     if (!Number.isFinite(index) || index < 0 || index >= pickData.length) return;
+    if (silky) {
+      coastMode = 'idle';
+      coastVel = 0;
+      dragPointer = null;
+      dragSamples.length = 0;
+    }
     // Ring only has N meshes — never pin past the last card (avoids θ alias desync).
     const i = Math.min(index, meshes.length - 1);
     userMoved = true;
@@ -995,10 +1051,34 @@ export function mountPickRing(root, pickData) {
       if (t >= 1) inkJob = null;
     }
 
-    if (variant === 'c' && !dragPointer) {
-      extraVel *= Math.exp(-3.1 * dtSec);
-      if (Math.abs(extraVel) < 2e-4) extraVel = 0;
-      if (extraVel !== 0) uTime += (extraVel * dtSec) / SPIN_RATE;
+    if (silky && coastMode === 'drag') {
+      const idleFor = dragPointer ? (performance.now() - dragPointer.t) / 1000 : 1;
+      if (idleFor > 0.045) {
+        coastVel *= Math.exp(-12 * dtSec);
+        if (Math.abs(coastVel) < 1e-3) coastVel = 0;
+      }
+    } else if (silky && coastMode === 'coast') {
+      const prev = coastVel;
+      const decay = Math.exp(-COAST_FRICTION * dtSec);
+      coastVel = prev * decay;
+      const moved = (prev - coastVel) / COAST_FRICTION;
+      uTime += moved / SPIN_RATE;
+      if (Math.abs(coastVel) < SNAP_SPEED) beginSnap(uTime * SPIN_RATE + smoothedDelta, coastVel, false);
+    } else if (silky && coastMode === 'snap') {
+      const err = snapSpin - snapTarget;
+      const accel = -snapOmega * snapOmega * err - 2 * SNAP_ZETA * snapOmega * snapVel;
+      const v0 = snapVel;
+      snapVel += accel * dtSec;
+      snapSpin += ((v0 + snapVel) * 0.5) * dtSec;
+      uTime = (snapSpin - smoothedDelta) / SPIN_RATE;
+      coastVel = snapVel;
+      if (Math.abs(snapSpin - snapTarget) < 8e-4 && Math.abs(snapVel) < 0.015) {
+        snapSpin = snapTarget;
+        snapVel = 0;
+        coastVel = 0;
+        uTime = (snapTarget - smoothedDelta) / SPIN_RATE;
+        coastMode = 'idle';
+      }
     }
 
     const vel = motion.matches ? 0 : smoothedDelta;
@@ -1014,7 +1094,7 @@ export function mountPickRing(root, pickData) {
     } else if (!motion.matches && Math.abs(progressSpring.v) > 1e-3) {
       sharedSpinVel = SPIN_RATE * 15 * progressSpring.v;
     }
-    if (variant === 'c') sharedSpinVel += extraVel;
+    if (silky) sharedSpinVel += coastVel;
     const spinAccel = dtSec > 0 ? Math.abs(sharedSpinVel - prevSharedSpinVel) / dtSec : 0;
     prevSharedSpinVel = sharedSpinVel;
     // Constant cruise has no stagger. Glue once the tails are close so a settled
@@ -1034,11 +1114,28 @@ export function mountPickRing(root, pickData) {
     } else {
       for (let i = 0; i < meshes.length; i++) {
         const s = cardSprings[i];
-        springStep(s, spin, cardOmega(i), dtSec, sharedSpinVel, true);
+        const follow = silky && coastMode !== 'idle';
+        if (follow) {
+          const omega = cardOmega(i);
+          const err = s.x - spin;
+          const damp = s.v - sharedSpinVel;
+          const accel = -omega * omega * err - 2 * 0.92 * omega * damp;
+          s.v += accel * dtSec;
+          s.x += s.v * dtSec;
+        } else {
+          springStep(s, spin, cardOmega(i), dtSec, sharedSpinVel, true);
+        }
         let lag = s.x - spin;
         let relV = s.v - sharedSpinVel;
-        const silky = variant === 'c' && Math.abs(extraVel) > 0.02;
-        if (!silky && (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05))) {
+        const silkySettle = silky && coastMode === 'idle';
+        if (silkySettle) {
+          if (Math.abs(lag) < 0.004 && Math.abs(relV) < 0.02 && Math.abs(sharedSpinVel) < 0.02) {
+            lag = 0;
+            relV = 0;
+            s.x = spin;
+            s.v = sharedSpinVel;
+          }
+        } else if (!follow && (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05))) {
           lag = 0;
           relV = 0;
           s.x = spin;
@@ -1048,8 +1145,8 @@ export function mountPickRing(root, pickData) {
           s.x = spin;
         }
         meshes[i].uniforms.uLag.value = lag;
-        let bend = relV * (variant === 'c' ? 0.09 : BEND_SCALE);
-        const bendCap = variant === 'c' ? 0.1 : BEND_MAX;
+        let bend = relV * (follow ? 0.09 : BEND_SCALE);
+        const bendCap = follow ? 0.1 : BEND_MAX;
         if (bend > bendCap) bend = bendCap;
         else if (bend < -bendCap) bend = -bendCap;
         if (Math.abs(bend) < 1e-3) bend = 0;
@@ -1099,7 +1196,7 @@ export function mountPickRing(root, pickData) {
           recede = 0.42;
         }
       }
-      if (variant === 'd' && i === hoverIndex && facing > 0.4) lift = 0.7;
+      if (variant === 'd' && coastMode === 'idle' && i === hoverIndex && facing > 0.4) lift = 0.7;
       if (variant === 'a') meshes[i].mesh.visible = facing > 0.16;
       meshes[i].uniforms.uFit.value = fit;
       meshes[i].uniforms.uFocus.value = focus;
@@ -1132,7 +1229,7 @@ export function mountPickRing(root, pickData) {
     if (Math.abs(tiltSpring.x - tiltTarget) > 1e-4 || Math.abs(tiltSpring.v) > 2e-3) return true;
     if (pinned >= 0 && spinSpring.hold) return true;
     if (Math.abs(smoothedDelta) > 1e-4 || Math.abs(velHold.v) > 2e-3) return true;
-    if (variant === 'c' && (dragPointer || Math.abs(extraVel) > 2e-4)) return true;
+    if (silky && coastMode !== 'idle') return true;
     for (let i = 0; i < meshes.length; i++) {
       if (Math.abs(meshes[i].uniforms.uLag.value) > 1e-4) return true;
       if (Math.abs(meshes[i].uniforms.uBend.value) > 1e-4) return true;
@@ -1224,11 +1321,15 @@ export function mountPickRing(root, pickData) {
     return pickIndexAtNX(nx);
   }
   canvas.addEventListener('click', (e) => {
-    if (variant === 'c' && e.detail && Math.hypot(e.clientX - (dragOriginX || e.clientX), 0) > 6) return;
+    if (silky && dragMoved) {
+      dragMoved = false;
+      return;
+    }
     select(pickIndexAtClientX(e.clientX));
   });
 
   let dragOriginX = 0;
+  let dragMoved = false;
   let captionEl = null;
   let shadowEl = null;
 
@@ -1313,30 +1414,46 @@ export function mountPickRing(root, pickData) {
     });
   }
 
-  if (variant === 'c') {
+  if (silky) {
     canvas.addEventListener('pointerdown', (e) => {
       if (e.button !== 0) return;
       dragOriginX = e.clientX;
-      dragPointer = { id: e.pointerId, x: e.clientX, t: performance.now() };
-      extraVel = 0;
+      dragMoved = false;
+      const now = performance.now();
+      const spin = liveSpin();
+      dragPointer = { id: e.pointerId, x: e.clientX, t: now };
+      dragSamples.length = 0;
+      dragSamples.push({ t: now, s: spin });
+      coastMode = 'drag';
+      pinned = -1;
+      spinSpring.hold = false;
+      userMoved = true;
       canvas.setPointerCapture?.(e.pointerId);
       kick();
     });
     canvas.addEventListener('pointermove', (e) => {
       if (!dragPointer || e.pointerId !== dragPointer.id) return;
-      const now = performance.now();
-      const dt = Math.max(0.016, (now - dragPointer.t) / 1000);
       const dx = e.clientX - dragPointer.x;
+      if (dx === 0) return;
+      if (Math.abs(e.clientX - dragOriginX) > 6) dragMoved = true;
+      const now = performance.now();
       const dSpin = -dx / (Math.max(1, viewW) * 0.34);
       uTime += dSpin / SPIN_RATE;
-      extraVel = dSpin / dt;
       dragPointer.x = e.clientX;
       dragPointer.t = now;
+      coastVel = sampleVelocity(now, liveSpin());
       kick();
     });
     const endDrag = (e) => {
       if (!dragPointer || (e && e.pointerId !== dragPointer.id)) return;
+      const now = performance.now();
+      const spin = liveSpin();
+      coastVel = sampleVelocity(now, spin);
       dragPointer = null;
+      dragSamples.length = 0;
+      if (motion.matches) beginSnap(spin, 0, true);
+      else if (Math.abs(coastVel) < SNAP_SPEED) beginSnap(spin, coastVel, false);
+      else coastMode = 'coast';
       kick();
     };
     canvas.addEventListener('pointerup', endDrag);
@@ -1422,6 +1539,8 @@ export function mountPickRing(root, pickData) {
         sound: soundOn,
         fx: fxIndex,
         userMoved,
+        coast: coastMode,
+        coastVel: Math.round(coastVel * 1000) / 1000,
       };
     },
   };
