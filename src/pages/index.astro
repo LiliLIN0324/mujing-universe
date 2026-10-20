@@ -392,8 +392,12 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   z-index: 0;
   display: block;
   pointer-events: auto;
-  cursor: pointer;
+  cursor: grab;
+  touch-action: pan-y;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
+.pick-canvas.is-drag { cursor: grabbing; }
 .picks-layout {
   position: relative;
   z-index: 1;
@@ -534,6 +538,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   aspect-ratio: 16 / 9;
   background: #E6E3DE;
   overflow: hidden;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 .about__gallery__media__image {
   width: 100%;
@@ -543,6 +549,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   border-radius: 0;
   pointer-events: none;
   user-select: none;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 .pick-list-window {
   grid-column: 2;
