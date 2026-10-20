@@ -1,0 +1,13 @@
+---
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+/** 二维码文件不在仓库里时不占位。把图放到 public/wechat-qr.png 后重新构建即可出现。 */
+const hasQr = existsSync(join(process.cwd(), 'public', 'wechat-qr.png'));
+const { centered = false } = Astro.props;
+---
+<div class:list={['wx', centered && 'wx--center']}>
+  <p class="wx-id" translate="no">endTree-26</p>
+  <button class="btn solid wx-copy" type="button" data-wx-copy>复制微信号</button>
+  {hasQr && <img class="wx-qr" src="/wechat-qr.png" alt="微信二维码" width="160" height="160"/>}
+</div>
