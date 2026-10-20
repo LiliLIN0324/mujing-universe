@@ -106,7 +106,7 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
   display: flex; align-items: center; justify-content: center; overflow: hidden;
   padding: 8px; background: #FBFBFA; color: #1A1A1C; text-align: center; pointer-events: none;
   font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", sans-serif; font-weight: 600; font-size: 13px; line-height: 1.2;
-  filter: drop-shadow(.6px 0 0 #1A1A1C) drop-shadow(-.6px 0 0 #1A1A1C) drop-shadow(0 .6px 0 #1A1A1C) drop-shadow(0 -.6px 0 #1A1A1C);
+  filter: drop-shadow(1.15px 0 0 #1A1A1C) drop-shadow(-1.15px 0 0 #1A1A1C) drop-shadow(0 1.15px 0 #1A1A1C) drop-shadow(0 -1.15px 0 #1A1A1C);
   transform-origin: center center;
 }
 .seal-ghost span { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
@@ -286,16 +286,16 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
       g.style.clipPath = HEX;
       placeGhost(g, p.x, p.y, lattice.size, lattice.size, g.dataset.tilt, 1);
     });
-    await wait(520);
+    await wait(560);
+    if (!stampLock) return;
+    await wait(680);
     if (!stampLock) return;
     const target = stampPending || nextLine;
     ghosts.forEach((g) => {
-      const keep = target === '全部' || g.dataset.line === target;
-      g.style.transition = 'transform .12s ease-out' + (keep ? '' : ', opacity .16s linear');
+      g.style.transition = 'transform .12s ease-out';
       g.style.transform = 'translateY(5px) rotate(' + g.dataset.tilt + 'deg) scale(.9)';
-      if (!keep) g.style.opacity = '0';
     });
-    await wait(460);
+    await wait(140);
     if (!stampLock) return;
     line = stampPending || nextLine;
     stampPending = null;
@@ -321,7 +321,11 @@ const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line
     ghosts[0].getBoundingClientRect();
     requestAnimationFrame(() => {
       ghosts.forEach((g) => {
-        if (!g._to) return;
+        if (!g._to) {
+          g.style.transition = 'opacity .24s linear';
+          g.style.opacity = '0';
+          return;
+        }
         const r = g._to;
         g.style.transition = 'left .44s cubic-bezier(.16,1,.3,1), top .44s cubic-bezier(.16,1,.3,1), width .44s cubic-bezier(.16,1,.3,1), height .44s cubic-bezier(.16,1,.3,1), clip-path .44s cubic-bezier(.16,1,.3,1), transform .44s cubic-bezier(.16,1,.3,1)';
         g.style.clipPath = RECT;
