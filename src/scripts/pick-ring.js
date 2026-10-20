@@ -26,6 +26,9 @@ uniform float uFit;
 uniform float uBreath;
 uniform float uTilt;
 uniform float uClock;
+uniform float uRadius;
+uniform float uYaw;
+uniform float uLift;
 
 varying vec2 vUv;
 
@@ -59,10 +62,16 @@ mat4 cabinMatrix(vec3 ringPos, float yaw, vec3 scale) {
 
 void main() {
   const float PI = 3.141592653589793;
-  float radius = 3.0;
+  float radius = uRadius;
   float angle = uAngle;
   vec2 ring = vec2(cos(angle * PI * 2.0), sin(angle * PI * 2.0)) * radius;
-  float yaw0 = angle * PI * 2.0 - PI * 0.2 - position.x * 0.3 - uVelocity * 15.0;
+  float spinAdd = uTime * 0.12 + uVelocity + uLag;
+  // uYaw is 1 on the default ring, and a full turn is the same pose.
+  // Below 1, only the wrapped facing shrinks, so the front card stays front.
+  float yawBase = angle * PI * 2.0 - PI * 0.2 - position.x * 0.3 - uVelocity * 15.0;
+  float combined = yawBase + spinAdd;
+  float wrapped = atan(sin(combined), cos(combined));
+  float yaw0 = uYaw * wrapped - spinAdd;
 
   // Ribbon bend is 0 at the card center, so hit-tests and the settled pose stay put.
   vec3 pos = position;
@@ -72,12 +81,13 @@ void main() {
   float grow = 1.0 + 0.5 * uScroll * uScroll;
   float fit = max(uFit, 0.2);
   vec4 p = cabinMatrix(vec3(ring.x, 0.0, ring.y), yaw0, vec3(uScale.x * grow * fit, uScale.y * grow * fit, 1.0)) * vec4(pos, 1.0);
-  p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), uTime * 0.12 + uVelocity + uLag);
+  p.xyz = rotate(p.xyz, vec3(0.0, 1.0, 0.0), spinAdd);
   p.xyz = rotate(p.xyz, vec3(1.0, 0.0, 0.0), -PI * 0.15 * (1.0 - uScroll));
   p.z -= 20.0 - 12.0 * uScroll;  // end ≈ z-8 (01:37)
   p.x -= 3.7 * uScroll;          // more left than 01:37's 3.2
   p.y -= 0.85 * uScroll;
   p.x -= 1.4;                    // more left than 01:37's 1.15
+  p.z += uLift;
 
   // Idle float. Exactly 0 at 落幅, and uBreath/uTilt are 0 under reduced motion.
   float settle = 1.0 - smoothstep(0.62, 1.0, uScroll);
@@ -101,6 +111,7 @@ uniform float uFocus;
 uniform float uWash;
 uniform float uScroll;
 uniform float uInk;
+uniform float uRecede;
 float inkBlob(vec2 p, vec2 c, float r) {
   vec2 d = (p - c) * vec2(1.0, 1.18);
   return 1.0 - smoothstep(r * 0.62, r, length(d));
@@ -140,6 +151,8 @@ void main() {
   if (washKill < 0.2) discard;
   color = mix(vec3(0.945, 0.945, 0.941), color, clamp(washKill, 0.0, 1.0));
   color *= mix(0.62, 1.0, clamp(uFocus, 0.0, 1.0));
+  // uRecede is 0 on the default ring, so this mix is a no-op there.
+  color = mix(color, vec3(0.965, 0.961, 0.953), uRecede);
 
   // Ink bloom layered on the cover. Geometry is unchanged.
   // uInk 0 = paper, about 1.6 = the photograph fully open (~600ms).
@@ -228,6 +241,17 @@ function wrapPi(rad) {
 }
 
 export function mountPickRing(root, pickData) {
+  // Mockup switch. Empty string is the shipped ring; a–d never run unless asked.
+  const variant = (() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get('variant');
+      return v === 'a' || v === 'b' || v === 'c' || v === 'd' ? v : '';
+    } catch (err) {
+      return '';
+    }
+  })();
+  const ringRadius = variant === 'a' ? 3.32 : 3;
+  const yawScale = variant === 'a' ? 0.74 : 1;
   const canvas = root.querySelector('#pick-canvas');
   const introEl = root.querySelector('#pick-intro');
   const listEl = root.querySelector('#pick-list');
@@ -386,6 +410,10 @@ export function mountPickRing(root, pickData) {
       uLag: { value: 0 },
       uBend: { value: 0 },
       uFit: { value: 1 },
+      uRadius: { value: ringRadius },
+      uYaw: { value: yawScale },
+      uLift: { value: 0 },
+      uRecede: { value: 0 },
       uBreath: shared.uBreath,
       uTilt: shared.uTilt,
       uClock: shared.uClock,
@@ -511,6 +539,10 @@ export function mountPickRing(root, pickData) {
   let soundOn = false;
   let audioCtx = null;
   let fxIndex = -1;
+  // Variant C only. Default ring leaves both at rest.
+  let dragPointer = null;
+  let extraVel = 0;
+  let hoverIndex = -1;
 
   /** Cover of the card that just became front. Paper until the section is on screen. */
   function beginInk(index) {
@@ -609,7 +641,8 @@ export function mountPickRing(root, pickData) {
    */
   function eyeYaw(index, spin, vel) {
     const theta = (index / N) * Math.PI * 2;
-    return theta - CABIN_YAW - (vel || 0) * VEL_YAW + spin;
+    const raw = theta - CABIN_YAW - (vel || 0) * VEL_YAW + spin;
+    return wrapPi(raw) * yawScale;
   }
 
   /** Face-on score. Higher = card center normal toward the camera. */
@@ -962,6 +995,12 @@ export function mountPickRing(root, pickData) {
       if (t >= 1) inkJob = null;
     }
 
+    if (variant === 'c' && !dragPointer) {
+      extraVel *= Math.exp(-3.1 * dtSec);
+      if (Math.abs(extraVel) < 2e-4) extraVel = 0;
+      if (extraVel !== 0) uTime += (extraVel * dtSec) / SPIN_RATE;
+    }
+
     const vel = motion.matches ? 0 : smoothedDelta;
     shared.uTime.value = uTime;
     shared.uVelocity.value = vel;
@@ -975,6 +1014,7 @@ export function mountPickRing(root, pickData) {
     } else if (!motion.matches && Math.abs(progressSpring.v) > 1e-3) {
       sharedSpinVel = SPIN_RATE * 15 * progressSpring.v;
     }
+    if (variant === 'c') sharedSpinVel += extraVel;
     const spinAccel = dtSec > 0 ? Math.abs(sharedSpinVel - prevSharedSpinVel) / dtSec : 0;
     prevSharedSpinVel = sharedSpinVel;
     // Constant cruise has no stagger. Glue once the tails are close so a settled
@@ -997,7 +1037,8 @@ export function mountPickRing(root, pickData) {
         springStep(s, spin, cardOmega(i), dtSec, sharedSpinVel, true);
         let lag = s.x - spin;
         let relV = s.v - sharedSpinVel;
-        if (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05)) {
+        const silky = variant === 'c' && Math.abs(extraVel) > 0.02;
+        if (!silky && (Math.abs(sharedSpinVel) < 0.02 || (coasting && Math.abs(lag) < 0.05))) {
           lag = 0;
           relV = 0;
           s.x = spin;
@@ -1007,9 +1048,10 @@ export function mountPickRing(root, pickData) {
           s.x = spin;
         }
         meshes[i].uniforms.uLag.value = lag;
-        let bend = relV * BEND_SCALE;
-        if (bend > BEND_MAX) bend = BEND_MAX;
-        else if (bend < -BEND_MAX) bend = -BEND_MAX;
+        let bend = relV * (variant === 'c' ? 0.09 : BEND_SCALE);
+        const bendCap = variant === 'c' ? 0.1 : BEND_MAX;
+        if (bend > bendCap) bend = bendCap;
+        else if (bend < -bendCap) bend = -bendCap;
         if (Math.abs(bend) < 1e-3) bend = 0;
         meshes[i].uniforms.uBend.value = bend;
       }
@@ -1039,12 +1081,30 @@ export function mountPickRing(root, pickData) {
       // edge cannot cover it. Pinned neighbors also shrink and step back.
       meshes[i].mesh.renderOrder = isHero ? 2 : 0;
       meshes[i].program.depthTest = !isHero;
-      meshes[i].uniforms.uFit.value = pinned >= 0 && !isHero ? 0.82 : 1;
-      meshes[i].uniforms.uFocus.value = isHero
+      let fit = pinned >= 0 && !isHero ? 0.82 : 1;
+      let focus = isHero
         ? 1
         : pinned >= 0
           ? 0.36
           : Math.max(0.12, facing * 0.45 + 0.02);
+      let recede = 0;
+      let lift = 0;
+      if (variant === 'b') {
+        if (isHero) {
+          fit = 1;
+          focus = 1;
+        } else {
+          fit = 0.86;
+          focus = 1;
+          recede = 0.42;
+        }
+      }
+      if (variant === 'd' && i === hoverIndex && facing > 0.4) lift = 0.7;
+      if (variant === 'a') meshes[i].mesh.visible = facing > 0.16;
+      meshes[i].uniforms.uFit.value = fit;
+      meshes[i].uniforms.uFocus.value = focus;
+      meshes[i].uniforms.uRecede.value = recede;
+      meshes[i].uniforms.uLift.value = lift;
       if (isHero) meshes[i].uniforms.uWash.value = 0;
       else if (meshes[i].isPaper || meshes[i].coverScore < -20) meshes[i].uniforms.uWash.value = 1;
       else meshes[i].uniforms.uWash.value = 0;
@@ -1059,6 +1119,7 @@ export function mountPickRing(root, pickData) {
     const active = pinned >= 0 ? pinned : best;
     setFront(active);
     maybeFx(best, facings[best]);
+    if (variant === 'd') placeVariantChrome(hero, spin, progress, facings);
 
     renderer.render({ scene, camera, frustumCull: false });
     if (needsFrame()) raf = requestAnimationFrame(frame);
@@ -1071,6 +1132,7 @@ export function mountPickRing(root, pickData) {
     if (Math.abs(tiltSpring.x - tiltTarget) > 1e-4 || Math.abs(tiltSpring.v) > 2e-3) return true;
     if (pinned >= 0 && spinSpring.hold) return true;
     if (Math.abs(smoothedDelta) > 1e-4 || Math.abs(velHold.v) > 2e-3) return true;
+    if (variant === 'c' && (dragPointer || Math.abs(extraVel) > 2e-4)) return true;
     for (let i = 0; i < meshes.length; i++) {
       if (Math.abs(meshes[i].uniforms.uLag.value) > 1e-4) return true;
       if (Math.abs(meshes[i].uniforms.uBend.value) > 1e-4) return true;
@@ -1103,7 +1165,7 @@ export function mountPickRing(root, pickData) {
    * Used for click hit-testing (pickIndexAtNX); not for scroll-hero / best.
    */
   function phaseScreen(phase, progress, fit) {
-    const R = 3;
+    const R = ringRadius;
     let x = R * Math.cos(phase);
     let y = 0;
     let z = R * Math.sin(phase);
@@ -1162,8 +1224,124 @@ export function mountPickRing(root, pickData) {
     return pickIndexAtNX(nx);
   }
   canvas.addEventListener('click', (e) => {
+    if (variant === 'c' && e.detail && Math.hypot(e.clientX - (dragOriginX || e.clientX), 0) > 6) return;
     select(pickIndexAtClientX(e.clientX));
   });
+
+  let dragOriginX = 0;
+  let captionEl = null;
+  let shadowEl = null;
+
+  function placeVariantChrome(hero, spin, progress) {
+    if (!captionEl) return;
+    const fit = meshes[hero] ? meshes[hero].uniforms.uFit.value : 1;
+    const scr = cardScreen(hero, spin, progress, fit);
+    const copy = root.querySelector('.picks-copy');
+    const list = root.querySelector('.pick-list-window');
+    const copyR = copy ? copy.getBoundingClientRect() : { right: 0 };
+    const listL = list ? list.getBoundingClientRect() : { left: viewW };
+    const host = canvas.getBoundingClientRect();
+    const stage = (root.querySelector('.picks-sticky') || root).getBoundingClientRect();
+    const work = pickData[hero];
+    const title = (work && work.title) || '';
+    if (captionEl.textContent !== title) captionEl.textContent = title;
+    const maxW = Math.max(80, listL.left - copyR.right - 36);
+    captionEl.style.maxWidth = `${maxW}px`;
+    const capW = Math.min(maxW, captionEl.offsetWidth || 160);
+    let x = host.left + scr.nx * viewW - capW / 2;
+    const minX = copyR.right + 16;
+    const maxX = listL.left - capW - 16;
+    if (x < minX) x = minX;
+    if (x > maxX) x = maxX;
+    const y = host.top + scr.ny * viewH + scr.pxH * 0.5 + 12;
+    captionEl.style.transform = `translate3d(${Math.round(x)}px, ${Math.round(y)}px, 0)`;
+
+    if (!shadowEl) return;
+    const show = hoverIndex >= 0 && hoverIndex < meshes.length && meshes[hoverIndex].uniforms.uLift.value > 0;
+    shadowEl.hidden = !show;
+    if (!show) return;
+    const hFit = meshes[hoverIndex].uniforms.uFit.value;
+    const hs = cardScreen(hoverIndex, spin + (meshes[hoverIndex].uniforms.uLag.value || 0), progress, hFit);
+    const sw = Math.min(hs.pxW * 0.62, maxW);
+    const sx = host.left + hs.nx * viewW - sw / 2;
+    const sy = host.top - stage.top + hs.ny * viewH + hs.pxH * 0.5 - 10;
+    shadowEl.style.width = `${Math.round(sw)}px`;
+    shadowEl.style.transform = `translate3d(${Math.round(Math.min(Math.max(sx, minX), maxX))}px, ${Math.round(sy)}px, 0)`;
+  }
+
+  if (variant === 'd') {
+    captionEl = document.createElement('div');
+    captionEl.setAttribute('data-variant-caption', '');
+    captionEl.style.cssText = [
+      'position:absolute',
+      'left:0',
+      'top:0',
+      'z-index:1',
+      'pointer-events:none',
+      'color:#1A1A1C',
+      'font:500 13px/1.35 "Alibaba PuHuiTi 3.0","Noto Sans SC",system-ui,sans-serif',
+      'letter-spacing:0.01em',
+      'white-space:nowrap',
+      'overflow:hidden',
+      'text-overflow:ellipsis',
+    ].join(';');
+    shadowEl = document.createElement('div');
+    shadowEl.hidden = true;
+    shadowEl.setAttribute('data-variant-shadow', '');
+    shadowEl.style.cssText = [
+      'position:absolute',
+      'left:0',
+      'top:0',
+      'z-index:0',
+      'height:28px',
+      'pointer-events:none',
+      'background:radial-gradient(closest-side, rgba(26,26,28,0.20), rgba(26,26,28,0) 72%)',
+    ].join(';');
+    const stage = root.querySelector('.picks-sticky') || root;
+    stage.insertBefore(shadowEl, canvas);
+    stage.append(captionEl);
+    canvas.addEventListener('pointermove', (e) => {
+      const next = pickIndexAtClientX(e.clientX);
+      if (next === hoverIndex) return;
+      hoverIndex = next;
+      kick();
+    });
+    canvas.addEventListener('pointerleave', () => {
+      if (hoverIndex < 0) return;
+      hoverIndex = -1;
+      kick();
+    });
+  }
+
+  if (variant === 'c') {
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      dragOriginX = e.clientX;
+      dragPointer = { id: e.pointerId, x: e.clientX, t: performance.now() };
+      extraVel = 0;
+      canvas.setPointerCapture?.(e.pointerId);
+      kick();
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (!dragPointer || e.pointerId !== dragPointer.id) return;
+      const now = performance.now();
+      const dt = Math.max(0.016, (now - dragPointer.t) / 1000);
+      const dx = e.clientX - dragPointer.x;
+      const dSpin = -dx / (Math.max(1, viewW) * 0.34);
+      uTime += dSpin / SPIN_RATE;
+      extraVel = dSpin / dt;
+      dragPointer.x = e.clientX;
+      dragPointer.t = now;
+      kick();
+    });
+    const endDrag = (e) => {
+      if (!dragPointer || (e && e.pointerId !== dragPointer.id)) return;
+      dragPointer = null;
+      kick();
+    };
+    canvas.addEventListener('pointerup', endDrag);
+    canvas.addEventListener('pointercancel', endDrag);
+  }
   rowBtns.forEach((btn) => {
     btn.addEventListener('click', () => select(Number(btn.dataset.i)));
   });
