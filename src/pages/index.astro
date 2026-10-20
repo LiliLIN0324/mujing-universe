@@ -109,6 +109,13 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   </div>}
   <div class="picks-sticky">
   <canvas class="pick-canvas" id="pick-canvas" aria-hidden="true"></canvas>
+  <div class="pick-caption" id="pick-caption" aria-hidden="true">
+    <span class="pick-caption-line"></span>
+    <span class="pick-caption-line"></span>
+  </div>
+  <button class="pick-sound" id="pick-sound" type="button" aria-pressed="false" aria-label="声音 关">
+    <span>声音</span><span data-role="sound-label">关</span>
+  </button>
   <div class="picks-layout">
     <div class="picks-copy">
       <h2 class="picks-label">精选</h2>
@@ -417,12 +424,61 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 }
 .pick-canvas {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 0;
   display: block;
   pointer-events: auto;
   cursor: pointer;
 }
+.pick-caption {
+  position: absolute;
+  left: 180px;
+  right: 380px;
+  bottom: 0;
+  height: 56px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+.pick-caption-line {
+  grid-area: 1 / 1;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  color: #1A1A1C;
+  font: 500 13px/1.35 "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  transition: opacity 200ms linear;
+}
+.pick-caption-line.is-on { opacity: 1; }
+#picks.is-reduced .pick-caption-line { transition: none; }
+.pick-sound {
+  position: absolute;
+  left: 48px;
+  bottom: 28px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  margin: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: #1A1A1C;
+  color: #F6F5F3;
+  font: 500 12px/1 "Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  pointer-events: auto;
+}
+.pick-sound[aria-pressed="true"] { background: #b5432f; }
+.pick-sound:focus-visible { outline: 1px solid rgba(26, 26, 28, 0.45); outline-offset: 3px; }
 .picks-layout {
   position: relative;
   z-index: 1;
@@ -692,6 +748,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 @media (max-width: 860px) {
   .picks { height: auto; }
   .pick-canvas { display: none; }
+  .pick-caption { display: none; }
+  .pick-sound { display: none; }
   .picks-sticky { position: relative; top: auto; height: auto; padding-top: 72px; }
   .picks-layout { grid-template-columns: 1fr; row-gap: 28px; }
   .picks-copy { grid-column: 1; grid-row: 1; }
