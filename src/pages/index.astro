@@ -386,18 +386,7 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   overflow: hidden;
   background: #F6F5F3;
 }
-.pick-canvas {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  display: block;
-  pointer-events: auto;
-  cursor: grab;
-  touch-action: pan-y;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-.pick-canvas.is-drag { cursor: grabbing; }
+.pick-canvas { display: none; }
 .picks-layout {
   position: relative;
   z-index: 1;
@@ -552,6 +541,53 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
 }
+@media (min-width: 861px) {
+  .about__gallery.is-arc {
+    position: absolute;
+    left: 43%;
+    top: 56%;
+    width: min(860px, 60vw);
+    height: min(420px, 48vh);
+    margin: 0;
+    transform: translate(-50%, -50%);
+    overflow: visible;
+    clip: auto;
+    z-index: 0;
+    pointer-events: auto;
+    touch-action: pan-y;
+    cursor: grab;
+    background: transparent;
+  }
+  .about__gallery.is-arc.is-drag { cursor: grabbing; }
+  .about__gallery.is-arc .about__gallery__wrapper {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    pointer-events: none;
+  }
+  .about__gallery.is-arc .about__gallery__link {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(380px, 28vw);
+    aspect-ratio: 16 / 9;
+    height: auto;
+    margin: 0;
+    pointer-events: none;
+    transform-origin: 50% 50%;
+    will-change: transform, opacity;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .about__gallery.is-arc .about__gallery__media {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #E6E3DE;
+  }
+}
 .pick-list-window {
   grid-column: 2;
   grid-row: 1 / span 2;
@@ -653,11 +689,22 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     margin: 0;
     overflow: visible;
     clip: auto;
+    transform: none;
     grid-column: 1;
     grid-row: 2;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+    pointer-events: auto;
+    cursor: auto;
+    touch-action: auto;
+  }
+  .about__gallery__link {
+    position: static;
+    width: auto;
+    transform: none;
+    opacity: 1;
+    will-change: auto;
   }
   .about__gallery__media {
     width: 100%;
