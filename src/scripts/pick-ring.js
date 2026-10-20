@@ -178,6 +178,10 @@ const BREATH_AMP = 0;
 const BREATH_PERIOD = Math.PI * 4;
 const BEND_SCALE = 0.05;
 const BEND_MAX = 0.16;
+/** One chord on the ring. Every pair this many steps apart has the same length. */
+const UNIT_STEP = 3;
+const SAG_LOOSE = 22;
+const SAG_TIGHT = 1.5;
 
 function lerp(a, b, t) {
   return a + (b - a) * t;
@@ -226,6 +230,11 @@ function wrapPi(rad) {
 
 export function mountPickRing(root, pickData) {
   const canvas = root.querySelector('#pick-canvas');
+  const threadCanvas = document.createElement('canvas');
+  threadCanvas.className = 'pick-threads';
+  threadCanvas.setAttribute('aria-hidden', 'true');
+  if (canvas) canvas.insertAdjacentElement('afterend', threadCanvas);
+  const threadCtx = threadCanvas.getContext('2d');
   const introEl = root.querySelector('#pick-intro');
   const listEl = root.querySelector('#pick-list');
   const listWindow = root.querySelector('.pick-list-window');
@@ -437,6 +446,10 @@ export function mountPickRing(root, pickData) {
   let prevSharedSpinVel = 0;
   let tiltTarget = 0;
   let breathClock = 0;
+  let hoverIndex = -1;
+  let shownAnchor = -1;
+  const threadDraw = { x: 0, v: 0 };
+  const threadSag = { x: SAG_LOOSE, v: 0 };
 
   /** Softer springs trail, so the ring opens into a ribbon while it moves. */
   function cardOmega(i) {
@@ -458,6 +471,8 @@ export function mountPickRing(root, pickData) {
     root.style.height = `${window.innerHeight + listOverflow()}px`;
   }
 
+  let threadDpr = 1;
+
   function resize() {
     const host = canvas.parentElement || root;
     const width = host.clientWidth || window.innerWidth;
@@ -465,6 +480,9 @@ export function mountPickRing(root, pickData) {
     renderer.setSize(width, height);
     camera.perspective({ aspect: width / Math.max(1, height), fov: 45 });
     applyCardScale();
+    threadDpr = Math.min(2, window.devicePixelRatio || 1);
+    threadCanvas.width = Math.max(1, Math.round(width * threadDpr));
+    threadCanvas.height = Math.max(1, Math.round(height * threadDpr));
   }
 
   const waveEl = introEl && introEl.querySelector('[data-role="wave"]');
@@ -700,6 +718,7 @@ export function mountPickRing(root, pickData) {
     const dt = Math.min(34, now - lastNow);
     lastNow = now;
     if (narrow.matches) {
+      if (threadCtx) threadCtx.clearRect(0, 0, threadCanvas.width, threadCanvas.height);
       requestAnimationFrame(frame);
       return;
     }
@@ -893,6 +912,7 @@ export function mountPickRing(root, pickData) {
     setFront(pinned >= 0 ? pinned : best);
 
     renderer.render({ scene, camera, frustumCull: false });
+    drawUnitThreads(dtSec, progress);
     requestAnimationFrame(frame);
   }
 
@@ -950,6 +970,125 @@ export function mountPickRing(root, pickData) {
     return phaseScreenNX(theta + spin, progress);
   }
 
+  /**
+   * Card center in CSS pixels. Same transposed rotations as the shader, so a
+   * thread end stays on the card while the ring turns.
+   */
+  function cardScreen(index, progress) {
+    const R = 3;
+    const theta = (index / N) * Math.PI * 2;
+    const phase = theta + liveSpin() + lagOf(index);
+    let x = R * Math.cos(phase);
+    let y = 0;
+    let z = R * Math.sin(phase);
+    const pitch = -Math.PI * 0.15 * (1 - progress);
+    const cp = Math.cos(pitch);
+    const sp = Math.sin(pitch);
+    const x1 = x * cp;
+    const y1 = y * cp + z * sp;
+    const z1 = -y * sp + z * cp;
+    x = x1 - 3.7 * progress - 1.4;
+    y = y1 - 0.85 * progress;
+    z = z1 - (20 - 12 * progress);
+    const tilt = visualTilt(progress);
+    if (tilt !== 0) {
+      const ct = Math.cos(tilt);
+      const st = Math.sin(tilt);
+      const xt = x * ct + y * st;
+      const yt = -x * st + y * ct;
+      x = xt;
+      y = yt;
+    }
+    const viewZ = z - camera.position.z;
+    const depth = Math.max(0.35, -viewZ);
+    const fovRad = (camera.fov * Math.PI) / 180;
+    const halfH = Math.tan(fovRad / 2) * depth;
+    const halfW = halfH * (camera.aspect || 1);
+    const ndcX = x / Math.max(1e-4, halfW);
+    const ndcY = y / Math.max(1e-4, halfH);
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: (ndcX * 0.5 + 0.5) * rect.width,
+      y: (0.5 - ndcY * 0.5) * rect.height,
+      depth,
+    };
+  }
+
+  function threadAnchor() {
+    return pinned >= 0 ? pinned : hoverIndex;
+  }
+
+  function strokeSilk(a, b, sag, draw, alpha) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy);
+    if (len < 2 || draw < 0.02) return;
+    const inv = 1 / len;
+    let px = -dy * inv;
+    let py = dx * inv;
+    if (py < 0) {
+      px = -px;
+      py = -py;
+    }
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    threadCtx.beginPath();
+    threadCtx.moveTo(a.x, a.y);
+    threadCtx.quadraticCurveTo(mx + px * sag, my + py * sag, b.x, b.y);
+    const curve = len * 1.08;
+    if (draw < 0.995) {
+      threadCtx.setLineDash([Math.max(0.5, curve * draw), curve + 2]);
+    } else {
+      threadCtx.setLineDash([]);
+    }
+    threadCtx.globalAlpha = alpha * Math.min(1, draw);
+    threadCtx.stroke();
+  }
+
+  /** Equal-length chords of UNIT_STEP. Still when nothing is hovered or selected. */
+  function drawUnitThreads(dtSec, progress) {
+    if (!threadCtx) return;
+    const anchor = threadAnchor();
+    if (anchor >= 0) shownAnchor = anchor;
+    const wantDraw = anchor >= 0 ? 1 : 0;
+    const wantSag = pinned >= 0 ? SAG_TIGHT : SAG_LOOSE;
+    if (motion.matches) {
+      threadDraw.x = wantDraw;
+      threadDraw.v = 0;
+      threadSag.x = pinned >= 0 ? 0 : SAG_LOOSE;
+      threadSag.v = 0;
+    } else if (dtSec > 0) {
+      springStep(threadDraw, wantDraw, 9, dtSec);
+      springStep(threadSag, anchor >= 0 ? wantSag : SAG_LOOSE, 8, dtSec);
+    }
+    const w = threadCanvas.width;
+    const h = threadCanvas.height;
+    threadCtx.setTransform(threadDpr, 0, 0, threadDpr, 0, 0);
+    threadCtx.clearRect(0, 0, w, h);
+    if (threadDraw.x < 0.02 || shownAnchor < 0) {
+      if (threadDraw.x < 0.02) shownAnchor = -1;
+      return;
+    }
+
+    const pts = [];
+    for (let i = 0; i < meshes.length; i++) pts.push(cardScreen(i, progress));
+    threadCtx.lineWidth = 1;
+    threadCtx.lineCap = 'round';
+    threadCtx.lineJoin = 'round';
+    threadCtx.strokeStyle = '#8A867F';
+    const sag = threadSag.x;
+    const draw = threadDraw.x;
+    for (let i = 0; i < meshes.length; i++) {
+      const j = (i + UNIT_STEP) % meshes.length;
+      const incident = i === shownAnchor || j === shownAnchor;
+      const from = incident && j === shownAnchor ? pts[j] : pts[i];
+      const to = from === pts[j] ? pts[i] : pts[j];
+      strokeSilk(from, to, sag, draw, incident ? 0.88 : 0.38);
+    }
+    threadCtx.globalAlpha = 1;
+    threadCtx.setLineDash([]);
+  }
+
   /** Map click on canvas to the visible card under the cursor (hit-test only). */
   function pickIndexAtClientX(clientX) {
     const rect = canvas.getBoundingClientRect();
@@ -958,6 +1097,19 @@ export function mountPickRing(root, pickData) {
   }
   canvas.addEventListener('click', (e) => {
     select(pickIndexAtClientX(e.clientX));
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const nx = (e.clientX - rect.left) / Math.max(1, rect.width);
+    const ny = (e.clientY - rect.top) / Math.max(1, rect.height);
+    if (nx < 0 || nx > 1 || ny < 0 || ny > 1) {
+      hoverIndex = -1;
+      return;
+    }
+    hoverIndex = pickIndexAtNX(nx);
+  });
+  canvas.addEventListener('pointerleave', () => {
+    hoverIndex = -1;
   });
   rowBtns.forEach((btn) => {
     btn.addEventListener('click', () => select(Number(btn.dataset.i)));
@@ -1025,6 +1177,12 @@ export function mountPickRing(root, pickData) {
         tilt: Math.round(visualTilt(progress) * 1e4) / 1e4,
         breath: motion.matches ? 0 : Math.round(BREATH_AMP * settleOf(progress) * 1e4) / 1e4,
         heroDepthTest: front >= 0 ? meshes[front].program.depthTest : null,
+        threads: {
+          anchor: pinned >= 0 ? pinned : hoverIndex,
+          draw: Math.round(threadDraw.x * 1000) / 1000,
+          sag: Math.round(threadSag.x * 10) / 10,
+          hover: hoverIndex,
+        },
         best,
         bestFacing: Math.round(bestFacing * 1000) / 1000,
         bestTitle: (pickData[best] && pickData[best].title) || '',
