@@ -1,0 +1,111 @@
+---
+import { chairLayers } from '../lib/chair-geometry.js';
+/** Chair44 carrier, drawn as a flat isometric stand-in. Hover opens the 2× supertile; scroll steps the substitution. */
+const { viewBox, layers } = chairLayers();
+---
+<figure class="chair-motif" data-depth="0">
+  <button class="chair-hit" type="button" aria-pressed="false" aria-label="椅砖。点按或悬停，看它嵌进二倍超砖。">
+    <svg viewBox={viewBox} aria-hidden="true">
+      {layers.map((layer) => (
+        <g class:list={['layer', layer.id]}>
+          {layer.faces.map((face) => <path class={`f-${face.kind}`} d={face.d} />)}
+        </g>
+      ))}
+    </svg>
+  </button>
+  <figcaption>椅砖</figcaption>
+</figure>
+<style>
+  .chair-motif {
+    margin: 64px 0 0;
+    padding: 28px 28px 18px;
+    background: #F6F5F3;
+    border-radius: 28px;
+    font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Noto Sans SC", sans-serif;
+  }
+  .chair-hit {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 0 0;
+    border: 0;
+    border-radius: 20px;
+    background: transparent;
+    cursor: pointer;
+    color: inherit;
+  }
+  .chair-hit:focus-visible { outline: 2px solid #1A1A1C; outline-offset: 4px; }
+  .chair-hit svg { display: block; width: min(440px, 86%); height: auto; margin: 0 auto; }
+  .layer { opacity: 0; transition: opacity .45s ease; }
+  .chair-motif:not(.is-ready) .layer,
+  .chair-motif.is-instant .layer { transition: none; }
+  .chair-motif[data-depth="0"] .d0,
+  .chair-motif[data-depth="1"] .d1,
+  .chair-motif[data-depth="2"] .d2 { opacity: 1; }
+  .chair-motif.is-nest[data-depth="0"] .d0 { opacity: 0; }
+  .chair-motif.is-nest[data-depth="0"] .d1 { opacity: 1; }
+  .chair-motif.is-nest[data-depth="1"] .d1 { opacity: 0; }
+  .chair-motif.is-nest[data-depth="1"] .d2 { opacity: 1; }
+  .chair-motif.is-nest[data-depth="2"] .d2 { opacity: 0; }
+  .chair-motif.is-nest[data-depth="2"] .d3 { opacity: 1; }
+  .f-z { fill: #F4F2ED; }
+  .f-x { fill: #E0DBD2; }
+  .f-y { fill: #C9C3B8; }
+  .f-s { fill: #D9D4CB; }
+  .chair-hit path {
+    stroke: rgba(26, 26, 28, 0.72);
+    stroke-width: 0.011;
+    stroke-linejoin: round;
+    pointer-events: none;
+  }
+  .f-s { stroke-width: 0.005; }
+  figcaption {
+    margin: 8px 0 0;
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.22em;
+    color: #9a958c;
+  }
+  @media (max-width: 768px) {
+    .chair-motif { margin-top: 36px; padding: 16px 12px 12px; border-radius: 20px; }
+    .chair-hit svg { width: min(300px, 92%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .layer { transition: none; }
+  }
+</style>
+<script>
+  const el = document.querySelector('.chair-motif');
+  const hit = el && el.querySelector('.chair-hit');
+  if (el && hit) {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) el.classList.add('is-instant');
+    let pinned = false;
+    let queued = false;
+    const depth = () => {
+      const r = el.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      const t = 1 - (r.top + r.height * 0.45) / vh;
+      el.dataset.depth = t < 0.62 ? '0' : t < 0.84 ? '1' : '2';
+    };
+    depth();
+    requestAnimationFrame(() => el.classList.add('is-ready'));
+    addEventListener('scroll', () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; depth(); });
+    }, { passive: true });
+    hit.addEventListener('pointerenter', (e) => {
+      if (e.pointerType === 'touch') return;
+      el.classList.add('is-nest');
+    });
+    hit.addEventListener('pointerleave', () => {
+      if (!pinned) el.classList.remove('is-nest');
+    });
+    hit.addEventListener('click', () => {
+      pinned = !pinned;
+      el.classList.toggle('is-nest', pinned);
+      hit.setAttribute('aria-pressed', String(pinned));
+    });
+  }
+</script>
