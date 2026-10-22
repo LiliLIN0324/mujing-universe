@@ -1,29 +1,72 @@
-# 幕景宇宙 · 林丽丽艺术工作室
+# 幕景宇宙 · Mujing Universe
 
-艺术家林丽丽的 AIGC 文化艺术工作室官网（Astro 5，包名 `mujing-site`）。
+AIGC 艺术工作室的官网：作品目录、艺术家与工作室介绍，外加一个能聊作品的 AI 向导「Mimi」。
 
-页面底色是 `#F6F5F3`：大圆角作品图、图下短标题与灰色信息、稀疏顶栏，主按钮是黑底胶囊。中文使用自托管的阿里巴巴普惠体 3.0（Regular / Medium / SemiBold 子集，官方 OSS 返回 403），字体栈是 `"Alibaba PuHuiTi 3.0", "Noto Sans SC", system-ui, sans-serif`。Noto Sans SC 只做回退。英文说明用 Inter。
+**线上：<https://mujing-universe.pages.dev>**
 
-## 本地运行
+Astro 静态站点，无前端框架运行时；唯一的动态能力是页面右下角的 AI 对话，跑在 Cloudflare Pages Functions 上。
 
-```bash
-npm install
-npm run dev
-```
-
-开发服务器：<http://127.0.0.1:4471>
-
-```bash
-npm run build
-npm run preview
-```
+---
 
 ## 页面
 
-- `/` 首页（长卷、聆听图景、精选作品、底部合作）
-- `/works/` 作品（图录 / 编号索引 / 年表，按创作线筛选）
-- `/works/[slug]` 作品详情
-- `/artist/` 艺术家
-- `/studio/` 工作室
-- `/contact/` 合作与经纪
-- `/about/` 重定向至工作室
+| 路径 | 内容 |
+|---|---|
+| `/` | 首页 |
+| `/works/` | 作品列表 |
+| `/works/<slug>/` | 单个作品 |
+| `/artist/` · `/studio/` | 艺术家与工作室 |
+| `/contact/` | 联系方式 |
+
+`/about` 通过 `_redirects` 跳到 `/studio/`。
+
+## AI 向导 Mimi
+
+`functions/api/chat.ts` 是一个流式（SSE）接口，后端调用 SiliconFlow 的 `Qwen/Qwen3-8B`，按 IP 限流。
+
+本地运行对话需要一个 API Key：
+
+```bash
+# .dev.vars（不要提交）
+SILICONFLOW_API_KEY=sk-...
+```
+
+## 本地开发
+
+```bash
+npm install
+npm run dev        # http://localhost:4471
+npm run build      # 产物在 dist/
+npm run preview
+```
+
+带 AI 接口的本地预览用 Wrangler：
+
+```bash
+npx wrangler pages dev dist --compatibility-date=2025-01-01
+```
+
+## 作品数据
+
+每个作品是 `src/content/works/` 下的一个 JSON 文件，字段由 `src/content.config.ts` 校验。新增作品＝加一个 JSON，无需改页面。
+
+封面图可用 `scripts/fetch-ring-covers.mjs` 批量抓取；字体自托管在 `public/fonts/`，不依赖外部 CDN。
+
+## 部署
+
+Cloudflare Pages：
+
+- 构建命令 `npm run build`，输出目录 `dist`
+- 环境变量 `SILICONFLOW_API_KEY`（Functions 用）
+- `public/_headers` 已配置安全响应头
+
+## 目录
+
+```
+src/pages/         路由
+src/content/works/ 作品 JSON
+src/components/    页面组件（含 MimiChat）
+functions/api/     Cloudflare Pages Functions
+public/            _headers、_redirects、字体、山形装饰
+scripts/           封面抓取、作品导入
+```
