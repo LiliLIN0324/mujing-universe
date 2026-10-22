@@ -1,0 +1,15 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="新闻 · 幕景宇宙" active="/news/">
+<main class="wrap news-page">
+  <p class="kicker cap">News · 新闻</p>
+  <h1>新闻</h1>
+  <p class="empty">近期动态陆续更新。</p>
+</main>
+<style>
+.news-page { padding-top: 80px; }
+.news-page h1 { font-size: clamp(2rem, 4vw, 2.6rem); font-weight: 600; letter-spacing: -0.03em; margin: 16px 0 32px; }
+.empty { color: var(--ink2); }
+</style>
+</Base>

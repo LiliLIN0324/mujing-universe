@@ -9,11 +9,11 @@ const {
   home = false,
   navClass = '',
 } = Astro.props;
-const links = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
+const links = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '联络']];
 // Every page uses the homepage 'Scendance Space' bar (header.top.top--home). `home` pages (homepage, work detail)
 // keep the auto-hide/overlay behaviour; all other pages add 'top--page': always visible, in flow, on the paper colour.
 const pageNav = navClass.split(' ').filter((c) => c && c !== 'top--unified').join(' ');
-const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
+const foot = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '联络']];
 const canonical = Astro.site ? new URL(Astro.url.pathname + Astro.url.search, Astro.site).href : '';
 const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 ---
