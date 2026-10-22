@@ -33,24 +33,12 @@ const mLead = mobilePicks[0];
 const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off', picks: 'on', cta: 'off' };
 ---
 <Base active="/" home>
+
+{/* ---- Mobile: hero + card stack (≤768px only) ---- */}
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
-<section class="hero" id="scroll-hero" aria-label="当代西湖繁胜全景图">
+<section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图">
   <div class="hero-pan">
     <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
-    <video
-      id="scroll-video"
-      class="hero-video"
-      muted
-      playsinline
-      webkit-playsinline
-      x5-playsinline
-      x5-video-player-type="h5"
-      preload="none"
-      disablepictureinpicture
-      referrerpolicy="no-referrer"
-      data-src={SCROLL_VIDEO}
-      aria-hidden="true"
-    ></video>
   </div>
   <div class="hero-grad" aria-hidden="true"></div>
   <div class="hero-info">
@@ -60,20 +48,14 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
       <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
       <p class="meta">古画新绘　·　进行中　·　2026</p>
     </div>
-    <div class="hero-act">
-      <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
-    </div>
   </div>
-  <div class="hero-cue" aria-hidden="true">长卷 · 自动展开<i></i>01 / 12</div>
   <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
 </section>
-<a class="scroll-cue" id="scroll-cue" href="#picks" aria-label="向下滚动至精选"><span>SCROLL</span><i></i></a>
 <a class="m-down" href="#picks" aria-label="向下滚动至精选作品"><b>下滑</b><i></i><em>⌄</em></a>
 <a class="m-peek" href="#picks"><span>精选作品</span><span>{mobilePicks.length}</span></a>
 </div>
 
 {leadPick && <section class="picks" id="picks" data-dwell={PAGE_DWELL.picks}>
-  {/* Mobile card stack (≤768px) */}
   {mLead && <div class="m-feat" id="m-feat">
     <div class="m-hd"><b>精选作品</b><span id="m-count">01 / {String(mobilePicks.length).padStart(2, '0')}</span></div>
     <div class="m-stage" id="m-stage" role="group" aria-roledescription="carousel" aria-label="精选作品">
@@ -100,41 +82,61 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     </ul>
     <script type="application/json" id="m-pick-data" set:html={JSON.stringify(mobilePicks).replace(/</g, '\\u003c')}></script>
   </div>}
-
-  {/* Desktop fullscreen work slides */}
-  <div class="fs-works" id="fs-works" aria-label="精选作品">
-    {ringWorks.map((work, i) => (
-      <div class="fs-slide" data-i={i} aria-hidden={i !== 0}>
-        <img
-          class="fs-bg"
-          alt={work.title}
-          width="1920"
-          height="1080"
-          draggable="false"
-          referrerpolicy="no-referrer"
-          decoding="async"
-          src={`/ring/${i}.jpg`}
-          data-fallback={work.fallback || '/ring/paper.jpg'}
-          loading={i < 2 ? 'eager' : 'lazy'}
-        />
-        <div class="fs-grad" aria-hidden="true"></div>
-        <div class="fs-info">
-          <p class="fs-no">0{i + 1}</p>
-          <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
-          {work.meta && <p class="fs-meta">{work.meta}</p>}
-          {work.summary && <p class="fs-summary">{work.summary}</p>}
-          <a class="fs-view" href={work.href}>查看作品 →</a>
-        </div>
-      </div>
-    ))}
-    <div class="fs-nav" aria-hidden="true">
-      {ringWorks.map((_, i) => <button class:list={['fs-dot', { on: i === 0 }]} type="button" data-i={i} aria-label={`作品 ${i + 1}`}></button>)}
-    </div>
-    <button class="fs-arrow fs-prev" type="button" aria-label="上一件">‹</button>
-    <button class="fs-arrow fs-next" type="button" aria-label="下一件">›</button>
-  </div>
-  <script type="application/json" id="pick-data" set:html={JSON.stringify(picks).replace(/</g, '\\u003c')}></script>
 </section>}
+
+{/* ---- Desktop: single fullscreen carousel, starts from 西湖长卷 ---- */}
+<div class="fs-stage" id="fs-stage" aria-label="精选作品">
+  {/* Slide 0: 西湖长卷 — hero work with video/audio */}
+  <div class="fs-slide is-active" data-i="0" aria-hidden="false">
+    <div class="fs-pan">
+      <img class="fs-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+      <video
+        id="scroll-video"
+        class="fs-video"
+        muted
+        playsinline
+        webkit-playsinline
+        x5-playsinline
+        preload="none"
+        disablepictureinpicture
+        referrerpolicy="no-referrer"
+        data-src={SCROLL_VIDEO}
+        aria-hidden="true"
+      ></video>
+    </div>
+    <div class="fs-grad" aria-hidden="true"></div>
+    <div class="fs-info">
+      <p class="fs-by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
+      <h1 class="fs-title">{leadPick.title}</h1>
+      {leadPick.summary && <p class="fs-summary">{leadPick.summary}</p>}
+      <p class="fs-meta">古画新绘　·　进行中　·　2026</p>
+      <div class="fs-actions">
+        <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+        <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  </div>
+  {/* Slides 1–9: other works */}
+  {ringWorks.slice(1).map((work, i) => (
+    <div class="fs-slide" data-i={i + 1} aria-hidden="true">
+      <img class="fs-bg" alt={work.title} width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+      <div class="fs-grad" aria-hidden="true"></div>
+      <div class="fs-info">
+        <p class="fs-no">{String(i + 2).padStart(2, '0')}</p>
+        <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
+        {work.meta && <p class="fs-meta">{work.meta}</p>}
+        {work.summary && <p class="fs-summary">{work.summary}</p>}
+        <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+  ))}
+  <div class="fs-nav" aria-hidden="true">
+    {ringWorks.map((_, i) => <button class:list={['fs-dot', { on: i === 0 }]} type="button" data-i={i} aria-label={`作品 ${i + 1}`}></button>)}
+  </div>
+  <button class="fs-arrow fs-prev" type="button" aria-label="上一件">‹</button>
+  <button class="fs-arrow fs-next" type="button" aria-label="下一件">›</button>
+  <a class="scroll-cue" id="scroll-cue" href="#cta" aria-label="向下滚动"><span>SCROLL</span><i></i></a>
+</div>
 
 <section class="narrow cta" id="cta" data-dwell={PAGE_DWELL.cta}>
   <h2>展览 · 委托 · 合作</h2>
@@ -142,9 +144,402 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   <a class="btn solid" href="/contact/">合作</a>
 </section>
 
+
 <style>
-/* ---- Hero: fullscreen, text overlaid ---- */
+/* ---- Desktop fullscreen carousel ---- */
+.fs-stage {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: #1a1a18;
+}
+@media (min-width: 769px) {
+  .fs-stage { display: block; }
+  .first-screen { display: none; }
+  .picks { display: none; }
+  .cta { position: relative; z-index: 1; margin-top: 100vh; }
+}
+.fs-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  pointer-events: none;
+}
+.fs-slide.is-active { opacity: 1; pointer-events: auto; }
+
+/* Slide 0: panning painting */
+.fs-pan {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.fs-still {
+  position: absolute;
+  top: calc(-8vh);
+  left: 0;
+  height: 116%;
+  width: auto;
+  max-width: none;
+  object-fit: initial;
+  animation: fs-pan 120s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes fs-pan {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% + 100vw)); }
+}
+.fs-video {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Other slides */
+.fs-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fs-grad {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.15) 0%,
+    rgba(0,0,0,0) 40%,
+    rgba(0,0,0,0.6) 100%
+  );
+}
+.fs-info {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 2;
+  padding: 0 72px 56px;
+  color: #fff;
+}
+.fs-by {
+  margin: 0 0 8px;
+  font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
+  font-size: clamp(18px, 1.8vw, 26px);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255,255,255,0.88);
+}
+.fs-by a { color: inherit; text-decoration: none; }
+.fs-by a:hover { opacity: 0.7; }
+.fs-by span { margin-left: 10px; font-family: var(--en), var(--sans); font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.55); letter-spacing: 0.06em; }
+.fs-no { margin: 0 0 8px; font-family: var(--en), var(--sans); font-size: 11px; letter-spacing: 0.2em; color: rgba(255,255,255,0.4); }
+.fs-title {
+  margin: 0 0 10px;
+  font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
+  font-size: clamp(30px, 4vw, 56px);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: #fff;
+}
+.fs-title a { color: inherit; text-decoration: none; }
+.fs-title a:hover { opacity: 0.8; }
+.fs-summary { margin: 0 0 10px; font-size: clamp(13px, 1.1vw, 16px); color: rgba(255,255,255,0.7); max-width: 38em; line-height: 1.65; }
+.fs-meta { margin: 0 0 20px; font-size: 12px; letter-spacing: 0.1em; color: rgba(255,255,255,0.42); }
+.fs-actions { display: flex; align-items: center; gap: 20px; }
+.listen {
+  display: flex; align-items: center; gap: 10px;
+  border: 1px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.07);
+  color: #fff; border-radius: 999px;
+  padding: 11px 22px;
+  font-family: inherit; font-size: 13px;
+  letter-spacing: 0.08em; cursor: pointer;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.listen:hover { background: rgba(255,255,255,0.16); }
+.listen .ic { width: 0; height: 0; border-left: 7px solid #fff; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.listen[aria-pressed="true"] .ic { width: 7px; height: 10px; border: 0; border-left: 2px solid #fff; border-right: 2px solid #fff; }
+.listen:disabled { opacity: 0.35; cursor: not-allowed; }
+.fs-view {
+  display: inline-block; color: #fff;
+  font-size: 13px; letter-spacing: 0.1em;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(255,255,255,0.4);
+  padding-bottom: 2px;
+}
+.fs-view:hover { border-bottom-color: #fff; }
+
+/* Nav dots */
+.fs-nav {
+  position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
+  z-index: 3; display: flex; flex-direction: column; gap: 8px;
+}
+.fs-dot {
+  width: 5px; height: 5px; border-radius: 50%; border: 0;
+  background: rgba(255,255,255,0.28); cursor: pointer; padding: 0;
+  transition: background 0.25s, transform 0.25s;
+}
+.fs-dot.on { background: #fff; transform: scale(1.4); }
+.fs-dot:focus-visible { outline: 1px solid rgba(255,255,255,0.5); outline-offset: 3px; }
+
+/* Arrows */
+.fs-arrow {
+  position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
+  width: 44px; height: 44px; border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 50%; background: rgba(0,0,0,0.18); color: #fff;
+  font-size: 20px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: background 0.2s;
+}
+.fs-arrow:hover { background: rgba(0,0,0,0.42); }
+.fs-prev { left: 20px; }
+.fs-next { right: 52px; }
+
+/* Scroll cue */
+.scroll-cue {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 0.3em;
+  text-decoration: none; transition: opacity 0.4s;
+}
+.scroll-cue span { margin-right: -0.3em; }
+.scroll-cue i { display: block; width: 1px; height: 34px; background: rgba(255,255,255,0.2); position: relative; overflow: hidden; }
+.scroll-cue i::after { content: ""; position: absolute; left: 0; top: 8px; width: 1px; height: 12px; background: rgba(255,255,255,0.75); animation: scroll-drip 2.2s cubic-bezier(0.65,0,0.35,1) infinite; }
+@keyframes scroll-drip { 0% { transform: translateY(-36px); } 100% { transform: translateY(36px); } }
+.scroll-cue.is-gone { opacity: 0; pointer-events: none; }
+
+/* CTA */
+.cta { text-align: center; padding: 96px 24px 80px; background: var(--bg); }
+.cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
+.cta p { color: var(--ink2); margin-bottom: 22px; }
+
+/* ---- Mobile ---- */
+.m-prog, .m-down, .m-peek { display: none; }
 .first-screen {
+  position: relative;
+  height: 100vh; height: 100svh; height: 100dvh;
+  background: #1a1a18; color: #fff;
+}
+.hero {
+  position: absolute; inset: 0; overflow: hidden;
+}
+.hero-pan {
+  position: absolute; top: 0; left: 0;
+  height: 100%; width: auto;
+  animation: none;
+  transform: translate3d(var(--pan-x, 0px), 0, 0);
+}
+.hero-still {
+  position: relative; inset: auto; top: 0;
+  height: 100%; width: auto; max-width: none; object-fit: initial;
+}
+.hero-grad {
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.65) 100%);
+}
+.hero-info {
+  position: absolute; inset: auto 0 0 0; z-index: 2;
+  padding: 0 24px 80px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
+}
+.hero-copy .by { margin: 0 0 6px; font-family: "Noto Serif SC", serif; font-weight: 600; font-size: 24px; color: rgba(255,255,255,0.9); }
+.hero-copy .by a { color: inherit; text-decoration: none; }
+.hero-copy .by span { margin-left: 8px; font-family: var(--en), var(--sans); font-size: 13px; color: rgba(255,255,255,0.55); }
+.hero-copy h1 { margin: 0; color: #fff; font-family: "Noto Serif SC", serif; font-weight: 600; font-size: 30px; line-height: 1.15; }
+.hero-copy .sub { margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.68); line-height: 1.55; }
+.hero-copy .meta { margin: 6px 0 0; font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.38); }
+@media (max-width: 768px) {
+  .m-prog {
+    position: absolute; left: 50%; bottom: 18px; z-index: 2;
+    transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
+    white-space: nowrap; color: rgba(255,255,255,0.9); font-size: 11px;
+    letter-spacing: 0.2em; font-variant-numeric: tabular-nums; pointer-events: none;
+  }
+  .m-prog i { display: block; width: 120px; height: 1px; background: rgba(255,255,255,0.4); position: relative; }
+  .m-prog b { position: absolute; left: 0; top: 0; height: 1px; width: 100%; background: #fff; transform-origin: 0 50%; transform: scaleX(var(--prog, 0)); }
+  .m-down {
+    position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    color: rgba(255,255,255,0.45); font-size: 10px; letter-spacing: 0.3em; text-decoration: none;
+  }
+  .m-down b { font-weight: 400; margin-right: -0.3em; }
+  .m-down i { display: block; width: 1px; height: 30px; background: rgba(255,255,255,0.18); position: relative; overflow: hidden; }
+  .m-down i::after { content: ""; position: absolute; left: 0; top: 10px; width: 1px; height: 14px; background: rgba(255,255,255,0.7); animation: m-down-drip 2.2s cubic-bezier(0.65,0,0.35,1) infinite; }
+  @keyframes m-down-drip { 0% { transform: translateY(-26px); } 100% { transform: translateY(26px); } }
+  .m-down em { font-style: normal; font-size: 12px; line-height: 1; margin-top: -6px; }
+  .m-peek {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+    padding: 16px 24px 0; display: flex; justify-content: space-between;
+    background: #F6F5F3; color: #9a958c; font-size: 12px; letter-spacing: 0.2em; text-decoration: none;
+  }
+  :global(html) { scroll-snap-type: y mandatory; }
+  .first-screen, .picks, .cta { scroll-snap-align: start; scroll-snap-stop: always; }
+  .picks { min-height: 100vh; min-height: 100svh; padding-top: 52px; background: #F6F5F3; }
+  .cta { margin-top: 0; padding-top: 96px; }
+}
+
+/* Mobile featured card stack */
+.m-feat { display: none; }
+@media (max-width: 768px) {
+  .picks { height: auto; padding-bottom: 8px; }
+  .m-feat {
+    --cw: calc(100vw - 90px); --ch: calc(var(--cw) * 9 / 16);
+    display: block; color: #1a1a18; font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
+  }
+  .m-hd { display: flex; justify-content: space-between; align-items: baseline; padding: 14px 24px 0; line-height: normal; }
+  .m-hd b { font-size: 12px; font-weight: 400; color: #9a958c; letter-spacing: 0.2em; }
+  .m-hd span { font-size: 12px; color: #9a958c; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+  .m-stage { position: relative; height: calc(var(--ch) + 44px); margin-top: 22px; perspective: 900px; touch-action: pan-y; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .m-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); transform-origin: 100% 50%; border-radius: 4px; overflow: hidden; background: #e6e3de; box-shadow: 0 14px 30px rgba(40,30,20,0.16); will-change: transform, opacity; backface-visibility: hidden; }
+  .m-card:not([style]) { transform: translateX(24px); }
+  .m-card:not([style]) ~ .m-card:not([style]) { opacity: 0; }
+  .m-card img { width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; pointer-events: none; }
+  .m-bar { display: flex; gap: 6px; padding: 0 24px; }
+  .m-bar i { flex: 1; height: 2px; background: #e1ddd6; transition: background 0.25s ease; }
+  .m-bar i.on { background: #1a1a18; }
+  .m-info { padding: 22px 24px 0; }
+  .m-title { margin: 0; color: #1a1a18; font-family: "Noto Serif SC", serif; font-weight: 600; font-size: 28px; line-height: 1.25; }
+  .m-title-link { color: inherit; text-decoration: none; }
+  .m-meta { margin-top: 8px; font-size: 12px; color: #9a958c; letter-spacing: 0.08em; }
+  .m-body { margin: 12px 0 0; font-size: 14px; line-height: 1.75; color: #4a463f; }
+  .m-view { display: inline-block; margin-top: 16px; color: #1a1a18; font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-decoration: none; border-bottom: 1px solid rgba(26,26,24,0.5); padding-bottom: 2px; }
+  .m-view span { margin-left: 4px; }
+  .m-feat [hidden] { display: none !important; }
+  .m-list { list-style: none; margin: 22px 24px 0; padding: 0; border-top: 1px solid #e3dfd8; }
+  .m-row { border-bottom: 1px solid #e3dfd8; }
+  .m-row button { display: flex; align-items: center; gap: 14px; width: 100%; height: 44px; padding: 0; border: 0; background: none; color: #8d887f; font: inherit; font-size: 14px; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .m-row .no { font-size: 11px; width: 18px; color: #b9b4ab; font-variant-numeric: tabular-nums; }
+  .m-row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-row .y { font-size: 12px; }
+  .m-row.on button { color: #1a1a18; }
+  .m-row.on .no { color: #b5432f; }
+  .m-row.on .t { font-weight: 600; }
+  .m-row.m-all { border-bottom: none; }
+  .m-row.m-all button { color: #1a1a18; font-size: 13px; letter-spacing: 0.08em; }
+  .m-row.m-all .y { color: #9a958c; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fs-slide { transition: none; }
+  .fs-still { animation: none; }
+  .scroll-cue i::after { animation: none; }
+}
+</style>
+
+<script>
+// Desktop fullscreen carousel (≥769px only)
+const fsStage = document.getElementById('fs-stage');
+const isMobile = matchMedia('(max-width: 768px)');
+if (fsStage && !isMobile.matches) {
+  const slides = Array.from(fsStage.querySelectorAll<HTMLElement>('.fs-slide'));
+  const dots = Array.from(fsStage.querySelectorAll<HTMLElement>('.fs-dot'));
+  const video = document.getElementById('scroll-video') as HTMLVideoElement | null;
+  const listen = document.getElementById('snd') as HTMLButtonElement | null;
+  const listenLabel = listen?.querySelector('.lb');
+  let cur = 0, listening = false;
+
+  function setVolume(v: number) { try { if (video) video.volume = v; } catch {} }
+  function failSilent() {
+    listening = false;
+    if (video) { video.muted = true; video.defaultMuted = true; video.setAttribute('muted', ''); }
+    setVolume(0);
+    if (listen) { listen.disabled = false; listen.setAttribute('aria-pressed', 'false'); }
+    if (listenLabel) listenLabel.textContent = '聆听图景';
+  }
+  function setAudible(on: boolean) {
+    listening = on;
+    if (on) {
+      if (video) { video.muted = false; video.defaultMuted = false; video.removeAttribute('muted'); }
+      setVolume(1); listen?.setAttribute('aria-pressed', 'true');
+      if (listenLabel) listenLabel.textContent = '静音';
+    } else {
+      if (video) { video.muted = true; video.defaultMuted = true; video.setAttribute('muted', ''); }
+      setVolume(0); listen?.setAttribute('aria-pressed', 'false');
+      if (listenLabel) listenLabel.textContent = '聆听图景';
+    }
+  }
+  function attachSource() {
+    if (!video) return false;
+    const src = video.dataset.src; if (!src) return false;
+    video.playsInline = true; video.autoplay = true; video.loop = true;
+    if (!listening) { video.muted = true; video.defaultMuted = true; video.setAttribute('muted', ''); }
+    if (video.getAttribute('src') !== src) video.src = src;
+    return true;
+  }
+  video?.addEventListener('error', () => failSilent());
+  listen?.addEventListener('click', () => {
+    if (listen.disabled) return;
+    if (listening) { setAudible(false); return; }
+    if (!attachSource()) { failSilent(); return; }
+    setAudible(true);
+    const p = video?.play();
+    if (p) p.catch((err: Error) => { if (err?.name === 'AbortError') return; setAudible(false); if (video?.error) failSilent(); });
+  });
+
+  function goTo(i: number) {
+    cur = (i + slides.length) % slides.length;
+    slides.forEach((s, idx) => {
+      const active = idx === cur;
+      s.classList.toggle('is-active', active);
+      s.setAttribute('aria-hidden', String(!active));
+    });
+    dots.forEach((d, idx) => d.classList.toggle('on', idx === cur));
+  }
+  fsStage.querySelector('.fs-prev')?.addEventListener('click', () => goTo(cur - 1));
+  fsStage.querySelector('.fs-next')?.addEventListener('click', () => goTo(cur + 1));
+  dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(cur + 1);
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goTo(cur - 1);
+  });
+  let timer = setInterval(() => goTo(cur + 1), 7000);
+  fsStage.addEventListener('click', () => { clearInterval(timer); timer = setInterval(() => goTo(cur + 1), 7000); });
+
+  // scroll-cue hides after user scrolls
+  const cue = document.getElementById('scroll-cue');
+  window.addEventListener('scroll', () => { cue?.classList.toggle('is-gone', window.scrollY > 40); }, { passive: true });
+}
+</script>
+
+<script>
+// Nav auto-hide (desktop)
+const nav = document.getElementById('home-nav');
+let hoverTop = false, scrollShown = false, lastY = window.scrollY;
+function syncNav() { nav?.classList.toggle('is-shown', hoverTop || scrollShown); }
+window.addEventListener('mousemove', (e) => {
+  const near = e.clientY <= (nav?.classList.contains('is-shown') ? 96 : 72);
+  if (near !== hoverTop) { hoverTop = near; syncNav(); }
+}, { passive: true });
+document.documentElement.addEventListener('mouseleave', () => { hoverTop = false; syncNav(); });
+window.addEventListener('scroll', () => {
+  const y = window.scrollY, dy = y - lastY;
+  if (y <= 4) scrollShown = false;
+  else if (dy < -4) scrollShown = true;
+  else if (dy > 4) scrollShown = false;
+  if (Math.abs(dy) > 4 || y <= 4) lastY = y;
+  syncNav();
+}, { passive: true });
+</script>
+
+<script>
+import { mountMobileHero } from '../scripts/mobile-hero.js';
+import { mountMobileStack } from '../scripts/mobile-stack.js';
+import { mountMobilePager } from '../scripts/mobile-pager.js';
+const heroDwell = mountMobileHero();
+const mobileStackRoot = document.getElementById('m-feat');
+const stackDwell = mobileStackRoot ? mountMobileStack(mobileStackRoot) : null;
+mountMobilePager([
+  { el: document.getElementById('first-screen'), dwell: heroDwell },
+  { el: document.getElementById('picks'), dwell: stackDwell },
+  { el: document.getElementById('cta'), dwell: null },
+]);
+</script>
+</Base>
   position: relative;
   height: 100vh;
   height: 100svh;
