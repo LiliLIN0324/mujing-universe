@@ -22,9 +22,20 @@ import Cooperate from '../components/Cooperate.astro';
     <span class="go">微信 endTree-26 · 合作页 →</span>
   </a>
 </div>
-<h2>我们做什么</h2><ul><li>AIGC 音画创作与展陈（新线，进行中）</li><li>AIGC 产品与交互设计</li><li>游戏与数字场景</li><li>空间研究与数据可视化</li></ul>
+<h2>我们做什么</h2>
+<div class="erdos" data-erdos>
+  <ol aria-hidden="true">
+    {Array.from({ length: 16 }, (_, i) => <li data-dot><span>{String(i + 1).padStart(2, '0')}</span></li>)}
+  </ol>
+  <p class="cap">灰是未竟的问题，亮起是人和智能一起做完。</p>
+</div>
+<ul><li>AIGC 音画创作与展陈（新线，进行中）</li><li>AIGC 产品与交互设计</li><li>游戏与数字场景</li><li>空间研究与数据可视化</li></ul>
 <Cooperate />
 </main>
+<script>
+  import { mountErdos } from '../scripts/erdos-dots.js';
+  mountErdos();
+</script>
 <style>
 .studio { width: min(960px, calc(100% - 96px)); margin: 0 auto; padding-top: 88px; text-align: center; }
 .studio h1 { font-size: clamp(36px, 4vw, 48px); margin: 0 0 18px; font-weight: 600; letter-spacing: -0.03em; }
@@ -44,8 +55,44 @@ import Cooperate from '../components/Cooperate.astro';
 .member p { color: var(--ivory-2); margin: 0; }
 .member .go { margin-top: 16px; color: var(--gold); letter-spacing: 0.06em; }
 .member:hover .go { color: var(--ivory); }
-.studio ul { margin: 16px 0 0; padding-left: 1.1em; color: var(--ivory-2); text-align: left; }
-.studio li { padding: 6px 0; }
+.erdos { margin-top: 22px; text-align: left; }
+.erdos ol {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.erdos li {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 36px;
+  border-radius: 50%;
+  background: #D0CCC6;
+  color: #7A7670;
+  font-family: var(--en), var(--sans);
+  font-size: 10px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1;
+  user-select: none;
+  transition: background-color 0.35s ease, color 0.35s ease;
+}
+.erdos li.is-lit { background: #1A1A1C; color: #F6F5F3; }
+.erdos .cap { display: block; margin: 14px 0 0; letter-spacing: 0.08em; }
+.studio ul { margin: 22px 0 0; padding-left: 1.1em; color: var(--ivory-2); text-align: left; }
+.studio ul li { padding: 6px 0; }
+@media (max-width: 860px) {
+  .erdos ol { gap: 8px; }
+  .erdos li { width: 32px; height: 32px; flex-basis: 32px; font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .erdos li { transition: none; }
+}
 @media (max-width: 720px) {
   .studio { width: calc(100% - 32px); }
   .members { grid-template-columns: 1fr; }
