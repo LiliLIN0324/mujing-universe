@@ -1,57 +1,46 @@
 ---
 import Base from '../layouts/Base.astro';
-const jobs = [
-  ['AIGC 古画', '用 AI 做古画方向的影像和视觉，可以进展览，也可以单件委托。'],
-  ['民乐音画', '民乐和画面放在一起，适合展览、演出和公共空间。'],
-  ['合作项目', '文旅和展览里的数字展陈、机构或品牌的委托，也包括一起做的产品和游戏。'],
-];
+const lines = ['古画', '民乐音画', '展览 · 委托'];
 ---
-<Base title="合作 · 幕景宇宙" description="幕景宇宙的合作页。AIGC 古画、民乐音画和合作项目，先跟 Mimi 说需求，再用飞书加好友。" active="/contact/">
-<main class="narrow page">
-  <p class="kicker cap">Collaborate · 合作</p>
-  <h1>合作</h1>
-  <p class="lead">幕景是杭州的 AIGC 文化艺术团队。古画、民乐音画，还有展览和委托，都可以从这里说起。</p>
-
-  <section class="block">
-    <h2>可以接这些</h2>
-    <ul class="jobs">
-      {jobs.map(([title, text]) => (
-        <li>
-          <h3>{title}</h3>
-          <p>{text}</p>
-        </li>
-      ))}
-    </ul>
-  </section>
-
-  <section class="block" id="start">
-    <h2>怎么开始</h2>
-    <p>先把需求说清楚，再加飞书。官网不会自动拉群，也没有 24 小时在线的飞书助理。</p>
-    <ol>
-      <li><strong>先跟 Mimi 说需求。</strong>右下角可以打开她。告诉她是古画、民乐音画，还是一个具体项目。</li>
-      <li><strong>再用飞书加终树。</strong>扫下面的名片，备注里写项目。加上之后，由终树在飞书里回复。</li>
-    </ol>
-    <p class="acts">
-      <button class="btn" type="button" id="ask-mimi" data-mimi-open>先跟 Mimi 说需求</button>
-      <a class="btn solid" href="#feishu">用飞书聊</a>
-    </p>
-  </section>
-
-  <section class="block card" id="feishu">
-    <h2>用飞书聊</h2>
-    <img src="/mimi/feishu-qr.png" alt="终树的飞书名片，扫码加好友" width="431" height="568"/>
-    <p>用飞书扫一扫，添加终树。这是加好友，不是自动进群。</p>
-    <p class="hint">手机上可以长按图片保存。</p>
-  </section>
-
-  <section class="block card" id="wechat">
-    <h2>微信备用</h2>
-    <p>飞书不方便时，可以用微信 <span class="wx" id="wx-id">endTree-26</span>。</p>
-    <button class="btn" type="button" id="copy-wx">复制微信号</button>
-  </section>
-
-  <p class="quiet">创作和学术交流，写给林丽丽：<a href="mailto:lily1326685527@gmail.com">lily1326685527@gmail.com</a></p>
-  <p class="quiet">作品图像用于公开展示。商业使用和展览授权，用飞书说一声。</p>
+<Base title="合作 · 幕景宇宙" description="合作。飞书、微信、邮件。" active="/contact/">
+<main class="coop">
+  <header class="coop-top">
+    <p class="coop-idx">01</p>
+    <h1>合作</h1>
+  </header>
+  <div class="coop-rows">
+    <section class="row">
+      <h2>范围</h2>
+      <ul>
+        {lines.map((line) => <li>{line}</li>)}
+      </ul>
+    </section>
+    <section class="row" id="feishu">
+      <h2>飞书</h2>
+      <div class="fact">
+        <img src="/mimi/feishu-qr.png" alt="终树的飞书名片" width="431" height="568"/>
+        <p>加终树</p>
+      </div>
+    </section>
+    <section class="row" id="wechat">
+      <h2>微信</h2>
+      <div class="fact">
+        <p class="wx" id="wx-id">endTree-26</p>
+        <button class="sq" type="button" id="copy-wx">复制</button>
+      </div>
+    </section>
+    <section class="row">
+      <h2>邮件</h2>
+      <p class="mail"><a href="mailto:lily1326685527@gmail.com">lily1326685527@gmail.com</a></p>
+    </section>
+    <section class="row" id="start">
+      <h2>Mimi</h2>
+      <div class="fact">
+        <button class="sq ghost" type="button" id="ask-mimi" data-mimi-open>问一句</button>
+        <p class="aside">不会自动拉群。</p>
+      </div>
+    </section>
+  </div>
 </main>
 <script is:inline>
   document.getElementById('ask-mimi')?.addEventListener('click', () => {
@@ -76,7 +65,7 @@ const jobs = [
     return ok;
   }
   copy?.addEventListener('click', () => {
-    const prev = '复制微信号';
+    const prev = '复制';
     copy.textContent = '已复制';
     let settled = false;
     const finish = (ok) => {
@@ -101,43 +90,96 @@ const jobs = [
   });
 </script>
 <style>
-  .page { padding-top: 80px; padding-bottom: 12px; }
-  .page h1 { margin: 0 0 14px; }
-  .lead { color: var(--ink2); font-size: 1.05rem; }
-  .block { margin-top: 48px; }
-  .block h2 { margin: 0 0 14px; font-size: 1.35rem; }
-  .jobs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-  .jobs li {
-    background: var(--paper);
-    border-radius: 0;
-    padding: 18px 20px 16px;
+  .coop {
+    width: min(960px, calc(100% - 80px));
+    margin: 0 auto;
+    padding: 36px 0 72px;
   }
-  .jobs h3 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; }
-  .jobs p { margin: 0; color: var(--ink2); }
-  ol { margin: 0 0 18px; padding-left: 1.2em; }
-  ol li { margin: 0 0 8px; }
-  .acts { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
-  .card {
-    background: var(--paper);
-    border-radius: 0;
-    padding: 22px 20px 20px;
-    scroll-margin-top: 96px;
+  .coop-top {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    align-items: baseline;
+    gap: 24px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--ink);
   }
-  #start { scroll-margin-top: 96px; }
-  .card img {
-    display: block;
-    width: min(240px, 100%);
-    height: auto;
-    margin: 0 0 12px;
-    border-radius: 0;
-    background: var(--bg);
-  }
-  .hint, .quiet { color: var(--muted); font-size: 0.92rem; }
-  .quiet a { color: var(--ink); }
-  .wx {
+  .coop-idx {
+    margin: 0;
     font-family: var(--en), var(--sans);
-    letter-spacing: 0.02em;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
   }
-  #copy-wx { margin-top: 4px; }
+  .coop h1 {
+    margin: 0;
+    font-size: clamp(56px, 8vw, 88px);
+    font-weight: 600;
+    letter-spacing: -0.045em;
+    line-height: 0.9;
+  }
+  .row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 24px;
+    align-items: start;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--rule);
+    scroll-margin-top: 88px;
+  }
+  .row h2 {
+    margin: 4px 0 0;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+  }
+  .row ul { list-style: none; margin: 0; padding: 0; }
+  .row li {
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: -0.03em;
+  }
+  .fact { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 20px; }
+  .fact p { margin: 0; }
+  .row img {
+    display: block;
+    width: 148px;
+    height: auto;
+    border-radius: 0;
+    background: #fff;
+  }
+  .wx {
+    margin: 0;
+    font-family: var(--en), var(--sans);
+    font-size: 28px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1;
+  }
+  .mail { margin: 0; font-size: 22px; letter-spacing: -0.03em; }
+  .mail a { text-decoration: none; border-bottom: 1px solid var(--ink); }
+  .aside { margin: 0; color: var(--ink2); font-size: 15px; }
+  .sq {
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    background: var(--ink);
+    color: var(--bg);
+    padding: 8px 14px;
+    font-family: var(--sans);
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .sq.ghost { background: transparent; color: var(--ink); }
+  .sq:hover { opacity: 0.82; }
+  @media (max-width: 720px) {
+    .coop { width: calc(100% - 40px); padding-top: 28px; }
+    .coop-top, .row { grid-template-columns: 1fr; gap: 8px; }
+    .coop h1 { font-size: 48px; }
+    .row { padding: 18px 0; }
+    .row li, .mail { font-size: 20px; }
+    .wx { font-size: 24px; }
+  }
 </style>
 </Base>
