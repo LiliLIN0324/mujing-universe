@@ -1,68 +1,65 @@
 ---
-// 作品库：代表作在前，全部作品默认收起。有视频的封面悬停或点击才播，页面本身不自动播放。
+// 作品库：一条大图代表作，下面是网格。全部作品默认收起。
+// 有核对过的 mp4 才在悬停或点击时播放，页面不自动播放，没有片子的封面保持静图。
 import Base from '../../layouts/Base.astro';
-import WorkCover from '../../components/WorkCover.astro';
-import { FEATURED_SLUGS, LINES, allWorks, clean, coverClip, splitTitle } from '../../lib';
+import WorkCard from '../../components/WorkCard.astro';
+import { FEATURED_SLUGS, LINES, allWorks, clean, splitTitle } from '../../lib';
 
 const ws = (await allWorks()).map((w) => {
   const [main, sub] = splitTitle(w.title);
+  const year = w.yearNum || w.year;
   return {
     ...w,
     main,
     sub,
     desc: clean(w.description),
-    tag: w.status === '进行中' ? `${w.line} · 进行中` : w.line,
+    tag: w.status === '进行中' ? `${w.line} · 进行中` : [w.line, year].filter(Boolean).join(' · '),
+    lineLabel: w.status === '进行中' ? `${w.line} · 进行中` : w.line,
   };
 });
 const bySlug = new Map(ws.map((w) => [w.slug, w]));
-const featured = FEATURED_SLUGS.map((slug) => bySlug.get(slug)).filter((w) => !!w);
+const featured = FEATURED_SLUGS.map((slug) => bySlug.get(slug)).filter((w) => !!w).map((w, i) => ({
+  ...w,
+  idx: String(i + 1).padStart(2, '0'),
+}));
+const lead = featured[0];
+const rest = featured.slice(1);
 const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w) => w.line === line).length])] as [string, number][];
+const featTotal = String(featured.length).padStart(2, '0');
 ---
 <Base title="作品 · 幕景宇宙" description="幕景宇宙的代表作，以及按创作线收着的全部作品。" active="/works/">
 <main class="wf">
   <header class="wf-head">
-    <h1>作品<sup>{ws.length}</sup></h1>
-    <p class="intro">先看 {featured.length} 件代表作。其余按创作线收在全部作品里。</p>
+    <h1>作品</h1>
+    <p class="intro">先看 {featured.length} 件代表作。其余 {ws.length} 件按创作线收在下面，需要时再展开。</p>
   </header>
 
-  <section class="wf-block" id="features" aria-labelledby="feat-title">
-    <div class="wf-sec">
-      <span class="n">01</span>
-      <h2 id="feat-title">代表作 <em>Features</em></h2>
-      <span class="r">{featured.length} 件</span>
+  <section class="wf-stage" id="features" aria-labelledby="feat-title">
+    <div class="wf-tocwrap">
+      <h2 id="feat-title">代表作</h2>
+      <nav class="wf-toc" aria-label="代表作目录">
+        {featured.map((w) => (
+          <a href={`#w-${w.slug}`} data-slug={w.slug}>{w.main}</a>
+        ))}
+      </nav>
+      <span class="wf-now" id="wf-now" aria-hidden="true">01 / {featTotal}</span>
     </div>
-    <div class="wf-feat">
-      {featured.map((w, i) => {
-        const href = `/works/${w.slug}/`;
-        const clip = coverClip(w.slug);
-        const media = (
-          <div class="im">
-            <WorkCover w={w} eager={i === 0} />
-            {clip ? <a class="go" href={href}>查看</a> : <span class="go">查看</span>}
-          </div>
-        );
-        const cap = (
-          <div class="cap">
-            <span class="no">{w.no}</span>
-            <h3>
-              {clip ? <a href={href}><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</a> : <><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</>}
-            </h3>
-            <span class="yr">{w.yearNum || w.year}</span>
-            {w.desc && <p class="blurb">{w.desc}</p>}
-            <span class="tag">{w.tag}</span>
-          </div>
-        );
-        return clip
-          ? <article class:list={['card', i === 0 && 'lead']} data-slug={w.slug}>{media}{cap}</article>
-          : <a class:list={['card', i === 0 && 'lead']} href={href} data-slug={w.slug}>{media}{cap}</a>;
-      })}
-    </div>
+
+    {lead && (
+      <div class="wf-hero">
+        <WorkCard w={lead} eager lead anchor idx={lead.idx} />
+      </div>
+    )}
+    {rest.length > 0 && (
+      <div class="wf-grid">
+        {rest.map((w) => <WorkCard w={w} anchor idx={w.idx} rise />)}
+      </div>
+    )}
   </section>
 
   <details class="wf-fold" id="archive" data-mode="grid">
     <summary>
-      <span class="n">02</span>
-      <h2>全部作品 <em>All works</em></h2>
+      <h2>全部作品</h2>
       <span class="r"><span class="when-shut">展开</span><span class="when-open">收起</span> <b>{ws.length}</b></span>
     </summary>
     <script is:inline>
@@ -92,29 +89,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
       </div>
       <noscript><p class="wf-note">筛选需要打开脚本。这里是全部作品。</p></noscript>
       <div class="wf-cards">
-        {ws.map((w) => {
-          const href = `/works/${w.slug}/`;
-          const clip = coverClip(w.slug);
-          const inner = (
-            <>
-              <div class="im">
-                <WorkCover w={w} />
-                {clip ? <a class="go" href={href}>查看</a> : <span class="go">查看</span>}
-              </div>
-              <div class="cap">
-                <span class="no">{w.no}</span>
-                <h3>
-                  {clip ? <a href={href}><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</a> : <><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</>}
-                </h3>
-                <span class="yr">{w.yearNum || w.year}</span>
-                <span class="tag">{w.tag}</span>
-              </div>
-            </>
-          );
-          return clip
-            ? <article class="card" data-line={w.line} data-slug={w.slug}>{inner}</article>
-            : <a class="card" href={href} data-line={w.line} data-slug={w.slug}>{inner}</a>;
-        })}
+        {ws.map((w) => <WorkCard w={w} />)}
       </div>
       <div class="idx">
         <div class="row hd" aria-hidden="true">
@@ -128,7 +103,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
           <a class="row" href={`/works/${w.slug}/`} data-line={w.line} data-slug={w.slug}>
             <span class="no">{w.no}</span>
             <span class="t">{w.main}{w.sub && <em>{w.sub}</em>}</span>
-            <span class="c">{w.tag}</span>
+            <span class="c">{w.lineLabel}</span>
             <span class="d">{w.desc}</span>
             <span class="y">{w.yearNum || w.year}</span>
           </a>
@@ -142,182 +117,181 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 <style is:global>
 .wf {
   --rule1: rgba(26, 26, 28, .10);
-  --rule2: rgba(26, 26, 28, .16);
-  --song: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif;
-  --fbpaper: #F1EEE6;
-  width: min(1200px, calc(100% - 96px));
+  width: min(1440px, calc(100% - 96px));
   margin: 0 auto;
-  padding: 28px 0 16px;
+  padding: 12px 0 24px;
   color: var(--ink);
+  background: transparent;
 }
 .wf a { color: inherit; text-decoration: none; }
 .wf p { margin: 0; }
 .wf [hidden] { display: none !important; }
 .wf-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(220px, .7fr);
-  gap: 32px 48px;
-  align-items: end;
-  padding: 28px 0 4px;
+  display: block;
+  max-width: 40em;
+  padding: 20px 0 4px;
 }
 .wf h1 {
   margin: 0;
-  font-family: var(--song);
   font-weight: 600;
-  font-size: clamp(64px, 8vw, 104px);
-  line-height: .92;
-  letter-spacing: .03em;
+  font-size: clamp(40px, 4.4vw, 56px);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
   color: var(--ink);
-}
-.wf h1 sup {
-  font-family: var(--en);
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0;
-  margin-left: 10px;
-  color: var(--muted);
-  vertical-align: super;
 }
 .wf .intro {
-  margin: 0 0 10px;
-  max-width: 22em;
-  font-size: 16px;
-  line-height: 1.75;
-  color: var(--ink2);
-}
-.wf-block { margin-top: 56px; scroll-margin-top: 96px; }
-.wf-sec, .wf-fold summary {
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  column-gap: 12px;
-  align-items: baseline;
-}
-.wf-sec { border-top: 1px solid var(--ink); padding-top: 14px; }
-.wf-sec .n, .wf-fold summary .n {
-  font-family: var(--en);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: .06em;
-  color: var(--accent);
-}
-.wf h2 {
-  margin: 0;
-  font-family: var(--sans);
-  font-size: 15px;
-  font-weight: 600;
-  letter-spacing: .14em;
-  line-height: 1.4;
-}
-.wf h2 em {
-  font-style: normal;
-  font-weight: 400;
-  font-family: var(--en);
-  font-size: 12px;
-  letter-spacing: .08em;
-  color: var(--muted);
-  margin-left: 8px;
-}
-.wf-sec .r, .wf-fold summary .r {
-  font-size: 13px;
-  letter-spacing: .06em;
-  color: var(--muted);
-  white-space: nowrap;
-}
-.wf-fold summary .r b { color: var(--ink); font-weight: 500; margin-left: 6px; }
-.wf-feat {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  column-gap: 28px;
-  row-gap: 64px;
-  margin-top: 32px;
-}
-.wf-feat .lead { grid-column: 1 / -1; }
-.wf .card { display: block; min-width: 0; color: inherit; }
-.wf .im { position: relative; background: #EFEDE9; }
-.wf .go {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  z-index: 3;
-  background: var(--bg);
-  color: var(--ink);
-  font-size: 13px;
-  letter-spacing: .08em;
-  padding: 10px 12px;
-  min-height: 44px;
-  opacity: 0;
-  pointer-events: none;
-}
-.wf a.go { pointer-events: auto; }
-.wf .cap {
-  display: grid;
-  grid-template-columns: 36px minmax(0, 1fr) auto;
-  column-gap: 8px;
-  align-items: baseline;
-  padding-top: 14px;
-}
-.wf .cap .no, .wf .cap .yr, .wf .idx .no, .wf .idx .y {
-  font-family: var(--en);
-  font-size: 13px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .04em;
-  color: var(--muted);
-}
-.wf .card h3 {
-  margin: 0;
-  min-width: 0;
-  font-family: var(--song);
-  font-weight: 600;
-  font-size: 22px;
-  line-height: 1.35;
-  letter-spacing: .02em;
-  overflow-wrap: break-word;
-}
-.wf .lead h3 { font-size: clamp(26px, 2.4vw, 34px); }
-.wf .card h3 em {
-  display: block;
-  margin-top: 4px;
-  font-style: normal;
-  font-weight: 400;
-  font-family: var(--sans);
-  font-size: 14px;
-  letter-spacing: 0;
-  color: var(--ink2);
-}
-.wf .blurb {
-  grid-column: 2 / 4;
-  margin-top: 8px;
+  margin: 12px 0 0;
+  max-width: 36em;
   font-size: 15px;
   line-height: 1.7;
   color: var(--ink2);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
 }
-.wf .tag {
-  grid-column: 2 / 4;
-  margin-top: 10px;
+.wf-stage { margin-top: 28px; }
+.wf-tocwrap {
+  display: flex;
+  align-items: center;
+  gap: 8px 28px;
+  margin: 0 0 22px;
+  padding: 2px 0;
+  background: rgba(246, 245, 243, .94);
+}
+.wf h2 {
+  margin: 0;
+  flex: 0 0 auto;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  line-height: 1.4;
+}
+.wf-toc {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 2px 22px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+.wf-toc a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.wf-now {
+  flex: 0 0 auto;
+  font-family: var(--en);
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   letter-spacing: .08em;
   color: var(--muted);
 }
+.wf-hero { margin: 0; }
+.wf-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  row-gap: 72px;
+  margin-top: 80px;
+}
+.wf .card { display: block; min-width: 0; color: inherit; }
+.wf-stage .card { scroll-margin-top: 148px; }
+.wf .im { background: transparent; }
+.wf .cap { padding-top: 16px; }
+.wf .card h3 {
+  margin: 0;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.3;
+  letter-spacing: -0.03em;
+  overflow-wrap: break-word;
+}
+.wf-hero .cap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 32px;
+  row-gap: 6px;
+  align-items: end;
+  padding-top: 18px;
+}
+.wf-hero .card h3 {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: clamp(28px, 3vw, 40px);
+  letter-spacing: -0.035em;
+}
+.wf .sub {
+  margin: 6px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink2);
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wf-hero .sub { grid-column: 1; grid-row: 2; margin-top: 0; }
+.wf .meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+}
+.wf-hero .meta {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: end;
+  margin-top: 0;
+  justify-content: flex-end;
+}
+.wf .tag {
+  font-size: 13px;
+  line-height: 1.4;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+.wf .more {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  letter-spacing: .08em;
+  color: var(--ink2);
+}
 .wf-fold {
-  margin-top: 72px;
-  border-top: 1px solid var(--ink);
+  margin-top: 96px;
+  border-top: 1px solid var(--rule);
   scroll-margin-top: 96px;
   overflow-anchor: none;
 }
 .wf-fold summary {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
   list-style: none;
   cursor: pointer;
-  padding: 16px 96px 16px 0;
-  min-height: 48px;
+  min-height: 56px;
+  padding: 18px 0;
 }
 .wf-fold summary::-webkit-details-marker { display: none; }
 .wf-fold summary::marker { content: ""; }
 .wf-fold:not([open]) > :not(summary) { display: none !important; }
 .wf-fold[open] .when-shut, .wf-fold:not([open]) .when-open { display: none; }
+.wf-fold summary .r {
+  font-size: 14px;
+  letter-spacing: .06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.wf-fold summary .r b { color: var(--ink); font-weight: 500; margin-left: 6px; }
 .wf-arch { padding-bottom: 8px; }
 .wf-bar {
   position: sticky;
@@ -328,19 +302,22 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   align-items: flex-end;
   justify-content: space-between;
   gap: 8px 24px;
-  padding: 12px 0 10px;
+  padding: 8px 0 10px;
   background: rgba(246, 245, 243, .94);
-  backdrop-filter: blur(12px);
 }
 .wf-filters {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 2px 22px;
-  flex: 1 1 280px;
+  flex: 1 1 240px;
   min-width: 0;
   max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
 }
+.wf-filters::-webkit-scrollbar { display: none; }
 .wf-filters button, .wf-view button {
   border: 0;
   background: none;
@@ -352,6 +329,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   cursor: pointer;
   white-space: nowrap;
 }
+.wf-filters button { min-height: 44px; }
 .wf-filters button sup {
   font-family: var(--en);
   font-size: 10px;
@@ -359,13 +337,11 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   letter-spacing: 0;
   color: var(--muted);
 }
-.wf-filters button.on {
-  color: var(--ink);
-  box-shadow: inset 0 -1px 0 var(--accent);
-}
+.wf-filters button.on { color: var(--ink); box-shadow: inset 0 -1px 0 var(--accent); }
 .wf-tools { display: flex; align-items: center; gap: 18px; }
 .wf-count { font-size: 12px; letter-spacing: .08em; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .wf-view { display: flex; gap: 16px; }
+.wf-view button { min-height: 44px; }
 .wf-view button.on { color: var(--ink); font-weight: 600; }
 .wf-note { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
 .wf-cards {
@@ -380,11 +356,11 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 .wf .idx { margin-top: 12px; border-top: 1px solid var(--ink); }
 .wf .idx .row {
   display: grid;
-  grid-template-columns: 52px minmax(0, 1.4fr) 148px minmax(0, 1.3fr) 56px;
+  grid-template-columns: 52px minmax(0, 1.4fr) 148px minmax(0, 1.3fr) 72px;
   column-gap: 16px;
   align-items: center;
-  min-height: 58px;
-  padding: 10px 0;
+  min-height: 64px;
+  padding: 12px 0;
   border-bottom: 1px solid var(--rule1);
   color: inherit;
 }
@@ -396,12 +372,18 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   letter-spacing: .12em;
   color: var(--muted) !important;
 }
+.wf .idx .no, .wf .idx .y {
+  font-family: var(--en);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
 .wf .idx .t {
   min-width: 0;
-  font-family: var(--song);
-  font-size: 18px;
+  font-size: 17px;
   line-height: 1.4;
-  letter-spacing: .02em;
+  letter-spacing: -0.02em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -409,7 +391,6 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 .wf .idx .t em {
   font-style: normal;
   font-weight: 400;
-  font-family: var(--sans);
   font-size: 14px;
   color: var(--muted);
   margin-left: 8px;
@@ -423,93 +404,225 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   text-overflow: ellipsis;
 }
 .wf .idx .y { text-align: right; }
-/* cover */
-.wf .cv { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #EFEDE9; container-type: inline-size; }
-.wf .lead .cv { aspect-ratio: 2.35 / 1; }
-.wf .cv img, .wf .cv-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; }
-.wf .cv:not(.fb) > .fb-no, .wf .cv:not(.fb) > .fb-t, .wf .cv:not(.fb) > .fb-meta { display: none; }
+.wf .cv {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #EFEDE9;
+  container-type: inline-size;
+}
+.wf-hero .cv {
+  aspect-ratio: 2.2 / 1;
+  max-height: calc(100dvh - 300px);
+  border-radius: 18px;
+}
+.wf .cv-frame {
+  position: absolute;
+  inset: 0;
+  transform: scale(1);
+  transition: transform 1.05s cubic-bezier(.22, 1, .36, 1);
+}
+.wf .cv.has-clip.is-on .cv-frame { transform: scale(1.045); }
+.wf .cv:not(.fb) > .fb-no,
+.wf .cv:not(.fb) > .fb-t,
+.wf .cv:not(.fb) > .fb-meta { display: none; }
+.wf .cv img, .wf .cv-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  max-width: none;
+}
 .wf .cv-video { z-index: 1; opacity: 0; pointer-events: none; background: transparent; }
 .wf .cv.is-on .cv-video { opacity: 1; }
 .wf .cv-play {
   position: absolute;
-  left: 0;
-  bottom: 0;
+  left: 12px;
+  bottom: 12px;
   z-index: 3;
   border: 0;
-  background: var(--bg);
+  border-radius: 999px;
+  background: rgba(246, 245, 243, .94);
   color: var(--ink);
   font: inherit;
   font-size: 13px;
   letter-spacing: .08em;
-  padding: 10px 12px;
-  min-height: 44px;
+  padding: 8px 14px;
+  min-height: 40px;
   min-width: 44px;
   cursor: pointer;
 }
 .wf .cv.is-on .cv-play { color: var(--accent); }
-.wf .cv.fb { background: var(--fbpaper); box-shadow: inset 0 0 0 1px var(--rule2); }
+.wf .cv.fb { background: #F1EEE6; box-shadow: inset 0 0 0 1px rgba(26, 26, 28, .16); }
 .wf .fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
 .wf .fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
-.wf .fb-title { display: block; font-family: var(--song); font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: .03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
+.wf .fb-title { display: block; font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: -0.03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
 .wf .fb-title.long { font-size: 4.6cqw; }
-.wf .fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-family: var(--en), "Noto Sans SC", sans-serif; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .04em; color: var(--muted); }
-.wf .fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .06em; color: var(--muted); }
+.wf .fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .02em; color: var(--muted); }
+.wf .fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .04em; color: var(--muted); }
+html.js .wf .rise { opacity: 0; transform: translateY(18px); }
+html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .7s ease, transform .7s cubic-bezier(.22, 1, .36, 1); }
+@media (min-width: 901px) {
+  .wf-tocwrap {
+    position: sticky;
+    top: 80px;
+    z-index: 5;
+    backdrop-filter: blur(12px);
+  }
+  .wf-toc {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+  .wf-toc::-webkit-scrollbar { display: none; }
+  .wf-toc a.on { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
+}
 @media (hover: hover) and (pointer: fine) {
-  .wf .go, .wf .cv-video { transition: opacity .2s ease; }
-  .wf .card:hover .go, .wf .card:focus-within .go { opacity: 1; }
-  .wf .card:hover .cap .no { color: var(--accent); }
+  .wf-toc a, .wf .ttl, .wf .idx .t, .wf .cv-video, .wf .cv-play, .wf .tag {
+    transition: color .25s ease, opacity .35s ease, transform .35s cubic-bezier(.22, 1, .36, 1), box-shadow .25s ease;
+  }
+  .wf .cv-play { opacity: 0; }
+  .wf .card:hover .cv-play,
+  .wf .card:focus-within .cv-play,
+  .wf .cv.is-on .cv-play { opacity: 1; }
+  .wf .card:hover .ttl { text-decoration: underline; text-underline-offset: .18em; }
+  .wf .card:has(.cv.is-on) .tag { color: var(--ink2); }
+  .wf-toc a:hover { color: var(--ink); }
   .wf .idx a.row:hover { background: rgba(26, 26, 28, .03); }
+  .wf .idx a.row:hover .t { transform: translateX(6px); }
   .wf .idx a.row:hover .no { color: var(--accent); }
 }
 @media (hover: none) {
-  .wf span.go { display: none; }
-  .wf a.go { opacity: 1; }
+  .wf .cv-play { opacity: 1; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .wf .go, .wf .cv-video { transition: none; }
+  html.js .wf .rise { opacity: 1; transform: none; transition: none; }
+  .wf .cv-frame, .wf .cv-video, .wf .cv-play, .wf .idx .t, .wf-toc a { transition: none; }
+  .wf .cv.has-clip.is-on .cv-frame { transform: none; }
+  .wf .idx a.row:hover .t { transform: none; }
 }
-@media (max-width: 1000px) {
+@media (max-width: 1100px) {
   .wf { width: calc(100% - 48px); }
   .wf-cards { grid-template-columns: 1fr 1fr; }
-  .wf .idx .row { grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, .8fr) 48px; }
+  .wf .idx .row { grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, .8fr) 56px; }
   .wf .idx .d { display: none; }
+}
+@media (max-width: 900px) {
+  .wf-tocwrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: "label count" "toc toc";
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 0;
+  }
+  .wf-tocwrap h2 { grid-area: label; }
+  .wf-now { grid-area: count; }
+  .wf-toc {
+    grid-area: toc;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .wf-toc::-webkit-scrollbar { display: none; }
+  .wf-toc a.on { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
 }
 @media (max-width: 768px) {
   .wf-bar { top: 52px; }
-  .wf-block, .wf-fold { scroll-margin-top: 64px; }
+  .wf-stage .card, .wf-fold { scroll-margin-top: 72px; }
 }
 @media (max-width: 700px) {
-  .wf { width: auto; margin: 0; padding: 8px 24px 8px; }
-  .wf-head { display: block; padding-top: 16px; }
-  .wf h1 { font-size: 52px; }
-  .wf .intro { margin-top: 14px; }
-  .wf-block { margin-top: 36px; }
-  .wf-feat, .wf-cards { grid-template-columns: 1fr; row-gap: 36px; }
-  .wf-feat .lead { grid-column: auto; }
-  .wf .lead .cv { aspect-ratio: 16 / 9; }
-  .wf .card h3, .wf .lead h3 { font-size: 20px; }
-  .wf-fold { margin-top: 40px; }
-  .wf h2 em { display: none; }
-  .wf-fold summary { padding-right: 80px; }
-  .wf-filters { gap: 0 16px; }
-  .wf-filters button { min-height: 44px; }
+  .wf { width: auto; margin: 0; padding: 8px 20px 16px; }
+  .wf-head { display: block; padding-top: 12px; }
+  .wf h1 { font-size: 40px; }
+  .wf .intro { margin: 12px 0 0; }
+  .wf-stage { margin-top: 18px; }
+  .wf-tocwrap { margin-bottom: 16px; }
+  .wf h2 { letter-spacing: .08em; }
+  .wf-hero .cv { aspect-ratio: 16 / 10; max-height: none; border-radius: 14px; }
+  .wf .cv { border-radius: 14px; }
+  .wf-hero .cap { display: block; padding-top: 14px; }
+  .wf-hero .card h3, .wf .card h3 { font-size: 22px; }
+  .wf-hero .meta { display: flex; justify-content: space-between; margin-top: 8px; }
+  .wf-grid, .wf-cards { grid-template-columns: 1fr; row-gap: 36px; }
+  .wf-grid { margin-top: 40px; }
+  .wf-fold { margin-top: 48px; }
+  .wf-fold summary { padding-right: 88px; }
   .wf-tools { width: 100%; justify-content: space-between; }
   .wf .idx .row { grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; min-height: 52px; }
   .wf .idx .c, .wf .idx .d, .wf .idx .t em { display: none; }
   .wf .idx .t { font-size: 16px; }
-  .wf-cards { row-gap: 32px; }
 }
 </style>
 <script is:inline>
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  document.documentElement.classList.add('js');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   let sweepClips = () => {};
+
+  const risers = $$('.wf .rise');
+  if (reduce.matches) risers.forEach((el) => el.classList.add('in'));
+  else {
+    const rise = new IntersectionObserver((entries) => {
+      entries.forEach((en) => {
+        if (!en.isIntersecting) return;
+        en.target.classList.add('in');
+        rise.unobserve(en.target);
+      });
+    }, { threshold: 0.16, rootMargin: '0px 0px -8% 0px' });
+    risers.forEach((el, i) => {
+      el.style.transitionDelay = `${(i % 2) * 90}ms`;
+      rise.observe(el);
+    });
+  }
+
   const fail = (img) => { const cv = img.closest('.cv'); if (cv) cv.classList.add('fb'); img.remove(); };
   $$('.wf img[data-cv-img]').forEach((img) => {
     if (img.complete && img.naturalWidth === 0 && img.src) fail(img);
     else img.addEventListener('error', () => fail(img), { once: true });
   });
+
+  const toc = $$('.wf-toc a');
+  const spots = $$('.wf-stage .card');
+  const nowEl = $('#wf-now');
+  const total = String(spots.length).padStart(2, '0');
+  let spyAt = -1;
+  function spy() {
+    if (!spots.length) return;
+    const mark = window.innerWidth <= 768 ? 120 : 170;
+    let i = 0;
+    spots.forEach((el, n) => { if (el.getBoundingClientRect().top <= mark) i = n; });
+    if (i === spyAt) return;
+    spyAt = i;
+    const slug = spots[i].dataset.slug;
+    toc.forEach((a) => {
+      const on = a.dataset.slug === slug;
+      a.classList.toggle('on', on);
+      if (on) a.setAttribute('aria-current', 'true');
+      else a.removeAttribute('aria-current');
+    });
+    if (nowEl) nowEl.textContent = `${spots[i].dataset.idx || String(i + 1).padStart(2, '0')} / ${total}`;
+    const nav = $('.wf-toc');
+    const link = toc[i];
+    if (nav && link && nav.scrollWidth > nav.clientWidth + 8) {
+      const left = link.offsetLeft - (nav.clientWidth - link.offsetWidth) / 2;
+      nav.scrollTo({ left: Math.max(0, left), behavior: reduce.matches ? 'auto' : 'smooth' });
+    }
+  }
+  let spyTick = 0;
+  document.addEventListener('scroll', () => {
+    cancelAnimationFrame(spyTick);
+    spyTick = requestAnimationFrame(spy);
+  }, { passive: true });
+  spy();
 
   const arch = $('#archive');
   if (!arch) return;
@@ -577,7 +690,6 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   if ((location.hash === '#archive' || line !== '全部') && !arch.open) arch.open = true;
   paint();
 
-  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
   let pinned = null;
   const clips = () => $$('.wf .cv.has-clip');
   const videoOf = (cv) => cv.querySelector('.cv-video');

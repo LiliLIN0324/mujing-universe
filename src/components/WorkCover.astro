@@ -9,10 +9,12 @@ const sub = sub0 || w.category || '';
 const style = c ? [`object-position:${c.pos || '50% 50%'}`, c.scale ? `transform:scale(${c.scale})` : ''].filter(Boolean).join(';') : '';
 ---
 <div class:list={['cv', !c && 'fb', clip && 'has-clip']}>
-  {c && <img src={c.src} alt="" style={style} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'} decoding="async" referrerpolicy="no-referrer" data-cv-img />}
-  {clip && (
-    <video class="cv-video" data-src={clip} muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>
-  )}
+  <div class="cv-frame">
+    {c && <img src={c.src} alt="" style={style} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'} decoding="async" referrerpolicy="no-referrer" data-cv-img />}
+    {clip && (
+      <video class="cv-video" data-src={clip} muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>
+    )}
+  </div>
   {clip && <button class="cv-play" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
   <span class="fb-no">{w.no}</span>
   <div class="fb-t"><b class:list={['fb-title', titleWidth(main) > 22 && 'long']}>{main}</b>{sub && <i class="fb-sub">{sub}</i>}</div>
