@@ -166,18 +166,6 @@
       "source": "work"
     },
     {
-      "id": "tech-litflow",
-      "section": "tech",
-      "title": "LitFlow 研究工作台仍在做",
-      "summary": "给研究人员看论文的平台，用摘要和关键词气泡呈现成果。作品页写着 2026 年 1 月 13 日起、还在做，所以归在「现在」。",
-      "start": "2026-01-13",
-      "open": true,
-      "href": "/works/litflow/",
-      "hrefLabel": "查看作品",
-      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/litflow/01.png",
-      "source": "work"
-    },
-    {
       "id": "activity-intercity-hack-2026",
       "section": "activity",
       "title": "黑客松分享会",

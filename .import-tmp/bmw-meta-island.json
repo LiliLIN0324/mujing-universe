@@ -1,0 +1,36 @@
+{
+ "id": "03",
+ "slug": "bmw-meta-island",
+ "title": "同济& BMW 联合挑战营 - 一杯咖啡的游戏旅程",
+ "category": "Game",
+ "year": "2022-10-10~2022-12-10",
+ "description": "同济与 BMW 联合挑战营中的元宇宙品牌营销方案，以人格测试、场景探索与 O2O 联动建立年轻用户与品牌之间的情感连接。",
+ "abstract": "",
+ "challenge": "如何让 Z 世代在数字化体验中自然感知 BMW 的品牌价值，并愿意从线上体验继续走向线下互动。",
+ "solution": "以咖啡联名作为现实入口，结合人格测试、车型匹配、森林与城市探索、BMW 元素收集和 Carbon Energy 机制，构建完整的 Meta Island 沉浸式品牌体验。",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/logo.jpg",
+ "tech": [
+  "Unity",
+  "Blender",
+  "Figma",
+  "Metaverse Design",
+  "O2O Marketing"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/08.jpg"
+ ],
+ "hasDemo": true,
+ "line": "游戏",
+ "source": "https://lililin0324.github.io/#/game/bmw-meta-island",
+ "sourceFile": "games/03_bmw-meta-island.md",
+ "yearNum": 2022,
+ "status": "已完成",
+ "flags": []
+}

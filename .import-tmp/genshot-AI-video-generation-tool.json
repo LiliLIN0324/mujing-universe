@@ -1,0 +1,34 @@
+{
+ "id": "03",
+ "slug": "genshot-AI-video-generation-tool",
+ "title": "Genshot - AI videos Generation Tool",
+ "category": "UI&UX Design",
+ "year": "2025",
+ "description": "粘贴商品链接，一键成片。",
+ "abstract": "",
+ "challenge": "",
+ "solution": "",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/logo.jpg",
+ "tech": [
+  "Figma",
+  "React",
+  "TypeScript"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/08.jpg"
+ ],
+ "hasDemo": true,
+ "line": "AIGC 产品",
+ "source": "https://lililin0324.github.io/#/product/genshot-AI-video-generation-tool",
+ "sourceFile": "product/03_genshot-AI-video-generation-tool.md",
+ "yearNum": 2025,
+ "status": "已完成",
+ "flags": []
+}
