@@ -6,6 +6,27 @@ import glob, re, json, os, collections, time
 SRC = os.environ.get('LILI_REPO', '/tmp/lili') + '/src/data/projects'
 OUT = os.environ.get('OUT_DIR') or os.path.join(os.path.dirname(__file__), '..', 'src', 'content', 'works')
 LINE = {'product': '产品', 'platform': '产品', 'games': '游戏', 'AI': '空间', 'planning': '空间'}
+# 中文名定稿（2026-10-24 林丽丽确认）：同步时覆盖个人站英文题名，别被回滚。
+TITLE_CN = {
+  'riffle-ai-game-generation-tool': 'AI 生成小游戏',
+  'scendance': 'AI 活动布置平台',
+  'bazi-fengshui-analysis': '洛书八字',
+  'genshot-AI-video-generation-tool': 'AI 视频生成',
+  'genstyle': 'AI 衣橱',
+  'anyreal': 'AI 虚拟影棚',
+  'dragon-diffussion': 'AI 创意画板',
+  'perslearn': '论文文献平台',
+  'heatmapper': '热力地图',
+  'local-climate-zones-urban-heat-resilience': '纽约城市热韧性与局部气候关系',
+  'participatory-urban-regeneration-empowered-by-artificial-intelligence': 'AI赋能的城市更新',
+  'prompt-engineering-agentic-rag': 'Agentic RAG 城市知识库',
+  'urban-heat-resilience-machine-learning': '首尔城市热韧性评估',
+  'cluster-visualizer-3d': '全球城市聚类',
+  'neurotopia': '神经元式的城市畅想',
+  'chicken-utopia': '小鸡乌托邦',
+  'previous-archi-work': '早年建筑作品',
+  'previous-planning-research': '早年城市作品',
+}
 SKIP = {'epstein-mystery-archive', 'how-to-use-unity-making-wechat-minigames', 'how-to-use-cocos-creator-making-games'}
 def fm(text):
     m = re.match(r'^---\s*\n(.*?)\n---', text, re.S); body = m.group(1) if m else ''
@@ -33,6 +54,7 @@ for f in sorted(glob.glob(os.path.join(SRC, '*', '*.md'))):
     if not d['slug'] or d['slug'] in SKIP: continue
     d.update(line=LINE[folder], source=f'https://lililin0324.github.io/#/{ {"games":"game","AI":"ai"}.get(folder,folder) }/{d["slug"]}',
              sourceFile=os.path.relpath(f, SRC).replace(os.sep, '/'), yearNum=year_num(d['year']), status='已完成', flags=[])
+    if d['slug'] in TITLE_CN: d['title'] = TITLE_CN[d['slug']]
     items.append(d)
 # 检测重复/模板文案
 for key in ['description', 'challenge', 'solution', 'abstract']:

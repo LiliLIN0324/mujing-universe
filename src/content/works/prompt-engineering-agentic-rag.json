@@ -1,7 +1,7 @@
 {
  "id": "01",
  "slug": "prompt-engineering-agentic-rag",
- "title": "Prompt Engineering · Agentic RAG 城市规划知识库",
+ "title": "Agentic RAG 城市知识库",
  "category": "AI / Agentic RAG",
  "year": "2025-present",
  "description": "面向城市规划的 Agentic RAG 原型：结合规划知识库、Prompt Engineering、向量检索与多 Agent 工具调用",

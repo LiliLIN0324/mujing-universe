@@ -1,7 +1,7 @@
 {
  "id": "07",
  "slug": "cluster-visualizer-3d",
- "title": "Cluster Visualizer 3D",
+ "title": "全球城市聚类",
  "category": "Global heat mapping",
  "year": "2024-present",
  "description": "基于PCA和K-Means的高维数据聚类3D探索",
