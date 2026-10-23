@@ -42,8 +42,10 @@ const backNote = w.line;
 <div class="wd">
   <section class="wd-page wd-p1" data-dwell={PAGE_DWELL.intro}>
     <figure class:list={['wd-hero', clip && 'has-motion']} style={paper ? `--wd-paper:${paper}` : undefined}>
-      <img src={hero} data-fallback={fallback} alt={w.title} referrerpolicy="no-referrer" fetchpriority="high"/>
-      {clip && <video class="wd-motion" id={clipIsAudio ? 'wd-audio' : undefined} data-src={clip} data-audio={clipIsAudio ? '1' : undefined} muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>}
+      <div class="wd-frame">
+        <img src={hero} data-fallback={fallback} alt={w.title} referrerpolicy="no-referrer" fetchpriority="high"/>
+        {clip && <video class="wd-motion" id={clipIsAudio ? 'wd-audio' : undefined} data-src={clip} data-audio={clipIsAudio ? '1' : undefined} muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>}
+      </div>
       {clip && <button class="wd-play" id="wd-hero-play" type="button" aria-pressed="false">播放</button>}
       <figcaption class="wd-cap" aria-hidden="true">{clip ? (w.slug === 'xihu-panorama' ? '长卷 · 画面' : '画面') : (w.slug === 'xihu-panorama' ? '长卷 · 静帧 01' : '静帧 01')}</figcaption>
     </figure>
@@ -104,8 +106,20 @@ const backNote = w.line;
 .wd-sound { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .wd { color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 .wd p { margin: 0; }
-.wd-hero { position: relative; height: 568px; margin: 0; overflow: hidden; background: var(--wd-paper, #d8d2c4); }
-.wd-hero img {
+/* 主视觉：压在一屏内（header + 预留标题区），保证项目名字首屏可见；宽图居中裁切。 */
+.wd-hero {
+  position: relative;
+  height: min(568px, max(360px, calc(100svh - 300px)));
+  margin: 0;
+  overflow: hidden;
+  background: var(--wd-paper, #d8d2c4);
+}
+.wd-frame {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+.wd-frame img {
   position: absolute;
   top: 0;
   left: 50%;
@@ -115,7 +129,7 @@ const backNote = w.line;
   transform: translateX(-50%);
   display: block;
 }
-.wd-hero .wd-motion {
+.wd-motion {
   position: absolute;
   inset: 0;
   width: 100%;
