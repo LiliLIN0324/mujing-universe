@@ -25,5 +25,5 @@ npm run preview
 - `/works/[slug]` 作品详情
 - `/artist/` 艺术家
 - `/studio/` 工作室
-- `/contact/` 合作与经纪
+- `/contact/` 合作
 - `/about/` 重定向至工作室
