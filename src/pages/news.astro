@@ -120,7 +120,6 @@ function hasDetail(item: NewsItem) {
 
 <style>
 .news-page {
-  --song: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif;
   --stage: #F6F5F3;
   --paper-ink: #1A1A1C;
   --paper-dim: #6A655F;
@@ -134,13 +133,12 @@ function hasDetail(item: NewsItem) {
   padding: 48px 0 88px;
 }
 .news-page h1 {
-  margin: 0 0 28px;
+  margin: 0 0 22px;
   color: var(--paper-ink);
-  font-family: var(--song);
-  font-weight: 500;
-  font-size: 36px;
+  font-weight: 600;
+  font-size: clamp(40px, 5vw, 56px);
   line-height: 1;
-  letter-spacing: 0.14em;
+  letter-spacing: -0.04em;
 }
 .bar {
   display: flex;
@@ -203,11 +201,10 @@ button.line { cursor: pointer; }
 .date { font-variant-numeric: tabular-nums; }
 .who { text-align: right; }
 .title {
-  font-family: var(--song);
   font-size: 20px;
-  font-weight: 500;
-  line-height: 1.45;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.03em;
   color: var(--paper-ink);
 }
 .where {

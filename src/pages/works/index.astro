@@ -13,7 +13,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 ---
 <Base title="作品 · 幕景宇宙" description="幕景宇宙的作品目录，按创作线筛选。" active="/works/">
 <main class="wf" id="archive" data-mode="grid">
-  <h1 class="sr">作品</h1>
+  <header class="wf-top"><h1>作品</h1></header>
   <div class="wf-bar">
     <div class="wf-filters" role="group" aria-label="按创作线筛选">
       {tabs.map(([line, n], i) => (
@@ -60,6 +60,13 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 .wf a { color: inherit; text-decoration: none; }
 .wf p { margin: 0; }
 .wf [hidden] { display: none !important; }
+.wf-top h1 {
+  margin: 8px 0 4px;
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
 .wf .sr {
   position: absolute;
   width: 1px;
@@ -112,7 +119,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   letter-spacing: 0;
   color: var(--muted);
 }
-.wf-filters button.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
+.wf-filters button.on { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
 .wf-view { display: flex; flex: 0 0 auto; gap: 18px; }
 .wf-view button { font-size: 14px; }
 .wf-view button.on { color: var(--ink); font-weight: 600; }
@@ -120,7 +127,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   column-gap: 28px;
-  row-gap: 64px;
+  row-gap: 40px;
   margin-top: 28px;
 }
 .wf[data-mode="list"] .wf-cards,
@@ -256,7 +263,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   min-width: 44px;
   cursor: pointer;
 }
-.wf .cv.is-on .cv-play { color: var(--accent); }
+.wf .cv.is-on .cv-play { color: var(--ink); }
 .wf .cv.fb { background: #F1EEE6; box-shadow: inset 0 0 0 1px rgba(26, 26, 28, .16); }
 .wf .fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
 .wf .fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
@@ -278,7 +285,7 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
   .wf .card:hover .ttl { text-decoration: underline; text-underline-offset: .18em; }
   .wf .idx a.row:hover { background: rgba(26, 26, 28, .03); }
   .wf .idx a.row:hover .t { transform: translateX(6px); }
-  .wf .idx a.row:hover .no { color: var(--accent); }
+  .wf .idx a.row:hover .no { color: var(--ink); }
 }
 @media (hover: none) {
   .wf .go, .wf .cv-play { opacity: 1; transform: none; }
