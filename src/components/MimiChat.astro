@@ -131,6 +131,9 @@ const mail = 'mailto:lily1326685527@gmail.com';
     inset: 0;
   }
   .mimi-rive[hidden] { display: none !important; }
+  .mimi-face.is-rive {
+    background: #F6F5F3;
+  }
   .mimi-face.is-rive .mimi-still { visibility: hidden; }
   .mimi-hi {
     position: absolute;
@@ -965,6 +968,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     const motion = { hover: false, open: false, attention: false };
     let rig = null;
     let attentionTimer = 0;
+    let glanceQueued = false;
     function applyMotion() {
       root.dataset.motion = mimiMotion(motion);
       if (!rig) return;
@@ -975,7 +979,8 @@ const mail = 'mailto:lily1326685527@gmail.com';
       if (reduce) return;
       motion.attention = true;
       applyMotion();
-      rig?.attention();
+      if (rig) rig.attention();
+      else glanceQueued = true;
       window.clearTimeout(attentionTimer);
       attentionTimer = window.setTimeout(() => {
         motion.attention = false;
@@ -1011,7 +1016,10 @@ const mail = 'mailto:lily1326685527@gmail.com';
       rig = next;
       face.style.transform = '';
       applyMotion();
-      if (motion.attention) rig.attention();
+      if (glanceQueued || motion.attention) {
+        rig.attention();
+        glanceQueued = false;
+      }
     });
     if (window.ResizeObserver) {
       const ro = new ResizeObserver(() => rig?.resize());
