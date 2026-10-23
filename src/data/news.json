@@ -1,5 +1,5 @@
 {
-  "note": "活动参与里的会议与工作坊来自 src/data/artist.json（talks 与奖项里的工作坊）。中文题名是译写，original 保留发表用英文。placeholder 为真的条目没有公开稿。source 为 work 的条目摘自作品页，界面标「作品页」。年份只精确到年的，start/end 用该年首尾日，界面只显示年份。image 是封面，写站内路径或图片地址。有这个字段，列表和详情才显示图；没有就不要写，也不留空框。",
+  "note": "活动参与里的会议与工作坊来自 src/data/artist.json（talks 与奖项里的工作坊）。中文题名是译写，original 保留发表用英文。placeholder 为真的条目没有公开稿。source 为 work 的条目摘自作品页，界面标「作品页」。年份只精确到年的，start/end 用该年首尾日，界面只显示年份。image 是封面，写站内路径或图片地址。有这个字段，列表和详情才显示图。和作品相关、作品页已有主图的，用那张主图。没有真实图就不要写，也不留空框。",
   "items": [
     {
       "id": "activity-aaai-2025-kg",
@@ -14,6 +14,7 @@
       "people": ["林丽丽"],
       "href": "/works/knowledge-graph-urban-planning/",
       "hrefLabel": "相关作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/knowledge-graph-urban-planning/01.jpg",
       "source": "archive"
     },
     {
@@ -29,6 +30,7 @@
       "people": ["林丽丽"],
       "href": "/works/knowledge-graph-urban-planning/",
       "hrefLabel": "相关作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/knowledge-graph-urban-planning/02.jpg",
       "source": "archive"
     },
     {
@@ -44,6 +46,7 @@
       "people": ["林丽丽"],
       "href": "/works/knowledge-graph-urban-planning/",
       "hrefLabel": "相关作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/knowledge-graph-urban-planning/03.jpg",
       "source": "archive"
     },
     {
@@ -59,6 +62,7 @@
       "people": ["林丽丽"],
       "href": "/works/local-climate-zones-urban-heat-resilience/",
       "hrefLabel": "相关作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/local-climate-zones/01.jpg",
       "source": "archive"
     },
     {
@@ -74,6 +78,7 @@
       "people": ["林丽丽"],
       "href": "/works/urban-heat-resilience-machine-learning/",
       "hrefLabel": "相关作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/01.jpg",
       "source": "archive"
     },
     {
@@ -88,6 +93,7 @@
       "people": ["林丽丽"],
       "href": "/works/urban-heat-resilience-machine-learning/",
       "hrefLabel": "相关作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/01.jpg",
       "source": "archive"
     },
     {
@@ -103,6 +109,7 @@
       "people": ["林丽丽"],
       "href": "/works/urban-heat-resilience-machine-learning/",
       "hrefLabel": "相关作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/01.jpg",
       "source": "archive"
     },
     {
@@ -117,6 +124,7 @@
       "people": ["林丽丽"],
       "href": "/works/neurotopia/",
       "hrefLabel": "相关作品",
+      "image": "/news/neurotopia.jpg",
       "source": "archive"
     },
     {
@@ -154,6 +162,7 @@
       "end": "2026-10-04",
       "href": "/works/scendance/",
       "hrefLabel": "查看作品",
+      "image": "/ring/_sources/scendance-hero.jpg",
       "source": "work"
     },
     {
@@ -165,6 +174,7 @@
       "open": true,
       "href": "/works/litflow/",
       "hrefLabel": "查看作品",
+      "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/litflow/01.png",
       "source": "work"
     },
     {

@@ -222,7 +222,7 @@ function hasDetail(item: NewsItem) {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center 46%;
+  object-position: center;
   display: block;
   border-radius: 0;
 }
@@ -292,11 +292,19 @@ li:has(.hit[aria-expanded="true"]) .hit {
 }
 .detail[hidden] { display: none; }
 .detail-grid { padding-bottom: 22px; border-bottom: 1px solid var(--paper-rule); }
-.shot { margin: 2px 0 14px; max-width: 640px; }
+.shot {
+  margin: 2px 0 14px;
+  width: 100%;
+  max-width: 40em;
+  font-size: 14px;
+}
 .shot img {
   display: block;
   width: 100%;
-  height: auto;
+  aspect-ratio: 16 / 9;
+  max-height: 280px;
+  object-fit: cover;
+  object-position: center;
   border-radius: 0;
 }
 .detail-body p { margin: 0 0 8px; max-width: 40em; font-size: 14px; line-height: 1.7; color: #4a463f; }
@@ -329,7 +337,7 @@ li:has(.hit[aria-expanded="true"]) .hit {
   .sec { grid-column: 1 / -1; grid-row: 2; }
   .main { grid-column: 1 / -1; grid-row: 3; align-items: flex-start; }
   .cover { width: 88px; }
-  .shot { max-width: none; }
+  .shot img { max-height: 200px; }
   .title { font-size: 18px; }
   .where { white-space: normal; }
   .detail-grid > span { display: none; }
