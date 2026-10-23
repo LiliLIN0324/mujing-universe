@@ -182,11 +182,11 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   /* 彩色色板：丁科智 = Mimi 橙；合作项目 = 雾蓝。文字固定白色。 */
   .wf .card[data-by="ding"]::before { background: #ff690a; }
   .wf .card[data-by="collab"]::before { background: #3e5c76; }
-  .wf .card[data-by] .cap h2,
-  .wf .card[data-by] .more .m-by { color: #fff; }
-  .wf .card[data-by] .more .m-by span { color: rgba(255, 255, 255, 0.75); }
-  .wf .card[data-by] .more .m-meta,
-  .wf .card[data-by] .more .m-desc { color: rgba(255, 255, 255, 0.82); }
+  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .cap h2,
+  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-by { color: #fff; }
+  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-by span { color: rgba(255, 255, 255, 0.75); }
+  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-meta,
+  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-desc { color: rgba(255, 255, 255, 0.82); }
 }
 /* 作品少时页脚贴住视口底部。 */
 body:has(.wf) { display: flex; flex-direction: column; min-height: 100dvh; }
