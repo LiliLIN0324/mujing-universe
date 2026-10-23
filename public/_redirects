@@ -1,2 +1,5 @@
-/about /studio/ 301
-/about/ /studio/ 301
+/about /about/ 301
+/artist /about/ 301
+/artist/ /about/ 301
+/studio /about/ 301
+/studio/ /about/ 301
