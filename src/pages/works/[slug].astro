@@ -105,19 +105,17 @@ const backNote = w.line;
 .wd-sound { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .wd { color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 .wd p { margin: 0; }
-/* 主视觉：16:9 框，满宽时零裁切；屏幕矮时整体等比缩小居中（纸色补边）。 */
+/* 第一屏是完整的一页：视频区吃掉标题以外的全部空间，标题固定在页底。 */
 .wd-hero {
   position: relative;
   margin: 0;
   overflow: hidden;
   background: var(--wd-paper, #d8d2c4);
-  display: flex;
-  justify-content: center;
 }
 .wd-frame {
   position: relative;
   width: 100%;
-  height: min(56.25vw, calc(100svh - 310px));
+  height: 100%;
   overflow: hidden;
 }
 .wd-frame img {
@@ -125,6 +123,11 @@ const backNote = w.line;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+@media (min-width: 769px) {
+  .wd-page.wd-p1 { height: 100svh; display: flex; flex-direction: column; overflow: hidden; }
+  .wd-page.wd-p1 .wd-hero { flex: 1 1 auto; min-height: 0; }
+  .wd-page.wd-p1 .wd-wrap { flex: none; padding-bottom: 28px; }
 }
 .wd-motion {
   position: absolute;
