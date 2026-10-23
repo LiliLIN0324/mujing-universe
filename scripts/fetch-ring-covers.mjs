@@ -2,7 +2,7 @@ import { copyFile, mkdir, readFile, readdir, writeFile, access } from 'node:fs/p
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
-const LINES = ['音画', 'AIGC 产品', '游戏', '空间与研究'];
+const LINES = ['数字艺术', '产品', '游戏', '空间'];
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
 /** R2 stills 404 — keep paper unless a local override exists. */
 const BROKEN = new Set([]);
