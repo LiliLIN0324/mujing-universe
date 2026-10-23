@@ -1,32 +1,26 @@
 ---
-/** 作品库卡片：图下标题与类别。有片时标题单独链到详情，点画面才播。 */
+/** 目录卡片：图、标题、类别。有片时点画面才播，标题和「查看」进详情。 */
 import WorkCover from './WorkCover.astro';
 import { coverClip } from '../lib';
 
-const { w, eager = false, lead = false, anchor = false, idx = '', rise = false } = Astro.props;
+const { w, eager = false } = Astro.props;
 const href = `/works/${w.slug}/`;
 const clip = coverClip(w.slug);
-const id = anchor ? `w-${w.slug}` : undefined;
 ---
 {clip ? (
-  <article class:list={['card', lead && 'lead', rise && 'rise']} id={id} data-slug={w.slug} data-line={w.line} data-idx={idx || undefined}>
-    <div class="im"><WorkCover w={w} eager={eager} /></div>
+  <article class="card rise" data-slug={w.slug} data-line={w.line}>
+    <div class="im"><WorkCover w={w} eager={eager} /><a class="go" href={href}>查看</a></div>
     <div class="cap">
-      <h3><a href={href}><span class="ttl">{w.main}</span></a></h3>
-      {w.sub && <p class="sub">{w.sub}</p>}
-      <div class="meta">
-        <span class="tag">{w.tag}</span>
-        <a class="more" href={href}>查看</a>
-      </div>
+      <h2><a href={href}><span class="ttl">{w.main}</span></a></h2>
+      <span class="tag">{w.line}</span>
     </div>
   </article>
 ) : (
-  <a class:list={['card', lead && 'lead', rise && 'rise']} id={id} href={href} data-slug={w.slug} data-line={w.line} data-idx={idx || undefined}>
-    <div class="im"><WorkCover w={w} eager={eager} /></div>
+  <a class="card rise" href={href} data-slug={w.slug} data-line={w.line}>
+    <div class="im"><WorkCover w={w} eager={eager} /><span class="go">查看</span></div>
     <div class="cap">
-      <h3><span class="ttl">{w.main}</span></h3>
-      {w.sub && <p class="sub">{w.sub}</p>}
-      <div class="meta"><span class="tag">{w.tag}</span></div>
+      <h2><span class="ttl">{w.main}</span></h2>
+      <span class="tag">{w.line}</span>
     </div>
   </a>
 )}

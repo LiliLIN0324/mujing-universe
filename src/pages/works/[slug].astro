@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Cooperate from '../../components/Cooperate.astro';
-import { allWorks, coverClip, isFeaturedSlug, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
+import { allWorks, coverClip, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
   // 下一件 follows the catalogue order; the last wraps to the first.
@@ -34,10 +34,9 @@ const facts = [['角色', role], ['技术', tech.join(' · ')], ['年份', year]
 const total = 1 + stills.length;
 const pad = (n: number) => String(n).padStart(2, '0');
 const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' · ');
-const inFeatured = isFeaturedSlug(w.slug);
-const backHref = inFeatured ? '/works/#features' : '/works/#archive';
-const backText = inFeatured ? '← 返回代表作' : '← 返回全部作品';
-const backNote = inFeatured ? '代表作' : '全部作品';
+const backHref = `/works/?line=${encodeURIComponent(w.line)}#archive`;
+const backText = '← 作品';
+const backNote = w.line;
 ---
 <Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
@@ -51,7 +50,7 @@ const backNote = inFeatured ? '代表作' : '全部作品';
     <div class="wd-wrap">
       <div class="wd-head">
         <div>
-          <p class="wd-crumb"><a href={backHref}>{inFeatured ? '代表作' : '作品'}</a>　/　<a href={`/works/?line=${encodeURIComponent(w.line)}#archive`}>{w.line}</a></p>
+          <p class="wd-crumb"><a href="/works/#archive">作品</a>　/　<a href={backHref}>{w.line}</a></p>
           <h1>{w.title}</h1>
           {sub && <p class="wd-sub">{sub}</p>}
           <p class="wd-meta"><b>{w.no}</b><span class="d">{deskMeta}</span><span class="m">{mobileMeta}</span></p>
