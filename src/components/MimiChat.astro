@@ -61,7 +61,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     height: 72px;
     padding: 0;
     border: 0;
-    border-radius: 50%;
+    border-radius: 0;
     background: transparent;
     cursor: grab;
     touch-action: none;
@@ -80,7 +80,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   .mimi-halo {
     position: absolute;
     inset: -7px;
-    border-radius: 50%;
+    border-radius: 0;
     border: 2px solid transparent;
     border-top-color: #ff6a13;
     border-right-color: #ff6a13;
@@ -101,7 +101,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     display: block;
     width: 100%;
     height: 100%;
-    border-radius: 50%;
+    border-radius: 0;
     overflow: hidden;
     background: #ff6a13;
     box-shadow: 0 0 0 2px #fff, 0 8px 22px rgba(26, 26, 28, 0.18);
@@ -130,7 +130,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     font-size: 13px;
     line-height: 1;
     padding: 8px 12px;
-    border-radius: 999px;
+    border-radius: 0;
     white-space: nowrap;
     pointer-events: none;
     opacity: 0;
@@ -150,14 +150,14 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     transform: translateX(-50%);
     gap: 3px;
     padding: 3px 6px;
-    border-radius: 999px;
+    border-radius: 0;
     background: rgba(26, 26, 28, 0.78);
   }
   .mimi[data-state="thinking"] .mimi-dots { display: flex; }
   .mimi-dots i {
     width: 4px;
     height: 4px;
-    border-radius: 50%;
+    border-radius: 0;
     background: #fff;
     animation: mimi-dot 1s infinite;
   }
@@ -183,7 +183,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     background: #f6f5f3;
     color: #1a1a1c;
     border: 1px solid rgba(26, 26, 28, 0.08);
-    border-radius: 24px;
+    border-radius: 0;
     box-shadow: 0 18px 50px rgba(26, 26, 28, 0.14);
     overflow: hidden;
     transform: scale(0.12);
@@ -231,7 +231,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     width: 36px;
     height: 36px;
     border: 0;
-    border-radius: 50%;
+    border-radius: 0;
     background: transparent;
     color: #1a1a1c;
     font-size: 22px;
@@ -255,7 +255,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   .mimi-msg p { margin: 0; }
   .mimi-msg.bot p {
     background: #fff;
-    border-radius: 16px;
+    border-radius: 0;
     padding: 10px 12px;
   }
   .mimi-msg.user { display: flex; justify-content: flex-end; }
@@ -263,7 +263,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     max-width: 88%;
     background: #1a1a1c;
     color: #f6f5f3;
-    border-radius: 18px;
+    border-radius: 0;
     padding: 8px 14px;
   }
   .mimi-msg a { color: inherit; }
@@ -271,7 +271,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   :global(.mimi-coop) {
     margin: 0 0 12px;
     background: #fff;
-    border-radius: 18px;
+    border-radius: 0;
     padding: 12px;
     text-align: center;
   }
@@ -314,7 +314,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   :global(.mimi-wx button) {
     border: 0;
     background: #f6f5f3;
-    border-radius: 999px;
+    border-radius: 0;
     padding: 2px 8px;
     font: inherit;
     font-size: 13px;
@@ -338,7 +338,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     max-width: min(420px, 92vw);
     max-height: 70vh;
     background: #fff;
-    border-radius: 16px;
+    border-radius: 0;
   }
   :global(.mimi-light p) {
     margin: 0;
@@ -349,7 +349,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   :global(.mimi-light a) {
     color: #1a1a1c;
     background: #fff;
-    border-radius: 999px;
+    border-radius: 0;
     padding: 8px 16px;
     text-decoration: none;
     font-size: 14px;
@@ -361,7 +361,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     padding: 4px 14px 12px;
   }
   .mimi-quick button {
-    border-radius: 999px;
+    border-radius: 0;
     border: 1px solid rgba(26, 26, 28, 0.16);
     background: transparent;
     color: #1a1a1c;
@@ -383,7 +383,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     flex: 1;
     min-width: 0;
     height: 40px;
-    border-radius: 999px;
+    border-radius: 0;
     border: 1px solid rgba(26, 26, 28, 0.14);
     background: #fff;
     padding: 0 14px;
@@ -395,7 +395,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     height: 40px;
     padding: 0 16px;
     border: 0;
-    border-radius: 999px;
+    border-radius: 0;
     background: #1a1a1c;
     color: #f6f5f3;
     font: inherit;
@@ -423,7 +423,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     z-index: 161;
     width: 22px;
     height: 22px;
-    border-radius: 50%;
+    border-radius: 0;
     background: #ff6a13;
     pointer-events: none;
     animation: mimi-crumb 0.7s ease-out forwards;

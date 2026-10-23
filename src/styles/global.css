@@ -70,7 +70,7 @@
   --accent: #B23A2A;
   --cta-bg: #1A1A1C;
   --cta-fg: #F6F5F3;
-  --radius: 20px;
+  --radius: 0;
   --sans: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
   --en: Inter, -apple-system, system-ui, sans-serif;
   --ivory: var(--ink);
@@ -151,7 +151,7 @@ p { margin: 0 0 0.8em; }
   display: inline-block;
   margin-left: 6px;
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--bg2);
   color: var(--muted);
   font-size: 0.72rem;
@@ -163,7 +163,7 @@ p { margin: 0 0 0.8em; }
   justify-content: center;
   gap: 6px;
   padding: 10px 18px;
-  border-radius: 999px;
+  border-radius: 0;
   border: 1px solid var(--rule);
   background: transparent;
   color: var(--ink);
@@ -206,7 +206,7 @@ header.top {
 .brand i {
   width: 7px;
   height: 7px;
-  border-radius: 50%;
+  border-radius: 0;
   background: var(--accent);
 }
 header nav {
@@ -342,7 +342,7 @@ header.top.top--home:focus-within {
 .top--home nav a.pill {
   background: #1a1a18;
   color: #fff;
-  border-radius: 999px;
+  border-radius: 0;
   padding: 8px 18px;
   line-height: normal;
 }
@@ -412,7 +412,7 @@ header.top.top--home:focus-within {
     padding: 6px 0;
     background: rgba(246, 245, 243, 0.96);
     border: 1px solid #e3dfd8;
-    border-radius: 6px;
+    border-radius: 0;
     box-shadow: 0 12px 28px rgba(40, 30, 20, 0.12);
   }
   .top--home.is-menu-open nav { display: flex; }
