@@ -16,11 +16,10 @@
  "images": [
   "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-utopia/01.jpg",
   "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-utopia/02.jpg",
-  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-utopia/03.jpg",
-  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-utopia/04.jpg"
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-utopia/03.jpg"
  ],
  "hasDemo": false,
- "line": "空间与研究",
+ "line": "空间",
  "source": "https://lililin0324.github.io/#/planning/chicken-utopia",
  "sourceFile": "planning/00_chicken-utopia.md",
  "yearNum": 2022,

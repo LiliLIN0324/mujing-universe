@@ -8,7 +8,7 @@
  "abstract": "幕景 Scendance 是一款面向活动策划与场地布置的 AI 工作台。它把平面图变成可编辑的场地，用真实尺寸的物料库摆放桌椅、吧台、舞台等道具，并支持用一句需求让 AI 生成布置初稿；方案可以云端保存，由同一工作室的成员协作编辑。",
  "challenge": "活动布置的沟通成本集中在「场地尺寸」和「道具清单」两件事上：平面图只有约定俗成的标注，物料表又是另一份文件，客户、策划和执行的版本经常对不上。要在有限的制作周期内把这些信息收敛到同一个可编辑的三维场景，同时保证多人协作时不会互相覆盖。",
  "solution": "以场地 + 物料为核心数据模型：平面图作为尺寸证据被引用，场地以矩形或多边形表示并校验顶点、面积和出入口位置；物料按真实尺寸入库，场景中的每件物件都有唯一实例编号。AI 方案生成、预算上限和制作计划都挂在同一份场景数据上，编辑权以交接的方式在成员之间流转，断网时草稿本地保留、恢复后与云端版本比对。",
- "icon": "/ring/_sources/scendance-hero.jpg",
+ "icon": "/scroll-placeholder.svg",
  "tech": [
   "Next.js",
   "React",
@@ -21,10 +21,11 @@
   "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/scendance/02.jpg"
  ],
  "hasDemo": true,
- "line": "AIGC 产品",
+ "line": "产品",
  "source": "https://lililin0324.github.io/#/product/scendance",
- "sourceFile": "product/08_scendance.md",
+ "sourceFile": "product/09_scendance.md",
  "yearNum": 2026,
  "status": "已完成",
- "flags": []
+ "flags": [],
+ "note": "幕景 Scendance 是 AI 活动布置工作台（非音画作品）"
 }

@@ -1,6 +1,6 @@
 import { getCollection } from 'astro:content';
-export const LINES = ['音画', 'AIGC 产品', '游戏', '空间与研究'] as const;
-export const LINE_EN: Record<string,string> = { '音画':'Audio-Visual', 'AIGC 产品':'AIGC Products', '游戏':'Games', '空间与研究':'Space & Research' };
+export const LINES = ['数字艺术', '产品', '游戏', '空间'] as const;
+export const LINE_EN: Record<string,string> = { '数字艺术':'Digital Art', '产品':'Products', '游戏':'Games', '空间':'Space' };
 export async function allWorks() {
   const ws = (await getCollection('works')).map(w => w.data);
   // slug breaks ties so the order (and the /ring/<slot>.jpg covers) is the same on every build
@@ -9,9 +9,9 @@ export async function allWorks() {
 }
 const PLACEHOLDER_COVER = 'scroll-placeholder.svg';
 
-/** Homepage 精选：音画 / 展览线。产品、游戏、研究留在 /works/。有实拍封面的排在矢量底图前面。 */
+/** Homepage 精选：数字艺术 / 展览线。产品、游戏、研究留在 /works/。有实拍封面的排在矢量底图前面。 */
 export function featuredWorks<T extends { line: string; images: string[]; icon: string }>(ws: T[]): T[] {
-  const art = ws.filter((w) => w.line === '音画');
+  const art = ws.filter((w) => w.line === '数字艺术');
   const hasCover = (w: T) => {
     const src = w.images[0] || w.icon || '';
     return src.length > 0 && !src.includes(PLACEHOLDER_COVER);

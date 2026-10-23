@@ -1,0 +1,33 @@
+{
+ "id": "03",
+ "slug": "urban-heat-resilience-machine-learning",
+ "title": "Assessing Urban Heat Resilience",
+ "category": "Machine Learning",
+ "year": "2025-present",
+ "description": "利用可解释机器学习方法揭示城市形态因子与极端高温之间的非线性关系",
+ "abstract": "",
+ "challenge": "",
+ "solution": "",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/logo.jpg",
+ "tech": [
+  "GIS",
+  "Machine Learning"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/08.png",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/02.png",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/03.png",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/04.png",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/05.png",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/06.png",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/07.png"
+ ],
+ "hasDemo": false,
+ "line": "空间",
+ "source": "https://lililin0324.github.io/#/ai/urban-heat-resilience-machine-learning",
+ "sourceFile": "AI/03_urban-heat-resilience-machine-learning.md",
+ "yearNum": 2025,
+ "status": "已完成",
+ "flags": []
+}

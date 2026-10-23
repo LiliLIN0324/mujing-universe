@@ -19,6 +19,5 @@ const style = c ? [`object-position:${c.pos || '50% 50%'}`, c.scale ? `transform
       <video class="cv-video" data-src={clip} muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>
     )}
   </div>
-  {clip && <button class="cv-play" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
   {!c && <div class="fb-t"><b class:list={['fb-title', titleWidth(main) > 22 && 'long']}>{main}</b></div>}
 </div>
