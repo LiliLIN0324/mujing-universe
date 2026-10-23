@@ -121,8 +121,8 @@ const mail = 'mailto:lily1326685527@gmail.com';
     outline: none;
   }
   .mimi-launch.is-drag .mimi-face { transition: none; }
-  /* 画布不裁切、不放大。橙色圆是 Rive 画出来的，四角透明，直接贴在页面上。
-     静态图的白角只裁在图片自己身上，缺的圆顶用同色圆补。 */
+  /* 画布不缩放、不裁切。橙色圆外的白底在 mimi-rive.js 里按橙边清掉。
+     静态图的白角只处理图片自己，缺的圆顶用同色圆补。 */
   .mimi-ground {
     position: absolute;
     inset: 0;
