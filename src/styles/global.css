@@ -350,7 +350,7 @@ header.top.top--home {
   right: 0;
   z-index: 40;
   min-height: 0;
-  height: 80px;
+  height: 64px;
   padding: 0 var(--page-pad);
   gap: 20px;
   background: var(--bg);
