@@ -26,6 +26,15 @@ TITLE_CN = {
   'chicken-utopia': '小鸡乌托邦',
   'previous-archi-work': '早年建筑作品',
   'previous-planning-research': '早年城市作品',
+  'kittylovecarrots': '微信小游戏开发',
+  'guangzhou-xinyuan-tech': 'bilibili 游戏实习项目',
+  '72-hour-game-jam': '腾讯Gamejam 华科金奖项目',
+  'bmw-meta-island': '同济宝马元宇宙工作坊项目',
+  'peace-elite-hust-campus': '和平精英华科项目',
+  'knowledge-graph-urban-planning': '城市文本知识图谱',
+  'campus-public-space-vitality-modeling': '同济校园活力建模夏令营',
+  'hongqiqu': '国家级大创项目',
+  '1037pinpin': '华科校园拼单平台',
 }
 SKIP = {'epstein-mystery-archive', 'how-to-use-unity-making-wechat-minigames', 'how-to-use-cocos-creator-making-games'}
 def fm(text):
