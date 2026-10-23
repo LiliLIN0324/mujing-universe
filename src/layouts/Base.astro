@@ -1,0 +1,118 @@
+---
+import '../styles/global.css';
+import MimiChat from '../components/MimiChat.astro';
+const {
+  title = '幕景宇宙 · 林丽丽艺术工作室',
+  description = '幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。',
+  image = '/ring/0.jpg',
+  active = '',
+  home = false,
+  fullscreen = false,
+  navClass = '',
+} = Astro.props;
+const links = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '合作']];
+// Every page uses the homepage 'Scendance Space' bar (header.top.top--home). `home` pages (homepage, work detail)
+// keep the auto-hide/overlay behaviour; all other pages add 'top--page': always visible, in flow, on the paper colour.
+const pageNav = navClass.split(' ').filter((c) => c && c !== 'top--unified').join(' ');
+const canonical = Astro.site ? new URL(Astro.url.pathname + Astro.url.search, Astro.site).href : '';
+const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
+---
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{title}</title>
+  <meta name="description" content={description}/>
+  <meta name="theme-color" content="#F6F5F3"/>
+  <meta name="referrer" content="no-referrer"/>
+  <meta name="format-detection" content="telephone=no"/>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
+  <link rel="preload" href="/fonts/AlibabaPuHuiTi-3-55-Regular.woff2" as="font" type="font/woff2" crossorigin/>
+  <link rel="preload" href="/fonts/CormorantSC-600-wordmark.woff2" as="font" type="font/woff2" crossorigin/>
+  {canonical && <link rel="canonical" href={canonical}/>}
+  <meta property="og:type" content="website"/>
+  <meta property="og:locale" content="zh_CN"/>
+  <meta property="og:site_name" content="幕景宇宙"/>
+  <meta property="og:title" content={title}/>
+  <meta property="og:description" content={description}/>
+  {canonical && <meta property="og:url" content={canonical}/>}
+  <meta property="og:image" content={ogImage}/>
+  <meta property="og:image:width" content="1920"/>
+  <meta property="og:image:height" content="760"/>
+  <meta property="og:image:alt" content="幕景宇宙"/>
+  <meta name="twitter:card" content="summary_large_image"/>
+</head>
+<body class:list={[{ home, fullscreen }]}>
+<a class="skip" href="#content">跳到主要内容</a>
+{home ? (
+<header class:list={["top top--home", navClass]} id="home-nav" data-autohide>
+  <a class="wordmark" href="/" translate="no">幕景宇宙</a>
+  <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+  <nav id="home-menu">
+    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
+  </nav>
+</header>
+) : (
+<header class:list={["top top--home top--page", pageNav]} id="home-nav">
+  <a class="wordmark" href="/" translate="no">幕景宇宙</a>
+  <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+  <nav id="home-menu">
+    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
+  </nav>
+</header>
+)}
+<div id="content">
+<slot/>
+</div>
+<footer class="bot">
+  <nav class="social" aria-label="社交">
+    <a href="/contact/#feishu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.6a8 8 0 0 0-8 8c0 1.5.4 2.9 1.1 4.1L4.2 20.2l4.4-1.2A8 8 0 1 0 12 3.6zm-2.6 7.1h5.2a.9.9 0 0 1 0 1.8H9.4a.9.9 0 0 1 0-1.8zm0 3.1h3.4a.9.9 0 0 1 0 1.8H9.4a.9.9 0 0 1 0-1.8z"/></svg>
+      <span>飞书</span>
+    </a>
+    <a href="/contact/#wechat">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9.2 3.5C5.7 3.5 2.8 5.9 2.8 8.9c0 1.7.9 3.2 2.4 4.2l-.6 2.2 2.4-1.2c.7.2 1.4.3 2.2.3.3 0 .6 0 .8-.1-.2-.5-.3-1.1-.3-1.6 0-3.3 3-5.9 6.7-5.9.3 0 .5 0 .8.1C16 5 12.8 3.5 9.2 3.5zM7.2 7a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm4.2 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2zM16.3 8.2c-3.2 0-5.8 2.3-5.8 5.1s2.6 5.1 5.8 5.1c.6 0 1.2-.1 1.7-.3l2.1 1-.5-1.8c1.2-.8 2-2.1 2-3.5 0-2.8-2.6-5.6-5.8-5.6h.5zm-1.8 2.7a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7zm3.6 0a.85.85 0 1 1 0 1.7.85.85 0 0 1 0-1.7z"/></svg>
+      <span>微信</span>
+    </a>
+    <a href="https://github.com/LiliLIN0324" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C6.5 2 2 6.6 2 12.2c0 4.5 2.9 8.3 6.9 9.6.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.2-3.4-1.2-.4-1.1-1.1-1.4-1.1-1.4-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.4-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5.1 0c2-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 3.9-2.4 4.7-4.6 5 .4.3.7 1 .7 2.1v3c0 .3.2.6.7.5A10.2 10.2 0 0 0 22 12.2C22 6.6 17.5 2 12 2z"/></svg>
+      <span>GitHub</span>
+    </a>
+  </nav>
+  <p class="copy">© 2026 幕景宇宙</p>
+</footer>
+<noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
+<script>
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const io = new IntersectionObserver(es => es.forEach(e => {
+  if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+}), { threshold: .12 });
+document.querySelectorAll('.reveal').forEach(el => {
+  if (!reduce && el.parentElement) {
+    const sibs = [...el.parentElement.children].filter(n => n.classList?.contains('reveal'));
+    const idx = sibs.indexOf(el);
+    if (idx > 0) el.style.transitionDelay = `${Math.min(idx, 6) * 80}ms`;
+  }
+  io.observe(el);
+});
+// Mobile (≤768px) home menu: the two-line button toggles the existing nav as a dropdown.
+const menuBtn = document.getElementById('home-menu-btn');
+const homeNav = document.getElementById('home-nav');
+if (menuBtn && homeNav) {
+  const setOpen = (open) => {
+    homeNav.classList.toggle('is-menu-open', open);
+    menuBtn.setAttribute('aria-expanded', String(open));
+  };
+  menuBtn.addEventListener('click', () => setOpen(!homeNav.classList.contains('is-menu-open')));
+  homeNav.querySelectorAll('#home-menu a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('click', (e) => { if (!homeNav.contains(e.target)) setOpen(false); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
+  matchMedia('(max-width: 768px)').addEventListener?.('change', (e) => { if (!e.matches) setOpen(false); });
+}
+document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
+  img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
+}));
+</script>
+<MimiChat />
+</body>
+</html>

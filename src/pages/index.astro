@@ -1,0 +1,540 @@
+---
+import Base from '../layouts/Base.astro';
+import { allWorks, coverClip, pickBody, pickDeskBody, pickIntro, pickSummary, pickTypeYear, workCovers, workFallback } from '../lib';
+const ws = await allWorks();
+const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
+const SCROLL_STILL = `${R2}/01.jpg`;
+const picks = ws.map((w) => ({
+  slug: w.slug,
+  title: w.title,
+  year: w.yearNum || w.year,
+  href: `/works/${w.slug}/`,
+  intro: pickIntro(w),
+  summary: pickSummary(w),
+  meta: pickTypeYear(w),
+  body: pickDeskBody(w),
+  stills: workCovers(w),
+  fallback: workFallback(w),
+  clip: coverClip(w.slug),
+}));
+const leadPick = picks[0];
+const ringWorks = picks.slice(0, 10);
+const mobilePicks = ws.slice(0, 10).map((w, i) => ({
+  no: String(i + 1).padStart(2, '0'),
+  title: w.title,
+  year: w.yearNum || w.year,
+  href: `/works/${w.slug}/`,
+  meta: pickTypeYear(w),
+  body: pickBody(w),
+  cover: `/ring/${i}.jpg`,
+  fallback: workFallback(w) || '/ring/paper.jpg',
+  clip: coverClip(w.slug),
+}));
+const mLead = mobilePicks[0];
+const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks: 'on' };
+---
+<Base active="/" home fullscreen>
+
+{/* ---- Mobile: hero + card stack (≤768px only) ---- */}
+<div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
+<section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图" data-clip={coverClip('xihu-panorama') ? '1' : undefined}>
+  <div class="hero-pan">
+    <img class="hero-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+  </div>
+  {coverClip('xihu-panorama') && (
+    <video class="fs-clip" id="scroll-video-m" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={coverClip('xihu-panorama')}></video>
+  )}
+  <div class="hero-info">
+    <div class="hero-plate">
+      <div class="hero-copy">
+        <p class="by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
+        <h1>当代西湖繁胜全景图</h1>
+        <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
+        <p class="meta">古画新绘　·　进行中　·　2026</p>
+      </div>
+      <div class="fs-actions">
+        <button id="snd-m" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video-m"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+        <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>
+      </div>
+      <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
+      <p class="fs-hint">下滑看精选</p>
+    </div>
+  </div>
+</section>
+<a class="m-peek" href="#picks"><span>精选作品</span><span>{mobilePicks.length}</span></a>
+</div>
+
+{leadPick && <section class="picks" id="picks" data-dwell={PAGE_DWELL.picks}>
+  {mLead && <div class="m-feat" id="m-feat">
+    <div class="m-hd"><b>精选作品</b><span id="m-count">01 / {String(mobilePicks.length).padStart(2, '0')}</span></div>
+    <div class="m-stage" id="m-stage" role="group" aria-roledescription="carousel" aria-label="精选作品">
+      {mobilePicks.map((w, i) => (
+        <div class="m-card" data-i={i} data-clip={w.clip ? '1' : undefined} aria-hidden={i === 0 ? 'false' : 'true'}>
+          <img src={w.cover} data-fallback={w.fallback} alt={w.title} width="1200" height="675" draggable="false" decoding="async" referrerpolicy="no-referrer" loading={i < 4 ? 'eager' : 'lazy'}/>
+          {w.clip && <video class="fs-clip" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={w.clip}></video>}
+          {w.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
+        </div>
+      ))}
+    </div>
+    <div class="m-bar" id="m-bar" aria-hidden="true">{mobilePicks.map((_, i) => <i class={i === 0 ? 'on' : undefined}></i>)}</div>
+    <div class="m-info" aria-live="polite">
+      <h2 class="m-title"><a class="m-title-link" id="m-title" href={mLead.href}>{mLead.title}</a></h2>
+      <div class="m-meta" id="m-meta" hidden={!mLead.meta}>{mLead.meta}</div>
+      <p class="m-body" id="m-body" hidden={!mLead.body}>{mLead.body}</p>
+      <a class="m-view" id="m-view" href={mLead.href}>查看作品 <span aria-hidden="true">→</span></a>
+    </div>
+    <ul class="m-list" id="m-list">
+      {mobilePicks.map((w, i) => (
+        <li class:list={['m-row', { on: i === 0 }]} data-i={i} hidden={i > 3}>
+          <button type="button" data-i={i}><span class="no">{w.no}</span><span class="t">{w.title}</span><span class="y">{w.year}</span></button>
+        </li>
+      ))}
+      <li class="m-row m-all"><button type="button" id="m-all" aria-expanded="false" aria-controls="m-list"><span class="t">全部作品</span><span class="y">{mobilePicks.length}</span></button></li>
+    </ul>
+    <script type="application/json" id="m-pick-data" set:html={JSON.stringify(mobilePicks).replace(/</g, '\\u003c')}></script>
+  </div>}
+</section>}
+
+{/* Desktop: one fullscreen chapter at a time. Scroll crossfades; nothing autoplays. */}
+{leadPick && <div class="fs-runway" id="fs-runway" data-hold="0.85" style={`--chapters:${ringWorks.length};--hold:0.85`}>
+  <div class="fs-stage" id="fs-stage" aria-label="精选作品">
+    <div class="fs-slide is-active" data-i="0" data-clip={leadPick.clip ? '1' : undefined} aria-hidden="false">
+      <div class="fs-pan">
+        <img class="fs-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+        {leadPick.clip && (
+          <video
+            id="scroll-video"
+            class="fs-video fs-clip"
+            muted
+            playsinline
+            webkit-playsinline
+            x5-playsinline
+            preload="none"
+            disablepictureinpicture
+            referrerpolicy="no-referrer"
+            data-src={leadPick.clip}
+            aria-hidden="true"
+          ></video>
+        )}
+      </div>
+      <div class="fs-plate">
+        <p class="fs-kicker"><b>01</b> / {String(ringWorks.length).padStart(2, '0')}　音画 · 进行中</p>
+        <p class="fs-by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
+        <h1 class="fs-title">{leadPick.title}</h1>
+        {leadPick.summary && <p class="fs-summary">{leadPick.summary}</p>}
+        <div class="fs-actions">
+          <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+          {leadPick.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
+          <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
+        </div>
+        <p class="fs-hint">下滑换一件</p>
+      </div>
+    </div>
+    {ringWorks.slice(1).map((work, i) => (
+      <div class="fs-slide" data-i={i + 1} data-clip={work.clip ? '1' : undefined} aria-hidden="true" inert>
+        {work.clip ? (
+          <div class="fs-visual">
+            <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+            <video class="fs-clip" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
+          </div>
+        ) : (
+          <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+        )}
+        <div class="fs-plate">
+          <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}{work.meta ? `　${work.meta}` : ''}</p>
+          <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
+          {work.summary && <p class="fs-summary">{work.summary}</p>}
+          <div class="fs-actions">
+            {work.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
+            <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
+          </div>
+          {i + 1 < ringWorks.length - 1 && <p class="fs-hint">下滑换一件</p>}
+        </div>
+      </div>
+    ))}
+    <div class="fs-rail">
+      {ringWorks.map((work, i) => (
+        <button class:list={['fs-dot', { on: i === 0 }]} type="button" data-i={i} aria-label={`第 ${i + 1} 件，${work.title}`} aria-current={i === 0 ? 'true' : undefined}></button>
+      ))}
+    </div>
+  </div>
+</div>}
+
+
+<style>
+/* Chapters: full-bleed picture, type on #F6F5F3 paper. No edge darkening. */
+.fs-runway { display: none; height: calc((var(--chapters) + var(--hold, 0.85)) * 100vh); background: #F6F5F3; }
+.fs-stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: #F6F5F3;
+}
+@media (min-width: 769px) {
+  .fs-runway { display: block; position: relative; width: auto; height: calc((var(--chapters) + var(--hold, 0.85)) * 100vh); overflow: visible; opacity: 1; pointer-events: auto; z-index: auto; }
+  .first-screen { display: none; }
+  .picks { display: none; }
+}
+@media (max-width: 768px) {
+  /* Kept in the tree so 聆听图景 can play the same file; not shown. */
+  .fs-runway {
+    display: block;
+    position: fixed;
+    left: 0; top: 0;
+    width: 2px; height: 2px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .fs-still, .fs-bg { animation: none; }
+}
+.fs-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translate3d(0, 0, 0) scale(1.04);
+  pointer-events: none;
+}
+.fs-slide.is-active { opacity: 1; pointer-events: auto; }
+
+/* Slide 0: panning painting */
+.fs-pan {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+.fs-still {
+  position: absolute;
+  top: calc(-8vh);
+  left: 0;
+  height: 116%;
+  width: auto;
+  max-width: none;
+  object-fit: initial;
+  animation: fs-pan 140s linear infinite alternate;
+  will-change: transform;
+}
+@keyframes fs-pan {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(calc(-100% + 100vw), 0, 0); }
+}
+.fs-video {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fs-clip { transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1); }
+.fs-visual { position: absolute; inset: 0; }
+.fs-clip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: transparent;
+}
+[data-clip].is-on .fs-clip,
+[data-clip].is-on .fs-video { opacity: 1; }
+.fs-pin {
+  border: 0;
+  background: transparent;
+  padding: 0 0 2px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(26, 26, 28, 0.45);
+  cursor: pointer;
+}
+.fs-pin[aria-pressed="true"] { border-bottom-color: var(--ink); }
+.hero .fs-clip { z-index: 1; }
+.hero-info { z-index: 2; }
+.fs-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transform-origin: 50% 42%;
+  animation: fs-drift 40s linear infinite alternate;
+}
+@keyframes fs-drift {
+  from { transform: translate3d(1%, 0.5%, 0) scale(1.06); }
+  to { transform: translate3d(-1%, -0.5%, 0) scale(1.06); }
+}
+.fs-plate {
+  position: absolute;
+  left: var(--page-pad);
+  bottom: 40px;
+  z-index: 2;
+  width: min(460px, calc(100% - 140px));
+  padding: 26px 28px 22px;
+  background: rgba(246, 245, 243, 0.94);
+  color: var(--ink);
+}
+.fs-plate::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: rgba(26, 26, 28, 0.14);
+}
+.fs-plate::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: #1A1A1C;
+  transform: scaleY(var(--p, 0));
+  transform-origin: top center;
+  z-index: 1;
+}
+.fs-kicker {
+  margin: 0 0 12px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+.fs-kicker b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
+.fs-by {
+  margin: 0 0 6px;
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+.fs-by a { color: inherit; text-decoration: none; }
+.fs-by a:hover { opacity: 0.7; }
+.fs-by span { margin-left: 10px; font-family: var(--en), var(--sans); font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0.06em; }
+.fs-title {
+  margin: 0 0 10px;
+  font-family: var(--sans);
+  font-size: clamp(28px, 3.2vw, 44px);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.fs-title a { color: inherit; text-decoration: none; }
+.fs-title a:hover { opacity: 0.72; }
+.fs-summary { margin: 0 0 18px; font-family: var(--sans); font-size: 15px; color: #4a463f; max-width: 36em; line-height: 1.65; }
+.fs-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.listen {
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 0; background: #1A1A1C; color: #F6F5F3; border-radius: 0;
+  padding: 11px 18px;
+  font-family: var(--sans); font-size: 13px;
+  letter-spacing: 0.08em; cursor: pointer;
+}
+.listen:hover { opacity: 0.86; }
+.listen .ic { width: 0; height: 0; border-left: 7px solid #F6F5F3; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.listen[aria-pressed="true"] .ic { width: 8px; height: 10px; border: 0; border-left: 2px solid #F6F5F3; border-right: 2px solid #F6F5F3; }
+.listen:disabled { opacity: 0.35; cursor: not-allowed; }
+.fs-view {
+  display: inline-block; color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px; letter-spacing: 0.06em;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(26, 26, 28, 0.45);
+  padding-bottom: 2px;
+}
+.fs-view:hover { border-bottom-color: var(--ink); }
+.fs-hint {
+  margin: 16px 0 0;
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: #8a847c;
+}
+.fs-rail {
+  position: absolute;
+  right: var(--page-pad);
+  top: 22%;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 4px;
+  background: rgba(246, 245, 243, 0.92);
+  border-radius: 0;
+}
+.fs-dot {
+  width: 28px; height: 16px; border: 0; padding: 0;
+  background: transparent; cursor: pointer; position: relative;
+}
+.fs-dot::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 5px; height: 5px;
+  border-radius: 0;
+  background: rgba(26, 26, 28, 0.32);
+  transform: translate(-50%, -50%);
+  transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.fs-dot.on::before { height: 18px; background: #1A1A1C; }
+.fs-dot:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* ---- Mobile ---- */
+.m-prog, .m-peek { display: none; }
+.first-screen {
+  position: relative;
+  height: 100vh; height: 100svh; height: 100dvh;
+  background: #F6F5F3; color: var(--ink);
+}
+.hero {
+  position: absolute; inset: 0; overflow: hidden; background: #F6F5F3;
+}
+.hero-pan {
+  position: absolute; top: 0; left: 0;
+  height: 100%; width: auto;
+  animation: none;
+  transform: translate3d(var(--pan-x, 0px), 0, 0);
+}
+.hero-still {
+  position: relative; inset: auto; top: 0;
+  height: 100%; width: auto; max-width: none; object-fit: initial;
+  transform-origin: 30% 50%;
+}
+.hero-info {
+  position: absolute; inset: auto 0 0 0; z-index: 2;
+  padding: 0 var(--page-gutter) 80px;
+}
+.hero-plate { background: rgba(246, 245, 243, 0.94); padding: 18px 18px 16px; }
+.hero-copy .by { margin: 0 0 6px; font-family: var(--sans); font-weight: 600; font-size: 20px; color: var(--ink); }
+.hero-copy .by a { color: inherit; text-decoration: none; }
+.hero-copy .by span { margin-left: 8px; font-family: var(--en), var(--sans); font-size: 13px; color: var(--muted); }
+.hero-copy h1 { margin: 0; color: var(--ink); font-family: var(--sans); font-weight: 600; font-size: 28px; line-height: 1.2; letter-spacing: -0.03em; }
+.hero-copy .sub { margin: 8px 0 0; font-family: var(--sans); font-size: 14px; color: #4a463f; line-height: 1.55; }
+.hero-copy .meta { margin: 6px 0 14px; font-family: var(--sans); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.hero-plate .fs-actions { margin-top: 4px; }
+.hero-plate .listen { min-height: 44px; }
+@keyframes m-drift {
+  from { transform: translate3d(1.2%, 0.4%, 0) scale(1.05); }
+  to { transform: translate3d(-1.2%, -0.4%, 0) scale(1.05); }
+}
+@media (max-width: 768px) {
+  .hero-still { animation: m-drift 40s linear infinite alternate; }
+  .hero-plate:has(.listen[aria-pressed="true"]) .m-prog {
+    display: flex; align-items: center; gap: 10px; margin-top: 12px;
+    color: var(--muted); font-size: 11px; letter-spacing: 0.14em;
+    font-variant-numeric: tabular-nums; pointer-events: none;
+  }
+  .m-prog i { display: block; width: 96px; height: 1px; background: rgba(26, 26, 28, 0.18); position: relative; }
+  .m-prog b { position: absolute; left: 0; top: 0; height: 1px; width: 100%; background: #1A1A1C; transform-origin: 0 50%; transform: scaleX(var(--prog, 0)); }
+  .m-peek {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
+    padding: 16px var(--page-gutter) 0; display: flex; justify-content: space-between;
+    background: #F6F5F3; color: #9a958c; font-size: 12px; letter-spacing: 0.2em; text-decoration: none;
+  }
+  :global(html) { scroll-snap-type: y mandatory; }
+  .first-screen, .picks { scroll-snap-align: start; scroll-snap-stop: always; }
+  .picks { min-height: 100vh; min-height: 100svh; padding-top: 52px; background: #F6F5F3; }
+}
+
+/* Mobile featured card stack */
+.m-feat { display: none; }
+@media (max-width: 768px) {
+  .picks { height: auto; padding-bottom: 8px; }
+  .m-feat {
+    --cw: calc(100vw - var(--page-gutter) - 66px); --ch: calc(var(--cw) * 9 / 16);
+    display: block; color: #1a1a18; font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
+  }
+  .m-hd { display: flex; justify-content: space-between; align-items: baseline; padding: 14px var(--page-gutter) 0; line-height: normal; }
+  .m-hd b { font-size: 12px; font-weight: 400; color: #9a958c; letter-spacing: 0.2em; }
+  .m-hd span { font-size: 12px; color: #9a958c; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
+  .m-stage { position: relative; height: calc(var(--ch) + 44px); margin-top: 22px; perspective: 900px; touch-action: pan-y; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+  .m-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); transform-origin: 100% 50%; border-radius: 0; overflow: hidden; background: #e6e3de; box-shadow: inset 0 0 0 1px rgba(26, 26, 28, 0.16); will-change: transform, opacity; backface-visibility: hidden; }
+  .m-card:not([style]) { transform: translateX(var(--page-gutter)); }
+  .m-card:not([style]) ~ .m-card:not([style]) { opacity: 0; }
+  .m-card img { width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; pointer-events: none; }
+  .m-card .fs-pin {
+    position: absolute;
+    z-index: 2;
+    left: 10px;
+    bottom: 10px;
+    background: rgba(246, 245, 243, 0.94);
+    border: 0;
+    border-radius: 0;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+  .m-bar { display: flex; gap: 6px; padding: 0 var(--page-gutter); }
+  .m-bar i { flex: 1; height: 2px; background: #e1ddd6; transition: background 0.25s ease; }
+  .m-bar i.on { background: #1a1a18; }
+  .m-info { padding: 22px var(--page-gutter) 0; }
+  .m-title { margin: 0; color: #1a1a18; font-family: var(--sans); font-weight: 600; font-size: 28px; line-height: 1.25; letter-spacing: -0.03em; }
+  .m-title-link { color: inherit; text-decoration: none; }
+  .m-meta { margin-top: 8px; font-size: 12px; color: #9a958c; letter-spacing: 0.08em; }
+  .m-body { margin: 12px 0 0; font-size: 14px; line-height: 1.75; color: #4a463f; }
+  .m-view { display: inline-block; margin-top: 16px; color: #1a1a18; font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-decoration: none; border-bottom: 1px solid rgba(26,26,24,0.5); padding-bottom: 2px; }
+  .m-view span { margin-left: 4px; }
+  .m-feat [hidden] { display: none !important; }
+  .m-list { list-style: none; margin: 22px var(--page-gutter) 0; padding: 0; border-top: 1px solid #e3dfd8; }
+  .m-row { border-bottom: 1px solid #e3dfd8; }
+  .m-row button { display: flex; align-items: center; gap: 14px; width: 100%; height: 44px; padding: 0; border: 0; background: none; color: #8d887f; font: inherit; font-size: 14px; text-align: left; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .m-row .no { font-size: 11px; width: 18px; color: #b9b4ab; font-variant-numeric: tabular-nums; }
+  .m-row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .m-row .y { font-size: 12px; }
+  .m-row.on button { color: #1a1a18; }
+  .m-row.on .no { color: #1a1a18; }
+  .m-row.on .t { font-weight: 600; }
+  .m-row.m-all { border-bottom: none; }
+  .m-row.m-all button { color: #1a1a18; font-size: 13px; letter-spacing: 0.08em; }
+  .m-row.m-all .y { color: #9a958c; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .fs-still, .fs-bg, .hero-still, .fs-video, .fs-dot::before { animation: none; transition: none; }
+  .fs-slide.is-active { transform: none; }
+}
+</style>
+
+<script>
+// Nav auto-hide (desktop)
+const nav = document.getElementById('home-nav');
+let hoverTop = false, scrollShown = false, lastY = window.scrollY;
+function syncNav() { nav?.classList.toggle('is-shown', hoverTop || scrollShown); }
+window.addEventListener('mousemove', (e) => {
+  const near = e.clientY <= (nav?.classList.contains('is-shown') ? 96 : 72);
+  if (near !== hoverTop) { hoverTop = near; syncNav(); }
+}, { passive: true });
+document.documentElement.addEventListener('mouseleave', () => { hoverTop = false; syncNav(); });
+window.addEventListener('scroll', () => {
+  const y = window.scrollY, dy = y - lastY;
+  if (y <= 4) scrollShown = false;
+  else if (dy < -4) scrollShown = true;
+  else if (dy > 4) scrollShown = false;
+  if (Math.abs(dy) > 4 || y <= 4) lastY = y;
+  syncNav();
+}, { passive: true });
+</script>
+
+<script>
+import { mountHomeClips } from '../scripts/home-clips.js';
+import { mountHomeChapters } from '../scripts/home-chapters.js';
+mountHomeClips();
+import { mountMobileHero } from '../scripts/mobile-hero.js';
+import { mountMobileStack } from '../scripts/mobile-stack.js';
+import { mountMobilePager } from '../scripts/mobile-pager.js';
+mountHomeChapters();
+const heroDwell = mountMobileHero();
+const mobileStackRoot = document.getElementById('m-feat');
+const stackDwell = mobileStackRoot ? mountMobileStack(mobileStackRoot) : null;
+mountMobilePager([
+  { el: document.getElementById('first-screen'), dwell: heroDwell },
+  { el: document.getElementById('picks'), dwell: stackDwell },
+]);
+</script>
+</Base>

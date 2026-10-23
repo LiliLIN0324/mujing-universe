@@ -1,0 +1,108 @@
+{
+ "talks": [
+  {
+   "title": "Knowledge Graph Generation from Urban Planning Texts",
+   "event": "39th AAAI Workshop - AI for Urban Planning",
+   "location": "Philadelphia, PA, USA",
+   "date": "February 28 - March 3, 2025",
+   "format": "Poster"
+  },
+  {
+   "title": "Knowledge Graph Generation from Urban Planning Texts",
+   "event": "Computational Urban Planning and Urban Management Conference (CUPUM)",
+   "location": "London, UK",
+   "date": "June 23 - 27, 2025",
+   "format": "Oral"
+  },
+  {
+   "title": "Knowledge Graph Generation from Urban Planning Texts",
+   "event": "19th International Association for China Planning Conference (IACP)",
+   "location": "Xiamen, China",
+   "date": "July 3 - 7, 2025",
+   "format": "Oral"
+  },
+  {
+   "title": "Local Climate Zone and Urban Heat Resilience: An Empirical Study in New York",
+   "event": "52nd International Conference on Urban Affairs (ICUA)",
+   "location": "Vancouver, Canada",
+   "date": "April 15 - 19, 2025",
+   "format": "Oral"
+  },
+  {
+   "title": "Reveal nonlinear relationships between urban form factors and extreme heat with an explainable machine learning approach",
+   "event": "65th Association of Collegiate Schools of Planning Annual Conference (ACSP)",
+   "location": "Minneapolis, MN, USA",
+   "date": "October 23 - 25, 2025",
+   "format": "Oral"
+  },
+  {
+   "title": "Assessing Nonlinear Impacts of Urban Form on Heat Resilience Across Scales Using Machine Learning",
+   "event": "39th AAAI Workshop - AI for Urban Planning",
+   "location": "Singapore",
+   "date": "January 26, 2026",
+   "format": "Poster"
+  },
+  {
+   "title": "Nonlinear Impacts of Urban Form on Urban Heat Islands: A Machine Learning Analysis Across Scales and Weather Conditions in Seoul",
+   "event": "20th International Association for China Planning (IACP)",
+   "location": "Xi'an, China",
+   "date": "July 10 - 13, 2026",
+   "format": "Oral"
+  },
+  {
+   "title": "Decentralized future urban design based on the biological characteristics of neurons",
+   "event": "Urban Design Institute of Korea (UDIK) Autumn Conference",
+   "location": "Seoul, South Korea",
+   "date": "October 10, 2024",
+   "format": "Oral"
+  }
+ ],
+ "awards": [
+  {
+   "category": "竞赛奖项 · Competitions",
+   "items": [
+    {
+     "name": "腾讯游戏极限开发挑战赛 金奖",
+     "year": "2021"
+    },
+    {
+     "name": "eVolo 摩天大楼建筑竞赛 编辑部推荐奖",
+     "year": "2022"
+    },
+    {
+     "name": "“互联网+”大学生创新创业大赛 武汉市银奖 / 湖北省铜奖",
+     "year": "2022"
+    },
+    {
+     "name": "中央国际玻璃国际建筑设计竞赛 佳作奖",
+     "year": "2023"
+    },
+    {
+     "name": "米兰设计周省级一等奖",
+     "year": "2023"
+    },
+    {
+     "name": "亚洲设计学年奖 银奖、铜奖、优秀奖",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "category": "项目与其他 · Projects & Recognition",
+   "items": [
+    {
+     "name": "国家级大创项目《红旗渠类山地灌渠工程遗产价值判定与数字化平台构建》",
+     "year": "2023"
+    },
+    {
+     "name": "Digital Futures workshop 参与证书",
+     "year": "2023"
+    },
+    {
+     "name": "最佳跨界融合奖 · 同济 AI4CITIES 工作坊",
+     "year": "2025"
+    }
+   ]
+  }
+ ]
+}

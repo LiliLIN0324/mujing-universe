@@ -1,0 +1,102 @@
+---
+import Base from '../layouts/Base.astro';
+import Cooperate from '../components/Cooperate.astro';
+import portraits from '../data/portraits.json';
+const pickJs = `(function(){var L=${JSON.stringify(portraits)},im=document.getElementById('apimg');if(!im||!L.length)return;var P=im.parentNode;P.classList.add('has-photo');var u=L[Math.floor(Math.random()*L.length)],f=0;im.onload=function(){im.classList.add('on')};im.onerror=function(){im.remove();P.classList.remove('has-photo');};im.src=u;})();`;
+const studioIntro = '幕景宇宙是一家位于杭州的AI Native工作室，以人工智能为核心，借助对于文化、设计与空间的理解，创作解决当下真实问题的产品、游戏与智能体，让我们生活的城市更美好。';
+---
+<Base title="关于 · 幕景宇宙" description={studioIntro} active="/about/" navClass="top--unified">
+<main class="wrap about-page">
+
+<div class="studio-intro reveal">
+  <h1>以创作为核心的<br/>AIGC 文化艺术团队</h1>
+  <p class="lead">{studioIntro}</p>
+</div>
+
+<div class="members">
+
+  <div class="member reveal">
+    <div class="member-photo portrait">
+      <img id="apimg" class="pimg" alt="林丽丽 肖像" width="900" height="1200" decoding="async" fetchpriority="high"/>
+      <script is:inline set:html={pickJs}></script>
+      <span class="serif">林<br/>丽<br/>丽</span>
+    </div>
+    <div class="member-info">
+      <p class="kicker cap">艺术家 · 创作</p>
+      <h2>林丽丽 <small>Lili Lin</small></h2>
+      <p>首尔大学城市与区域规划硕士，华中科技大学建筑学出身。以画面与空间为语言，把 AI、古典美学与三维做成可看、可交互的作品。作品版权所有者，未来 OPC 主体。</p>
+    </div>
+  </div>
+
+  <div class="member reveal">
+    <div class="member-photo portrait has-photo">
+      <img class="pimg on" src="/team-zhongshu.jpg" alt="丁科智 肖像" width="900" height="1200" decoding="async" loading="lazy"/>
+    </div>
+    <div class="member-info">
+      <p class="kicker cap">经纪 · 管理 · 声音</p>
+      <h2>丁科智 <small>Ke-Zhi Ding</small></h2>
+      <p>浙江音乐学院硕士在读，负责艺术家经纪、项目统筹与展览商务对接，参与音画线的声音设计部分。</p>
+    </div>
+  </div>
+
+</div>
+
+<section class="endcap reveal">
+  <a class="btn" href="/works/">浏览作品 →</a>
+  <Cooperate />
+</section>
+
+</main>
+<style>
+.about-page { padding-top: 80px; }
+
+.studio-intro { margin-bottom: 80px; }
+.studio-intro .lead { max-width: 36em; }
+.studio-intro h1 { font-size: clamp(40px, 5vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.15; margin: 0 0 20px; }
+.lead { font-size: 1.05rem; color: var(--ink2); line-height: 1.8; }
+
+.members { display: flex; flex-direction: column; gap: 72px; }
+
+.member { display: grid; grid-template-columns: 260px 1fr; gap: 52px; align-items: start; padding-top: 48px; border-top: 1px solid var(--rule); }
+
+.portrait {
+  aspect-ratio: 3 / 4;
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 28px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.pimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s ease; }
+.pimg.on { opacity: 1; }
+.portrait.has-photo .serif { display: none; }
+.portrait .serif { position: relative; z-index: 2; font-size: clamp(2.4rem, 3.5vw, 3.2rem); line-height: 1.15; letter-spacing: 0.18em; color: var(--ink2); }
+
+.member-info { padding-top: 4px; }
+.member-info h2 { font-size: clamp(1.6rem, 2.5vw, 2rem); font-weight: 600; letter-spacing: -0.02em; margin: 8px 0 16px; }
+.member-info h2 small {
+  display: inline-block;
+  margin-left: 10px;
+  font-family: var(--en), var(--sans);
+  font-weight: 400;
+  font-size: 0.9rem;
+  letter-spacing: 0;
+  color: var(--ink2);
+}
+.member-info p { font-size: 1rem; color: var(--ink2); line-height: 1.8; }
+
+.endcap { text-align: left; margin-top: 88px; }
+.endcap .btn { margin: 6px 6px 6px 0; }
+
+@media (max-width: 760px) {
+  .studio-intro { margin-bottom: 48px; }
+  .member { grid-template-columns: 1fr; gap: 24px; }
+  .portrait { max-width: 220px; }
+  .members { gap: 48px; }
+}
+</style>
+</Base>

@@ -1,0 +1,478 @@
+/* Self-hosted subset of Alibaba PuHuiTi 3.0 (Regular / Medium / SemiBold).
+   Official OSS webfont returns 403. Noto Sans SC is only the fallback. */
+@font-face {
+  font-family: "Alibaba PuHuiTi 3.0";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/AlibabaPuHuiTi-3-55-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Alibaba PuHuiTi 3.0";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/AlibabaPuHuiTi-3-65-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Alibaba PuHuiTi 3.0";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2") format("woff2");
+}
+/* Wordmark only: latin subset, so the name does not wait on fonts.googleapis.com. */
+@font-face {
+  font-family: "Cormorant SC";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/CormorantSC-600-wordmark.woff2") format("woff2");
+  unicode-range: U+0020, U+0053, U+0061, U+0063-0065, U+006E, U+0070;
+}
+/* Map the old Google family names onto fonts already on Chinese phones. */
+@font-face {
+  font-family: "Noto Sans SC";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("PingFang SC"), local("Noto Sans CJK SC"), local("Microsoft YaHei"), local("Noto Sans SC");
+}
+@font-face {
+  font-family: "Noto Serif SC";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("Songti SC"), local("STSong"), local("SimSun"), local("Noto Serif SC");
+}
+@font-face {
+  font-family: "Noto Serif CJK SC";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("Noto Serif CJK SC"), local("Source Han Serif SC"), local("Songti SC");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: local("Inter"), local("Inter Regular");
+}
+:root {
+  --bg: #F6F5F3;
+  --bg2: #EFEDE9;
+  --paper: #FFFFFF;
+  --ink: #1A1A1C;
+  --ink2: #6B6B6B;
+  --muted: #6A655F;
+  --rule: #1A1A1C14;
+  --accent: #1A1A1C;
+  /* Page gutters. --page-gutter is 64px, and 24px at ≤768px.
+     --page-gutter-lg stays the desktop value.
+     --page-pad is the inline inset of a full-width element: at least the
+     gutter, and the side margin of a centered --page-max-width column when
+     the viewport is wider. The 100% resolves on the element that uses it.
+     --gutter / --measure are the same tokens, kept so older rules still track. */
+  --page-gutter-lg: 64px;
+  --page-gutter: var(--page-gutter-lg);
+  --page-max-width: 1440px;
+  --page-pad: max(var(--page-gutter), calc((100% - var(--page-max-width)) / 2));
+  --gutter: var(--page-gutter);
+  --measure: var(--page-max-width);
+  --cta-bg: #1A1A1C;
+  --cta-fg: #F6F5F3;
+  --radius: 0;
+  --sans: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  --en: Inter, -apple-system, system-ui, sans-serif;
+  --ivory: var(--ink);
+  --ivory-2: var(--ink2);
+  --line: var(--rule);
+  --line-strong: #1A1A1C1F;
+  --gold: var(--ink);
+  --elev: var(--bg2);
+  --serif: var(--sans);
+  --latin: var(--en);
+  --max: 1120px;
+}
+
+* { box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+@media (max-width: 768px) {
+  html { scroll-behavior: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 3px;
+}
+a, button { touch-action: manipulation; }
+.skip {
+  position: absolute;
+  left: 12px;
+  top: 8px;
+  z-index: 100;
+  padding: 8px 14px;
+  background: var(--ink);
+  color: #fff;
+  text-decoration: none;
+  transform: translateY(-160%);
+}
+.skip:focus { transform: none; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+img { max-width: 100%; }
+h1, h2, h3, .serif {
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+h1 { font-size: clamp(36px, 4vw, 48px); font-weight: 600; line-height: 1.15; }
+h2 { font-size: clamp(28px, 3vw, 36px); font-weight: 600; }
+h3 { font-size: 19px; font-weight: 500; }
+a { color: inherit; }
+p { margin: 0 0 0.8em; }
+
+.wrap { width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter))); margin: 0 auto; }
+.narrow { width: min(720px, calc(100% - 2 * var(--page-gutter))); margin: 0 auto; }
+.cap, .kicker, .mono {
+  font-family: var(--en), var(--sans);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--muted);
+}
+.kicker { margin: 0 0 10px; }
+.ph {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 0;
+  background: var(--bg2);
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 0;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn.solid {
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  border-color: var(--cta-bg);
+}
+.btn:hover { opacity: 0.86; }
+
+header.top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 72px;
+  padding: 16px var(--page-gutter);
+  background: #F6F5F3;
+  border-bottom: 1px solid var(--rule);
+}
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: -0.02em;
+}
+.brand i {
+  width: 7px;
+  height: 7px;
+  border-radius: 0;
+  background: var(--accent);
+}
+header nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+header nav a {
+  color: var(--ink2);
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+header nav a.on { color: var(--ink); }
+header nav a.btn.solid {
+  color: var(--cta-fg);
+  margin-left: 6px;
+  padding: 9px 16px;
+}
+
+footer.bot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px 28px;
+  width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter)));
+  margin: 0 auto;
+  padding: 20px 0 28px;
+  border-top: 1px solid var(--ink);
+  background: var(--bg);
+  color: var(--ink2);
+  text-align: left;
+}
+footer.bot .social {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px 22px;
+}
+footer.bot .social a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 2px;
+  color: var(--ink2);
+  text-decoration: none;
+  font-size: 0.88rem;
+  line-height: 1;
+}
+footer.bot .social a:hover { color: var(--ink); }
+footer.bot .social svg { width: 18px; height: 18px; display: block; flex: none; }
+footer.bot .copy {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--en), var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+@media (min-width: 769px) {
+  body.fullscreen footer.bot {
+    min-height: 100dvh;
+    border-top: 0;
+    align-items: center;
+  }
+}
+
+.reveal { opacity: 0; transform: translateY(8px); animation: rise 0.7s ease forwards; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { animation: none; opacity: 1; transform: none; }
+}
+
+@media (max-width: 768px) {
+  :root { --page-gutter: 24px; }
+  .wrap, .narrow { width: calc(100% - 2 * var(--page-gutter)); }
+  header.top { padding: 12px var(--page-gutter); flex-wrap: wrap; }
+  header nav { gap: 14px; width: 100%; }
+  footer.bot { gap: 12px; padding-bottom: 32px; }
+}
+
+/* Homepage auto-hide nav (mock-home v9): hidden by default, shown on
+   hover near the top or on scroll-up. Other pages keep header.top above. */
+header.top.top--home {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  min-height: 0;
+  height: 80px;
+  padding: 0 var(--page-pad);
+  gap: 20px;
+  background: #F6F5F3;
+  border-bottom: 1px solid var(--rule);
+  color: #1a1a18;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: normal;
+  letter-spacing: 0.08em;
+  opacity: 0;
+  transform: translateY(-24px);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+header.top.top--home.is-shown,
+header.top.top--home:focus-within {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.top--home .wordmark {
+  color: #1a1a18;
+  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+}
+.top--home nav { display: flex; align-items: center; gap: 32px; }
+.top--home nav a {
+  color: #1a1a18;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+}
+.top--home nav a.pill {
+  background: #1a1a18;
+  color: #fff;
+  border-radius: 0;
+  padding: 8px 18px;
+  line-height: normal;
+}
+.top--home nav a:hover { opacity: 0.7; }
+.top--home nav a.pill:hover { opacity: 0.86; }
+@media (max-width: 760px) {
+  header.top.top--home { height: 64px; padding: 0 var(--page-gutter); flex-wrap: nowrap; }
+  .top--home nav { gap: 18px; width: auto; }
+  .top--home .wordmark { font-size: 17px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  header.top.top--home { transition: opacity 0.2s linear; transform: none; }
+}
+
+/* Homepage mobile top bar (≤768px): always visible, sticky 52px, two-line menu
+   button opening the existing nav as a dropdown. Desktop keeps auto-hide above. */
+.top--home .menu-btn { display: none; }
+@media (max-width: 768px) {
+  header.top.top--home,
+  header.top.top--home.is-shown {
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    z-index: 200;
+    height: 52px;
+    padding: 0 var(--page-gutter);
+    flex-wrap: nowrap;
+    background: #F6F5F3;
+    border-bottom: 1px solid var(--rule);
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    transition: none;
+  }
+  .top--home .wordmark { font-size: 17px; font-weight: 600; letter-spacing: 0.16em; line-height: 1; }
+  .top--home .menu-btn {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    width: 44px;
+    height: 44px;
+    margin-right: -12px;
+    padding: 0 12px;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .top--home .menu-btn i { display: block; width: 20px; height: 1.5px; background: #1a1a18; transition: transform 0.25s ease; }
+  .top--home.is-menu-open .menu-btn i:first-child { transform: translateY(3.75px) rotate(45deg); }
+  .top--home.is-menu-open .menu-btn i:last-child { transform: translateY(-3.75px) rotate(-45deg); }
+  .top--home nav {
+    display: none;
+    position: absolute;
+    top: 52px;
+    right: var(--page-gutter);
+    width: auto;
+    min-width: 148px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 6px 0;
+    background: #F6F5F3;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+  }
+  .top--home.is-menu-open nav { display: flex; }
+  .top--home nav a,
+  .top--home nav a.pill {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 12px 18px;
+    background: none;
+    color: #1a1a18;
+    border-radius: 0;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+  }
+}
+@media (max-width: 768px) and (prefers-reduced-motion: reduce) {
+  .top--home .menu-btn i { transition: none; }
+}
+/* Homepage mobile (≤768px): the bar overlays the painting (no layout push) and
+   uses the mock's light gradient while over it; cream bar everywhere else. */
+@media (max-width: 768px) {
+  header.top.top--home { margin-bottom: -52px; }
+  header.top.top--home.on-hero:not(.is-menu-open) {
+    background: #F6F5F3;
+    border-bottom: 1px solid var(--rule);
+  }
+}
+/* Work detail page bar: same component as the homepage. Active link underlined;
+   ≤768px it stays in flow above the hero (no overlay) on a light bar. */
+.top--home nav a.on { border-bottom: 1px solid currentColor; padding-bottom: 2px; }
+@media (max-width: 768px) {
+  header.top.top--home.top--work { margin-bottom: 0; background: rgba(255, 255, 255, 0.78); }
+  .top--home nav a.on { border-bottom: 0; padding-bottom: 11px; font-weight: 600; }
+}
+
+/* Ordinary content pages (works index, artist, contact, studio, ...): the same
+   'Scendance Space' bar as the homepage, but non-overlay — always visible, sticky
+   and in flow (no content under it), dark text on the paper background. */
+@media (min-width: 769px) {
+  header.top.top--home.top--page {
+    position: sticky;
+    left: auto;
+    right: auto;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    background: #F6F5F3;
+    border-bottom: 1px solid var(--rule);
+  }
+}
+@media (max-width: 768px) {
+  header.top.top--home.top--page { margin-bottom: 0; }
+}
+@media (min-width: 769px) {
+  .top--home nav a.pill.on { border-bottom: 0; padding-bottom: 8px; }
+}

@@ -1,0 +1,26 @@
+---
+/** 目录卡片：图、标题、类别。有片时点画面才播，标题和「查看」进详情。 */
+import WorkCover from './WorkCover.astro';
+import { coverClip } from '../lib';
+
+const { w, eager = false } = Astro.props;
+const href = `/works/${w.slug}/`;
+const clip = coverClip(w.slug);
+---
+{clip ? (
+  <article class="card rise" data-slug={w.slug} data-line={w.line}>
+    <div class="im"><WorkCover w={w} eager={eager} /><a class="go" href={href}>查看</a></div>
+    <div class="cap">
+      <h2><a href={href}><span class="ttl">{w.main}</span></a></h2>
+      <span class="tag">{w.line}</span>
+    </div>
+  </article>
+) : (
+  <a class="card rise" href={href} data-slug={w.slug} data-line={w.line}>
+    <div class="im"><WorkCover w={w} eager={eager} /><span class="go">查看</span></div>
+    <div class="cap">
+      <h2><span class="ttl">{w.main}</span></h2>
+      <span class="tag">{w.line}</span>
+    </div>
+  </a>
+)}

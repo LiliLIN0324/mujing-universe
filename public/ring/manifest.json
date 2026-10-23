@@ -1,0 +1,48 @@
+[
+  {
+    "slug": "xihu-panorama",
+    "file": "0.jpg"
+  },
+  {
+    "slug": "litflow",
+    "file": "1.jpg",
+    "note": "fig/litflow/01.png (was AnyReal duplicate)"
+  },
+  {
+    "slug": "riffle-ai-game-generation-tool",
+    "file": "2.jpg"
+  },
+  {
+    "slug": "scendance",
+    "file": "3.jpg",
+    "source": "_sources/scendance-hero.jpg"
+  },
+  {
+    "slug": "bazi-fengshui-analysis",
+    "file": "4.jpg"
+  },
+  {
+    "slug": "genshot-AI-video-generation-tool",
+    "file": "5.jpg",
+    "note": "fig/genshot/01.jpg (replaced riffle stand-in)"
+  },
+  {
+    "slug": "genstyle",
+    "file": "6.jpg",
+    "note": "fig/genstyle/01.jpg"
+  },
+  {
+    "slug": "anyreal",
+    "file": "7.jpg"
+  },
+  {
+    "slug": "dragon-diffussion",
+    "file": "8.jpg",
+    "note": "fig/dragon-diffusion/01.jpg (replaced riffle landscape)"
+  },
+  {
+    "slug": "early-campus-experience",
+    "file": "9.jpg",
+    "note": "1037pinpin/01.jpg (first photo), resized to 1920"
+  }
+]

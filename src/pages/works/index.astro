@@ -1,0 +1,507 @@
+---
+// 作品页是完整目录，按创作线筛选，可换成列表。首页负责代表作。
+// 有核对过的 mp4 才在悬停或点击时播放，页面不自动播放。
+import Base from '../../layouts/Base.astro';
+import WorkCard from '../../components/WorkCard.astro';
+import { LINES, allWorks, splitTitle } from '../../lib';
+
+const ws = (await allWorks()).map((w) => {
+  const [main, sub] = splitTitle(w.title);
+  return { ...w, main, sub };
+});
+const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w) => w.line === line).length])] as [string, number][];
+---
+<Base title="作品 · 幕景宇宙" description="幕景宇宙的作品目录，按创作线筛选。" active="/works/">
+<main class="wf" id="archive" data-mode="grid">
+  <header class="wf-top"><h1>作品</h1></header>
+  <div class="wf-bar">
+    <div class="wf-filters" role="group" aria-label="按创作线筛选">
+      {tabs.map(([line, n], i) => (
+        <button type="button" data-f={line} class={i === 0 ? 'on' : undefined} aria-pressed={i === 0 ? 'true' : 'false'}>
+          {line}<sup>{n}</sup>
+        </button>
+      ))}
+    </div>
+    <div class="wf-view" role="group" aria-label="查看方式">
+      <button type="button" data-mode="grid" class="on" aria-pressed="true">网格</button>
+      <button type="button" data-mode="list" aria-pressed="false">列表</button>
+    </div>
+  </div>
+  <div class="wf-cards">
+    {ws.map((w, i) => <WorkCard w={w} eager={i < 4} />)}
+  </div>
+  <div class="idx">
+    <div class="row hd" aria-hidden="true">
+      <span class="no">No.</span>
+      <span class="t">作品</span>
+      <span class="c">类别</span>
+      <span class="y">年份</span>
+    </div>
+    {ws.map((w) => (
+      <a class="row" href={`/works/${w.slug}/`} data-line={w.line}>
+        <span class="no">{w.no}</span>
+        <span class="t">{w.main}{w.sub && <em>{w.sub}</em>}</span>
+        <span class="c">{w.line}</span>
+        <span class="y">{w.yearNum || w.year}</span>
+      </a>
+    ))}
+  </div>
+  <p class="wf-empty" id="wf-empty" hidden>这一类还没有作品。</p>
+</main>
+
+<style is:global>
+.wf {
+  --rule1: rgba(26, 26, 28, .10);
+  width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter)));
+  margin: 0 auto;
+  padding: 8px 0 32px;
+  color: var(--ink);
+}
+.wf a { color: inherit; text-decoration: none; }
+.wf p { margin: 0; }
+.wf [hidden] { display: none !important; }
+.wf-top h1 {
+  margin: 8px 0 4px;
+  font-size: clamp(40px, 5vw, 56px);
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.wf .sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.wf-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 28px;
+  padding: 16px 0 10px;
+  background: rgba(246, 245, 243, .94);
+}
+.wf-filters {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: 2px 26px;
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.wf-filters::-webkit-scrollbar { display: none; }
+.wf-filters button, .wf-view button {
+  border: 0;
+  background: none;
+  padding: 10px 0;
+  min-height: 44px;
+  font: inherit;
+  font-size: 16px;
+  letter-spacing: .02em;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wf-filters button sup {
+  font-family: var(--en);
+  font-size: 11px;
+  margin-left: 4px;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.wf-filters button.on { color: var(--ink); box-shadow: inset 0 -1px 0 var(--ink); }
+.wf-view { display: flex; flex: 0 0 auto; gap: 18px; }
+.wf-view button { font-size: 14px; }
+.wf-view button.on { color: var(--ink); font-weight: 600; }
+.wf-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 28px;
+  row-gap: 40px;
+  margin-top: 28px;
+}
+.wf[data-mode="list"] .wf-cards,
+.wf[data-mode="grid"] .idx { display: none; }
+.wf .card { display: block; min-width: 0; color: inherit; }
+.wf .im { position: relative; }
+.wf .cap { padding-top: 12px; }
+.wf .card h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.03em;
+  overflow-wrap: break-word;
+}
+.wf .tag {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+.wf .go {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  letter-spacing: .06em;
+  padding: 12px 14px;
+  min-height: 44px;
+  opacity: 0;
+  transform: translateY(8px);
+}
+.wf a.go { display: inline-flex; align-items: center; }
+.wf-empty { margin: 36px 0 8px; color: var(--muted); font-size: 15px; }
+.wf .idx { margin-top: 8px; border-top: 1px solid var(--ink); }
+.wf .idx .row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1.6fr) 140px 72px;
+  column-gap: 16px;
+  align-items: center;
+  min-height: 60px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule1);
+  color: inherit;
+}
+.wf .idx .hd { min-height: 40px; }
+.wf .idx .hd span {
+  font-family: var(--en);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .12em;
+  color: var(--muted);
+}
+.wf .idx .no, .wf .idx .y {
+  font-family: var(--en);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+.wf .idx .t {
+  min-width: 0;
+  font-size: 17px;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf .idx .t em {
+  font-style: normal;
+  font-weight: 400;
+  font-size: 14px;
+  color: var(--muted);
+  margin-left: 8px;
+}
+.wf .idx .c {
+  min-width: 0;
+  font-size: 14px;
+  color: var(--ink2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf .idx .y { text-align: right; }
+.wf .cv {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-radius: 0;
+  background: #EFEDE9;
+  container-type: inline-size;
+}
+.wf .cv-frame {
+  position: absolute;
+  inset: 0;
+  transform: scale(1);
+  transition: transform 1.05s cubic-bezier(.22, 1, .36, 1);
+}
+.wf .cv.has-clip.is-on .cv-frame { transform: scale(1.045); }
+.wf .cv:not(.fb) > .fb-no,
+.wf .cv:not(.fb) > .fb-t,
+.wf .cv:not(.fb) > .fb-meta { display: none; }
+.wf .cv img, .wf .cv-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  max-width: none;
+}
+.wf .cv-video { z-index: 1; opacity: 0; pointer-events: none; background: transparent; }
+.wf .cv.is-on .cv-video { opacity: 1; }
+.wf .cv-play {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 3;
+  border: 0;
+  border-radius: 0;
+  background: rgba(246, 245, 243, .94);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: .08em;
+  padding: 8px 14px;
+  min-height: 40px;
+  min-width: 44px;
+  cursor: pointer;
+}
+.wf .cv.is-on .cv-play { color: var(--ink); }
+.wf .cv.fb { background: #F1EEE6; box-shadow: inset 0 0 0 1px rgba(26, 26, 28, .16); }
+.wf .fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
+.wf .fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
+.wf .fb-title { display: block; font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: -0.03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
+.wf .fb-title.long { font-size: 4.6cqw; }
+.wf .fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .02em; color: var(--muted); }
+.wf .fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .04em; color: var(--muted); }
+html.js .wf .rise { opacity: 0; transform: translateY(14px); }
+html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s cubic-bezier(.22, 1, .36, 1); }
+@media (hover: hover) and (pointer: fine) {
+  .wf .go, .wf .cv-video, .wf .cv-play, .wf .idx .t {
+    transition: transform .24s cubic-bezier(.22, 1, .36, 1), opacity .24s ease;
+  }
+  .wf .card:hover .go, .wf .card:focus-within .go { opacity: 1; transform: none; }
+  .wf .cv-play { opacity: 0; }
+  .wf .card:hover .cv-play,
+  .wf .card:focus-within .cv-play,
+  .wf .cv.is-on .cv-play { opacity: 1; }
+  .wf .card:hover .ttl { text-decoration: underline; text-underline-offset: .18em; }
+  .wf .idx a.row:hover { background: rgba(26, 26, 28, .03); }
+  .wf .idx a.row:hover .t { transform: translateX(6px); }
+  .wf .idx a.row:hover .no { color: var(--ink); }
+}
+@media (hover: none) {
+  .wf .go, .wf .cv-play { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html.js .wf .rise { opacity: 1; transform: none; transition: none; }
+  .wf .go, .wf .cv-frame, .wf .cv-video, .wf .cv-play, .wf .idx .t { transition: none; }
+  .wf .cv.has-clip.is-on .cv-frame,
+  .wf .idx a.row:hover .t,
+  .wf .go { transform: none; }
+}
+@media (max-width: 1100px) {
+  .wf { width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter))); }
+  .wf-cards { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .wf-bar { top: 52px; }
+  #archive { scroll-margin-top: 64px; }
+}
+@media (max-width: 700px) {
+  .wf { width: auto; margin: 0; padding: 4px var(--page-gutter) 24px; }
+  .wf-bar { align-items: stretch; flex-wrap: wrap; gap: 0; }
+  .wf-view { width: 100%; justify-content: flex-end; }
+  .wf-cards { grid-template-columns: 1fr; row-gap: 36px; }
+  .wf .cv { border-radius: 0; }
+  .wf .idx .row { grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; min-height: 52px; }
+  .wf .idx .c, .wf .idx .t em { display: none; }
+  .wf .idx .t { font-size: 16px; }
+}
+</style>
+<script is:inline>
+(() => {
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  document.documentElement.classList.add('js');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const root = $('.wf');
+  let sweepClips = () => {};
+
+  const fail = (img) => { const cv = img.closest('.cv'); if (cv) cv.classList.add('fb'); img.remove(); };
+  $$('.wf img[data-cv-img]').forEach((img) => {
+    if (img.complete && img.naturalWidth === 0 && img.src) fail(img);
+    else img.addEventListener('error', () => fail(img), { once: true });
+  });
+
+  const rise = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (!en.isIntersecting) return;
+      en.target.classList.add('in');
+      rise.unobserve(en.target);
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -6% 0px' });
+  function arm(el) {
+    if (reduce.matches) { el.classList.add('in'); return; }
+    el.classList.remove('in');
+    rise.observe(el);
+  }
+
+  const filters = $$('.wf-filters button');
+  const valid = new Set(filters.map((b) => b.dataset.f));
+  let line = new URLSearchParams(location.search).get('line') || '全部';
+  if (!valid.has(line)) line = '全部';
+  const cards = $$('.wf-cards .card');
+  const rows = $$('.wf .idx .row[data-line]');
+  const empty = $('#wf-empty');
+
+  function paint() {
+    filters.forEach((b) => {
+      const on = b.dataset.f === line;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    const hit = (el) => line === '全部' || el.dataset.line === line;
+    cards.forEach((el) => {
+      const show = hit(el);
+      const wasHidden = el.hidden;
+      el.hidden = !show;
+      if (show && wasHidden) arm(el);
+    });
+    rows.forEach((el) => { el.hidden = !hit(el); });
+    const n = cards.filter((el) => !el.hidden).length;
+    if (empty) empty.hidden = n !== 0;
+    sweepClips();
+  }
+  function writeUrl() {
+    const url = new URL(location.href);
+    if (line === '全部') url.searchParams.delete('line');
+    else url.searchParams.set('line', line);
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+  filters.forEach((b) => b.addEventListener('click', () => {
+    line = b.dataset.f;
+    paint();
+    writeUrl();
+  }));
+  $$('.wf-view button').forEach((b) => b.addEventListener('click', () => {
+    if (root) root.dataset.mode = b.dataset.mode;
+    $$('.wf-view button').forEach((x) => {
+      const on = x === b;
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-pressed', String(on));
+    });
+    sweepClips();
+  }));
+  paint();
+  cards.forEach((el) => { if (!el.hidden) arm(el); });
+
+  let pinned = null;
+  const clips = () => $$('.wf .cv.has-clip');
+  const videoOf = (cv) => cv.querySelector('.cv-video');
+  const alive = (cv) => {
+    const card = cv.closest('.card');
+    if (!card || card.hidden) return false;
+    if (root && root.dataset.mode !== 'grid') return false;
+    return true;
+  };
+  function mark(cv, on) {
+    cv.classList.toggle('is-on', on);
+    const b = cv.querySelector('.cv-play');
+    if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.textContent = on ? '暂停' : '预览';
+    b.setAttribute('aria-label', on ? '暂停预览' : '播放预览');
+  }
+  function halt(cv, release) {
+    const v = videoOf(cv);
+    if (!v) return;
+    v.pause();
+    if (release) {
+      v.dataset.dropping = '1';
+      v.removeAttribute('src');
+      v.load();
+      v.dataset.dropping = '';
+    }
+    mark(cv, false);
+  }
+  function start(cv) {
+    if (!alive(cv) || !videoOf(cv)) return;
+    clips().forEach((other) => {
+      if (other === cv) return;
+      if (pinned === other) pinned = null;
+      halt(other, true);
+    });
+    const v = videoOf(cv);
+    if (!v.getAttribute('src') && v.dataset.src) v.src = v.dataset.src;
+    v.muted = true;
+    const attempt = v.play();
+    if (attempt) attempt.catch(() => {});
+  }
+  function togglePin(cv) {
+    if (!videoOf(cv)) return;
+    if (pinned === cv) {
+      pinned = null;
+      halt(cv, true);
+      return;
+    }
+    pinned = cv;
+    start(cv);
+  }
+  sweepClips = function () {
+    clips().forEach((cv) => {
+      if (alive(cv)) return;
+      if (pinned === cv) pinned = null;
+      halt(cv, true);
+    });
+  };
+  clips().forEach((cv) => {
+    const v = videoOf(cv);
+    const b = cv.querySelector('.cv-play');
+    if (!v) return;
+    v.addEventListener('playing', () => mark(cv, true));
+    v.addEventListener('pause', () => mark(cv, false));
+    v.addEventListener('error', () => {
+      if (v.dataset.dropping === '1' || !v.getAttribute('src')) return;
+      if (pinned === cv) pinned = null;
+      v.remove();
+      b?.remove();
+      cv.classList.remove('has-clip', 'is-on');
+    });
+    b?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePin(cv);
+    });
+    cv.addEventListener('click', (e) => {
+      if (e.target.closest('a, button')) return;
+      togglePin(cv);
+    });
+    const host = cv.closest('.im') || cv;
+    host.addEventListener('pointerenter', (e) => {
+      if (reduce.matches || (e.pointerType !== 'mouse' && e.pointerType !== 'pen')) return;
+      start(cv);
+    });
+    host.addEventListener('pointerleave', (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
+      if (pinned === cv) return;
+      halt(cv, true);
+    });
+  });
+  const seen = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      const cv = en.target;
+      if (!en.isIntersecting || !alive(cv)) {
+        const keep = pinned === cv;
+        if (videoOf(cv) && !videoOf(cv).paused) halt(cv, !keep);
+        else if (!keep) mark(cv, false);
+        return;
+      }
+      if (pinned === cv) start(cv);
+    });
+  }, { threshold: 0.4 });
+  clips().forEach((cv) => seen.observe(cv));
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clips().forEach((cv) => { if (videoOf(cv) && !videoOf(cv).paused) videoOf(cv).pause(); });
+    else if (pinned && alive(pinned)) start(pinned);
+  });
+})();
+</script>
+</Base>
