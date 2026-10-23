@@ -1,0 +1,33 @@
+{
+ "slug": "zhuantang-yixun",
+ "title": "转塘艺讯",
+ "category": "本地艺文日程",
+ "year": "2026",
+ "yearNum": 2026,
+ "line": "产品",
+ "status": "已上线",
+ "description": "把转塘一带散落的演出、展览和讲座收进同一张地图、一份近期日程和一本日历。国美象山、浙江音乐学院附近的活动，可以按地点和时间看。",
+ "abstract": "英文名 ZHUANGTANG · YIXUN。面向国美象山和浙江音乐学院一带，把原来对不上的活动信息收成地图、日程和日历。",
+ "challenge": "演出、展览、讲座来源杂，时间、地点和是不是同一场，不容易对上。",
+ "solution": "先用评估把零散信息收成可以核对的条目，再把产品收成地图、日程和日历。",
+ "tech": [
+  "地图",
+  "日程聚合",
+  "日历",
+  "腾讯地图"
+ ],
+ "images": [
+  "/works/zhuantang-yixun/home.jpg",
+  "/works/zhuantang-yixun/calendar.jpg",
+  "/works/zhuantang-yixun/qa-eval.png",
+  "/works/zhuantang-yixun/qa-performing-arts.png",
+  "/works/zhuantang-yixun/qa-research-ops.png"
+ ],
+ "icon": "/works/zhuantang-yixun/home.jpg",
+ "hasDemo": true,
+ "flags": [],
+ "source": "manual",
+ "sourceFile": "endTree",
+ "note": "公网在魔搭创空间。",
+ "link": "https://endtree26-yixun.ms.show"
+}

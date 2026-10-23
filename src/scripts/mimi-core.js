@@ -48,9 +48,9 @@ export function localAnswer(q) {
   if (flat === '怎么找到你们' || /怎么找|找到你们/.test(flat)) return ANSWERS.find;
   if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么|委托|合作|古画|民乐|音画/.test(flat))) return ANSWERS.works;
   if (flat === '幕景是做什么的？' || ((/幕景|你们/.test(flat)) && /做|是什么|干什么/.test(flat))) return ANSWERS.what;
-  if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|档期|合同|版权|微信|飞书|终树|丁科智|古画|民乐|音画|展陈|委托/.test(flat)) return ANSWERS.coop;
+  if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|定金|支付宝|付款|收款|支付|档期|合同|版权|微信|飞书|终树|丁科智|古画|民乐|音画|展陈|委托/.test(flat)) return ANSWERS.coop;
   if (/[A-Za-z]/.test(s) && !/[\u4e00-\u9fff]/.test(s)) {
-    return /collab|cooperat|contact|price|quote|hire|partner/i.test(s) ? ANSWERS.enCoop : ANSWERS.en;
+    return /collab|cooperat|contact|price|quote|hire|partner|alipay|payment|deposit/i.test(s) ? ANSWERS.enCoop : ANSWERS.en;
   }
   return ANSWERS.other;
 }

@@ -35,6 +35,8 @@ TITLE_CN = {
   'campus-public-space-vitality-modeling': '同济校园活力建模夏令营',
   'hongqiqu': '国家级大创项目',
   '1037pinpin': '华科校园拼单平台',
+  'mimi-agent': 'Mimi 智能体',
+  'zhuantang-yixun': '转塘艺讯',
 }
 SKIP = {'epstein-mystery-archive', 'how-to-use-unity-making-wechat-minigames', 'how-to-use-cocos-creator-making-games'}
 def fm(text):

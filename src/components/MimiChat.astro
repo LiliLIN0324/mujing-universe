@@ -95,8 +95,8 @@ const mail = 'mailto:lily1326685527@gmail.com';
     inset: -7px;
     border-radius: 50%;
     border: 2px solid transparent;
-    border-top-color: var(--ink);
-    border-right-color: var(--ink);
+    border-top-color: #1a1a1c;
+    border-right-color: #1a1a1c;
     opacity: 0;
     pointer-events: none;
   }
@@ -106,7 +106,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
   }
   .mimi-launch.is-flash .mimi-halo {
     opacity: 1;
-    border-color: var(--ink);
+    border-color: #1a1a1c;
     animation: mimi-flash 0.45s ease-out;
   }
   .mimi-face {
@@ -178,8 +178,8 @@ const mail = 'mailto:lily1326685527@gmail.com';
     left: 50%;
     bottom: calc(100% + 10px);
     transform: translateX(-50%) translateY(4px);
-    background: var(--cta-bg);
-    color: var(--cta-fg);
+    background: #1a1a1c;
+    color: #f6f5f3;
     font-size: 13px;
     line-height: 1.45;
     padding: 8px 12px;
@@ -214,7 +214,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     width: 4px;
     height: 4px;
     border-radius: 0;
-    background: #FFFFFF;
+    background: #fff;
     animation: mimi-dot 1s infinite;
   }
   .mimi-dots i:nth-child(2) { animation-delay: 0.15s; }
@@ -229,9 +229,9 @@ const mail = 'mailto:lily1326685527@gmail.com';
     flex-direction: column;
     width: min(400px, calc(100vw - 36px));
     height: min(620px, calc(100dvh - 120px));
-    background: var(--bg2);
-    color: var(--ink);
-    border: 1px solid var(--ink);
+    background: #f6f5f3;
+    color: #1a1a1c;
+    border: 1px solid #1a1a1c;
     border-radius: 0;
     overflow: hidden;
     transform: scale(0.12);
@@ -251,7 +251,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     align-items: center;
     gap: 10px;
     padding: 14px 12px 12px 14px;
-    border-bottom: 1px solid var(--rule);
+    border-bottom: 1px solid rgba(26, 26, 28, 0.08);
   }
   .mimi-hd .mimi-face {
     width: 44px;
@@ -273,7 +273,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
   }
   .mimi-demo {
     margin: 0;
-    color: var(--ink2);
+    color: #6b6b6b;
     font-size: 12px;
     letter-spacing: 0.14em;
     line-height: 1.2;
@@ -285,13 +285,13 @@ const mail = 'mailto:lily1326685527@gmail.com';
     border: 0;
     border-radius: 0;
     background: transparent;
-    color: var(--ink);
+    color: #1a1a1c;
     font-size: 22px;
     line-height: 1;
     cursor: pointer;
     flex: none;
   }
-  .mimi-x:hover { background: color-mix(in srgb, var(--ink) 6%, transparent); }
+  .mimi-x:hover { background: rgba(26, 26, 28, 0.06); }
   .mimi-hd,
   .mimi-quick,
   .mimi-cta,
@@ -309,15 +309,15 @@ const mail = 'mailto:lily1326685527@gmail.com';
   .mimi-msg { margin: 0 0 12px; font-size: 15px; line-height: 1.65; }
   .mimi-msg p { margin: 0; }
   .mimi-msg.bot p {
-    background: var(--paper);
+    background: #fff;
     border-radius: 0;
     padding: 10px 12px;
   }
   .mimi-msg.user { display: flex; justify-content: flex-end; }
   .mimi-msg.user p {
     max-width: 88%;
-    background: var(--cta-bg);
-    color: var(--cta-fg);
+    background: #1a1a1c;
+    color: #f6f5f3;
     border-radius: 0;
     padding: 8px 14px;
   }
@@ -325,7 +325,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
   .mimi-msg.bot a { text-decoration: underline; text-underline-offset: 2px; }
   :global(.mimi-coop) {
     margin: 0 0 12px;
-    background: var(--paper);
+    background: #fff;
     border-radius: 0;
     padding: 12px;
     text-align: center;
@@ -342,7 +342,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     margin: 8px auto 0;
     padding: 0;
     border: 0;
-    background: var(--paper);
+    background: #fff;
     cursor: zoom-in;
   }
   :global(.mimi-qr img) {
@@ -354,21 +354,21 @@ const mail = 'mailto:lily1326685527@gmail.com';
     margin: 6px 0 0;
     font-size: 13px;
     line-height: 1.45;
-    color: var(--ink-soft);
+    color: #3d3a35;
   }
-  :global(.mimi-hint) { color: var(--ink2) !important; }
+  :global(.mimi-hint) { color: #6b6b6b !important; }
   :global(.mimi-coop a) {
     display: inline-block;
     margin-top: 8px;
-    color: var(--ink);
+    color: #1a1a1c;
     font-size: 13px;
     text-decoration: underline;
     text-underline-offset: 2px;
   }
-  :global(.mimi-wx) { color: var(--ink) !important; }
+  :global(.mimi-wx) { color: #1a1a1c !important; }
   :global(.mimi-wx button) {
     border: 0;
-    background: var(--bg2);
+    background: #f6f5f3;
     border-radius: 0;
     padding: 2px 8px;
     font: inherit;
@@ -392,7 +392,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     width: auto;
     max-width: min(420px, 92vw);
     max-height: 70vh;
-    background: #FFFFFF;
+    background: #fff;
     border-radius: 0;
   }
   :global(.mimi-light p) {
@@ -402,8 +402,8 @@ const mail = 'mailto:lily1326685527@gmail.com';
     text-align: center;
   }
   :global(.mimi-light a) {
-    color: #131316;
-    background: #FFFFFF;
+    color: #1a1a1c;
+    background: #fff;
     border-radius: 0;
     padding: 8px 16px;
     text-decoration: none;
@@ -417,16 +417,16 @@ const mail = 'mailto:lily1326685527@gmail.com';
   }
   .mimi-quick button {
     border-radius: 0;
-    border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+    border: 1px solid rgba(26, 26, 28, 0.16);
     background: transparent;
-    color: var(--ink);
+    color: #1a1a1c;
     font: inherit;
     font-size: 13px;
     line-height: 1.3;
     padding: 7px 12px;
     cursor: pointer;
   }
-  .mimi-quick button:hover { background: var(--cta-bg); color: var(--cta-fg); }
+  .mimi-quick button:hover { background: #1a1a1c; color: #f6f5f3; }
   .mimi-cta {
     display: flex;
     gap: 8px;
@@ -444,8 +444,8 @@ const mail = 'mailto:lily1326685527@gmail.com';
   }
   .mimi-feishu {
     border: 0;
-    background: var(--cta-bg);
-    color: var(--cta-fg);
+    background: #1a1a1c;
+    color: #f6f5f3;
     cursor: pointer;
   }
   .mimi-feishu:hover { opacity: 0.86; }
@@ -453,17 +453,17 @@ const mail = 'mailto:lily1326685527@gmail.com';
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border: 1px solid var(--ink);
+    border: 1px solid #1a1a1c;
     background: transparent;
-    color: var(--ink);
+    color: #1a1a1c;
     text-decoration: none;
   }
-  .mimi-mail:hover { background: var(--cta-bg); color: var(--cta-fg); }
+  .mimi-mail:hover { background: #1a1a1c; color: #f6f5f3; }
   .mimi-ims {
     display: flex;
     flex-direction: column;
     margin: 8px 14px 0;
-    border: 1px solid color-mix(in srgb, var(--ink) 16%, transparent);
+    border: 1px solid rgba(26, 26, 28, 0.16);
   }
   .mimi-ims button {
     display: flex;
@@ -474,9 +474,9 @@ const mail = 'mailto:lily1326685527@gmail.com';
     padding: 0 12px;
     border: 0;
     border-radius: 0;
-    border-top: 1px solid var(--rule);
+    border-top: 1px solid rgba(26, 26, 28, 0.08);
     background: transparent;
-    color: var(--ink);
+    color: #1a1a1c;
     font: inherit;
     font-size: 13px;
     line-height: 1;
@@ -486,21 +486,21 @@ const mail = 'mailto:lily1326685527@gmail.com';
   .mimi-ims > :first-child { border-top: 0; }
   .mimi-ims button:not(:disabled):hover,
   .mimi-ims button.is-on {
-    background: var(--cta-bg);
-    color: var(--cta-fg);
+    background: #1a1a1c;
+    color: #f6f5f3;
   }
   .mimi-ims button:disabled {
-    color: var(--faint);
+    color: #9a9a9a;
     cursor: not-allowed;
   }
   .mimi-ims button span {
-    color: var(--faint);
+    color: #9a9a9a;
     font-size: 12px;
   }
   .mimi-foot {
     margin: 0;
     padding: 8px 14px 12px;
-    color: var(--ink2);
+    color: #6b6b6b;
     font-size: 12px;
     line-height: 1.45;
   }
@@ -509,27 +509,27 @@ const mail = 'mailto:lily1326685527@gmail.com';
     gap: 8px;
     align-items: center;
     padding: 12px;
-    border-top: 1px solid var(--rule);
+    border-top: 1px solid rgba(26, 26, 28, 0.08);
   }
   .mimi-form input {
     flex: 1;
     min-width: 0;
     height: 40px;
     border-radius: 0;
-    border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
-    background: var(--paper);
+    border: 1px solid rgba(26, 26, 28, 0.14);
+    background: #fff;
     padding: 0 14px;
     font: inherit;
     font-size: 16px;
-    color: var(--ink);
+    color: #1a1a1c;
   }
   .mimi-send {
     height: 40px;
     padding: 0 16px;
     border: 0;
     border-radius: 0;
-    background: var(--cta-bg);
-    color: var(--cta-fg);
+    background: #1a1a1c;
+    color: #f6f5f3;
     font: inherit;
     font-size: 14px;
     font-weight: 500;
@@ -555,8 +555,9 @@ const mail = 'mailto:lily1326685527@gmail.com';
     z-index: 161;
     width: 22px;
     height: 22px;
-    border-radius: 0;
-    background: var(--ink);
+    border-radius: 50%;
+    background: #ff690a;
+    opacity: 0.82;
     pointer-events: none;
     animation: mimi-crumb 0.7s ease-out forwards;
   }
@@ -587,6 +588,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     100% { opacity: 0; }
   }
   @keyframes mimi-crumb {
+    from { opacity: 0.82; transform: scale(1); }
     to { opacity: 0; transform: scale(0.3); }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -598,7 +600,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     .mimi-panel { animation: none; transition: none; }
     .mimi[data-state="thinking"] .mimi-halo {
       animation: none;
-      border-color: var(--ink);
+      border-color: #1a1a1c;
     }
     :global(.mimi-crumb) { display: none; }
   }
