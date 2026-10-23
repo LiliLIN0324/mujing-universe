@@ -1,21 +1,18 @@
 /**
- * 右下 Mimi 的 Rive 状态机。
+ * 右下 Mimi 的 Rive 状态机。文件是 public/mimi/mimi.riv。
+ * 打不开或没有状态机时，头像停在 /mimi/avatar.png。
  *
- * TODO(智能体搭建): 正式动画放到 public/mimi/mimi.riv，换文件即可，不用改页面。
- * 没有这个文件、文件打不开、或里面没有状态机时，头像停在 /mimi/avatar.png。
- *
- * 文件约定（名字区分大小写）：
- * - 用默认画板。
- * - 状态机名优先 Mimi，否则用文件里的第一个状态机。
- * - 输入 hover：Boolean。悬停 true，离开 false。微偏头。
- * - 输入 open：Boolean。面板打开 true。
- * - 输入 attention：Trigger。进站约 1.5s，或作品区滚进画面时 fire 一次。瞥一眼后回到 idle。
- * - 默认状态 idle：极慢呼吸、眨眼。三个输入都空着时停在这里。
- * 若文件用数据绑定而不是状态机输入，同名的 boolean / trigger 也会被写入。
+ * 这份文件（名字区分大小写）：
+ * - 画板 Mimi，状态机 Mimi
+ * - isHover：Boolean。悬停 true，离开 false
+ * - isOpen：Boolean。面板打开 true，关上必须写回 false
+ * - nudge：Trigger。进站约 1.5s，或作品区滚进画面时 fire 一次
+ * - 状态：idle（极慢呼吸、眨眼）/ attention / hover / open
  * prefers-reduced-motion：不创建运行时，停在静态头像的一帧。
  */
 
 export const MIMI_RIVE_SRC = '/mimi/mimi.riv';
+export const MIMI_ARTBOARD = 'Mimi';
 export const MIMI_STATE_MACHINE = 'Mimi';
 
 export function mimiMotion({ open = false, hover = false, attention = false } = {}) {
@@ -108,6 +105,7 @@ export async function mountMimiRive(canvas, reduce) {
   }
   RuntimeLoader.setWasmUrl(wasmUrl);
   RuntimeLoader.setWasmFallbackUrl(null);
+  Rive.suppressDeprecationWarnings = ['state-machine-inputs'];
 
   const face = canvas.closest('.mimi-face');
   return new Promise((resolve) => {
@@ -131,8 +129,9 @@ export async function mountMimiRive(canvas, reduce) {
       rive = new Rive({
         buffer,
         canvas,
-        autoplay: false,
-        autoBind: true,
+        artboard: MIMI_ARTBOARD,
+        stateMachine: MIMI_STATE_MACHINE,
+        autoplay: true,
         shouldDisableRiveListeners: true,
         layout: new Layout({ fit: Fit.Cover, alignment: Alignment.Center }),
         onLoadError: fail,
@@ -153,9 +152,9 @@ export async function mountMimiRive(canvas, reduce) {
               try { rive.resizeDrawingSurfaceToCanvas(); } catch { /* 已卸下 */ }
             });
             finish({
-              setHover(value) { writeBool(inputs, viewModel(rive), StateMachineInputType, 'hover', value); },
-              setOpen(value) { writeBool(inputs, viewModel(rive), StateMachineInputType, 'open', value); },
-              attention() { writeTrigger(inputs, viewModel(rive), StateMachineInputType, 'attention'); },
+              setHover(value) { writeBool(inputs, viewModel(rive), StateMachineInputType, 'isHover', value); },
+              setOpen(value) { writeBool(inputs, viewModel(rive), StateMachineInputType, 'isOpen', value); },
+              attention() { writeTrigger(inputs, viewModel(rive), StateMachineInputType, 'nudge'); },
               resize() {
                 try { rive.resizeDrawingSurfaceToCanvas(); } catch { /* 已卸下 */ }
               },
