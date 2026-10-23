@@ -228,15 +228,17 @@ header nav a.btn.solid {
 }
 
 footer.bot {
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  width: min(var(--max), calc(100% - 64px));
-  margin: 72px auto 0;
-  padding: 28px 0 40px;
+  width: 100%;
+  margin: 0;
+  padding: 36px 0 40px;
   border-top: 1px solid var(--rule);
-  background: transparent;
+  background: var(--bg);
   color: var(--ink2);
   text-align: center;
 }
@@ -266,6 +268,13 @@ footer.bot .copy {
   font-size: 12px;
   letter-spacing: 0.06em;
 }
+@media (min-width: 769px) {
+  body.fullscreen footer.bot {
+    min-height: 100dvh;
+    border-top: 0;
+    justify-content: center;
+  }
+}
 
 .reveal { opacity: 0; transform: translateY(8px); animation: rise 0.7s ease forwards; }
 @keyframes rise { to { opacity: 1; transform: none; } }
@@ -274,7 +283,7 @@ footer.bot .copy {
 }
 
 @media (max-width: 760px) {
-  .wrap, .narrow, footer.bot { width: calc(100% - 32px); }
+  .wrap, .narrow { width: calc(100% - 32px); }
   header.top { padding: 12px 16px; flex-wrap: wrap; }
   header nav { gap: 14px; width: 100%; }
   footer.bot { gap: 12px; padding-bottom: 32px; }
