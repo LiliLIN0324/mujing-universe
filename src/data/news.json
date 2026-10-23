@@ -4,7 +4,8 @@
     {
       "id": "activity-aaai-2025-kg",
       "section": "activity",
-      "title": "从城市规划文本生成知识图谱",
+      "title": "林丽丽在美国费城参加了AAAI 研讨会（AI for Urban Planning）",
+      "summary": "发表了《从城市规划文本生成知识图谱》研究",
       "original": "Knowledge Graph Generation from Urban Planning Texts",
       "start": "2025-02-28",
       "end": "2025-03-03",
@@ -20,7 +21,8 @@
     {
       "id": "activity-cupum-2025-kg",
       "section": "activity",
-      "title": "从城市规划文本生成知识图谱",
+      "title": "林丽丽在英国伦敦参加了计算城市规划与城市管理会议（CUPUM）",
+      "summary": "发表了《从城市规划文本生成知识图谱》研究",
       "original": "Knowledge Graph Generation from Urban Planning Texts",
       "start": "2025-06-23",
       "end": "2025-06-27",
@@ -36,7 +38,8 @@
     {
       "id": "activity-iacp-2025-kg",
       "section": "activity",
-      "title": "从城市规划文本生成知识图谱",
+      "title": "林丽丽在中国厦门参加了国际中国规划学会年会（IACP）",
+      "summary": "发表了《从城市规划文本生成知识图谱》研究",
       "original": "Knowledge Graph Generation from Urban Planning Texts",
       "start": "2025-07-03",
       "end": "2025-07-07",
@@ -52,7 +55,8 @@
     {
       "id": "activity-icua-2025-heat",
       "section": "activity",
-      "title": "局地气候区与城市热韧性：纽约的一项实证",
+      "title": "林丽丽在加拿大温哥华参加了城市事务国际会议（ICUA）",
+      "summary": "发表了《局地气候区与城市热韧性：纽约的一项实证》研究",
       "original": "Local Climate Zone and Urban Heat Resilience: An Empirical Study in New York",
       "start": "2025-04-15",
       "end": "2025-04-19",
@@ -68,7 +72,8 @@
     {
       "id": "activity-acsp-2025-heat",
       "section": "activity",
-      "title": "用可解释机器学习看城市形态与极端高温",
+      "title": "林丽丽在美国明尼阿波利斯参加了美国规划院校联合会年会（ACSP）",
+      "summary": "发表了《用可解释机器学习看城市形态与极端高温》研究",
       "original": "Reveal nonlinear relationships between urban form factors and extreme heat with an explainable machine learning approach",
       "start": "2025-10-23",
       "end": "2025-10-25",
@@ -84,10 +89,11 @@
     {
       "id": "activity-aaai-2026-heat",
       "section": "activity",
-      "title": "城市形态对热韧性的非线性影响",
+      "title": "林丽丽在新加坡参加了AAAI 研讨会（AI for Urban Planning）",
+      "summary": "发表了《城市形态对热韧性的非线性影响》研究",
       "original": "Assessing Nonlinear Impacts of Urban Form on Heat Resilience Across Scales Using Machine Learning",
       "start": "2026-01-26",
-      "event": "AAAI 研讨会 · AI for Urban Planning",
+      "event": "AAAI 研讨会（AI for Urban Planning）",
       "place": "新加坡",
       "format": "海报",
       "people": ["林丽丽"],
@@ -99,7 +105,8 @@
     {
       "id": "activity-iacp-2026-seoul",
       "section": "activity",
-      "title": "城市形态对城市热岛的非线性影响：首尔",
+      "title": "林丽丽在中国西安参加了国际中国规划学会年会（IACP）",
+      "summary": "发表了《城市形态对城市热岛的非线性影响》研究",
       "original": "Nonlinear Impacts of Urban Form on Urban Heat Islands: A Machine Learning Analysis Across Scales and Weather Conditions in Seoul",
       "start": "2026-07-10",
       "end": "2026-07-13",
