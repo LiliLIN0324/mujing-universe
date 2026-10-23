@@ -10,6 +10,7 @@
     "preview": "astro preview --port 4471 --host 127.0.0.1"
   },
   "dependencies": {
+    "@rive-app/canvas": "^2.45.1",
     "astro": "^5.0.0",
     "ogl": "^1.0.11"
   }
