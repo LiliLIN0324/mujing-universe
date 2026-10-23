@@ -124,7 +124,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     position: absolute;
     inset: -56px -14px -118px;
     z-index: -1;
-    background: var(--cta-bg);
+    background: #b98a4a;
     opacity: 0;
     transition: opacity 0.22s ease;
     pointer-events: none;
@@ -133,8 +133,11 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   .wf .card:hover { z-index: 2; }
   .wf .card:hover::before,
   .wf .card:focus-within::before { opacity: 1; }
+  .wf .card[data-line="产品"]::before { background: #3e5c76; }
+  .wf .card[data-line="游戏"]::before { background: #7a5ba6; }
+  .wf .card[data-line="空间"]::before { background: #4e7a68; }
   .wf .card:hover .cap h2,
-  .wf .card:focus-within .cap h2 { color: var(--cta-fg); }
+  .wf .card:focus-within .cap h2 { color: #fff; }
   .wf .m-top { display: none; }
   .wf .card:hover .m-top,
   .wf .card:focus-within .m-top {
@@ -149,7 +152,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     margin: 0;
     font-size: 13px;
     letter-spacing: .04em;
-    color: color-mix(in srgb, var(--cta-fg) 78%, transparent);
+    color: rgba(255, 255, 255, 0.82);
   }
   .wf .more { display: none; }
   .wf .card:hover .more,
@@ -166,22 +169,21 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.02em;
-    color: var(--cta-fg);
+    color: #fff;
   }
-  .wf .more .m-by span { margin-left: 6px; font-family: var(--en), var(--sans); font-size: 12px; font-weight: 400; color: color-mix(in srgb, var(--cta-fg) 72%, transparent); }
+  .wf .more .m-by span { margin-left: 6px; font-family: var(--en), var(--sans); font-size: 12px; font-weight: 400; color: rgba(255, 255, 255, 0.75); }
   .wf .more .m-desc {
     margin: 4px 0 0;
     font-size: 13px;
     line-height: 1.65;
-    color: color-mix(in srgb, var(--cta-fg) 78%, transparent);
+    color: rgba(255, 255, 255, 0.82);
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
     overflow: hidden;
   }
   /* 彩色色板：按分类取色——数字艺术橙 / 产品雾蓝 / 游戏紫 / 空间灰绿。文字固定白色。 */
-  .wf .card[data-line="数字艺术"]::before { background: #ff690a; }
-  .wf .card[data-line="产品"]::before { background: #3e5c76; }
+  .wf .card[data-line="产品"]::before { background: #8a5a3b; }
   .wf .card[data-line="游戏"]::before { background: #7a5ba6; }
   .wf .card[data-line="空间"]::before { background: #4e7a68; }
   .wf .card[data-line] .cap h2,
