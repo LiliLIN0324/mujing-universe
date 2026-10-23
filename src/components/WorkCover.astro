@@ -4,8 +4,7 @@ import { WORKS_COVER, coverClip, splitTitle, titleWidth } from '../lib';
 const { w, eager = false } = Astro.props;
 const c = WORKS_COVER[w.slug];
 const clip = coverClip(w.slug);
-const [main, sub0] = splitTitle(w.title);
-const sub = sub0 || w.category || '';
+const [main] = splitTitle(w.title);
 const style = c ? [`object-position:${c.pos || '50% 50%'}`, c.scale ? `transform:scale(${c.scale})` : ''].filter(Boolean).join(';') : '';
 ---
 <div class:list={['cv', !c && 'fb', clip && 'has-clip']}>
@@ -16,7 +15,5 @@ const style = c ? [`object-position:${c.pos || '50% 50%'}`, c.scale ? `transform
     )}
   </div>
   {clip && <button class="cv-play" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
-  <span class="fb-no">{w.no}</span>
-  <div class="fb-t"><b class:list={['fb-title', titleWidth(main) > 22 && 'long']}>{main}</b>{sub && <i class="fb-sub">{sub}</i>}</div>
-  <span class="fb-meta">{w.line} · {w.yearNum || w.year}</span>
+  {!c && <div class="fb-t"><b class:list={['fb-title', titleWidth(main) > 22 && 'long']}>{main}</b></div>}
 </div>
