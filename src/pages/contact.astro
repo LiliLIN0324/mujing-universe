@@ -58,32 +58,46 @@ const jobs = [
     document.dispatchEvent(new CustomEvent('mimi:open', { detail: { intent: 'coop' } }));
   });
   const copy = document.getElementById('copy-wx');
-  copy?.addEventListener('click', async () => {
+  function copyId() {
     const id = 'endTree-26';
+    const ta = document.createElement('textarea');
+    ta.value = id;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '0';
+    ta.style.left = '0';
+    ta.style.opacity = '0';
+    document.body.append(ta);
+    ta.focus();
+    ta.select();
     let ok = false;
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(id);
-        ok = true;
-      }
-    } catch { ok = false; }
-    if (!ok) {
-      const ta = document.createElement('textarea');
-      ta.value = id;
-      ta.setAttribute('readonly', '');
-      ta.style.position = 'fixed';
-      ta.style.top = '0';
-      ta.style.left = '0';
-      ta.style.opacity = '0';
-      document.body.append(ta);
-      ta.focus();
-      ta.select();
-      try { ok = document.execCommand('copy'); } catch { ok = false; }
-      ta.remove();
+    try { ok = document.execCommand('copy'); } catch { ok = false; }
+    ta.remove();
+    return ok;
+  }
+  copy?.addEventListener('click', () => {
+    const prev = '复制微信号';
+    copy.textContent = '已复制';
+    let settled = false;
+    const finish = (ok) => {
+      if (settled) return;
+      settled = true;
+      copy.textContent = ok ? '已复制' : '请长按微信号复制';
+      window.setTimeout(() => { copy.textContent = prev; }, 1600);
+    };
+    if (copyId()) { finish(true); return; }
+    if (navigator.clipboard && window.isSecureContext) {
+      const timer = window.setTimeout(() => finish(false), 500);
+      navigator.clipboard.writeText('endTree-26').then(() => {
+        window.clearTimeout(timer);
+        finish(true);
+      }).catch(() => {
+        window.clearTimeout(timer);
+        finish(false);
+      });
+      return;
     }
-    const prev = copy.textContent;
-    copy.textContent = ok ? '已复制' : '请长按微信号复制';
-    window.setTimeout(() => { copy.textContent = prev; }, 1400);
+    finish(false);
   });
 </script>
 <style>
