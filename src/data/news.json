@@ -154,12 +154,12 @@
   {
    "id": "activity-ai4cities-2025",
    "section": "activity",
-   "title": "同济 AI4CITIES 工作坊",
-   "summary": "林丽丽在上海同济大学参加了 AI4CITIES 工作坊，获最佳跨界融合奖。",
+   "title": "林丽丽在上海同济大学参加了AI4CITIES 工作坊",
+   "summary": "获最佳跨界融合奖。",
    "start": "2025-01-01",
    "end": "2025-12-31",
    "precision": "year",
-   "event": "同济 AI4CITIES 工作坊",
+   "event": "AI4CITIES 工作坊",
    "format": "工作坊",
    "people": [
     "林丽丽"
@@ -170,12 +170,11 @@
   {
    "id": "activity-digital-futures-2023",
    "section": "activity",
-   "title": "Digital Futures 工作坊",
-   "summary": "林丽丽在上海同济大学参加了 Digital Futures 工作坊。",
+   "title": "林丽丽在上海同济大学参加了Digital Futures 工作坊",
    "start": "2023-01-01",
    "end": "2023-12-31",
    "precision": "year",
-   "event": "Digital Futures",
+   "event": "Digital Futures 工作坊",
    "format": "工作坊",
    "people": [
     "林丽丽"
