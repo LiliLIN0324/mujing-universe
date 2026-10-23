@@ -51,6 +51,11 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   </section>
 
   <details class="wf-fold" id="archive" data-mode="grid">
+    <summary>
+      <span class="n">02</span>
+      <h2>全部作品 <em>All works</em></h2>
+      <span class="r"><span class="when-shut">展开</span><span class="when-open">收起</span> <b>{ws.length}</b></span>
+    </summary>
     <script is:inline>
       (function () {
         var a = document.getElementById('archive');
@@ -59,11 +64,6 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
         if (location.hash === '#archive' || (line && line !== '全部')) a.open = true;
       })();
     </script>
-    <summary>
-      <span class="n">02</span>
-      <h2>全部作品 <em>All works</em></h2>
-      <span class="r"><span class="when-shut">展开</span><span class="when-open">收起</span> <b>{ws.length}</b></span>
-    </summary>
     <div class="wf-arch">
       <div class="wf-bar">
         <div class="wf-filters" role="group" aria-label="按创作线筛选">
@@ -292,6 +292,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 }
 .wf-fold summary::-webkit-details-marker { display: none; }
 .wf-fold summary::marker { content: ""; }
+.wf-fold:not([open]) > :not(summary) { display: none !important; }
 .wf-fold[open] .when-shut, .wf-fold:not([open]) .when-open { display: none; }
 .wf-arch { padding-bottom: 8px; }
 .wf-bar {
@@ -441,6 +442,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   .wf .card h3, .wf .lead h3 { font-size: 20px; }
   .wf-fold { margin-top: 40px; }
   .wf h2 em { display: none; }
+  .wf-fold summary { padding-right: 76px; }
   .wf-filters { gap: 0 16px; }
   .wf-filters button { min-height: 44px; }
   .wf-tools { width: 100%; justify-content: space-between; }
