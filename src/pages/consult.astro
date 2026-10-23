@@ -1,0 +1,133 @@
+---
+import Base from '../layouts/Base.astro';
+
+const email = 'lily1326685527@gmail.com';
+const mailto = `mailto:${email}?subject=${encodeURIComponent('咨询排期')}`;
+/** 图里那张个人收款码，不是开放平台下单。 */
+const alipay = 'https://qr.alipay.com/tsx13075wejgikstvu1cv5d';
+const tiers = [
+  ['¥1', '试收款'],
+  ['¥9.9', '短咨询'],
+  ['¥49', '半小时'],
+  ['¥99', '正式咨询'],
+  ['自定义', '扫码后在支付宝里输入金额'],
+] as const;
+---
+<Base title="咨询 · 幕景宇宙" description="支付宝扫码付咨询定金。同一张码，金额自选。付后发邮件或飞书排期。" >
+<main class="consult">
+  <header>
+    <h1>咨询</h1>
+    <p class="line">支付宝扫码。同一张码，金额自选。</p>
+  </header>
+
+  <img src="/consult/alipay-qr.png" alt="支付宝收款码" width="1182" height="1772"/>
+  <p class="open"><a href={alipay}>用支付宝打开</a></p>
+
+  <dl>
+    {tiers.map(([amount, name]) => (
+      <div>
+        <dt>{amount}</dt>
+        <dd>{name}</dd>
+      </div>
+    ))}
+  </dl>
+
+  <p class="after">付后<a href={mailto}>发邮件</a>或<a href="/contact/#feishu">飞书</a>，我们排期。</p>
+  <p class="note">个人试收款，人工对账。</p>
+</main>
+<style>
+  .consult {
+    width: min(var(--measure), calc(100% - 2 * var(--gutter)));
+    margin: 0 auto;
+    padding: 36px 0 80px;
+  }
+  .consult h1 {
+    margin: 0;
+    font-size: clamp(40px, 5vw, 56px);
+    font-weight: 600;
+    letter-spacing: -0.04em;
+    line-height: 1;
+  }
+  .line {
+    margin: 16px 0 0;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+  }
+  .consult img {
+    display: block;
+    width: min(100%, 420px);
+    height: auto;
+    margin-top: 28px;
+    border-radius: 0;
+    background: #fff;
+  }
+  .open {
+    margin: 12px 0 0;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+  }
+  .open a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--ink);
+  }
+  dl {
+    max-width: 560px;
+    margin: 28px 0 0;
+    border-top: 1px solid var(--ink);
+  }
+  dl div {
+    display: grid;
+    grid-template-columns: 7.5rem 1fr;
+    gap: 16px;
+    align-items: baseline;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  dt, dd { margin: 0; }
+  dt {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  dd {
+    font-size: 16px;
+    letter-spacing: 0.04em;
+  }
+  .after {
+    margin: 22px 0 0;
+    font-size: 16px;
+  }
+  .after a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--ink);
+  }
+  .note {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    letter-spacing: 0.04em;
+  }
+  @media (max-width: 720px) {
+    .consult { width: calc(100% - 2 * var(--gutter)); padding-top: 28px; }
+    .consult h1 { font-size: 48px; }
+    .line { font-size: 20px; }
+    dt { font-size: 24px; }
+    dl div { grid-template-columns: 6.5rem 1fr; gap: 12px; }
+  }
+</style>
+<style is:global>
+  body:has(main.consult),
+  body:has(main.consult) header.top.top--home,
+  body:has(main.consult) header.top.top--home.top--page,
+  body:has(main.consult) header.top.top--home.is-shown,
+  body:has(main.consult) .top--home nav,
+  body:has(main.consult) footer.bot {
+    background: #fff;
+  }
+</style>
+</Base>
