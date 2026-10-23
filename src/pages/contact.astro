@@ -17,6 +17,7 @@ const kinds = [
 
   <section class="primary">
     <a class="cta" href={mailto}>写邮件</a>
+    <a class="quiet" href="/consult/">咨询定金</a>
     <a class="addr" href={mailto}>{email}</a>
     <p class="kinds">
       <span>范围</span>
@@ -144,6 +145,21 @@ const kinds = [
     text-decoration: none;
   }
   .cta:hover { opacity: 0.82; }
+  .quiet {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    background: transparent;
+    color: var(--ink);
+    padding: 14px 22px;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    line-height: 1;
+    text-decoration: none;
+  }
+  .quiet:hover { opacity: 0.82; }
   .addr {
     font-family: var(--en), var(--sans);
     font-size: 28px;
