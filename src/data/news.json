@@ -188,8 +188,8 @@
   {
    "id": "tech-scendance",
    "section": "tech",
-   "title": "幕景 Scendance 做出可演示的一版",
-   "summary": "幕景是林丽丽在 10.1–10.3 参与的浙江省杭州学军中学黑客松的产品。活动布置工作台：平面图、按真实尺寸入库的物料，和用一句话生成的布置方案，放在同一个三维场景里。",
+   "title": "幕景 Scendance 是林丽丽在杭州学军中学黑客松做出的产品",
+   "summary": "活动布置工作台：平面图、按真实尺寸入库的物料，和用一句话生成的布置方案，放在同一个三维场景里。",
    "start": "2026-10-01",
    "end": "2026-10-03",
    "href": "/works/scendance/",
@@ -200,9 +200,9 @@
   {
    "id": "activity-intercity-hack-2026",
    "section": "activity",
-   "title": "黑客松分享会",
+   "title": "丁科智在杭州 DELTA SPACE 参加了 INTERCITY HACK 黑客松分享会",
    "original": "Hackathon Content Night",
-   "summary": "杭州 DELTA SPACE 的黑客松分享会，丁科智（终树）作为嘉宾进行项目经历分享。",
+   "summary": "作为嘉宾进行项目经历分享。",
    "start": "2026-10-11",
    "event": "INTERCITY HACK",
    "place": "杭州 DELTA SPACE",
