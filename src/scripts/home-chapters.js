@@ -5,7 +5,7 @@
  * crossfade (Perlin smootherstep) while the incoming picture settles
  * from scale 1.04 to 1. Nothing advances on a timer.
  * The first picture also settles once on arrival.
- * 聆听图景 is opt-in. The scroll video stays paused until that click.
+ * Preview clips and 聆听图景 live in home-clips.js.
  *
  * --hold in CSS (extra viewports resting on the last chapter) must match
  * the data-hold attribute on #fs-runway.
@@ -18,95 +18,7 @@ const smootherstep = (x) => {
   const t = clamp01(x);
   return t * t * t * (t * (t * 6 - 15) + 10);
 };
-const mmss = (sec) => {
-  const s = Math.max(0, Math.round(sec || 0));
-  return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
-};
-
-function bindListen(buttons, video) {
-  const list = buttons.filter(Boolean);
-  if (!list.length || !video) return { stop() {}, get on() { return false; } };
-  const fill = document.getElementById('m-prog-fill');
-  const time = document.getElementById('m-prog-time');
-  let on = false;
-  let raf = 0;
-
-  function paintProgress() {
-    const dur = Number.isFinite(video.duration) ? video.duration : 0;
-    const p = dur > 0 ? clamp01(video.currentTime / dur) : 0;
-    if (fill) fill.style.setProperty('--prog', p.toFixed(4));
-    if (time) time.textContent = `${mmss(video.currentTime)} / ${mmss(dur)}`;
-  }
-  function tick() {
-    paintProgress();
-    raf = on ? requestAnimationFrame(tick) : 0;
-  }
-  function setPressed(next) {
-    on = next;
-    video.classList.toggle('is-on', next);
-    for (const button of list) {
-      button.setAttribute('aria-pressed', String(next));
-      const label = button.querySelector('.lb');
-      if (label) label.textContent = next ? '静音' : '聆听图景';
-    }
-  }
-  function stop() {
-    setPressed(false);
-    video.muted = true;
-    video.defaultMuted = true;
-    video.setAttribute('muted', '');
-    try { video.pause(); } catch (_) {}
-    if (raf) cancelAnimationFrame(raf);
-    raf = 0;
-  }
-  function fail() {
-    stop();
-    for (const button of list) button.disabled = true;
-  }
-  function attach() {
-    const src = video.dataset.src;
-    if (!src) return false;
-    video.playsInline = true;
-    video.loop = true;
-    if (video.getAttribute('src') !== src) video.src = src;
-    return true;
-  }
-  video.addEventListener('error', () => { if (on) fail(); });
-  for (const button of list) {
-    button.addEventListener('click', () => {
-      if (button.disabled) return;
-      if (on) { stop(); return; }
-      if (!attach()) { fail(); return; }
-      setPressed(true);
-      video.muted = false;
-      video.defaultMuted = false;
-      video.removeAttribute('muted');
-      try { video.volume = 1; } catch (_) {}
-      const pending = video.play();
-      if (pending) pending.catch((err) => {
-        if (err && err.name === 'AbortError') return;
-        stop();
-        if (video.error) fail();
-      });
-      if (!raf) raf = requestAnimationFrame(tick);
-    });
-  }
-  const hero = document.getElementById('scroll-hero-m');
-  if (hero && matchMedia('(max-width: 768px)').matches) {
-    new IntersectionObserver((entries) => {
-      if (!entries[0].isIntersecting) stop();
-    }, { threshold: 0.35 }).observe(hero);
-  }
-  return { stop, get on() { return on; } };
-}
-
 export function mountHomeChapters() {
-  const video = document.getElementById('scroll-video');
-  const media = bindListen(
-    [document.getElementById('snd'), document.getElementById('snd-m')],
-    video,
-  );
-
   document.querySelectorAll('img[data-fallback]').forEach((img) => {
     img.addEventListener('error', () => {
       const fb = img.getAttribute('data-fallback');
@@ -121,14 +33,14 @@ export function mountHomeChapters() {
   if (!runway || !stage) return;
   if (!desktop.matches) {
     desktop.addEventListener('change', () => {
-      if (desktop.matches) startChapters(runway, stage, media);
+      if (desktop.matches) startChapters(runway, stage);
     }, { once: true });
     return;
   }
-  startChapters(runway, stage, media);
+  startChapters(runway, stage);
 }
 
-function startChapters(runway, stage, media) {
+function startChapters(runway, stage) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const slides = Array.from(stage.querySelectorAll('.fs-slide'));
   const dots = Array.from(stage.querySelectorAll('.fs-dot'));
@@ -138,6 +50,7 @@ function startChapters(runway, stage, media) {
   const introStart = performance.now();
   let lastScroll = 0;
   let running = false;
+  let lastFront = -1;
 
   function progress() {
     const view = window.innerHeight || 1;
@@ -171,7 +84,7 @@ function startChapters(runway, stage, media) {
     slide.style.pointerEvents = plateOpacity > 0.55 ? 'auto' : 'none';
     slide.setAttribute('aria-hidden', String(plateOpacity < 0.08 && imageOpacity < 0.08));
     slide.toggleAttribute('inert', plateOpacity < 0.5);
-    const media = slide.querySelector('.fs-pan, .fs-bg');
+    const media = slide.querySelector('.fs-pan, .fs-visual') || slide.querySelector('.fs-bg');
     if (media) media.style.opacity = imageOpacity.toFixed(4);
     const plate = slide.querySelector('.fs-plate');
     if (plate) {
@@ -214,7 +127,10 @@ function startChapters(runway, stage, media) {
       if (on) dot.setAttribute('aria-current', 'true');
       else dot.removeAttribute('aria-current');
     });
-    if (front !== 0 && media.on) media.stop();
+    if (front !== lastFront) {
+      lastFront = front;
+      document.dispatchEvent(new CustomEvent('home-front', { detail: front }));
+    }
   }
   function step(now) {
     apply(now);
@@ -261,6 +177,5 @@ function startChapters(runway, stage, media) {
     }
     scrollToIndex(next);
   });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) media.stop(); });
   kick();
 }
