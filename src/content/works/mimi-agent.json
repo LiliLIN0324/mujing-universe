@@ -18,7 +18,7 @@
   "飞书"
  ],
  "images": [
-  "/works/mimi-agent/cover.png"
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/mimi-agent/01.jpg"
  ],
  "icon": "/works/mimi-agent/cover.png",
  "hasDemo": true,
