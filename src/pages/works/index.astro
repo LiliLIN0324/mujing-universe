@@ -51,7 +51,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 
 <style is:global>
 .wf {
-  --rule1: rgba(26, 26, 28, .10);
+  --rule1: var(--rule);
   width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter)));
   margin: 0 auto;
   padding: 8px 0 32px;
@@ -87,7 +87,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   justify-content: space-between;
   gap: 8px 28px;
   padding: 16px 0 10px;
-  background: rgba(246, 245, 243, .94);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
 }
 .wf-filters {
   display: flex;
@@ -174,7 +174,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   align-items: center;
   min-height: 60px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--rule1);
+  border-bottom: 1px solid var(--rule);
   color: inherit;
 }
 .wf .idx .hd { min-height: 40px; }
@@ -222,7 +222,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   aspect-ratio: 16 / 10;
   overflow: hidden;
   border-radius: 0;
-  background: #EFEDE9;
+  background: var(--bg2);
   container-type: inline-size;
 }
 .wf .cv-frame {
@@ -253,7 +253,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   z-index: 3;
   border: 0;
   border-radius: 0;
-  background: rgba(246, 245, 243, .94);
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
   color: var(--ink);
   font: inherit;
   font-size: 13px;
@@ -264,7 +264,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   cursor: pointer;
 }
 .wf .cv.is-on .cv-play { color: var(--ink); }
-.wf .cv.fb { background: #F1EEE6; box-shadow: inset 0 0 0 1px rgba(26, 26, 28, .16); }
+.wf .cv.fb { background: var(--bg2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent); }
 .wf .fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
 .wf .fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
 .wf .fb-title { display: block; font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: -0.03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
@@ -283,7 +283,7 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
   .wf .card:focus-within .cv-play,
   .wf .cv.is-on .cv-play { opacity: 1; }
   .wf .card:hover .ttl { text-decoration: underline; text-underline-offset: .18em; }
-  .wf .idx a.row:hover { background: rgba(26, 26, 28, .03); }
+  .wf .idx a.row:hover { background: color-mix(in srgb, var(--ink) 3%, transparent); }
   .wf .idx a.row:hover .t { transform: translateX(6px); }
   .wf .idx a.row:hover .no { color: var(--ink); }
 }

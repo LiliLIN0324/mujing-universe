@@ -23,7 +23,20 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>{title}</title>
   <meta name="description" content={description}/>
-  <meta name="theme-color" content="#F6F5F3"/>
+  <meta name="theme-color" content="#FFFFFF"/>
+  <script is:inline>
+  // Apply the saved (or system) theme before first paint, so night mode never flashes.
+  (function () {
+    try {
+      var t = localStorage.getItem('mj-theme');
+      if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        var m = document.querySelector('meta[name="theme-color"]');
+        if (m) m.setAttribute('content', '#131316');
+      }
+    } catch (e) {}
+  })();
+  </script>
   <meta name="referrer" content="no-referrer"/>
   <meta name="format-detection" content="telephone=no"/>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
@@ -47,18 +60,30 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 {home ? (
 <header class:list={["top top--home", navClass]} id="home-nav" data-autohide>
   <a class="wordmark" href="/" translate="no">幕景宇宙</a>
-  <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
-  <nav id="home-menu">
-    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
-  </nav>
+  <div class="top-right">
+    <nav id="home-menu">
+      {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="切换日间或夜间模式" aria-pressed="false">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.6a8.5 8.5 0 1 0 10.6 10.6Z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+    </button>
+    <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+  </div>
 </header>
 ) : (
 <header class:list={["top top--home top--page", pageNav]} id="home-nav">
   <a class="wordmark" href="/" translate="no">幕景宇宙</a>
-  <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
-  <nav id="home-menu">
-    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
-  </nav>
+  <div class="top-right">
+    <nav id="home-menu">
+      {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="切换日间或夜间模式" aria-pressed="false">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.6a8.5 8.5 0 1 0 10.6 10.6Z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+    </button>
+    <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+  </div>
 </header>
 )}
 <div id="content">
@@ -109,6 +134,22 @@ if (menuBtn && homeNav) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
   matchMedia('(max-width: 768px)').addEventListener?.('change', (e) => { if (!e.matches) setOpen(false); });
 }
+// Day/night switch. The initial state was set pre-paint in <head>; here we
+// keep the button state, the browser chrome colour and localStorage in sync.
+const rootEl = document.documentElement;
+const themeBtn = document.getElementById('theme-btn');
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+const applyTheme = (dark) => {
+  rootEl.classList.toggle('dark', dark);
+  themeBtn?.setAttribute('aria-pressed', String(dark));
+  themeMeta?.setAttribute('content', dark ? '#131316' : '#FFFFFF');
+};
+if (themeBtn) applyTheme(rootEl.classList.contains('dark'));
+themeBtn?.addEventListener('click', () => {
+  const dark = !rootEl.classList.contains('dark');
+  applyTheme(dark);
+  try { localStorage.setItem('mj-theme', dark ? 'dark' : 'light'); } catch (e) {}
+});
 document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
   img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
 }));
