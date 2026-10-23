@@ -49,7 +49,7 @@ for i in items:
 items.append(dict(slug='xihu-panorama', title='当代西湖繁胜全景图', category='AIGC 音画 · 长卷', year='2026 · 进行中', yearNum=2026,
   line='数字艺术', status='进行中', description='以宋画长卷的形式重绘当代西湖，画面元素由声音转译生成。（占位简介，待艺术家确认）',
   abstract='', challenge='', solution='', tech=['AIGC', '声音转译（占位）'], images=[], icon='/scroll-placeholder.svg',
-  hasDemo=False, flags=['占位：素材与文字待提供'], source='', sourceFile='manual'))
+  hasDemo=False, flags=['占位：素材与文字待提供'], source='', sourceFile='manual', credit='画面：林丽丽 / 声音：丁科智'))
 # 校验 R2 图片（GET + Range，带重试——本机到 R2 偶发抽风，别把好图误杀）；无图则用占位并标注
 import urllib.request, concurrent.futures as cf
 def ok(u, tries=3):
