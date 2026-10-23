@@ -3,13 +3,14 @@ import Base from '../layouts/Base.astro';
 import Cooperate from '../components/Cooperate.astro';
 import portraits from '../data/portraits.json';
 const pickJs = `(function(){var L=${JSON.stringify(portraits)},im=document.getElementById('apimg');if(!im||!L.length)return;var P=im.parentNode;P.classList.add('has-photo');var u=L[Math.floor(Math.random()*L.length)],f=0;im.onload=function(){im.classList.add('on')};im.onerror=function(){im.remove();P.classList.remove('has-photo');};im.src=u;})();`;
+const studioIntro = '幕景宇宙是一家位于杭州的AI Native工作室，以人工智能为核心，借助对于文化、设计与空间的理解，创作解决当下真实问题的产品、游戏与智能体，让我们生活的城市更美好。';
 ---
-<Base title="关于 · 幕景宇宙" active="/about/" navClass="top--unified">
+<Base title="关于 · 幕景宇宙" description={studioIntro} active="/about/" navClass="top--unified">
 <main class="wrap about-page">
 
 <div class="studio-intro reveal">
   <h1>以创作为核心的<br/>AIGC 文化艺术团队</h1>
-  <p class="lead">幕景宇宙（Mujing Universe）是杭州的 AIGC 文化艺术团队。我们用 AI 重新看待古画与民乐，让传统审美以新的形态进入当代展览与公共空间。团队名称"幕景"来自艺术家作品《幕景 Scendance》。</p>
+  <p class="lead">{studioIntro}</p>
 </div>
 
 <div class="members">
