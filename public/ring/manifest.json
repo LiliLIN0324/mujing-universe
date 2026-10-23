@@ -4,40 +4,42 @@
     "file": "0.jpg"
   },
   {
+    "slug": "mimi-agent",
+    "file": null,
+    "local": "/works/mimi-agent/cover.png"
+  },
+  {
     "slug": "riffle-ai-game-generation-tool",
-    "file": "1.jpg"
+    "file": "2.jpg"
   },
   {
     "slug": "scendance",
-    "file": "2.jpg",
+    "file": "3.jpg",
     "source": "_sources/scendance-hero.jpg"
   },
   {
+    "slug": "zhuantang-yixun",
+    "file": null,
+    "local": "/works/zhuantang-yixun/home.jpg"
+  },
+  {
     "slug": "bazi-fengshui-analysis",
-    "file": "3.jpg"
-  },
-  {
-    "slug": "genshot-AI-video-generation-tool",
-    "file": "4.jpg"
-  },
-  {
-    "slug": "genstyle",
     "file": "5.jpg"
   },
   {
-    "slug": "anyreal",
+    "slug": "genshot-AI-video-generation-tool",
     "file": "6.jpg"
   },
   {
-    "slug": "dragon-diffussion",
+    "slug": "genstyle",
     "file": "7.jpg"
   },
   {
-    "slug": "perslearn",
+    "slug": "anyreal",
     "file": "8.jpg"
   },
   {
-    "slug": "1037pinpin",
+    "slug": "dragon-diffussion",
     "file": "9.jpg"
   }
 ]
