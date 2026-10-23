@@ -30,9 +30,9 @@ const mobilePicks = ws.slice(0, 10).map((w, i) => ({
   fallback: workFallback(w) || '/ring/paper.jpg',
 }));
 const mLead = mobilePicks[0];
-const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off', picks: 'on', cta: 'off' };
+const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks: 'on' };
 ---
-<Base active="/" home>
+<Base active="/" home fullscreen>
 
 {/* ---- Mobile: hero + card stack (≤768px only) ---- */}
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
@@ -135,14 +135,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   </div>
   <button class="fs-arrow fs-prev" type="button" aria-label="上一件">‹</button>
   <button class="fs-arrow fs-next" type="button" aria-label="下一件">›</button>
-  <a class="scroll-cue" id="scroll-cue" href="#cta" aria-label="向下滚动"><span>SCROLL</span><i></i></a>
 </div>
-
-<section class="narrow cta" id="cta" data-dwell={PAGE_DWELL.cta}>
-  <h2>展览 · 委托 · 合作</h2>
-  <p>文旅数字展陈、AIGC 音画委托、品牌合作与驻留，由经纪人统一对接。</p>
-  <a class="btn solid" href="/contact/">合作</a>
-</section>
+<div class="home-push" aria-hidden="true"></div>
 
 
 <style>
@@ -154,11 +148,12 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   z-index: 0;
   background: #1a1a18;
 }
+.home-push { display: none; }
 @media (min-width: 769px) {
   .fs-stage { display: block; }
   .first-screen { display: none; }
   .picks { display: none; }
-  .cta { position: relative; z-index: 1; margin-top: 100vh; }
+  .home-push { display: block; height: 100vh; height: 100dvh; }
 }
 .fs-slide {
   position: absolute;
@@ -301,24 +296,6 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 .fs-prev { left: 20px; }
 .fs-next { right: 52px; }
 
-/* Scroll cue */
-.scroll-cue {
-  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-  z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 8px;
-  color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 0.3em;
-  text-decoration: none; transition: opacity 0.4s;
-}
-.scroll-cue span { margin-right: -0.3em; }
-.scroll-cue i { display: block; width: 1px; height: 34px; background: rgba(255,255,255,0.2); position: relative; overflow: hidden; }
-.scroll-cue i::after { content: ""; position: absolute; left: 0; top: 8px; width: 1px; height: 12px; background: rgba(255,255,255,0.75); animation: scroll-drip 2.2s cubic-bezier(0.65,0,0.35,1) infinite; }
-@keyframes scroll-drip { 0% { transform: translateY(-36px); } 100% { transform: translateY(36px); } }
-.scroll-cue.is-gone { opacity: 0; pointer-events: none; }
-
-/* CTA */
-.cta { text-align: center; padding: 96px 24px 80px; background: var(--bg); }
-.cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
-.cta p { color: var(--ink2); margin-bottom: 22px; }
-
 /* ---- Mobile ---- */
 .m-prog, .m-down, .m-peek { display: none; }
 .first-screen {
@@ -379,9 +356,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     background: #F6F5F3; color: #9a958c; font-size: 12px; letter-spacing: 0.2em; text-decoration: none;
   }
   :global(html) { scroll-snap-type: y mandatory; }
-  .first-screen, .picks, .cta { scroll-snap-align: start; scroll-snap-stop: always; }
+  .first-screen, .picks { scroll-snap-align: start; scroll-snap-stop: always; }
   .picks { min-height: 100vh; min-height: 100svh; padding-top: 52px; background: #F6F5F3; }
-  .cta { margin-top: 0; padding-top: 96px; }
 }
 
 /* Mobile featured card stack */
@@ -427,7 +403,6 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 @media (prefers-reduced-motion: reduce) {
   .fs-slide { transition: none; }
   .fs-still { animation: none; }
-  .scroll-cue i::after { animation: none; }
 }
 </style>
 
@@ -499,10 +474,6 @@ if (fsStage && !isMobile.matches) {
   });
   let timer = setInterval(() => goTo(cur + 1), 7000);
   fsStage.addEventListener('click', () => { clearInterval(timer); timer = setInterval(() => goTo(cur + 1), 7000); });
-
-  // scroll-cue hides after user scrolls
-  const cue = document.getElementById('scroll-cue');
-  window.addEventListener('scroll', () => { cue?.classList.toggle('is-gone', window.scrollY > 40); }, { passive: true });
 }
 </script>
 
@@ -536,7 +507,6 @@ const stackDwell = mobileStackRoot ? mountMobileStack(mobileStackRoot) : null;
 mountMobilePager([
   { el: document.getElementById('first-screen'), dwell: heroDwell },
   { el: document.getElementById('picks'), dwell: stackDwell },
-  { el: document.getElementById('cta'), dwell: null },
 ]);
 </script>
 </Base>
