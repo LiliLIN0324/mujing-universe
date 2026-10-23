@@ -17,7 +17,8 @@ Astro 静态站点，无前端框架运行时；唯一的动态能力是页面�
 | `/works/<slug>/` | 单个作品 |
 | `/news/` | 新闻（浅灰纸色列表） |
 | `/about/` | 关于 |
-| `/contact/` | 合作（写邮件；飞书、微信、Mimi 在次级） |
+| `/contact/` | 合作。邮件、飞书或定金 |
+| `/consult/` | 咨询定金与排期 |
 
 `/artist` 与 `/studio` 通过 `_redirects` 跳到 `/about/`。
 
