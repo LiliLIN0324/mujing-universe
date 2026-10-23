@@ -232,9 +232,6 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   transition: transform 1.05s cubic-bezier(.22, 1, .36, 1);
 }
 .wf .cv.has-clip.is-on .cv-frame { transform: scale(1.045); }
-.wf .cv:not(.fb) > .fb-no,
-.wf .cv:not(.fb) > .fb-t,
-.wf .cv:not(.fb) > .fb-meta { display: none; }
 .wf .cv img, .wf .cv-video {
   position: absolute;
   inset: 0;
@@ -265,12 +262,9 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 }
 .wf .cv.is-on .cv-play { color: var(--ink); }
 .wf .cv.fb { background: var(--bg2); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 16%, transparent); }
-.wf .fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
 .wf .fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
 .wf .fb-title { display: block; font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: -0.03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
 .wf .fb-title.long { font-size: 4.6cqw; }
-.wf .fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .02em; color: var(--muted); }
-.wf .fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .04em; color: var(--muted); }
 html.js .wf .rise { opacity: 0; transform: translateY(14px); }
 html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s cubic-bezier(.22, 1, .36, 1); }
 @media (hover: hover) and (pointer: fine) {
