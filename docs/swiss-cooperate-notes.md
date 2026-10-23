@@ -1,6 +1,6 @@
 # 合作页：瑞士风笔记
 
-看过这些，再改 `/contact/`。作品库这次不动。
+看过这些，整站用同一套，不只改合作页。作品库的格子不动，字和线跟其他页对齐。
 
 - 文章：[8 Swiss-Style Website Examples](https://swissthemes.design/insights/swiss-style-website-examples)
 - 站：[Swiss Style](https://swissstyle.framer.website/)、[Swiss Brut](https://swissbrut.framer.website/)、[FF Minimal](https://ff-minimal.framer.website/)
@@ -33,3 +33,7 @@
 - 飞书放现有名片，旁边「加终树」。微信是 `endTree-26` 和「复制」。邮件是林丽丽的公开地址。
 - Mimi 一行：「问一句」加上「不会自动拉群。」不弹层，不写说明书。
 - 底色继续 `#F6F5F3`。圆角保持 0。页脚的 `#feishu`、`#wechat` 锚点还在。
+
+## 整站同一套
+
+首页仍是整屏作品。导航、按钮、页脚、作品、新闻、合作、关于用同一套：直角、墨色对纸色、细线、无衬线标题、栏目名小、事实大。红色下划线和宋体标题不再单页使用。页脚是一行链接，不再居中堆图标。

@@ -72,18 +72,18 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   }
   .mimi-launch.is-drag { cursor: grabbing; }
   .mimi-launch.is-drag .mimi-face {
-    box-shadow: 0 0 0 2px #fff, 0 18px 40px rgba(26, 26, 28, 0.42);
+    box-shadow: inset 0 0 0 1px #1a1a1c;
   }
   .mimi-launch.is-hot .mimi-face {
-    box-shadow: 0 0 0 2px #fff, 0 14px 32px rgba(255, 106, 19, 0.45);
+    box-shadow: inset 0 0 0 1px #1a1a1c;
   }
   .mimi-halo {
     position: absolute;
     inset: -7px;
     border-radius: 0;
     border: 2px solid transparent;
-    border-top-color: #ff6a13;
-    border-right-color: #ff6a13;
+    border-top-color: #1a1a1c;
+    border-right-color: #1a1a1c;
     opacity: 0;
     pointer-events: none;
   }
@@ -93,7 +93,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   }
   .mimi-launch.is-flash .mimi-halo {
     opacity: 1;
-    border-color: #ff6a13;
+    border-color: #1a1a1c;
     animation: mimi-flash 0.45s ease-out;
   }
   .mimi-face {
@@ -103,8 +103,8 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     height: 100%;
     border-radius: 0;
     overflow: hidden;
-    background: #ff6a13;
-    box-shadow: 0 0 0 2px #fff, 0 8px 22px rgba(26, 26, 28, 0.18);
+    background: #1a1a1c;
+    box-shadow: inset 0 0 0 1px #1a1a1c;
     transition: transform 0.16s ease;
     transform-style: preserve-3d;
   }
@@ -182,9 +182,8 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     height: min(620px, calc(100dvh - 120px));
     background: #f6f5f3;
     color: #1a1a1c;
-    border: 1px solid rgba(26, 26, 28, 0.08);
+    border: 1px solid #1a1a1c;
     border-radius: 0;
-    box-shadow: 0 18px 50px rgba(26, 26, 28, 0.14);
     overflow: hidden;
     transform: scale(0.12);
     opacity: 0;
@@ -424,7 +423,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     width: 22px;
     height: 22px;
     border-radius: 0;
-    background: #ff6a13;
+    background: #1a1a1c;
     pointer-events: none;
     animation: mimi-crumb 0.7s ease-out forwards;
   }
@@ -472,7 +471,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     .mimi-panel { animation: none; transition: none; }
     .mimi[data-state="thinking"] .mimi-halo {
       animation: none;
-      border-color: #ff6a13;
+      border-color: #1a1a1c;
     }
     :global(.mimi-crumb) { display: none; }
   }

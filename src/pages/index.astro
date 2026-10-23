@@ -309,7 +309,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 .fs-kicker b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
 .fs-by {
   margin: 0 0 6px;
-  font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+  font-family: var(--sans);
   font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -320,7 +320,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 .fs-by span { margin-left: 10px; font-family: var(--en), var(--sans); font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0.06em; }
 .fs-title {
   margin: 0 0 10px;
-  font-family: "Noto Serif SC", "Songti SC", "STSong", var(--sans);
+  font-family: var(--sans);
   font-size: clamp(28px, 3.2vw, 44px);
   font-weight: 600;
   line-height: 1.18;
@@ -413,10 +413,10 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   padding: 0 20px 80px;
 }
 .hero-plate { background: rgba(246, 245, 243, 0.94); padding: 18px 18px 16px; }
-.hero-copy .by { margin: 0 0 6px; font-family: "Noto Serif SC", "Songti SC", serif; font-weight: 600; font-size: 20px; color: var(--ink); }
+.hero-copy .by { margin: 0 0 6px; font-family: var(--sans); font-weight: 600; font-size: 20px; color: var(--ink); }
 .hero-copy .by a { color: inherit; text-decoration: none; }
 .hero-copy .by span { margin-left: 8px; font-family: var(--en), var(--sans); font-size: 13px; color: var(--muted); }
-.hero-copy h1 { margin: 0; color: var(--ink); font-family: "Noto Serif SC", "Songti SC", var(--sans); font-weight: 600; font-size: 28px; line-height: 1.2; letter-spacing: -0.03em; }
+.hero-copy h1 { margin: 0; color: var(--ink); font-family: var(--sans); font-weight: 600; font-size: 28px; line-height: 1.2; letter-spacing: -0.03em; }
 .hero-copy .sub { margin: 8px 0 0; font-family: var(--sans); font-size: 14px; color: #4a463f; line-height: 1.55; }
 .hero-copy .meta { margin: 6px 0 14px; font-family: var(--sans); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
 .hero-plate .fs-actions { margin-top: 4px; }
@@ -456,7 +456,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   .m-hd b { font-size: 12px; font-weight: 400; color: #9a958c; letter-spacing: 0.2em; }
   .m-hd span { font-size: 12px; color: #9a958c; letter-spacing: 0.12em; font-variant-numeric: tabular-nums; }
   .m-stage { position: relative; height: calc(var(--ch) + 44px); margin-top: 22px; perspective: 900px; touch-action: pan-y; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-  .m-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); transform-origin: 100% 50%; border-radius: 0; overflow: hidden; background: #e6e3de; box-shadow: 0 14px 30px rgba(40,30,20,0.16); will-change: transform, opacity; backface-visibility: hidden; }
+  .m-card { position: absolute; left: 0; top: 0; width: var(--cw); height: var(--ch); transform-origin: 100% 50%; border-radius: 0; overflow: hidden; background: #e6e3de; box-shadow: inset 0 0 0 1px rgba(26, 26, 28, 0.16); will-change: transform, opacity; backface-visibility: hidden; }
   .m-card:not([style]) { transform: translateX(24px); }
   .m-card:not([style]) ~ .m-card:not([style]) { opacity: 0; }
   .m-card img { width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; pointer-events: none; }
@@ -475,7 +475,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   .m-bar i { flex: 1; height: 2px; background: #e1ddd6; transition: background 0.25s ease; }
   .m-bar i.on { background: #1a1a18; }
   .m-info { padding: 22px 24px 0; }
-  .m-title { margin: 0; color: #1a1a18; font-family: "Noto Serif SC", serif; font-weight: 600; font-size: 28px; line-height: 1.25; }
+  .m-title { margin: 0; color: #1a1a18; font-family: var(--sans); font-weight: 600; font-size: 28px; line-height: 1.25; letter-spacing: -0.03em; }
   .m-title-link { color: inherit; text-decoration: none; }
   .m-meta { margin-top: 8px; font-size: 12px; color: #9a958c; letter-spacing: 0.08em; }
   .m-body { margin: 12px 0 0; font-size: 14px; line-height: 1.75; color: #4a463f; }
