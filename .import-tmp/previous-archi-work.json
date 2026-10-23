@@ -1,0 +1,25 @@
+{
+ "id": "01",
+ "slug": "previous-archi-work",
+ "title": "previous-archi-work",
+ "category": "planning",
+ "year": "2020-2024",
+ "description": "",
+ "abstract": "",
+ "challenge": "",
+ "solution": "",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/previous-archi-work/logo.jpg",
+ "tech": [
+  "Rhino",
+  "architecture",
+  "design"
+ ],
+ "images": [],
+ "hasDemo": true,
+ "line": "空间",
+ "source": "https://lililin0324.github.io/#/planning/previous-archi-work",
+ "sourceFile": "planning/02_pervious_archi_work.md",
+ "yearNum": 2020,
+ "status": "已完成",
+ "flags": []
+}

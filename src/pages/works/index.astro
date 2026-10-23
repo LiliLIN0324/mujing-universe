@@ -121,12 +121,12 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 .wf .card { display: block; min-width: 0; color: inherit; position: relative; z-index: 0; }
 .wf .im { position: relative; }
 .wf .cap { padding-top: 10px; }
-/* Hover 色板：整卡浮出一块底色，标题换色，视频由 pointerenter 逻辑开始播放。 */
+/* Hover 色板：整卡浮出一块底色（上下加高），下方浮层放分类与简介（绝对定位，不挤动邻卡）。 */
 @media (hover: hover) and (pointer: fine) {
   .wf .card::before {
     content: "";
     position: absolute;
-    inset: -14px;
+    inset: -20px -14px -96px;
     z-index: -1;
     background: var(--cta-bg);
     opacity: 0;
@@ -139,14 +139,31 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   .wf .card:hover .cap h2,
   .wf .card:focus-within .cap h2 { color: var(--cta-fg); }
   .wf .card:hover .tag,
-  .wf .card:focus-within .tag { display: none; }
-  .wf .card:hover .meta,
-  .wf .card:focus-within .meta {
-    display: inline;
-    margin-left: 8px;
+  .wf .card:focus-within .tag { color: color-mix(in srgb, var(--cta-fg) 72%, transparent); }
+  .wf .more { display: none; }
+  .wf .card:hover .more,
+  .wf .card:focus-within .more {
+    display: block;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    margin-top: 8px;
+    color: color-mix(in srgb, var(--cta-fg) 78%, transparent);
+  }
+  .wf .more .m-meta {
+    margin: 0;
     font-size: 13px;
     letter-spacing: .04em;
-    color: color-mix(in srgb, var(--cta-fg) 72%, transparent);
+  }
+  .wf .more .m-desc {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.65;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
   }
 }
 /* 标题与分类同一行，省一行高度。 */
@@ -167,7 +184,6 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   color: var(--muted);
   white-space: nowrap;
 }
-.wf .meta { display: none; }
 .wf-empty { margin: 36px 0 8px; color: var(--muted); font-size: 15px; }
 .wf .idx { margin-top: 8px; border-top: 1px solid var(--ink); }
 .wf .idx .row {
