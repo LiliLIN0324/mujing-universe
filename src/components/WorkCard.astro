@@ -14,9 +14,9 @@ const desc = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
     <div class="im"><WorkCover w={w} eager={eager} /></div>
     <div class="cap">
       <h2><a href={href}><span class="ttl">{w.main}</span></a></h2>
+      <div class="m-top" aria-hidden="true">{meta && <p class="m-meta">{meta}</p>}</div>
       <div class="more" aria-hidden="true">
         {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
-        {meta && <p class="m-meta">{meta}</p>}
         {desc && <p class="m-desc">{desc}</p>}
       </div>
     </div>
@@ -26,9 +26,9 @@ const desc = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
     <div class="im"><WorkCover w={w} eager={eager} /></div>
     <div class="cap">
       <h2><span class="ttl">{w.main}</span></h2>
+      <div class="m-top" aria-hidden="true">{meta && <p class="m-meta">{meta}</p>}</div>
       <div class="more" aria-hidden="true">
         {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
-        {meta && <p class="m-meta">{meta}</p>}
         {desc && <p class="m-desc">{desc}</p>}
       </div>
     </div>
