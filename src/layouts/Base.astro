@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import MimiChat from '../components/MimiChat.astro';
+import WechatCopy from '../components/WechatCopy.astro';
 const {
   title = '幕景宇宙 · 林丽丽艺术工作室',
   description = '幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。',
@@ -65,19 +66,28 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 <slot/>
 </div>
 <footer class="bot">
-  <div>
-    <strong>幕景宇宙 Mujing Universe</strong>
-    <p>以艺术家林丽丽为核心的 AIGC 文化艺术工作室 · 浙江杭州</p>
-    <p class="cap">© 2026 幕景宇宙</p>
+  <section class="coop-block">
+    <p class="cap">Contact</p>
+    <h2>一起合作</h2>
+    <p>展览、委托和商务合作，加微信说一声就好。</p>
+    <WechatCopy centered />
+  </section>
+  <div class="bot-links">
+    <div>
+      <strong>幕景宇宙 Mujing Universe</strong>
+      <p>以艺术家林丽丽为核心的 AIGC 文化艺术团队 · 浙江杭州</p>
+      <p class="cap">© 2026 幕景宇宙</p>
+    </div>
+    <div>
+      <span class="cap">站点</span>
+      {foot.map(([h, t]) => <a href={h}>{t}</a>)}
+    </div>
+    <div>
+      <span class="cap">说明</span>
+      <p>作品图像用于公开展示。商业使用与展览授权，请经合作页联系。</p>
+    </div>
   </div>
-  <div>
-    <span class="cap">站点</span>
-    {foot.map(([h, t]) => <a href={h}>{t}</a>)}
-  </div>
-  <div>
-    <span class="cap">说明</span>
-    <p>作品图像用于工作室公开展示。商业使用与展览授权，请经合作页联系经纪人。</p>
-  </div>
+  <p class="wx-toast" role="status" hidden>已复制</p>
 </footer>
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 <script>
@@ -110,6 +120,36 @@ if (menuBtn && homeNav) {
 document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
   img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
 }));
+const wxToast = document.querySelector('.wx-toast');
+let wxToastTimer = 0;
+async function copyWechat() {
+  const id = 'endTree-26';
+  let ok = false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(id);
+      ok = true;
+    }
+  } catch {}
+  if (!ok) {
+    const area = document.createElement('textarea');
+    area.value = id;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.top = '0';
+    area.style.left = '-9999px';
+    document.body.appendChild(area);
+    area.select();
+    try { ok = document.execCommand('copy'); } catch {}
+    area.remove();
+  }
+  if (!wxToast) return;
+  wxToast.textContent = ok ? '已复制' : '请长按微信号复制';
+  wxToast.hidden = false;
+  clearTimeout(wxToastTimer);
+  wxToastTimer = setTimeout(() => { wxToast.hidden = true; }, 1600);
+}
+document.querySelectorAll('[data-wx-copy]').forEach((btn) => btn.addEventListener('click', copyWechat));
 </script>
 <MimiChat />
 </body>

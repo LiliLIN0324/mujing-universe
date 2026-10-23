@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import WechatCopy from '../components/WechatCopy.astro';
 const svc=[['展览与展陈','美术馆、文旅、景区的 AIGC 音画展陈与长卷委托'],['作品委托','品牌、机构的定制 AIGC 视觉与音画作品'],['产品与游戏合作','AIGC 产品设计、游戏与数字场景'],['讲座与工作坊','AI × 空间 / 艺术主题的分享与工作坊']];
 ---
 <Base title="合作与经纪 · 幕景宇宙" active="/contact/"><main class="wrap page">
@@ -7,7 +8,7 @@ const svc=[['展览与展陈','美术馆、文旅、景区的 AIGC 音画展陈�
 <p class="lead serif">艺术家林丽丽的展览、委托与商务合作，由经纪人丁科智（终树）统一对接。</p>
 <div class="svc">{svc.map(([t,d],i)=><div class="reveal"><span class="mono">0{i+1}</span><h3>{t}</h3><p>{d}</p></div>)}</div>
 <div class="cards">
- <div class="c main"><span class="cap">经纪 · 商务（首选）</span><h3>丁科智（终树）</h3><p>经纪 / 合作联系：丁科智（终树）· 微信 endTree-26</p></div>
+ <div class="c main"><span class="cap">经纪 · 商务（首选）</span><h3>丁科智（终树）</h3><p>合作请加微信。</p><WechatCopy /></div>
  <div class="c"><span class="cap">艺术家 · 学术交流</span><h3>林丽丽</h3><p><a href="mailto:lily1326685527@gmail.com">lily1326685527@gmail.com</a></p></div>
  <div class="c"><span class="cap">工作室</span><h3>幕景宇宙</h3><p>浙江 · 杭州</p></div>
 </div>
