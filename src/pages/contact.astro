@@ -1,32 +1,110 @@
 ---
 import Base from '../layouts/Base.astro';
-const svc=[['展览与展陈','美术馆、文旅、景区的 AIGC 音画展陈与长卷委托'],['作品委托','品牌、机构的定制 AIGC 视觉与音画作品'],['产品与游戏合作','AIGC 产品设计、游戏与数字场景'],['讲座与工作坊','AI × 空间 / 艺术主题的分享与工作坊']];
+const jobs = [
+  ['AIGC 古画', '用 AI 做古画方向的影像和视觉，可以进展览，也可以单件委托。'],
+  ['民乐音画', '民乐和画面放在一起，适合展览、演出和公共空间。'],
+  ['合作项目', '文旅和展览里的数字展陈、机构或品牌的委托，也包括一起做的产品和游戏。'],
+];
 ---
-<Base title="合作与经纪 · 幕景宇宙" active="/contact/"><main class="wrap page">
-<p class="kicker cap">Representation · 合作与经纪</p><h1>合作与经纪</h1>
-<p class="lead serif">艺术家林丽丽的展览、委托与商务合作，由经纪人丁科智（终树）统一对接。</p>
-<div class="svc">{svc.map(([t,d],i)=><div class="reveal"><span class="mono">0{i+1}</span><h3>{t}</h3><p>{d}</p></div>)}</div>
-<div class="cards">
- <div class="c main"><span class="cap">经纪 · 商务（首选）</span><h3>丁科智（终树）</h3><p>经纪 / 合作联系：丁科智（终树）· 微信 endTree-26</p></div>
- <div class="c"><span class="cap">艺术家 · 学术交流</span><h3>林丽丽</h3><p><a href="mailto:lily1326685527@gmail.com">lily1326685527@gmail.com</a></p></div>
- <div class="c"><span class="cap">工作室</span><h3>幕景宇宙</h3><p>浙江 · 杭州</p></div>
-</div>
+<Base title="合作 · 幕景宇宙" description="幕景宇宙的合作页。AIGC 古画、民乐音画和合作项目，先跟 Mimi 说需求，再用飞书加好友。" active="/contact/">
+<main class="narrow page">
+  <p class="kicker cap">Collaborate · 合作</p>
+  <h1>合作</h1>
+  <p class="lead">幕景是杭州的 AIGC 文化艺术团队。古画、民乐音画，还有展览和委托，都可以从这里说起。</p>
+
+  <section class="block">
+    <h2>可以接这些</h2>
+    <ul class="jobs">
+      {jobs.map(([title, text]) => (
+        <li>
+          <h3>{title}</h3>
+          <p>{text}</p>
+        </li>
+      ))}
+    </ul>
+  </section>
+
+  <section class="block" id="start">
+    <h2>怎么开始</h2>
+    <p>先把需求说清楚，再加飞书。官网不会自动拉群，也没有 24 小时在线的飞书助理。</p>
+    <ol>
+      <li><strong>先跟 Mimi 说需求。</strong>右下角可以打开她。告诉她是古画、民乐音画，还是一个具体项目。</li>
+      <li><strong>再用飞书加终树。</strong>扫下面的名片，备注里写项目。加上之后，由终树在飞书里回复。</li>
+    </ol>
+    <p class="acts">
+      <button class="btn" type="button" id="ask-mimi" data-mimi-open>先跟 Mimi 说需求</button>
+      <a class="btn solid" href="#feishu">用飞书聊</a>
+    </p>
+  </section>
+
+  <section class="block card" id="feishu">
+    <h2>用飞书聊</h2>
+    <img src="/mimi/feishu-qr.png" alt="终树的飞书名片，扫码加好友" width="431" height="568"/>
+    <p>用飞书扫一扫，添加终树。这是加好友，不是自动进群。</p>
+    <p class="hint">手机上可以长按图片保存。</p>
+  </section>
+
+  <section class="block card" id="wechat">
+    <h2>微信备用</h2>
+    <p>飞书不方便时，可以用微信 <span class="wx" id="wx-id">endTree-26</span>。</p>
+    <button class="btn" type="button" id="copy-wx">复制微信号</button>
+  </section>
+
+  <p class="quiet">创作和学术交流，写给林丽丽：<a href="mailto:lily1326685527@gmail.com">lily1326685527@gmail.com</a></p>
+  <p class="quiet">作品图像用于公开展示。商业使用和展览授权，用飞书说一声。</p>
 </main>
+<script is:inline>
+  document.getElementById('ask-mimi')?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('mimi:open', { detail: { intent: 'coop' } }));
+  });
+  const copy = document.getElementById('copy-wx');
+  copy?.addEventListener('click', () => {
+    const done = () => {
+      copy.textContent = '已复制';
+      window.setTimeout(() => { copy.textContent = '复制微信号'; }, 1400);
+    };
+    const id = 'endTree-26';
+    if (navigator.clipboard) navigator.clipboard.writeText(id).then(done).catch(() => {});
+  });
+</script>
 <style>
-.page { padding-top: 80px; }
-.page { text-align: center; }
-.page h1 { font-size: clamp(36px, 4vw, 48px); margin: 0 auto 16px; font-weight: 600; letter-spacing: -0.03em; }
-.lead { font-size: 1.05rem; font-weight: 400; max-width: 36em; margin-left: auto; margin-right: auto; color: var(--ink2); }
-.svc { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 56px 0 28px; text-align: left; }
-.svc div { padding: 22px 18px 26px; background: var(--paper); border: 0; border-radius: var(--radius); }
-.svc h3 { margin: 10px 0 8px; font-size: 1.15rem; letter-spacing: 0.06em; }
-.svc p { margin: 0; color: var(--ivory-2); font-size: 0.92rem; }
-.cards { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 16px; margin-bottom: 28px; text-align: left; }
-.c { background: var(--paper); border: 0; border-radius: var(--radius); padding: 28px 24px; }
-.c.main { background: var(--paper); }
-.c h3 { font-size: 1.45rem; margin: 8px 0; }
-.c p { color: var(--ivory-2); }
-.note { margin-top: 8px; }
-@media (max-width: 980px) { .svc { grid-template-columns: 1fr 1fr; } .cards { grid-template-columns: 1fr; } }
-@media (max-width: 640px) { .svc { grid-template-columns: 1fr; } }
-</style></Base>
+  .page { padding-top: 80px; padding-bottom: 12px; }
+  .page h1 { margin: 0 0 14px; }
+  .lead { color: var(--ink2); font-size: 1.05rem; }
+  .block { margin-top: 48px; }
+  .block h2 { margin: 0 0 14px; font-size: 1.35rem; }
+  .jobs { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .jobs li {
+    background: var(--paper);
+    border-radius: var(--radius);
+    padding: 18px 20px 16px;
+  }
+  .jobs h3 { margin: 0 0 6px; font-size: 1.05rem; font-weight: 600; letter-spacing: -0.02em; }
+  .jobs p { margin: 0; color: var(--ink2); }
+  ol { margin: 0 0 18px; padding-left: 1.2em; }
+  ol li { margin: 0 0 8px; }
+  .acts { display: flex; flex-wrap: wrap; gap: 10px; margin: 0; }
+  .card {
+    background: var(--paper);
+    border-radius: var(--radius);
+    padding: 22px 20px 20px;
+    scroll-margin-top: 96px;
+  }
+  #start { scroll-margin-top: 96px; }
+  .card img {
+    display: block;
+    width: min(240px, 100%);
+    height: auto;
+    margin: 0 0 12px;
+    border-radius: 16px;
+    background: var(--bg);
+  }
+  .hint, .quiet { color: var(--muted); font-size: 0.92rem; }
+  .quiet a { color: var(--ink); }
+  .wx {
+    font-family: var(--en), var(--sans);
+    letter-spacing: 0.02em;
+  }
+  #copy-wx { margin-top: 4px; }
+</style>
+</Base>

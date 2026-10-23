@@ -25,7 +25,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       </span>
       <div class="mimi-id">
         <strong id="mimi-name">Mimi</strong>
-        <p>幕景的 AI 伙伴，在官网接待访客。</p>
+        <p>先听需求。合作请自己加飞书。</p>
         <p class="mimi-demo" hidden>本地演示，未接通模型。</p>
       </div>
       <button class="mimi-x" type="button" aria-label="关闭对话">×</button>
@@ -135,7 +135,8 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     opacity: 0;
     transition: opacity 0.16s ease, transform 0.16s ease;
   }
-  .mimi-launch.is-hot .mimi-hi {
+  .mimi-launch.is-hot .mimi-hi,
+  .mimi-launch.is-invite .mimi-hi {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
@@ -504,15 +505,15 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     const pos = { x: 0, y: 0, side: 'right' };
 
     const ANSWERS = {
-      what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做影像、视觉和内容创作。目录在[作品页](/works/)。想合作就点「聊合作」。',
+      what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做古画、民乐音画，也做展览和委托。目录在[作品页](/works/)，怎么合作写在[合作页](/contact/)。',
       works: '公开的作品都在[作品页](/works/)。可以先看幕景 Scendance、LitFlow 和 Riffle，点进详情有介绍。',
       made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
-      coop: '想合作、咨询或联系，点「聊合作」。下面是飞书名片，扫码时备注一下来意。\n[[COOP]]',
+      coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
       secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
-      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「聊合作」。',
-      other: '这个问题我答不准，也不能替团队承诺。想合作或咨询，点「聊合作」。',
-      en: 'I can’t answer that precisely. If you want to talk about a project, tap “聊合作”.',
-      enCoop: 'I can’t give a price or a date. Tap “聊合作” and leave a note about the project.\n[[COOP]]',
+      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「聊合作」，或去[合作页](/contact/)。',
+      other: '这个问题我答不准，也不能替团队承诺。想合作，点「聊合作」，或去[合作页](/contact/)。',
+      en: 'I can’t answer that precisely. For a project, tap “聊合作” or open the [collaborate page](/contact/).',
+      enCoop: 'Say what you want to make. Then add 终树 on Feishu with the card below and leave a note. This site will not create a group, and there is no 24-hour assistant.\n[[COOP]]',
     };
 
     function splitCoop(text) {
@@ -539,9 +540,9 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       if (BANNED.test(flat)) return ANSWERS.skip;
       if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
       if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
-      if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么/.test(flat))) return ANSWERS.works;
+      if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么|委托|合作|古画|民乐|音画/.test(flat))) return ANSWERS.works;
       if (flat === '幕景是做什么的？' || ((/幕景|你们/.test(flat)) && /做|是什么|干什么/.test(flat))) return ANSWERS.what;
-      if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|档期|合同|版权|微信|飞书|终树|丁科智/.test(flat)) return ANSWERS.coop;
+      if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|档期|合同|版权|微信|飞书|终树|丁科智|古画|民乐|音画|展陈|委托/.test(flat)) return ANSWERS.coop;
       if (/[A-Za-z]/.test(s) && !/[\u4e00-\u9fff]/.test(s)) {
         return /collab|cooperat|contact|price|quote|hire|partner/i.test(s) ? ANSWERS.enCoop : ANSWERS.en;
       }
@@ -725,7 +726,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     }
 
     function linkify(parent, text) {
-      const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/(?!\/)[A-Za-z0-9/_\-.%]*)\)|(https?:\/\/[^\s<]+)|(\/(?:works|contact|artist|studio)\/[A-Za-z0-9/_\-.]*)/g;
+      const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/(?!\/)[A-Za-z0-9/_\-.%#]*)\)|(https?:\/\/[^\s<]+)|(\/(?:works|contact|artist|studio)\/[A-Za-z0-9/_\-.#]*)/g;
       let last = 0;
       let match;
       while ((match = re.exec(text))) {
@@ -818,7 +819,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       const card = document.createElement('div');
       card.className = 'mimi-coop';
       const title = document.createElement('strong');
-      title.textContent = '加终树飞书，聊合作';
+      title.textContent = '用飞书聊';
       const zoom = document.createElement('button');
       zoom.type = 'button';
       zoom.className = 'mimi-qr';
@@ -832,10 +833,13 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       zoom.append(img);
       zoom.addEventListener('click', openLight);
       const note = document.createElement('p');
-      note.textContent = '用飞书扫码添加，备注来意';
+      note.textContent = '扫码加终树为好友，备注项目。不会自动拉群。';
       const hint = document.createElement('p');
       hint.className = 'mimi-hint';
       hint.textContent = '点按放大。手机上长按图片，或点「保存图片」。';
+      const more = document.createElement('a');
+      more.href = '/contact/#start';
+      more.textContent = '先看我们接什么';
       const save = document.createElement('a');
       save.href = '/mimi/feishu-qr.png';
       save.download = 'feishu-qr.png';
@@ -854,7 +858,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         if (navigator.clipboard) navigator.clipboard.writeText('endTree-26').then(done).catch(() => {});
       });
       wx.append(id);
-      card.append(title, zoom, note, hint, save, wx);
+      card.append(title, zoom, note, hint, save, more, wx);
       log.append(card);
       if (card.offsetHeight <= log.clientHeight) log.scrollTop = log.scrollHeight;
       else log.scrollTop += card.getBoundingClientRect().top - log.getBoundingClientRect().top;
@@ -875,6 +879,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
           requestAnimationFrame(() => root.classList.add('is-open'));
         });
         launch.setAttribute('aria-expanded', 'true');
+        dismissInvite();
         document.body.classList.toggle('mimi-open', window.innerWidth <= 768);
         if (window.innerWidth > 768) input.focus();
         else root.querySelector('.mimi-x').focus();
@@ -888,7 +893,34 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       }
     }
 
-    append('bot', '你好，我是 Mimi，幕景的 AI 伙伴。想了解我们做什么，还是有项目想聊？', false);
+    append('bot', '你好，我是 Mimi。想了解作品，直接问我。想合作，先说说需求，我再把飞书名片放出来。这里不会自动拉群。', false);
+
+    const onContact = /\/contact\/?$/.test(location.pathname);
+    let coopPrimed = false;
+    function dismissInvite() {
+      launch.classList.remove('is-invite');
+      hi.textContent = '嗨，我是 Mimi';
+      try { sessionStorage.setItem('mimi-invite', '1'); } catch { /* private mode */ }
+    }
+    function primeCoop() {
+      if (coopPrimed) return;
+      coopPrimed = true;
+      input.placeholder = '例如：想做一场民乐音画';
+      append('bot', '可以说古画、民乐音画，或一个合作项目。说完我把飞书名片放出来，你自己加好友。官网不会自动拉群。我们接什么在[合作页](/contact/#start)。', false);
+    }
+    if (onContact) launch.setAttribute('aria-label', '先跟 Mimi 说需求');
+    try {
+      if (onContact && sessionStorage.getItem('mimi-invite') !== '1') {
+        hi.textContent = '先说需求';
+        launch.classList.add('is-invite');
+        requestAnimationFrame(() => placeBubble());
+      }
+    } catch { /* private mode */ }
+    document.addEventListener('mimi:open', (e) => {
+      setOpen(true);
+      dismissInvite();
+      if (e.detail?.intent === 'coop') primeCoop();
+    });
 
     function tilt(e) {
       if (pointer) return;
@@ -1088,6 +1120,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     document.addEventListener('click', (e) => {
       if (justDragged) { justDragged = false; return; }
       if (light && light.contains(e.target)) return;
+      if (e.target instanceof Element && e.target.closest('[data-mimi-open]')) return;
       if (!root.classList.contains('is-open') || root.contains(e.target)) return;
       setOpen(false);
     });
@@ -1193,7 +1226,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
             });
             reply = result.text;
             showCoop = result.coop;
-            if (!reply && showCoop) reply = '想合作的话，用下面的名片加就行。';
+            if (!reply && showCoop) reply = '想合作的话，用下面的名片自己加飞书好友。官网不会自动拉群。';
             failed = result.failed || !reply;
             if (failed && !reply) reply = '抱歉，这次没能生成回答，请稍后再试。';
           } else {
