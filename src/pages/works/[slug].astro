@@ -100,27 +100,25 @@ const backNote = w.line;
 .wd-sound { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .wd { color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 .wd p { margin: 0; }
-/* 主视觉：压在一屏内（header + 预留标题区），保证项目名字首屏可见；宽图居中裁切。 */
+/* 主视觉：16:9 框，满宽时零裁切；屏幕矮时整体等比缩小居中（纸色补边）。 */
 .wd-hero {
   position: relative;
-  height: min(680px, max(320px, calc(100svh - 230px)));
   margin: 0;
   overflow: hidden;
   background: var(--wd-paper, #d8d2c4);
+  display: flex;
+  justify-content: center;
 }
 .wd-frame {
   position: relative;
-  height: 100%;
+  width: min(100%, calc((100svh - 230px) * 16 / 9));
+  aspect-ratio: 16 / 9;
   overflow: hidden;
 }
 .wd-frame img {
-  position: absolute;
-  top: 0;
-  left: 50%;
+  width: 100%;
   height: 100%;
-  width: auto;
-  max-width: none;
-  transform: translateX(-50%);
+  object-fit: cover;
   display: block;
 }
 .wd-motion {
@@ -227,7 +225,6 @@ const backNote = w.line;
   :global(html) { scroll-snap-type: y mandatory; scroll-padding-top: 52px; }
   .wd-page { scroll-snap-align: start; scroll-snap-stop: always; min-height: calc(100vh - 52px); min-height: calc(100svh - 52px); }
   .wd-p3 { min-height: 0; }
-  .wd-hero { height: auto; aspect-ratio: 16 / 9; }
   .wd-play { right: 12px; bottom: 12px; }
   .wd-cap { display: none; }
   .wd-wrap { padding: 0 var(--page-gutter); }
