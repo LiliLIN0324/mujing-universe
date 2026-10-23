@@ -1,24 +1,22 @@
 ---
 /**
- * 合作工作台。主路径是填表发邮件（mailto，无后端）。
- * 飞书、定金、微信是同一块面板里的工具。
- * 定金码见 public/consult/pay-qr.png，裁自同一张个人收款码。
+ * 合作工作台。填表走 mailto，无后端。
+ * 定金码 public/consult/pay-qr.png。
  */
 const { tool = '' } = Astro.props;
 const email = 'lily1326685527@gmail.com';
 const mailto = `mailto:${email}?subject=${encodeURIComponent('合作')}`;
-const alipay = 'https://qr.alipay.com/tsx13075wejgikstvu1cv5d';
 const needs = ['古画', '民乐音画', '展览 · 委托'] as const;
 const tiers = [
-  ['1', '¥1', '试收款', '同一张码。在支付宝里选 ¥1。'],
-  ['9.9', '¥9.9', '短咨询', '同一张码。在支付宝里选 ¥9.9。'],
-  ['49', '¥49', '半小时', '同一张码。在支付宝里选 ¥49。'],
-  ['99', '¥99', '正式咨询', '同一张码。在支付宝里选 ¥99。'],
-  ['custom', '自定义', '自己输入', '扫码后在支付宝里输入金额。'],
+  ['1', '¥1', '试收款'],
+  ['9.9', '¥9.9', '短咨询'],
+  ['49', '¥49', '半小时'],
+  ['99', '¥99', '正式咨询'],
+  ['custom', '自定义', '自己输入'],
 ] as const;
 const names: Record<string, string> = {
-  mail: '发送邮件',
-  feishu: '飞书名片',
+  mail: '邮件',
+  feishu: '飞书',
   deposit: '定金',
   wechat: '微信',
 };
@@ -26,61 +24,53 @@ const known = Object.keys(names);
 const start = known.includes(tool) ? tool : 'mail';
 ---
 <main class="bench" id="bench" data-tool={start}>
-  <section class="panel" id="start" aria-label="合作工作台">
+  <section class="panel" id="start" aria-label="Mimi">
     <header class="hd">
-      <p class="who"><span>Mimi</span><span class="role">合作</span></p>
+      <img class="face" src="/mimi/avatar-72.webp" alt="" width="72" height="72"/>
+      <p class="who">Mimi</p>
       <p class="status"><i aria-hidden="true"></i><span id="bench-status">{names[start]}</span></p>
     </header>
 
     <div class="side">
-      <div class="intent">
-        <p class="kicker">意图</p>
-        <h1>告诉我你要做什么。</h1>
-      </div>
-      <div class="tools" role="toolbar" aria-label="工具">
-        <p class="kicker">工具</p>
-        <button type="button" data-tool="mail" aria-pressed={start === 'mail' ? 'true' : 'false'}>发送邮件</button>
-        <button type="button" data-tool="feishu" aria-pressed={start === 'feishu' ? 'true' : 'false'}>飞书名片</button>
+      <h1>你好，我是 Mimi。</h1>
+      <div class="chips" role="toolbar">
+        <button type="button" data-tool="mail" aria-pressed={start === 'mail' ? 'true' : 'false'}>邮件</button>
+        <button type="button" data-tool="feishu" aria-pressed={start === 'feishu' ? 'true' : 'false'}>飞书</button>
         <button type="button" data-tool="deposit" aria-pressed={start === 'deposit' ? 'true' : 'false'}>定金</button>
-        <button type="button" data-tool="wechat" aria-pressed={start === 'wechat' ? 'true' : 'false'}>微信<small>即将开放</small></button>
+        <button type="button" data-tool="wechat" aria-pressed={start === 'wechat' ? 'true' : 'false'}>微信<span class="badge">待</span></button>
       </div>
     </div>
 
     <div class="work">
       <form class="pane" id="pane-mail" action={mailto} method="post" enctype="text/plain" hidden={start !== 'mail'}>
-        <p class="kicker">发送邮件</p>
         <div class="fields">
           <label>称呼<input name="称呼" autocomplete="name" required/></label>
-          <label>品牌 / 单位<input name="品牌 / 单位" autocomplete="organization"/></label>
+          <label>品牌·单位<input name="品牌·单位" autocomplete="organization"/></label>
           <label>邮箱<input name="邮箱" type="email" autocomplete="email" inputmode="email" required/></label>
-          <label>需要什么
-            <select name="需要什么">
-              <option value="">选择</option>
+          <label>方向
+            <select name="方向">
+              <option value="" selected></option>
               {needs.map((item) => <option value={item}>{item}</option>)}
             </select>
           </label>
-          <label class="wide">项目简述<textarea name="项目简述" rows="5"></textarea></label>
+          <label class="wide">简述<textarea name="简述" rows="5"></textarea></label>
         </div>
         <div class="send">
           <button class="solid" type="submit">发送</button>
-          <p>也可直接写信 <a href={mailto}>{email}</a></p>
+          <a class="quiet" href={mailto}>{email}</a>
         </div>
       </form>
 
       <div class="pane" id="feishu" hidden={start !== 'feishu'}>
-        <p class="kicker">飞书名片</p>
         <button class="mark" type="button" data-zoom="/mimi/feishu-qr.png" data-cap="终树的飞书名片">
           <img src="/mimi/feishu-qr.png" alt="终树的飞书名片" width="431" height="568"/>
         </button>
-        <p class="hint">点按放大</p>
       </div>
 
       <div class="pane" id="pane-deposit" hidden={start !== 'deposit'}>
-        <p class="kicker">定金</p>
-        <p class="line">选一档。扫码后邮件或飞书找我们排期。</p>
-        <div class="tiers" role="group" aria-label="定金档位">
-          {tiers.map(([id, amount, name, note]) => (
-            <button type="button" data-tier={id} data-amount={amount} data-name={name} data-note={note} aria-pressed="false">
+        <div class="tiers" role="group" aria-label="定金">
+          {tiers.map(([id, amount, name]) => (
+            <button type="button" data-tier={id} data-amount={amount} data-name={name} aria-pressed="false">
               <b>{amount}</b>
               <small>{name}</small>
             </button>
@@ -92,22 +82,13 @@ const start = known.includes(tool) ? tool : 'mail';
           </button>
           <div>
             <p class="pay-name" id="pay-name"></p>
-            <p class="hint">点按放大</p>
-            <p class="after" id="pay-note"></p>
-            <p class="after">付后<a href={mailto}>发邮件</a>或<a href="#feishu">飞书</a>，我们排期。</p>
-            <p class="fine">人工对账。</p>
-            <p class="fine"><a href={alipay}>用支付宝打开</a></p>
+            <p class="after">付后 · <a href="#mail">邮件</a>或<a href="#feishu">飞书</a></p>
           </div>
         </div>
-        <noscript>
-          <img class="fallback" src="/consult/pay-qr.png" alt="收款码" width="691" height="691"/>
-          <p>扫码后在支付宝里输入金额。付后发邮件或飞书排期。人工对账。</p>
-        </noscript>
       </div>
 
       <div class="pane" id="wechat" hidden={start !== 'wechat'}>
-        <p class="kicker">微信</p>
-        <p class="soon">即将开放。</p>
+        <p class="soon">还没有。</p>
       </div>
     </div>
   </section>
@@ -123,7 +104,7 @@ const start = known.includes(tool) ? tool : 'mail';
   const form = document.getElementById('pane-mail');
   if (root && form) {
     const studio = 'lily1326685527@gmail.com';
-    const names = { mail: '发送邮件', feishu: '飞书名片', deposit: '定金', wechat: '微信' };
+    const names = { mail: '邮件', feishu: '飞书', deposit: '定金', wechat: '微信' };
     const buttons = [...root.querySelectorAll('button[data-tool]')];
     const status = document.getElementById('bench-status');
     const panes = {
@@ -134,7 +115,6 @@ const start = known.includes(tool) ? tool : 'mail';
     };
     const pay = document.getElementById('pay');
     const payName = document.getElementById('pay-name');
-    const payNote = document.getElementById('pay-note');
     const light = document.getElementById('bench-light');
     const lightImg = document.getElementById('bench-light-img');
 
@@ -148,7 +128,7 @@ const start = known.includes(tool) ? tool : 'mail';
       const tool = panes[name] ? name : 'mail';
       buttons.forEach((b) => b.setAttribute('aria-pressed', b.dataset.tool === tool ? 'true' : 'false'));
       Object.entries(panes).forEach(([key, el]) => { if (el) el.hidden = key !== tool; });
-      if (status && !(tool === 'deposit' && pay && !pay.hidden)) status.textContent = names[tool];
+      if (status) status.textContent = names[tool];
       if (pushHash) {
         const next = '#' + tool;
         if (location.hash !== next) history.replaceState(null, '', next);
@@ -162,33 +142,27 @@ const start = known.includes(tool) ? tool : 'mail';
         b.setAttribute('aria-pressed', 'true');
         if (pay) pay.hidden = false;
         if (payName) payName.textContent = b.dataset.amount + ' ' + b.dataset.name;
-        if (payNote) payNote.textContent = b.dataset.note || '';
-        if (status) status.textContent = b.dataset.amount;
       });
     });
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+      if (!form.reportValidity()) return;
       const data = new FormData(form);
       const name = String(data.get('称呼') || '').trim();
-      const org = String(data.get('品牌 / 单位') || '').trim();
+      const org = String(data.get('品牌·单位') || '').trim();
       const from = String(data.get('邮箱') || '').trim();
-      const need = String(data.get('需要什么') || '').trim();
-      const brief = String(data.get('项目简述') || '').trim();
-      if (!form.reportValidity()) {
-        if (status) status.textContent = '先写称呼和邮箱';
-        return;
-      }
+      const need = String(data.get('方向') || '').trim();
+      const brief = String(data.get('简述') || '').trim();
       const subject = need ? '合作 · ' + need : '合作';
       const body = [
         '称呼：' + name,
-        '品牌 / 单位：' + (org || '—'),
+        '品牌·单位：' + (org || '—'),
         '邮箱：' + from,
-        '需要什么：' + (need || '—'),
+        '方向：' + (need || '—'),
         '',
         brief,
       ].join('\n');
-      if (status) status.textContent = '打开邮件';
       location.href = 'mailto:' + studio + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
     });
 
@@ -229,6 +203,7 @@ const start = known.includes(tool) ? tool : 'mail';
     display: grid;
     grid-template-columns: 280px 1fr;
     grid-template-rows: auto 1fr;
+    min-height: 480px;
     border: 1px solid var(--ink);
     border-radius: 0;
     background: #fff;
@@ -237,25 +212,23 @@ const start = known.includes(tool) ? tool : 'mail';
     grid-column: 1 / -1;
     display: flex;
     align-items: center;
-    gap: 16px;
-    min-height: 52px;
+    gap: 10px;
+    min-height: 56px;
     padding: 0 16px;
     border-bottom: 1px solid var(--ink);
   }
+  .face {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex: none;
+  }
   .who {
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
     margin: 0;
     font-size: 15px;
     font-weight: 600;
     letter-spacing: 0.08em;
-  }
-  .role {
-    color: var(--muted);
-    font-size: 12px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
   }
   .status {
     margin: 0 0 0 auto;
@@ -277,22 +250,20 @@ const start = known.includes(tool) ? tool : 'mail';
     padding: 22px 16px 16px;
     border-right: 1px solid var(--ink);
   }
-  .intent h1 {
+  .side h1 {
     margin: 0;
-    font-size: clamp(28px, 3vw, 36px);
+    font-size: clamp(26px, 3vw, 32px);
     font-weight: 600;
     letter-spacing: -0.04em;
-    line-height: 1.15;
+    line-height: 1.2;
   }
-  .kicker {
-    margin: 0 0 10px;
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.16em;
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: auto;
   }
-  .tools { display: grid; gap: 8px; margin-top: auto; }
-  .tools button,
+  .chips button,
   .tiers button,
   .solid,
   .light button {
@@ -303,31 +274,29 @@ const start = known.includes(tool) ? tool : 'mail';
     font-family: var(--sans);
     cursor: pointer;
   }
-  .tools button {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 8px;
-    min-height: 44px;
-    padding: 10px 12px;
+  .chips button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 36px;
+    padding: 0 12px;
     font-size: 14px;
-    letter-spacing: 0.06em;
-    text-align: left;
+    letter-spacing: 0.08em;
   }
-  .tools button small {
+  .badge {
     color: var(--muted);
     font-size: 11px;
     letter-spacing: 0.08em;
   }
-  .tools button:hover,
-  .tools button[aria-pressed="true"],
+  .chips button:hover,
+  .chips button[aria-pressed="true"],
   .tiers button:hover,
   .tiers button[aria-pressed="true"] {
     background: var(--ink);
     color: #fff;
   }
-  .tools button:hover small,
-  .tools button[aria-pressed="true"] small { color: #fff; }
+  .chips button:hover .badge,
+  .chips button[aria-pressed="true"] .badge { color: #fff; }
   .work { padding: 22px 20px 20px; }
   .fields {
     display: grid;
@@ -366,6 +335,7 @@ const start = known.includes(tool) ? tool : 'mail';
     background-size: 6px 6px, 6px 6px;
     background-repeat: no-repeat;
   }
+  select:has(option[value=""]:checked) { color: var(--muted); }
   textarea { min-height: 140px; padding: 10px 12px; resize: vertical; }
   .send {
     display: flex;
@@ -383,22 +353,24 @@ const start = known.includes(tool) ? tool : 'mail';
     letter-spacing: 0.14em;
   }
   .solid:hover { opacity: 0.82; }
-  .send p,
-  .line,
-  .after,
-  .hint,
-  .fine,
+  .quiet {
+    color: var(--muted);
+    font-family: var(--en), var(--sans);
+    font-size: 13px;
+    letter-spacing: 0;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .quiet:hover { border-bottom-color: var(--muted); }
   .soon,
+  .after,
   .pay-name { margin: 0; }
-  .send p { font-size: 14px; }
-  .send a,
-  .after a,
-  .fine a {
+  .after { margin-top: 10px; font-size: 14px; letter-spacing: 0.04em; }
+  .after a {
     color: var(--ink);
     text-decoration: none;
     border-bottom: 1px solid var(--ink);
   }
-  .line { margin: 0 0 14px; font-size: 15px; }
   .tiers { display: flex; flex-wrap: wrap; gap: 8px; }
   .tiers button {
     display: flex;
@@ -420,30 +392,24 @@ const start = known.includes(tool) ? tool : 'mail';
   .mark {
     display: block;
     width: min(200px, 100%);
-    margin-top: 4px;
     padding: 0;
     border: 1px solid var(--ink);
     border-radius: 0;
     background: #fff;
     cursor: zoom-in;
   }
-  .mark img,
-  .fallback {
+  .mark img {
     display: block;
     width: 100%;
     height: auto;
     border-radius: 0;
   }
-  .fallback { width: min(200px, 100%); margin-top: 12px; border: 1px solid var(--ink); }
-  .hint, .fine { margin-top: 8px; color: var(--muted); font-size: 13px; letter-spacing: 0.04em; }
   .pay {
     display: grid;
     grid-template-columns: 200px 1fr;
     gap: 16px 18px;
-    align-items: start;
+    align-items: center;
     margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--ink);
   }
   .pay-name {
     font-size: 22px;
@@ -451,7 +417,6 @@ const start = known.includes(tool) ? tool : 'mail';
     letter-spacing: -0.03em;
     line-height: 1.1;
   }
-  .after { margin-top: 8px; font-size: 15px; line-height: 1.5; }
   .soon { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
   .pay[hidden],
   .pane[hidden],
@@ -486,10 +451,10 @@ const start = known.includes(tool) ? tool : 'mail';
   }
   @media (max-width: 720px) {
     .bench { width: calc(100% - 2 * var(--gutter)); padding-top: 16px; }
-    .panel { grid-template-columns: 1fr; }
+    .panel { grid-template-columns: 1fr; min-height: 0; }
     .side { gap: 16px; border-right: 0; border-bottom: 1px solid var(--ink); }
-    .intent h1 { font-size: 28px; }
-    .tools { grid-template-columns: 1fr 1fr; margin-top: 0; }
+    .side h1 { font-size: 26px; }
+    .chips { margin-top: 0; }
     .fields, .pay { grid-template-columns: 1fr; }
     .wide { grid-column: auto; }
   }
