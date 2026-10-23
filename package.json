@@ -13,5 +13,8 @@
     "@rive-app/canvas": "^2.45.1",
     "astro": "^5.0.0",
     "ogl": "^1.0.11"
+  },
+  "devDependencies": {
+    "@fontpkg/alibaba-pu-hui-ti-3-0": "^3.1.2"
   }
 }
