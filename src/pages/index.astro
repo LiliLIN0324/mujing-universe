@@ -127,11 +127,11 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
       <div class="fs-slide" data-i={i + 1} data-clip={work.clip ? '1' : undefined} aria-hidden="true" inert>
         {work.clip ? (
           <div class="fs-visual">
-            <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+            <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
             <video class="fs-clip" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
           </div>
         ) : (
-          <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+          <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
         )}
         <div class="fs-plate">
           <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}</p>
