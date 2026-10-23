@@ -1,19 +1,5 @@
 import { getCollection } from 'astro:content';
 export const LINES = ['音画', 'AIGC 产品', '游戏', '空间与研究'] as const;
-/** 作品库代表作。顺序即版面顺序，不跟目录排序走。首页全屏轮播仍用目录前 10 件。 */
-export const FEATURED_SLUGS = [
-  'xihu-panorama',
-  'scendance',
-  'litflow',
-  'riffle-ai-game-generation-tool',
-  'kittylovecarrots',
-  'neurotopia',
-  'chicken-utopia',
-  'heatmapper',
-] as const;
-export function isFeaturedSlug(slug: string) {
-  return (FEATURED_SLUGS as readonly string[]).includes(slug);
-}
 export const LINE_EN: Record<string,string> = { '音画':'Audio-Visual', 'AIGC 产品':'AIGC Products', '游戏':'Games', '空间与研究':'Space & Research' };
 export async function allWorks() {
   const ws = (await getCollection('works')).map(w => w.data);
