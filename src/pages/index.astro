@@ -4,6 +4,7 @@ import { allWorks, coverClip, pickBody, pickDeskBody, pickIntro, pickSummary, pi
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
 const SCROLL_STILL = `${R2}/01.jpg`;
+const SCROLL_FALLBACK = `${R2}/02.jpg`;
 const picks = ws.map((w) => ({
   slug: w.slug,
   title: w.title,
