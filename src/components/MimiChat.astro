@@ -76,6 +76,9 @@ const mail = 'mailto:lily1326685527@gmail.com';
     border: 0;
     border-radius: 0;
     background: transparent;
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
     cursor: grab;
     touch-action: none;
     -webkit-user-drag: none;
@@ -83,6 +86,10 @@ const mail = 'mailto:lily1326685527@gmail.com';
     user-select: none;
   }
   .mimi-launch.is-drag { cursor: grabbing; }
+  .mimi-launch:focus,
+  .mimi-launch:focus-visible {
+    outline: none;
+  }
   .mimi-halo {
     position: absolute;
     inset: -7px;
@@ -107,14 +114,15 @@ const mail = 'mailto:lily1326685527@gmail.com';
     display: block;
     width: 100%;
     height: 100%;
-    border-radius: 50%;
-    overflow: hidden;
+    border-radius: 0;
+    overflow: visible;
     background: transparent;
     box-shadow: none;
+    outline: none;
   }
   .mimi-launch.is-drag .mimi-face { transition: none; }
-  /* 橙色圆直接贴在页面上，不套黑框，也不垫白底方框。
-     文件里缺的圆顶仍用同色圆补上。 */
+  /* 画布不裁切、不放大。橙色圆是 Rive 画出来的，四角透明，直接贴在页面上。
+     静态图的白角只裁在图片自己身上，缺的圆顶用同色圆补。 */
   .mimi-ground {
     position: absolute;
     inset: 0;
@@ -122,13 +130,20 @@ const mail = 'mailto:lily1326685527@gmail.com';
     background: #ff690a;
     pointer-events: none;
   }
+  .mimi-face.is-rive .mimi-ground { visibility: hidden; }
   .mimi-face picture {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 50%;
+  }
+  .mimi-face picture img {
     position: absolute;
     left: 0;
     top: 3.48%;
     width: 100%;
     height: 100%;
-    margin: 0;
   }
   .mimi-face img,
   .mimi-launch img {
@@ -157,13 +172,6 @@ const mail = 'mailto:lily1326685527@gmail.com';
     user-select: none;
   }
   .mimi-rive[hidden] { display: none !important; }
-  /* 实机画布上整圆贴着上沿。339px 画布：左 21.4、上 0.2、直径 296.5。 */
-  .mimi-face.is-rive .mimi-rive {
-    left: -7.21%;
-    top: -0.05%;
-    width: 114.32%;
-    height: 114.32%;
-  }
   .mimi-face.is-rive .mimi-still { visibility: hidden; }
   .mimi-hi {
     position: absolute;
@@ -211,14 +219,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
   }
   .mimi-dots i:nth-child(2) { animation-delay: 0.15s; }
   .mimi-dots i:nth-child(3) { animation-delay: 0.3s; }
-  .mimi[data-state="answering"] .mimi-launch .mimi-face,
-  .mimi[data-state="answering"] .mimi-hd .mimi-face {
-    outline: 2px solid #1a1a1c;
-    outline-offset: 2px;
-  }
   .mimi[data-state="error"] .mimi-face {
-    outline: 2px solid #1a1a1c;
-    outline-offset: 2px;
     animation: mimi-shake 0.42s ease;
   }
   .mimi-panel {

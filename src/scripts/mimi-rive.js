@@ -133,7 +133,7 @@ export async function mountMimiRive(canvas, reduce) {
         stateMachine: MIMI_STATE_MACHINE,
         autoplay: true,
         shouldDisableRiveListeners: true,
-        layout: new Layout({ fit: Fit.Cover, alignment: Alignment.Center }),
+        layout: new Layout({ fit: Fit.Contain, alignment: Alignment.Center }),
         onLoadError: fail,
         onLoad: () => {
           try {
