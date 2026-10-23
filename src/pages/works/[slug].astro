@@ -1,13 +1,13 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Cooperate from '../../components/Cooperate.astro';
-import { allWorks, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
+import { allWorks, isFeaturedSlug, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
-  // 下一件 follows the catalogue order; its first 10 are the 精选 list (xihu → LitFlow …), last wraps to first.
-  return ws.map((w, i) => ({ params: { slug: w.slug }, props: { w, next: ws[i + 1] || ws[0], featured: i < 10 } }));
+  // 下一件 follows the catalogue order; the last wraps to the first.
+  return ws.map((w, i) => ({ params: { slug: w.slug }, props: { w, next: ws[i + 1] || ws[0] } }));
 }
-const { w, next, featured } = Astro.props;
+const { w, next } = Astro.props;
 /* ≤768px page-by-page: per-page "dwell" switch ('on' = vertical swipes first walk the
    page's own content — the full-scroll strip on page 2 — then flip; 'off' = flip at once).
    Which pages dwell is TBD: all off. */
@@ -32,9 +32,10 @@ const facts = [['角色', role], ['技术', tech.join(' · ')], ['年份', year]
 const total = 1 + stills.length;
 const pad = (n: number) => String(n).padStart(2, '0');
 const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' · ');
-const backHref = featured ? '/#picks' : '/works/';
-const backText = featured ? '← 返回精选' : '← 返回作品';
-const backNote = featured ? '精选目录' : '作品目录';
+const inFeatured = isFeaturedSlug(w.slug);
+const backHref = inFeatured ? '/works/#features' : '/works/#archive';
+const backText = inFeatured ? '← 返回代表作' : '← 返回全部作品';
+const backNote = inFeatured ? '代表作' : '全部作品';
 ---
 <Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
@@ -46,7 +47,7 @@ const backNote = featured ? '精选目录' : '作品目录';
     <div class="wd-wrap">
       <div class="wd-head">
         <div>
-          <p class="wd-crumb"><a href={featured ? '/#picks' : '/works/'}>{featured ? '精选' : '作品'}</a>　/　<a href={`/works/?line=${encodeURIComponent(w.line)}`}>{w.line}</a></p>
+          <p class="wd-crumb"><a href={backHref}>{inFeatured ? '代表作' : '作品'}</a>　/　<a href={`/works/?line=${encodeURIComponent(w.line)}#archive`}>{w.line}</a></p>
           <h1>{w.title}</h1>
           {sub && <p class="wd-sub">{sub}</p>}
           <p class="wd-meta"><b>{w.no}</b><span class="d">{deskMeta}</span><span class="m">{mobileMeta}</span></p>

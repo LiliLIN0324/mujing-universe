@@ -1,14 +1,14 @@
 ---
 /** /works/ 16:9 封面：WORKS_COVER 里的真图，否则排版封面。图片出错时由页面脚本加 .fb 并移除 img，排版内容已在 DOM 中。 */
 import { WORKS_COVER, splitTitle, titleWidth } from '../lib';
-const { w } = Astro.props;
+const { w, eager = false } = Astro.props;
 const c = WORKS_COVER[w.slug];
 const [main, sub0] = splitTitle(w.title);
 const sub = sub0 || w.category || '';
 const style = c ? [`object-position:${c.pos || '50% 50%'}`, c.scale ? `transform:scale(${c.scale})` : ''].filter(Boolean).join(';') : '';
 ---
 <div class:list={['cv', !c && 'fb']}>
-  {c && <img src={c.src} alt="" style={style} loading="lazy" decoding="async" referrerpolicy="no-referrer" data-cv-img />}
+  {c && <img src={c.src} alt="" style={style} loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : 'auto'} decoding="async" referrerpolicy="no-referrer" data-cv-img />}
   <span class="fb-no">{w.no}</span>
   <div class="fb-t"><b class:list={['fb-title', titleWidth(main) > 22 && 'long']}>{main}</b>{sub && <i class="fb-sub">{sub}</i>}</div>
   <span class="fb-meta">{w.line} · {w.yearNum || w.year}</span>
