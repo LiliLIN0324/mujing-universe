@@ -179,14 +179,16 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     -webkit-line-clamp: 3;
     overflow: hidden;
   }
-  /* 彩色色板：丁科智 = Mimi 橙；合作项目 = 雾蓝。文字固定白色。 */
-  .wf .card[data-by="ding"]::before { background: #ff690a; }
-  .wf .card[data-by="collab"]::before { background: #3e5c76; }
-  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .cap h2,
-  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-by { color: #fff; }
-  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-by span { color: rgba(255, 255, 255, 0.75); }
-  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-meta,
-  .wf .card[data-by="ding"], .wf .card[data-by="collab"] .more .m-desc { color: rgba(255, 255, 255, 0.82); }
+  /* 彩色色板：按分类取色——数字艺术橙 / 产品雾蓝 / 游戏紫 / 空间灰绿。文字固定白色。 */
+  .wf .card[data-line="数字艺术"]::before { background: #ff690a; }
+  .wf .card[data-line="产品"]::before { background: #3e5c76; }
+  .wf .card[data-line="游戏"]::before { background: #7a5ba6; }
+  .wf .card[data-line="空间"]::before { background: #4e7a68; }
+  .wf .card[data-line] .cap h2,
+  .wf .card[data-line] .more .m-by { color: #fff; }
+  .wf .card[data-line] .more .m-by span { color: rgba(255, 255, 255, 0.75); }
+  .wf .card[data-line] .more .m-meta,
+  .wf .card[data-line] .more .m-desc { color: rgba(255, 255, 255, 0.82); }
 }
 /* 作品少时页脚贴住视口底部。 */
 body:has(.wf) { display: flex; flex-direction: column; min-height: 100dvh; }
