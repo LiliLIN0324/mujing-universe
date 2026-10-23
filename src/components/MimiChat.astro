@@ -44,7 +44,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
       <a class="mimi-mail" href={mail}>写邮件</a>
     </div>
     <div class="mimi-ims" role="group" aria-label="其他聊天">
-      <a href="/contact/#feishu">飞书</a>
+      <button class="mimi-im-feishu" type="button" aria-pressed="false">飞书</button>
       <button type="button" disabled>企微/公众号<span>即将开放</span></button>
       <button type="button" disabled>微信<span>即将开放</span></button>
       <button type="button" disabled>钉钉<span>即将开放</span></button>
@@ -464,7 +464,6 @@ const mail = 'mailto:lily1326685527@gmail.com';
     margin: 8px 14px 0;
     border: 1px solid rgba(26, 26, 28, 0.16);
   }
-  .mimi-ims a,
   .mimi-ims button {
     display: flex;
     align-items: center;
@@ -481,10 +480,14 @@ const mail = 'mailto:lily1326685527@gmail.com';
     font-size: 13px;
     line-height: 1;
     text-align: left;
-    text-decoration: none;
+    cursor: pointer;
   }
   .mimi-ims > :first-child { border-top: 0; }
-  .mimi-ims a:hover { background: #1a1a1c; color: #f6f5f3; }
+  .mimi-ims button:not(:disabled):hover,
+  .mimi-ims button.is-on {
+    background: #1a1a1c;
+    color: #f6f5f3;
+  }
   .mimi-ims button:disabled {
     color: #9a9a9a;
     cursor: not-allowed;
@@ -612,9 +615,10 @@ const mail = 'mailto:lily1326685527@gmail.com';
   const demoNote = root?.querySelector('.mimi-demo');
   const quick = root?.querySelectorAll('.mimi-quick button');
   const feishuBtn = root?.querySelector('.mimi-feishu');
+  const imFeishu = root?.querySelector('.mimi-im-feishu');
   const hi = launch?.querySelector('.mimi-hi');
   const canvas = launch?.querySelector('.mimi-rive');
-  if (root && launch && face && panel && log && form && input && demoNote && quick && feishuBtn && hi && canvas) {
+  if (root && launch && face && panel && log && form && input && demoNote && quick && feishuBtn && imFeishu && hi && canvas) {
     let reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const BANNED = /西湖|繁胜全景|xihu-panorama/i;
     const STORE = 'mimi-dock';
@@ -1466,14 +1470,18 @@ const mail = 'mailto:lily1326685527@gmail.com';
       ask(input.value);
     });
     quick.forEach((btn) => btn.addEventListener('click', () => ask(btn.textContent || '')));
-    feishuBtn.addEventListener('click', () => {
+    function showFeishuCard() {
+      imFeishu.classList.add('is-on');
+      imFeishu.setAttribute('aria-pressed', 'true');
       const card = log.querySelector('.mimi-coop');
       if (card) {
         log.scrollTop += card.getBoundingClientRect().top - log.getBoundingClientRect().top;
         return;
       }
       appendCoop();
-    });
+    }
+    feishuBtn.addEventListener('click', showFeishuCard);
+    imFeishu.addEventListener('click', showFeishuCard);
 
     const refit = () => {
       cancelAnimationFrame(springRaf);
