@@ -29,8 +29,6 @@ const start = known.includes(tool) ? tool : '';
     <div class="work">
       <h1>你好，我是 Mimi。</h1>
       <div class="log" id="bench-log" role="log" aria-live="polite" aria-relevant="additions">
-        <div class="msg bot"><p>你好，我是 Mimi。</p></div>
-
         <form class="card" id="pane-mail" action={mailto} method="post" enctype="text/plain" hidden={start !== 'mail'}>
           <div class="fields">
             <label>称呼<input name="称呼" autocomplete="name" required/></label>
