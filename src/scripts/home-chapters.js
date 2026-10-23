@@ -172,7 +172,7 @@ function startChapters(runway, stage) {
     if (next < 0) return;
     e.preventDefault();
     if (next >= n) {
-      document.getElementById('cta')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      document.querySelector('footer.bot')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
       return;
     }
     scrollToIndex(next);
