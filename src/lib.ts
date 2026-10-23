@@ -150,9 +150,10 @@ export function workAudio(w: { slug: string }): string | null {
   return w.slug === 'xihu-panorama' ? `${R2_FIG}/xihu-panorama/scroll-placeholder.mp4` : null;
 }
 /**
- * 封面预览：只有 R2 上核对过的 mp4。没有片的作品不在这里，封面保持静图。
+ * 封面预览：核对过的 mp4。没有片的作品不在这里，封面保持静图。
  * 路径用 Range 请求确认过（206、video/mp4），不按 slug 猜。
  * 首页章节和作品库用同一份名单。
+ * 转塘艺讯暂用 public/works/zhuantang-yixun/cover.mp4。以后可改到 R2 fig/zhuantang-yixun/，slug 不变。Mimi 仍是静图。
  */
 const COVER_CLIP: Record<string, string> = {
   'xihu-panorama': `${R2_FIG}/xihu-panorama/scroll-placeholder.mp4`,
@@ -179,6 +180,7 @@ const COVER_CLIP: Record<string, string> = {
   'chicken-utopia': `${R2_FIG}/chicken-utopia/cover.mp4`,
   'hongqiqu': `${R2_FIG}/hongqiqu/cover.mp4`,
   'previous-archi-work': `${R2_FIG}/previous-archi-work/cover.mp4`,
+  'zhuantang-yixun': '/works/zhuantang-yixun/cover.mp4',
 };
 /** 首页章节、作品库封面和详情主视觉的真实预览。没有就返回 null，保持静图。 */
 export function coverClip(slug: string): string | null {
@@ -234,4 +236,7 @@ export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: nu
   'chicken-utopia': { src: `${R2_FIG}/chicken-utopia/02.jpg`, pos: '50% 30%' },
   'hongqiqu': { src: `${R2_FIG}/hongqiqu/logo.jpg`, pos: '50% 60%' },
   'scendance': { src: '/ring/_sources/scendance-hero.jpg' },
+  // 本地静帧。以后可改到 R2 fig/zhuantang-yixun/、fig/mimi-agent/，slug 不变。
+  'zhuantang-yixun': { src: '/works/zhuantang-yixun/home.jpg' },
+  'mimi-agent': { src: '/works/mimi-agent/cover.png' },
 };
