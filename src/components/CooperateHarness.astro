@@ -425,7 +425,7 @@ const start = known.includes(tool) ? tool : '';
     min-height: 0;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
   }
   .hd {
     display: flex;
@@ -469,7 +469,7 @@ const start = known.includes(tool) ? tool : '';
   .face-dots i {
     width: 3px;
     height: 3px;
-    background: #fff;
+    background: #FFFFFF;
     animation: bench-dot 1s infinite;
   }
   .face-dots i:nth-child(2) { animation-delay: 0.15s; }
@@ -517,7 +517,7 @@ const start = known.includes(tool) ? tool : '';
   .light button {
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
     color: var(--ink);
     font-family: var(--sans);
     cursor: pointer;
@@ -541,17 +541,17 @@ const start = known.includes(tool) ? tool : '';
   .tiers button:hover,
   .tiers button[aria-pressed="true"] {
     background: var(--ink);
-    color: #fff;
+    color: var(--bg);
   }
   .chips button:hover .badge,
-  .chips button[aria-pressed="true"] .badge { color: #fff; }
+  .chips button[aria-pressed="true"] .badge { color: var(--bg); }
   .work {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-width: 0;
     min-height: 0;
-    background: #fff;
+    background: var(--paper);
   }
   .log {
     flex: 1;
@@ -569,14 +569,14 @@ const start = known.includes(tool) ? tool : '';
     gap: 10px;
     padding: 12px 16px 16px;
     border-top: 1px solid var(--ink);
-    background: #fff;
+    background: var(--paper);
   }
   .card {
     align-self: stretch;
     width: 100%;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
     padding: 14px;
   }
   .say {
@@ -596,7 +596,7 @@ const start = known.includes(tool) ? tool : '';
     resize: none;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
     color: var(--ink);
     font: inherit;
     font-size: 16px;
@@ -607,7 +607,7 @@ const start = known.includes(tool) ? tool : '';
     min-height: 44px;
     padding: 0 18px;
     background: var(--ink);
-    color: #fff;
+    color: var(--bg);
     font-size: 14px;
     letter-spacing: 0.14em;
   }
@@ -632,7 +632,7 @@ const start = known.includes(tool) ? tool : '';
     margin-top: 6px;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
     color: var(--ink);
     font: inherit;
     font-size: 16px;
@@ -656,7 +656,7 @@ const start = known.includes(tool) ? tool : '';
   select {
     appearance: none;
     padding-right: 32px;
-    background-image: linear-gradient(45deg, transparent 50%, #1a1a1c 50%), linear-gradient(135deg, #1a1a1c 50%, transparent 50%);
+    background-image: linear-gradient(45deg, transparent 50%, var(--ink) 50%), linear-gradient(135deg, var(--ink) 50%, transparent 50%);
     background-position: calc(100% - 18px) 19px, calc(100% - 12px) 19px;
     background-size: 6px 6px, 6px 6px;
     background-repeat: no-repeat;
@@ -674,7 +674,7 @@ const start = known.includes(tool) ? tool : '';
     min-height: 44px;
     padding: 0 22px;
     background: var(--ink);
-    color: #fff;
+    color: var(--bg);
     font-size: 14px;
     letter-spacing: 0.14em;
   }
@@ -725,7 +725,7 @@ const start = known.includes(tool) ? tool : '';
     padding: 0;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
     cursor: zoom-in;
   }
   .mark img {
@@ -762,7 +762,7 @@ const start = known.includes(tool) ? tool : '';
     justify-content: center;
     gap: 16px;
     padding: 24px;
-    background: #fff;
+    background: #FFFFFF;
   }
   .light img {
     width: auto;
@@ -771,7 +771,7 @@ const start = known.includes(tool) ? tool : '';
     height: auto;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: #FFFFFF;
   }
   .light button {
     min-width: 88px;
@@ -803,7 +803,7 @@ const start = known.includes(tool) ? tool : '';
   body:has(#bench) {
     height: 100%;
     overflow: hidden;
-    background: #fff;
+    background: var(--bg);
   }
   body:has(#bench) {
     display: flex;
@@ -822,7 +822,7 @@ const start = known.includes(tool) ? tool : '';
   body:has(#bench) header.top.top--home.is-shown,
   body:has(#bench) .top--home nav,
   body:has(#bench) footer.bot {
-    background: #fff;
+    background: var(--bg);
   }
   body:has(#bench) #mimi { display: none !important; }
   body:has(#bench) footer.bot { flex: none; padding-top: 12px; padding-bottom: 12px; }
@@ -832,7 +832,7 @@ const start = known.includes(tool) ? tool : '';
     margin: 0;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
     color: var(--ink);
     padding: 10px 12px;
   }
@@ -840,7 +840,7 @@ const start = known.includes(tool) ? tool : '';
     align-self: flex-end;
     margin-left: 14%;
     background: var(--ink);
-    color: #fff;
+    color: var(--bg);
   }
   #bench .msg p {
     margin: 0;
@@ -860,7 +860,7 @@ const start = known.includes(tool) ? tool : '';
     padding: 4px 10px;
     border: 1px solid var(--ink);
     border-radius: 0;
-    background: #fff;
+    background: var(--paper);
     color: var(--ink);
     font: inherit;
     font-size: 13px;
