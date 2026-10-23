@@ -6,4 +6,4 @@ dist/
 
 # local-only preview copies of artist portraits (served when R2 object is missing in dev)
 public/_preview-portraits/
-".import-tmp/"  
+
