@@ -22,6 +22,11 @@ const audio = workAudio(w);
 const clip = coverClip(w.slug);
 const clipIsAudio = !!(clip && audio && clip === audio);
 const sub = workSubtitle(w);
+const oneLiner = (() => {
+  const d = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
+  if (!d) return '';
+  return d.endsWith('。') || d.length < 40 ? d : d.split('。')[0] + '。';
+})();
 const intro = pickBody(w);
 const tech = pickTech(w);
 const year = w.yearNum ? String(w.yearNum) : w.year;
@@ -50,7 +55,7 @@ const backNote = w.line;
       <div class="wd-head">
         <div>
           <h1>{w.title}</h1>
-          {sub && <p class="wd-sub">{sub}</p>}
+          {(sub || oneLiner) && <p class="wd-sub">{sub || oneLiner}</p>}
         </div>
         {audio && <button class="wd-listen" id="wd-listen" type="button" aria-pressed="false"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>}
       </div>
@@ -111,7 +116,7 @@ const backNote = w.line;
 }
 .wd-frame {
   position: relative;
-  width: 100%;
+  width: min(100%, calc((100svh - 310px) * 16 / 9));
   aspect-ratio: 16 / 9;
   overflow: hidden;
 }
@@ -172,8 +177,8 @@ const backNote = w.line;
 .wd-listen .ic { width: 0; height: 0; border-left: 9px solid var(--cta-fg); border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
 .wd-listen[aria-pressed="true"] .ic { width: 9px; height: 12px; border: 0; border-left: 3px solid var(--cta-fg); border-right: 3px solid var(--cta-fg); }
 .wd-listen:disabled { opacity: 0.45; cursor: not-allowed; }
-.wd-body { display: grid; grid-template-columns: 7fr 4fr; gap: 96px; margin-top: 64px; padding-top: 40px; border-top: 1px solid var(--rule); }
-.wd-intro, .wd-more { font-size: 17px; line-height: 2; color: var(--ink-soft); max-width: 36em; letter-spacing: 0.02em; }
+.wd-body { display: grid; grid-template-columns: 7fr 4fr; gap: 96px; margin-top: 32px; padding-top: 28px; border-top: 1px solid var(--rule); }
+.wd-intro, .wd-more { font-size: 15px; line-height: 1.85; color: var(--ink-soft); max-width: 36em; letter-spacing: 0.02em; }
 .wd-more { margin-top: 12px !important; }
 .wd-more a { color: inherit; }
 .wd-facts { margin: 0; font-size: 14px; }
