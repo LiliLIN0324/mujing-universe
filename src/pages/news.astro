@@ -1,15 +1,435 @@
 ---
 import Base from '../layouts/Base.astro';
+import raw from '../data/news.json';
+import {
+  SECTIONS,
+  SECTION_LABEL,
+  WHENS,
+  classify,
+  dateLabel,
+  isSection,
+  metaLine,
+  sortNews,
+  todayISO,
+  type NewsItem,
+  type SectionId,
+} from '../lib/news';
+
+const today = todayISO();
+const items = sortNews(
+  raw.items.map((item) => {
+    if (!isSection(item.section)) throw new Error(`新闻条目 ${item.id} 的板块无效`);
+    return item as NewsItem;
+  }),
+);
+
+const sectionCount = (id: SectionId) => items.filter((item) => item.section === id).length;
+const placeholderCount = (id: SectionId) => items.filter((item) => item.section === id && item.placeholder).length;
+const whenCount = (id: string) =>
+  id === 'all' ? items.length : items.filter((item) => classify(item, today) === id).length;
+
+function sectionStat(id: SectionId) {
+  const total = sectionCount(id);
+  const placeholders = placeholderCount(id);
+  if (placeholders === total && total > 0) return `${total} 条 · 均为占位`;
+  if (placeholders > 0) return `${total} 条 · ${placeholders} 条占位`;
+  return `${total} 条`;
+}
+
+function timeAttr(item: NewsItem) {
+  if (!item.start) return undefined;
+  if (item.precision === 'year') return item.start.slice(0, 4);
+  return item.start;
+}
 ---
-<Base title="新闻 · 幕景宇宙" active="/news/">
-<main class="wrap news-page">
-  <p class="kicker cap">News · 新闻</p>
-  <h1>新闻</h1>
-  <p class="empty">近期动态陆续更新。</p>
+<Base
+  title="新闻 · 幕景宇宙"
+  description="幕景宇宙新闻：技术动态、活动参与、技术分享。按现在、即将、往期查看。"
+  active="/news/"
+>
+<main class="news-page">
+  <header class="news-intro">
+    <p class="kicker cap">News</p>
+    <h1>新闻</h1>
+    <p class="lede">新闻分成三条线。技术动态写产品和工具，活动参与写会议和公开活动，技术分享写方法。深色列表可以按线筛选，也可以按现在、即将、往期再看一次。</p>
+    <div class="ia">
+      {SECTIONS.map((section) => (
+        <a class="ia-card" href={`/news/?section=${section.id}`} data-go-section={section.id}>
+          <p class="en">{section.en}</p>
+          <h2>{section.label}</h2>
+          <p class="hint">{section.hint}</p>
+          <p class="stat">{sectionStat(section.id)}</p>
+        </a>
+      ))}
+    </div>
+  </header>
+
+  <section class="stage" id="list" aria-label="新闻列表">
+    <div class="news-in">
+      <div class="bar">
+        <div class="secs" role="group" aria-label="按板块筛选">
+          <a href="/news/" data-section-link="all" class="on" aria-current="page">全部<sup>{items.length}</sup></a>
+          {SECTIONS.map((section) => (
+            <a href={`/news/?section=${section.id}`} data-section-link={section.id}>{section.label}<sup>{sectionCount(section.id)}</sup></a>
+          ))}
+        </div>
+        <div class="whens" role="group" aria-label="按时间筛选">
+          {WHENS.map((item) => (
+            <a href={item.id === 'all' ? '/news/' : `/news/?when=${item.id}`} data-when-link={item.id} class={item.id === 'all' ? 'on' : undefined} aria-current={item.id === 'all' ? 'page' : undefined}>{item.label}<sup>{whenCount(item.id)}</sup></a>
+          ))}
+        </div>
+      </div>
+      <p class="legend">「占位」表示这条还没写正文。「作品页」表示摘自现有作品。没有日期的，只在时间选「全部」时出现。</p>
+      <p class="status" id="news-status" aria-live="polite">全部板块 · 全部时间 · {items.length} 条</p>
+      <div class="cols" aria-hidden="true"><span>日期</span><span>板块</span><span>内容</span><span>谁</span></div>
+      <ol class="news-list">
+        {items.map((item) => {
+          const meta = metaLine(item);
+          const people = (item.people || []).join('、');
+          return (
+            <li
+              id={item.id}
+              data-section={item.section}
+              data-start={item.start || undefined}
+              data-end={item.end || undefined}
+              data-open={item.open ? '1' : undefined}
+            >
+              <article class="row">
+                <time class="date" datetime={timeAttr(item)}>{dateLabel(item)}</time>
+                <span class="sec">{SECTION_LABEL[item.section]}</span>
+                <div class="body">
+                  <h3>
+                    {item.title}
+                    {item.placeholder && <span class="mark">占位</span>}
+                    {item.source === 'work' && <span class="mark work">作品页</span>}
+                  </h3>
+                  {item.original && <p class="original" lang="en">{item.original}</p>}
+                  {item.summary && <p class="summary">{item.summary}</p>}
+                  {(meta || item.href) && (
+                    <p class="meta">
+                      {meta}
+                      {item.href && <a href={item.href}>{item.hrefLabel || '查看'}</a>}
+                    </p>
+                  )}
+                </div>
+                {people && <span class="who">{people}</span>}
+              </article>
+            </li>
+          );
+        })}
+      </ol>
+      <p class="empty" id="news-empty" hidden>这一组里还没有条目。</p>
+    </div>
+  </section>
 </main>
+
 <style>
-.news-page { padding-top: 80px; }
-.news-page h1 { font-size: clamp(2rem, 4vw, 2.6rem); font-weight: 600; letter-spacing: -0.03em; margin: 16px 0 32px; }
-.empty { color: var(--ink2); }
+.news-page {
+  --song: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif;
+  --stage: #141413;
+  --paper-ink: #f4f1ea;
+  --paper-dim: #9c968c;
+  --paper-rule: rgba(244, 241, 234, 0.16);
+}
+.news-intro, .news-in { width: min(1160px, calc(100% - 128px)); margin-inline: auto; }
+.news-intro { padding: 64px 0 48px; }
+.news-page h1 {
+  margin: 12px 0 0;
+  font-family: var(--song);
+  font-weight: 600;
+  font-size: clamp(40px, 5vw, 56px);
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+}
+.lede {
+  margin: 18px 0 0;
+  max-width: 40em;
+  color: var(--ink2);
+  font-size: 16px;
+  line-height: 1.75;
+}
+.ia {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+  margin-top: 36px;
+  padding-top: 22px;
+  border-top: 1px solid var(--rule);
+}
+.ia-card {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  padding-top: 4px;
+}
+.ia-card .en {
+  margin: 0;
+  font-family: var(--en);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ia-card h2 {
+  margin: 8px 0 0;
+  font-family: var(--song);
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+}
+.ia-card .hint { margin: 10px 0 0; color: var(--ink2); font-size: 15px; line-height: 1.7; }
+.ia-card .stat { margin: 14px 0 0; font-size: 13px; letter-spacing: 0.04em; color: var(--muted); }
+.ia-card:hover h2 { text-decoration: underline; text-underline-offset: 5px; }
+.ia-card.on .en { color: var(--accent); }
+
+.stage {
+  background: var(--stage);
+  color: var(--paper-ink);
+  padding: 32px 0 72px;
+  scroll-margin-top: 88px;
+}
+.bar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(244, 241, 234, 0.28);
+}
+.secs, .whens { display: flex; align-items: baseline; gap: 26px; }
+.secs a, .whens a {
+  color: var(--paper-dim);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 6px;
+  white-space: nowrap;
+}
+.secs a { font-size: 16px; letter-spacing: 0.04em; }
+.whens a { font-size: 13px; letter-spacing: 0.18em; }
+.secs a sup, .whens a sup {
+  font-family: var(--en);
+  font-size: 10px;
+  letter-spacing: 0;
+  margin-left: 4px;
+  color: var(--paper-dim);
+  vertical-align: 6px;
+}
+.secs a.on, .whens a.on { color: var(--paper-ink); border-bottom-color: var(--paper-ink); }
+.secs a:hover, .whens a:hover { color: var(--paper-ink); }
+.stage a:focus-visible { outline: 2px solid var(--paper-ink); outline-offset: 3px; }
+
+.legend, .status { margin: 0; color: var(--paper-dim); font-size: 13px; line-height: 1.6; }
+.legend { margin-top: 16px; max-width: 46em; }
+.status { margin-top: 8px; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
+.cols, .row {
+  display: grid;
+  grid-template-columns: 168px 96px minmax(0, 1fr) 88px;
+  column-gap: 24px;
+  align-items: start;
+}
+.cols {
+  margin-top: 22px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--paper-rule);
+  font-family: var(--en), var(--sans);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--paper-dim);
+}
+.news-list { list-style: none; margin: 0; padding: 0; }
+.stage.is-empty .cols { display: none; }
+.row { padding: 20px 0 18px; border-bottom: 1px solid var(--paper-rule); }
+.date, .sec, .who { font-size: 13px; line-height: 1.5; color: var(--paper-dim); }
+.date { font-variant-numeric: tabular-nums; letter-spacing: 0.02em; }
+.who { text-align: right; }
+.body h3 {
+  margin: 0;
+  color: var(--paper-ink);
+  font-family: var(--song);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+}
+.mark {
+  margin-left: 8px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  color: #c4b49a;
+  white-space: nowrap;
+}
+.mark.work { color: var(--paper-dim); }
+.original, .summary, .meta { margin: 6px 0 0; font-size: 14px; line-height: 1.65; color: #c8c2b6; }
+.original { font-family: var(--en), var(--sans); font-size: 13px; color: var(--paper-dim); }
+.meta a {
+  margin-left: 8px;
+  color: var(--paper-ink);
+  text-underline-offset: 3px;
+}
+.empty {
+  margin: 28px 0 0;
+  color: var(--paper-dim);
+  font-size: 16px;
+}
+.news-list > li[hidden] { display: none; }
+
+:global(footer.bot) { margin-top: 0; padding-top: 48px; }
+
+@media (max-width: 800px) {
+  .news-intro, .news-in { width: calc(100% - 40px); }
+  .news-intro { padding: 36px 0 32px; }
+  .news-page h1 { font-size: 36px; }
+  .ia { grid-template-columns: 1fr; gap: 22px; }
+  .ia-card h2 { font-size: 22px; }
+  .bar { flex-direction: column; align-items: stretch; gap: 12px; }
+  .secs, .whens {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    gap: 20px;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .secs::-webkit-scrollbar, .whens::-webkit-scrollbar { display: none; }
+  .cols { display: none; }
+  .row {
+    grid-template-columns: 1fr auto;
+    row-gap: 4px;
+    padding: 18px 0 16px;
+  }
+  .date { grid-column: 1; grid-row: 1; }
+  .who { grid-column: 2; grid-row: 1; }
+  .sec { grid-column: 1 / -1; grid-row: 2; }
+  .body { grid-column: 1 / -1; grid-row: 3; }
+  .body h3 { font-size: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .news-page { scroll-behavior: auto; }
+}
 </style>
+
+<script>
+  import { classify, todayISO } from '../lib/news';
+
+  const page = document.querySelector('.news-page');
+  if (page) {
+    const rows = [...page.querySelectorAll<HTMLLIElement>('.news-list > li')];
+    const secLinks = [...page.querySelectorAll<HTMLAnchorElement>('[data-section-link]')];
+    const whenLinks = [...page.querySelectorAll<HTMLAnchorElement>('[data-when-link]')];
+    const iaLinks = [...page.querySelectorAll<HTMLAnchorElement>('[data-go-section]')];
+    const status = page.querySelector<HTMLElement>('#news-status');
+    const empty = page.querySelector<HTMLElement>('#news-empty');
+    const stage = page.querySelector('.stage');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sections = new Set(['all', 'tech', 'activity', 'tutorial']);
+    const whens = new Set(['all', 'now', 'future', 'past']);
+    const secLabel: Record<string, string> = {
+      all: '全部板块',
+      tech: '技术动态',
+      activity: '活动参与',
+      tutorial: '技术分享',
+    };
+    const whenLabel: Record<string, string> = {
+      all: '全部时间',
+      now: '现在',
+      future: '即将',
+      past: '往期',
+    };
+
+    const params = new URLSearchParams(location.search);
+    let section = params.get('section') || 'all';
+    let when = params.get('when') || 'all';
+    if (!sections.has(section)) section = 'all';
+    if (!whens.has(when)) when = 'all';
+
+    const hrefFor = (nextSection: string, nextWhen: string) => {
+      const query = new URLSearchParams();
+      if (nextSection !== 'all') query.set('section', nextSection);
+      if (nextWhen !== 'all') query.set('when', nextWhen);
+      const text = query.toString();
+      return text ? `/news/?${text}` : '/news/';
+    };
+    const write = () => history.replaceState(null, '', hrefFor(section, when));
+
+    const mark = (link: HTMLAnchorElement, on: boolean) => {
+      link.classList.toggle('on', on);
+      if (on) link.setAttribute('aria-current', 'page');
+      else link.removeAttribute('aria-current');
+    };
+
+    const bucketOf = (row: HTMLLIElement) => classify(
+      { start: row.dataset.start || '', end: row.dataset.end || '', open: row.dataset.open === '1' },
+      todayISO(),
+    );
+    const matches = (row: HTMLLIElement, nextSection: string, nextWhen: string) => {
+      const bucket = bucketOf(row);
+      return (nextSection === 'all' || row.dataset.section === nextSection)
+        && (nextWhen === 'all' || bucket === nextWhen);
+    };
+    const setCount = (link: HTMLAnchorElement, count: number) => {
+      const sup = link.querySelector('sup');
+      if (sup) sup.textContent = String(count);
+    };
+
+    const apply = () => {
+      let count = 0;
+      rows.forEach((row) => {
+        const show = matches(row, section, when);
+        row.hidden = !show;
+        if (show) count += 1;
+      });
+      secLinks.forEach((link) => {
+        const id = link.dataset.sectionLink || 'all';
+        mark(link, id === section);
+        link.href = hrefFor(id, when);
+        setCount(link, rows.filter((row) => matches(row, id, when)).length);
+      });
+      whenLinks.forEach((link) => {
+        const id = link.dataset.whenLink || 'all';
+        mark(link, id === when);
+        link.href = hrefFor(section, id);
+        setCount(link, rows.filter((row) => matches(row, section, id)).length);
+      });
+      iaLinks.forEach((link) => {
+        link.classList.toggle('on', link.dataset.goSection === section);
+        link.href = hrefFor(link.dataset.goSection || 'tech', when);
+      });
+      if (status) status.textContent = `${secLabel[section]} · ${whenLabel[when]} · ${count} 条`;
+      if (empty) {
+        empty.hidden = count !== 0;
+        empty.textContent = when === 'future'
+          ? '即将里还没有排期。'
+          : when === 'now'
+            ? '现在没有进行中的条目。'
+            : '这一组里还没有条目。';
+      }
+      stage?.classList.toggle('is-empty', count === 0);
+    };
+
+    secLinks.forEach((link) => link.addEventListener('click', (event) => {
+      event.preventDefault();
+      section = link.dataset.sectionLink || 'all';
+      write();
+      apply();
+    }));
+    whenLinks.forEach((link) => link.addEventListener('click', (event) => {
+      event.preventDefault();
+      when = link.dataset.whenLink || 'all';
+      write();
+      apply();
+    }));
+    iaLinks.forEach((link) => link.addEventListener('click', (event) => {
+      event.preventDefault();
+      section = link.dataset.goSection || 'all';
+      write();
+      apply();
+      document.getElementById('list')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    }));
+
+    apply();
+  }
+</script>
 </Base>
