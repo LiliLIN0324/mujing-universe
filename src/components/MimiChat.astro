@@ -46,6 +46,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
 </div>
 
 <style>
+  .mimi { --safe-b: env(safe-area-inset-bottom, 0px); }
   .mimi-launch,
   .mimi-panel {
     position: fixed;
@@ -429,7 +430,9 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   :global(body:has(#mimi) footer.bot) { padding-bottom: 120px; }
   :global(body:has(#mimi):has(.listen) footer.bot) { padding-bottom: 210px; }
   @media (max-width: 768px) {
-    .mimi-launch { width: 60px; height: 60px; right: 14px; bottom: 88px; }
+    .mimi-hi { display: none !important; }
+    .mimi-launch { width: 60px; height: 60px; right: 14px; bottom: calc(16px + var(--safe-b)); }
+    :global(body:has(.m-peek)) .mimi-launch { bottom: calc(76px + var(--safe-b)); }
     :global(body.mimi-open) { overflow: hidden; }
     :global(body:has(#mimi) footer.bot),
     :global(body:has(#mimi):has(.listen) footer.bot) {
@@ -505,7 +508,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
 
     const ANSWERS = {
       what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做影像、视觉和内容创作。目录在[作品页](/works/)。想合作就点「聊合作」。',
-      works: '公开的作品都在[作品页](/works/)。可以先看幕景 Scendance、LitFlow 和 Riffle，点进详情有介绍。',
+      works: '代表作在[作品页](/works/#features)，点进去能看介绍。其余作品在同一页展开。',
       made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
       coop: '想合作、咨询或联系，点「聊合作」。下面是飞书名片，扫码时备注一下来意。\n[[COOP]]',
       secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
@@ -564,11 +567,22 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         y: Math.min(Math.max(v.y + m, y), v.y + v.h - s - m),
       };
     }
+    function safeBottom() {
+      const n = parseFloat(getComputedStyle(root).getPropertyValue('--safe-b'));
+      return Number.isFinite(n) ? n : 0;
+    }
     function defaultPos() {
       const s = btnSize();
       const v = view();
       const m = edge();
-      let y = v.y + v.h - (window.innerWidth <= 768 ? 88 : m) - s;
+      const safe = safeBottom();
+      let lift = m + safe;
+      if (window.innerWidth <= 768) {
+        const peek = document.querySelector('.m-peek');
+        const peekOn = !!peek && peek.getClientRects().length > 0;
+        lift = (peekOn ? 76 : 16) + safe;
+      }
+      let y = v.y + v.h - lift - s;
       const x = v.x + v.w - m - s;
       if (window.innerWidth > 768) {
         const listen = document.querySelector('.listen');
@@ -904,8 +918,9 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       else if (r.right > window.innerWidth - 8) hi.style.marginLeft = `${Math.round(window.innerWidth - 8 - r.right)}px`;
       launch.classList.toggle('is-below', launch.getBoundingClientRect().top < 52);
     }
+    const fineHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
     launch.addEventListener('pointerenter', (e) => {
-      if (e.pointerType === 'touch') return;
+      if (!fineHover || e.pointerType !== 'mouse') return;
       launch.classList.add('is-hot');
       if (!pointer) face.style.transform = 'scale(1.14)';
       placeBubble();
@@ -1003,7 +1018,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         pointer.holdTimer = window.setTimeout(() => {
           if (!pointer || pointer.moved) return;
           pointer.held = true;
-          launch.classList.add('is-hot', 'is-nod');
+          launch.classList.add('is-nod');
           if (!reduce) face.style.transform = '';
           placeBubble();
         }, 300);

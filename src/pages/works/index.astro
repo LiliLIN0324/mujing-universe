@@ -1,192 +1,693 @@
 ---
-import Base from '../../layouts/Base.astro'; import WorkCover from '../../components/WorkCover.astro';
-import { allWorks, LINES, WORKS_COVER, splitTitle, clean } from '../../lib';
-const ws = (await allWorks()).map(w => ({
-  ...w,
-  main: splitTitle(w.title)[0],
-  desc: clean(w.description),
-  ym: `${w.line} · ${w.yearNum || w.year}`,
-  meta: `${w.line} · ${w.yearNum || w.year}${w.status === '进行中' ? ' · 进行中' : ''}`,
-}));
-const first = ws[0];
-const preload = [...new Set(ws.map(w => WORKS_COVER[w.slug]?.src).filter(Boolean))];
-const tabs = [['全部', ws.length], ...LINES.map(l => [l, ws.filter(w => w.line === l).length])] as [string, number][];
+// 作品库：代表作在前，全部作品默认收起。有视频的封面悬停或点击才播，页面本身不自动播放。
+import Base from '../../layouts/Base.astro';
+import WorkCover from '../../components/WorkCover.astro';
+import { FEATURED_SLUGS, LINES, allWorks, clean, coverClip, splitTitle } from '../../lib';
+
+const ws = (await allWorks()).map((w) => {
+  const [main, sub] = splitTitle(w.title);
+  return {
+    ...w,
+    main,
+    sub,
+    desc: clean(w.description),
+    tag: w.status === '进行中' ? `${w.line} · 进行中` : w.line,
+  };
+});
+const bySlug = new Map(ws.map((w) => [w.slug, w]));
+const featured = FEATURED_SLUGS.map((slug) => bySlug.get(slug)).filter((w) => !!w);
+const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w) => w.line === line).length])] as [string, number][];
 ---
-<Base title="作品 · 幕景宇宙" active="/works/">
-<main class="wk">
-<section class="wk-head">
-  <div class="wk-hl"><p class="wk-kick">Works · {ws.length}</p><h1>作品</h1></div>
-  <div class="wk-tabwrap"><nav class="wk-tabs" id="wk-tabs" aria-label="按创作线筛选">
-    {tabs.map(([l, n], i) => <a href={i === 0 ? '/works/' : `/works/?line=${encodeURIComponent(l)}`} data-f={l} class={i === 0 ? 'on' : undefined}>{l}<sup>{n}</sup></a>)}
-  </nav></div>
-</section>
+<Base title="作品 · 幕景宇宙" description="幕景宇宙的代表作，以及按创作线收着的全部作品。" active="/works/">
+<main class="wf">
+  <header class="wf-head">
+    <h1>作品<sup>{ws.length}</sup></h1>
+    <p class="intro">先看 {featured.length} 件代表作。其余按创作线收在全部作品里。</p>
+  </header>
 
-<section class="wk-body">
-  <div class="wk-list">
-    <div class="wk-lh" aria-hidden="true"><span>No.</span><span>作品</span><span>类别 · 年份</span></div>
-    <ol id="wk-rows">
-      {ws.map((w, i) => <li data-line={w.line}><a class:list={['wk-row', i === 0 && 'on']} href={`/works/${w.slug}/`} data-slug={w.slug} data-no={w.no} data-title={w.title} data-meta={w.meta} data-desc={w.desc}>
-        <span class="no">{w.no}</span><span class="tt">{w.main}</span><span class="mt">{w.ym}</span></a></li>)}
-    </ol>
-  </div>
-  <aside class="wk-pv" id="wk-pv" aria-live="polite">
-    <a class="pv-cv" id="pv-cv" href={`/works/${first.slug}/`} tabindex="-1" aria-hidden="true"><div class="pv-layer"><WorkCover w={first}/></div></a>
-    <div class="pv-cap">
-      <div class="pv-row"><span class="pv-no" id="pv-no">{first.no}</span><span id="pv-meta">{first.meta}</span></div>
-      <h2 class="pv-t" id="pv-t">{first.title}</h2>
-      <p class="pv-d" id="pv-d" hidden={!first.desc}>{first.desc}</p>
-      <a class="more" id="pv-more" href={`/works/${first.slug}/`}>查看作品 <span>→</span></a>
+  <section class="wf-block" id="features" aria-labelledby="feat-title">
+    <div class="wf-sec">
+      <span class="n">01</span>
+      <h2 id="feat-title">代表作 <em>Features</em></h2>
+      <span class="r">{featured.length} 件</span>
     </div>
-  </aside>
+    <div class="wf-feat">
+      {featured.map((w, i) => {
+        const href = `/works/${w.slug}/`;
+        const clip = coverClip(w.slug);
+        const media = (
+          <div class="im">
+            <WorkCover w={w} eager={i === 0} />
+            {clip ? <a class="go" href={href}>查看</a> : <span class="go">查看</span>}
+          </div>
+        );
+        const cap = (
+          <div class="cap">
+            <span class="no">{w.no}</span>
+            <h3>
+              {clip ? <a href={href}><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</a> : <><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</>}
+            </h3>
+            <span class="yr">{w.yearNum || w.year}</span>
+            {w.desc && <p class="blurb">{w.desc}</p>}
+            <span class="tag">{w.tag}</span>
+          </div>
+        );
+        return clip
+          ? <article class:list={['card', i === 0 && 'lead']} data-slug={w.slug}>{media}{cap}</article>
+          : <a class:list={['card', i === 0 && 'lead']} href={href} data-slug={w.slug}>{media}{cap}</a>;
+      })}
+    </div>
+  </section>
 
-  <ol class="wk-m" id="wk-m">
-    {ws.map(w => <li data-line={w.line} data-slug={w.slug}><a href={`/works/${w.slug}/`}>
-      <WorkCover w={w}/>
-      <div class="mr"><span class="no">{w.no}</span><span class="tt">{w.main}</span></div>
-      <p class="mt">{w.meta}</p></a></li>)}
-  </ol>
-</section>
+  <details class="wf-fold" id="archive" data-mode="grid">
+    <summary>
+      <span class="n">02</span>
+      <h2>全部作品 <em>All works</em></h2>
+      <span class="r"><span class="when-shut">展开</span><span class="when-open">收起</span> <b>{ws.length}</b></span>
+    </summary>
+    <script is:inline>
+      (function () {
+        var a = document.getElementById('archive');
+        if (!a) return;
+        var line = new URLSearchParams(location.search).get('line');
+        if (location.hash === '#archive' || (line && line !== '全部')) a.open = true;
+      })();
+    </script>
+    <div class="wf-arch">
+      <div class="wf-bar">
+        <div class="wf-filters" role="group" aria-label="按创作线筛选">
+          {tabs.map(([line, n], i) => (
+            <button type="button" data-f={line} class={i === 0 ? 'on' : undefined} aria-pressed={i === 0 ? 'true' : 'false'}>
+              {line}<sup>{n}</sup>
+            </button>
+          ))}
+        </div>
+        <div class="wf-tools">
+          <span class="wf-count" id="wf-count">{ws.length} 件</span>
+          <div class="wf-view" role="group" aria-label="查看方式">
+            <button type="button" data-mode="grid" class="on" aria-pressed="true">网格</button>
+            <button type="button" data-mode="list" aria-pressed="false">列表</button>
+          </div>
+        </div>
+      </div>
+      <noscript><p class="wf-note">筛选需要打开脚本。这里是全部作品。</p></noscript>
+      <div class="wf-cards">
+        {ws.map((w) => {
+          const href = `/works/${w.slug}/`;
+          const clip = coverClip(w.slug);
+          const inner = (
+            <>
+              <div class="im">
+                <WorkCover w={w} />
+                {clip ? <a class="go" href={href}>查看</a> : <span class="go">查看</span>}
+              </div>
+              <div class="cap">
+                <span class="no">{w.no}</span>
+                <h3>
+                  {clip ? <a href={href}><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</a> : <><span class="ttl">{w.main}</span>{w.sub && <em>{w.sub}</em>}</>}
+                </h3>
+                <span class="yr">{w.yearNum || w.year}</span>
+                <span class="tag">{w.tag}</span>
+              </div>
+            </>
+          );
+          return clip
+            ? <article class="card" data-line={w.line} data-slug={w.slug}>{inner}</article>
+            : <a class="card" href={href} data-line={w.line} data-slug={w.slug}>{inner}</a>;
+        })}
+      </div>
+      <div class="idx">
+        <div class="row hd" aria-hidden="true">
+          <span class="no">No.</span>
+          <span class="t">作品</span>
+          <span class="c">类别</span>
+          <span class="d">简介</span>
+          <span class="y">年份</span>
+        </div>
+        {ws.map((w) => (
+          <a class="row" href={`/works/${w.slug}/`} data-line={w.line} data-slug={w.slug}>
+            <span class="no">{w.no}</span>
+            <span class="t">{w.main}{w.sub && <em>{w.sub}</em>}</span>
+            <span class="c">{w.tag}</span>
+            <span class="d">{w.desc}</span>
+            <span class="y">{w.yearNum || w.year}</span>
+          </a>
+        ))}
+      </div>
+      <p class="wf-empty" id="wf-empty" hidden>这一类还没有作品。</p>
+    </div>
+  </details>
 </main>
-<script is:inline type="application/json" id="wk-preload" set:html={JSON.stringify(preload)}></script>
 
 <style is:global>
-.wk { --rule1: rgba(26,26,28,.10); --rule2: rgba(26,26,28,.16); --fbpaper: #F1EEE6; --song: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif;
-  width: min(1312px, calc(100% - 128px)); margin: 0 auto; }
-.wk a { color: inherit; text-decoration: none; }
-.wk [hidden], .wk .hide { display: none !important; }
-/* head */
-.wk-head { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; align-items: end; padding: 88px 0 36px; border-bottom: 1px solid var(--rule2); }
-.wk-hl { grid-column: 1 / 7; }
-.wk-kick { margin: 0; font-family: var(--en); font-size: 12px; letter-spacing: .14em; color: var(--muted); }
-.wk h1 { margin: 14px 0 0; font-family: var(--song); font-weight: 600; font-size: 52px; line-height: 1.1; letter-spacing: .03em; color: var(--ink); }
-.wk-tabwrap { grid-column: 7 / 13; }
-.wk-tabs { display: flex; justify-content: flex-end; gap: 30px; padding-bottom: 4px; font-size: 15px; letter-spacing: .04em; color: var(--ink2); }
-.wk-tabs a { white-space: nowrap; padding-bottom: 7px; border-bottom: 1px solid transparent; transition: color .15s; }
-.wk-tabs a:hover { color: var(--ink); }
-.wk-tabs a.on { color: var(--ink); border-bottom-color: var(--ink); }
-.wk-tabs sup { font-family: var(--en); font-size: 10px; color: var(--muted); margin-left: 3px; letter-spacing: 0; vertical-align: 6px; line-height: 0; }
-/* body */
-.wk-body { display: grid; grid-template-columns: repeat(12, 1fr); column-gap: 24px; padding-top: 28px; align-items: start; }
-.wk-list { grid-column: 1 / 6; }
-.wk-lh { display: grid; grid-template-columns: 48px 1fr auto; font-family: var(--en); font-size: 11px; letter-spacing: .14em; color: var(--muted); padding: 0 0 12px; border-bottom: 1px solid var(--rule2); }
-.wk-list ol, .wk-m { list-style: none; margin: 0; padding: 0; }
-.wk-row { display: grid; grid-template-columns: 48px 1fr auto; align-items: baseline; padding: 15px 0 14px; border-bottom: 1px solid var(--rule1); outline-offset: 2px; }
-.wk-row .no { font-family: var(--en); font-size: 12px; letter-spacing: .06em; color: var(--muted); font-variant-numeric: tabular-nums; }
-.wk-row .tt { font-family: var(--song); font-size: 20px; line-height: 1.4; font-weight: 400; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px; color: #2a2a2c; }
-.wk-row .mt { font-size: 13px; color: var(--muted); letter-spacing: .03em; white-space: nowrap; }
-.wk-row.on .no { color: var(--accent); }
-.wk-row.on .tt { color: var(--ink); font-weight: 600; }
-.wk-row.on .mt { color: var(--ink2); }
-.wk-pv { grid-column: 7 / 13; position: sticky; top: 112px; padding-top: 29px; }
-.pv-cv { display: block; position: relative; aspect-ratio: 16 / 9; }
-.pv-layer { position: absolute; inset: 0; transition: opacity .15s ease; }
-.pv-layer.in { opacity: 0; }
-.pv-cap { padding-top: 22px; }
-.pv-row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: var(--muted); letter-spacing: .04em; }
-.pv-no { font-family: var(--en); color: var(--accent); letter-spacing: .06em; }
-.wk .pv-t { margin: 10px 0 0; font-family: var(--song); font-weight: 600; font-size: 28px; line-height: 1.3; letter-spacing: .02em; color: var(--ink); }
-.pv-d { margin: 12px 0 0; font-size: 15px; line-height: 1.75; color: var(--ink2); max-width: 34em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.wk .more { display: inline-block; margin-top: 20px; font-size: 14px; letter-spacing: .08em; border-bottom: 1px solid var(--ink); padding-bottom: 3px; }
-.more span { font-family: var(--en); margin-left: 4px; }
-.wk-m { display: none; }
+.wf {
+  --rule1: rgba(26, 26, 28, .10);
+  --rule2: rgba(26, 26, 28, .16);
+  --song: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif;
+  --fbpaper: #F1EEE6;
+  width: min(1200px, calc(100% - 96px));
+  margin: 0 auto;
+  padding: 28px 0 16px;
+  color: var(--ink);
+}
+.wf a { color: inherit; text-decoration: none; }
+.wf p { margin: 0; }
+.wf [hidden] { display: none !important; }
+.wf-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(220px, .7fr);
+  gap: 32px 48px;
+  align-items: end;
+  padding: 28px 0 4px;
+}
+.wf h1 {
+  margin: 0;
+  font-family: var(--song);
+  font-weight: 600;
+  font-size: clamp(64px, 8vw, 104px);
+  line-height: .92;
+  letter-spacing: .03em;
+  color: var(--ink);
+}
+.wf h1 sup {
+  font-family: var(--en);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  margin-left: 10px;
+  color: var(--muted);
+  vertical-align: super;
+}
+.wf .intro {
+  margin: 0 0 10px;
+  max-width: 22em;
+  font-size: 16px;
+  line-height: 1.75;
+  color: var(--ink2);
+}
+.wf-block { margin-top: 56px; scroll-margin-top: 96px; }
+.wf-sec, .wf-fold summary {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  column-gap: 12px;
+  align-items: baseline;
+}
+.wf-sec { border-top: 1px solid var(--ink); padding-top: 14px; }
+.wf-sec .n, .wf-fold summary .n {
+  font-family: var(--en);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: var(--accent);
+}
+.wf h2 {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .14em;
+  line-height: 1.4;
+}
+.wf h2 em {
+  font-style: normal;
+  font-weight: 400;
+  font-family: var(--en);
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: var(--muted);
+  margin-left: 8px;
+}
+.wf-sec .r, .wf-fold summary .r {
+  font-size: 13px;
+  letter-spacing: .06em;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.wf-fold summary .r b { color: var(--ink); font-weight: 500; margin-left: 6px; }
+.wf-feat {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 28px;
+  row-gap: 64px;
+  margin-top: 32px;
+}
+.wf-feat .lead { grid-column: 1 / -1; }
+.wf .card { display: block; min-width: 0; color: inherit; }
+.wf .im { position: relative; background: #EFEDE9; }
+.wf .go {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  background: var(--bg);
+  color: var(--ink);
+  font-size: 13px;
+  letter-spacing: .08em;
+  padding: 10px 12px;
+  min-height: 44px;
+  opacity: 0;
+  pointer-events: none;
+}
+.wf a.go { pointer-events: auto; }
+.wf .cap {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: baseline;
+  padding-top: 14px;
+}
+.wf .cap .no, .wf .cap .yr, .wf .idx .no, .wf .idx .y {
+  font-family: var(--en);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+  color: var(--muted);
+}
+.wf .card h3 {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--song);
+  font-weight: 600;
+  font-size: 22px;
+  line-height: 1.35;
+  letter-spacing: .02em;
+  overflow-wrap: break-word;
+}
+.wf .lead h3 { font-size: clamp(26px, 2.4vw, 34px); }
+.wf .card h3 em {
+  display: block;
+  margin-top: 4px;
+  font-style: normal;
+  font-weight: 400;
+  font-family: var(--sans);
+  font-size: 14px;
+  letter-spacing: 0;
+  color: var(--ink2);
+}
+.wf .blurb {
+  grid-column: 2 / 4;
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--ink2);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.wf .tag {
+  grid-column: 2 / 4;
+  margin-top: 10px;
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
+.wf-fold {
+  margin-top: 72px;
+  border-top: 1px solid var(--ink);
+  scroll-margin-top: 96px;
+  overflow-anchor: none;
+}
+.wf-fold summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 16px 96px 16px 0;
+  min-height: 48px;
+}
+.wf-fold summary::-webkit-details-marker { display: none; }
+.wf-fold summary::marker { content: ""; }
+.wf-fold:not([open]) > :not(summary) { display: none !important; }
+.wf-fold[open] .when-shut, .wf-fold:not([open]) .when-open { display: none; }
+.wf-arch { padding-bottom: 8px; }
+.wf-bar {
+  position: sticky;
+  top: 80px;
+  z-index: 4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 24px;
+  padding: 12px 0 10px;
+  background: rgba(246, 245, 243, .94);
+  backdrop-filter: blur(12px);
+}
+.wf-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 22px;
+  flex: 1 1 280px;
+  min-width: 0;
+  max-width: 100%;
+}
+.wf-filters button, .wf-view button {
+  border: 0;
+  background: none;
+  padding: 10px 0;
+  font: inherit;
+  font-size: 14px;
+  letter-spacing: .04em;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.wf-filters button sup {
+  font-family: var(--en);
+  font-size: 10px;
+  margin-left: 4px;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.wf-filters button.on {
+  color: var(--ink);
+  box-shadow: inset 0 -1px 0 var(--accent);
+}
+.wf-tools { display: flex; align-items: center; gap: 18px; }
+.wf-count { font-size: 12px; letter-spacing: .08em; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wf-view { display: flex; gap: 16px; }
+.wf-view button.on { color: var(--ink); font-weight: 600; }
+.wf-note { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.wf-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 56px;
+  margin-top: 22px;
+}
+.wf-fold[data-mode="list"] .wf-cards, .wf-fold[data-mode="grid"] .idx { display: none; }
+.wf-empty { margin: 28px 0 8px; color: var(--muted); font-size: 15px; }
+.wf .idx { margin-top: 12px; border-top: 1px solid var(--ink); }
+.wf .idx .row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1.4fr) 148px minmax(0, 1.3fr) 56px;
+  column-gap: 16px;
+  align-items: center;
+  min-height: 58px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule1);
+  color: inherit;
+}
+.wf .idx .hd { min-height: 40px; }
+.wf .idx .hd span {
+  font-family: var(--en) !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  letter-spacing: .12em;
+  color: var(--muted) !important;
+}
+.wf .idx .t {
+  min-width: 0;
+  font-family: var(--song);
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf .idx .t em {
+  font-style: normal;
+  font-weight: 400;
+  font-family: var(--sans);
+  font-size: 14px;
+  color: var(--muted);
+  margin-left: 8px;
+}
+.wf .idx .c, .wf .idx .d {
+  min-width: 0;
+  font-size: 14px;
+  color: var(--ink2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wf .idx .y { text-align: right; }
 /* cover */
-.wk .cv { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #EFEDE9; container-type: inline-size; }
-.wk .pv-layer .cv { height: 100%; }
-.wk .cv img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; }
-.wk .cv:not(.fb) > :not(img) { display: none; }
-.wk .cv.fb { background: var(--fbpaper); box-shadow: inset 0 0 0 1px var(--rule2); }
-.fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
-.fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
-.fb-title { display: block; font-family: var(--song); font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: .03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
-.fb-title.long { font-size: 4.6cqw; }
-.fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-family: var(--en), "Noto Sans SC", sans-serif; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .04em; color: var(--muted); }
-.fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .06em; color: var(--muted); }
-@media (prefers-reduced-motion: reduce) { .pv-layer { transition: none; } }
-/* mobile ≤1023 */
-@media (max-width: 1023px) {
-  .wk { width: auto; margin: 0; }
-  .wk-head { display: block; padding: 40px 24px 0; border-bottom: 0; }
-  .wk h1 { font-size: 36px; line-height: 1.15; margin-top: 10px; }
-  .wk-tabwrap { position: relative; margin: 26px -24px 0; border-bottom: 1px solid var(--rule2); }
-  .wk-tabwrap::after { content: ""; position: absolute; right: 0; top: 0; bottom: 0; width: 40px; pointer-events: none; background: linear-gradient(90deg, rgba(246,245,243,0), var(--bg)); }
-  .wk-tabs { justify-content: flex-start; gap: 24px; padding: 0 24px; font-size: 14px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
-  .wk-tabs::-webkit-scrollbar { display: none; }
-  .wk-tabs a { padding-bottom: 12px; }
-  .wk-tabs a:last-child { margin-right: 16px; }
-  .wk-body { display: block; padding-top: 0; }
-  .wk-list, .wk-pv { display: none; }
-  .wk-m { display: block; padding: 0 24px; }
-  .wk-m li { border-bottom: 1px solid var(--rule1); }
-  .wk-m li > a { display: block; padding: 28px 0 26px; }
-  .wk-m .fb-no, .wk-m .fb-meta { display: none; }
-  .wk-m .fb-t { transform: translateY(-50%); }
-  .mr { display: flex; align-items: baseline; gap: 12px; margin-top: 16px; }
-  .mr .no { flex: none; font-family: var(--en); font-size: 12px; letter-spacing: .06em; color: var(--muted); }
-  .mr .tt { font-family: var(--song); font-weight: 600; font-size: 18px; line-height: 1.45; letter-spacing: .02em; color: var(--ink); }
-  .wk-m .mt { margin: 6px 0 0 29px; font-size: 13px; color: var(--muted); letter-spacing: .03em; }
+.wf .cv { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #EFEDE9; container-type: inline-size; }
+.wf .lead .cv { aspect-ratio: 2.35 / 1; }
+.wf .cv img, .wf .cv-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; }
+.wf .cv:not(.fb) > .fb-no, .wf .cv:not(.fb) > .fb-t, .wf .cv:not(.fb) > .fb-meta { display: none; }
+.wf .cv-video { z-index: 1; opacity: 0; pointer-events: none; background: transparent; }
+.wf .cv.is-on .cv-video { opacity: 1; }
+.wf .cv-play {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 3;
+  border: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: .08em;
+  padding: 10px 12px;
+  min-height: 44px;
+  min-width: 44px;
+  cursor: pointer;
+}
+.wf .cv.is-on .cv-play { color: var(--accent); }
+.wf .cv.fb { background: var(--fbpaper); box-shadow: inset 0 0 0 1px var(--rule2); }
+.wf .fb-no { position: absolute; left: 4.5cqw; top: 4cqw; font-family: var(--en); font-size: clamp(11px, 1.9cqw, 13px); line-height: 1; letter-spacing: .08em; color: var(--muted); }
+.wf .fb-t { position: absolute; left: 9cqw; right: 9cqw; top: 50%; transform: translateY(-54%); display: flex; flex-direction: column; align-items: flex-start; }
+.wf .fb-title { display: block; font-family: var(--song); font-weight: 600; font-size: 6.2cqw; line-height: 1.22; letter-spacing: .03em; color: var(--ink); text-wrap: balance; word-break: keep-all; overflow-wrap: normal; }
+.wf .fb-title.long { font-size: 4.6cqw; }
+.wf .fb-sub { display: block; margin-top: 2.2cqw; font-style: normal; font-family: var(--en), "Noto Sans SC", sans-serif; font-size: clamp(11px, 2.1cqw, 14px); line-height: 1.5; letter-spacing: .04em; color: var(--muted); }
+.wf .fb-meta { position: absolute; left: 4.5cqw; bottom: 4cqw; font-size: clamp(11px, 1.9cqw, 13px); letter-spacing: .06em; color: var(--muted); }
+@media (hover: hover) and (pointer: fine) {
+  .wf .go, .wf .cv-video { transition: opacity .2s ease; }
+  .wf .card:hover .go, .wf .card:focus-within .go { opacity: 1; }
+  .wf .card:hover .cap .no { color: var(--accent); }
+  .wf .idx a.row:hover { background: rgba(26, 26, 28, .03); }
+  .wf .idx a.row:hover .no { color: var(--accent); }
+}
+@media (hover: none) {
+  .wf span.go { display: none; }
+  .wf a.go { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wf .go, .wf .cv-video { transition: none; }
+}
+@media (max-width: 1000px) {
+  .wf { width: calc(100% - 48px); }
+  .wf-cards { grid-template-columns: 1fr 1fr; }
+  .wf .idx .row { grid-template-columns: 44px minmax(0, 1.5fr) minmax(0, .8fr) 48px; }
+  .wf .idx .d { display: none; }
+}
+@media (max-width: 768px) {
+  .wf-bar { top: 52px; }
+  .wf-block, .wf-fold { scroll-margin-top: 64px; }
+}
+@media (max-width: 700px) {
+  .wf { width: auto; margin: 0; padding: 8px 24px 8px; }
+  .wf-head { display: block; padding-top: 16px; }
+  .wf h1 { font-size: 52px; }
+  .wf .intro { margin-top: 14px; }
+  .wf-block { margin-top: 36px; }
+  .wf-feat, .wf-cards { grid-template-columns: 1fr; row-gap: 36px; }
+  .wf-feat .lead { grid-column: auto; }
+  .wf .lead .cv { aspect-ratio: 16 / 9; }
+  .wf .card h3, .wf .lead h3 { font-size: 20px; }
+  .wf-fold { margin-top: 40px; }
+  .wf h2 em { display: none; }
+  .wf-fold summary { padding-right: 80px; }
+  .wf-filters { gap: 0 16px; }
+  .wf-filters button { min-height: 44px; }
+  .wf-tools { width: 100%; justify-content: space-between; }
+  .wf .idx .row { grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; min-height: 52px; }
+  .wf .idx .c, .wf .idx .d, .wf .idx .t em { display: none; }
+  .wf .idx .t { font-size: 16px; }
+  .wf-cards { row-gap: 32px; }
 }
 </style>
 <script is:inline>
 (() => {
-  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  // 图片封面出错 → 换成排版封面（排版内容已在 DOM 里）
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  let sweepClips = () => {};
   const fail = (img) => { const cv = img.closest('.cv'); if (cv) cv.classList.add('fb'); img.remove(); };
-  const guard = (root) => $$('img[data-cv-img]', root).forEach((img) => {
+  $$('.wf img[data-cv-img]').forEach((img) => {
     if (img.complete && img.naturalWidth === 0 && img.src) fail(img);
     else img.addEventListener('error', () => fail(img), { once: true });
   });
-  guard(document);
 
-  const rows = $$('.wk-row'), cards = $$('#wk-m > li');
-  const pvCv = $('#pv-cv'), pvNo = $('#pv-no'), pvMeta = $('#pv-meta'), pvT = $('#pv-t'), pvD = $('#pv-d'), pvMore = $('#pv-more');
-  let cur = rows.find((r) => r.classList.contains('on'));
-  function show(row) {
-    if (!row || row === cur) return;
-    cur?.classList.remove('on'); row.classList.add('on'); cur = row;
-    const d = row.dataset, href = row.getAttribute('href');
-    pvNo.textContent = d.no; pvMeta.textContent = d.meta; pvT.textContent = d.title;
-    pvD.textContent = d.desc || ''; pvD.hidden = !d.desc;
-    pvMore.href = href; pvCv.href = href;
-    const src = cards.find((c) => c.dataset.slug === d.slug)?.querySelector('.cv');
-    if (!src) return;
-    const layer = document.createElement('div'); layer.className = 'pv-layer';
-    const cv = src.cloneNode(true); $$('img', cv).forEach((i) => { i.loading = 'eager'; });
-    layer.appendChild(cv); guard(layer);
-    const old = $$('.pv-layer', pvCv);
-    if (reduce) { old.forEach((o) => o.remove()); pvCv.appendChild(layer); return; }
-    layer.classList.add('in'); pvCv.appendChild(layer);
-    requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.remove('in')));
-    setTimeout(() => old.forEach((o) => o.remove()), 160);
-  }
-  rows.forEach((r) => { r.addEventListener('mouseenter', () => show(r)); r.addEventListener('focus', () => show(r)); });
-
-  // 筛选：?line= + replaceState；列表和移动卡片同时过滤，当前项重置为第一件
-  const tabs = $$('#wk-tabs a');
-  const valid = new Set(tabs.map((t) => t.dataset.f));
+  const arch = $('#archive');
+  if (!arch) return;
+  const filters = $$('.wf-filters button');
+  const valid = new Set(filters.map((b) => b.dataset.f));
   let line = new URLSearchParams(location.search).get('line') || '全部';
   if (!valid.has(line)) line = '全部';
-  function apply() {
-    tabs.forEach((t) => { const on = t.dataset.f === line; t.classList.toggle('on', on); if (on) t.setAttribute('aria-current', 'true'); else t.removeAttribute('aria-current'); });
-    const hit = (el) => line === '全部' || el.dataset.line === line;
-    $$('#wk-rows > li').forEach((li) => li.classList.toggle('hide', !hit(li)));
-    cards.forEach((li) => li.classList.toggle('hide', !hit(li)));
-    const firstRow = rows.find((r) => hit(r.parentElement));
-    if (firstRow && firstRow !== cur) show(firstRow);
-  }
-  tabs.forEach((t) => t.addEventListener('click', (e) => {
-    e.preventDefault(); line = t.dataset.f;
-    history.replaceState(null, '', line === '全部' ? '/works/' : '?line=' + encodeURIComponent(line));
-    apply();
-  }));
-  apply();
+  const cards = $$('.wf-cards .card');
+  const rows = $$('.wf .idx .row[data-line]');
+  const count = $('#wf-count');
+  const empty = $('#wf-empty');
 
-  // 预取所有封面，悬停时不闪白
-  const pre = () => {
-    if (!matchMedia('(min-width: 1024px) and (hover: hover)').matches) return;
-    try { JSON.parse($('#wk-preload').textContent).forEach((u) => { const i = new Image(); i.referrerPolicy = 'no-referrer'; i.src = u; }); } catch (e) {}
+  function paint() {
+    filters.forEach((b) => {
+      const on = b.dataset.f === line;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    const hit = (el) => line === '全部' || el.dataset.line === line;
+    cards.forEach((el) => { el.hidden = !hit(el); });
+    rows.forEach((el) => { el.hidden = !hit(el); });
+    const n = cards.filter((el) => !el.hidden).length;
+    if (count) count.textContent = line === '全部' ? `${cards.length} 件` : `${n} / ${cards.length}`;
+    if (empty) empty.hidden = n !== 0;
+    sweepClips();
+  }
+  function writeUrl() {
+    const url = new URL(location.href);
+    if (line === '全部') url.searchParams.delete('line');
+    else url.searchParams.set('line', line);
+    url.hash = arch.open ? 'archive' : (url.hash === '#archive' ? '' : url.hash);
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+  filters.forEach((b) => b.addEventListener('click', () => {
+    line = b.dataset.f;
+    paint();
+    writeUrl();
+  }));
+  $$('.wf-view button').forEach((b) => b.addEventListener('click', () => {
+    arch.dataset.mode = b.dataset.mode;
+    $$('.wf-view button').forEach((x) => {
+      const on = x === b;
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-pressed', String(on));
+    });
+    sweepClips();
+  }));
+  arch.addEventListener('toggle', () => {
+    sweepClips();
+    if (arch.open) return;
+    if (location.hash === '#archive') {
+      history.replaceState(null, '', location.pathname + location.search);
+    }
+    const header = window.innerWidth <= 768 ? 72 : 108;
+    const top = arch.getBoundingClientRect().top;
+    const comfortable = top >= header && top < window.innerHeight * 0.45;
+    if (!comfortable) {
+      const root = document.documentElement;
+      const prev = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
+      window.scrollTo({ top: Math.max(0, window.scrollY + top - header), behavior: 'auto' });
+      root.style.scrollBehavior = prev;
+    }
+  });
+  if ((location.hash === '#archive' || line !== '全部') && !arch.open) arch.open = true;
+  paint();
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  let pinned = null;
+  const clips = () => $$('.wf .cv.has-clip');
+  const videoOf = (cv) => cv.querySelector('.cv-video');
+  const alive = (cv) => {
+    const card = cv.closest('.card');
+    if (!card || card.hidden) return false;
+    const fold = card.closest('.wf-fold');
+    if (fold && (!fold.open || fold.dataset.mode !== 'grid')) return false;
+    return true;
   };
-  if (document.readyState === 'complete') pre(); else addEventListener('load', pre, { once: true });
+  function mark(cv, on) {
+    cv.classList.toggle('is-on', on);
+    const b = cv.querySelector('.cv-play');
+    if (!b) return;
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.textContent = on ? '暂停' : '预览';
+    b.setAttribute('aria-label', on ? '暂停预览' : '播放预览');
+  }
+  function halt(cv, release) {
+    const v = videoOf(cv);
+    if (!v) return;
+    v.pause();
+    if (release) {
+      v.dataset.dropping = '1';
+      v.removeAttribute('src');
+      v.load();
+      v.dataset.dropping = '';
+    }
+    mark(cv, false);
+  }
+  function start(cv) {
+    if (!alive(cv) || !videoOf(cv)) return;
+    clips().forEach((other) => {
+      if (other === cv) return;
+      if (pinned === other) pinned = null;
+      halt(other, true);
+    });
+    const v = videoOf(cv);
+    if (!v.getAttribute('src') && v.dataset.src) v.src = v.dataset.src;
+    v.muted = true;
+    const attempt = v.play();
+    if (attempt) attempt.catch(() => {});
+  }
+  function togglePin(cv) {
+    if (!videoOf(cv)) return;
+    if (pinned === cv) {
+      pinned = null;
+      halt(cv, true);
+      return;
+    }
+    pinned = cv;
+    start(cv);
+  }
+  sweepClips = function () {
+    clips().forEach((cv) => {
+      if (alive(cv)) return;
+      if (pinned === cv) pinned = null;
+      halt(cv, true);
+    });
+  };
+  clips().forEach((cv) => {
+    const v = videoOf(cv);
+    const b = cv.querySelector('.cv-play');
+    if (!v) return;
+    v.addEventListener('playing', () => mark(cv, true));
+    v.addEventListener('pause', () => mark(cv, false));
+    v.addEventListener('error', () => {
+      if (v.dataset.dropping === '1' || !v.getAttribute('src')) return;
+      if (pinned === cv) pinned = null;
+      v.remove();
+      b?.remove();
+      cv.classList.remove('has-clip', 'is-on');
+    });
+    b?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      togglePin(cv);
+    });
+    cv.addEventListener('click', (e) => {
+      if (e.target.closest('a, button')) return;
+      togglePin(cv);
+    });
+    const host = cv.closest('.im') || cv;
+    host.addEventListener('pointerenter', (e) => {
+      if (reduce.matches || (e.pointerType !== 'mouse' && e.pointerType !== 'pen')) return;
+      start(cv);
+    });
+    host.addEventListener('pointerleave', (e) => {
+      if (e.pointerType && e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
+      if (pinned === cv) return;
+      halt(cv, true);
+    });
+  });
+  const seen = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      const cv = en.target;
+      if (!en.isIntersecting || !alive(cv)) {
+        const keep = pinned === cv;
+        if (videoOf(cv) && !videoOf(cv).paused) halt(cv, !keep);
+        else if (!keep) mark(cv, false);
+        return;
+      }
+      if (pinned === cv) start(cv);
+    });
+  }, { threshold: 0.4 });
+  clips().forEach((cv) => seen.observe(cv));
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) clips().forEach((cv) => { if (videoOf(cv) && !videoOf(cv).paused) videoOf(cv).pause(); });
+    else if (pinned && alive(pinned)) start(pinned);
+  });
 })();
 </script>
 </Base>
