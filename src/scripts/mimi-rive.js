@@ -332,10 +332,25 @@ export async function mountMimiRive(canvas, reduce) {
             };
             canvas.hidden = false;
             face?.classList.add('is-rive');
+            // 注意和打开时橙圆会顶出画布。把画板装进留白后的区域，裁掉的圆顶才补得回来。
+            const layoutFor = () => {
+              const w = canvas.width;
+              const h = canvas.height;
+              const m = Math.round(Math.min(w, h) * 0.09);
+              return new Layout({
+                fit: Fit.Contain,
+                alignment: Alignment.Center,
+                minX: m,
+                minY: m,
+                maxX: Math.max(m + 1, w - m),
+                maxY: Math.max(m + 1, h - m),
+              });
+            };
             const refit = () => {
               try {
-                rive.stopRendering();
                 rive.resizeDrawingSurfaceToCanvas();
+                rive.stopRendering();
+                rive.layout = layoutFor();
                 rive.startRendering();
               } catch { /* 已卸下 */ }
               trimDisc(canvas, memory);
