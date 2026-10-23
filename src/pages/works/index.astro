@@ -512,9 +512,10 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     if (location.hash === '#archive') {
       history.replaceState(null, '', location.pathname + location.search);
     }
+    const header = window.innerWidth <= 768 ? 72 : 108;
     const top = arch.getBoundingClientRect().top;
-    const header = window.innerWidth <= 768 ? 64 : 96;
-    if (top < header || top > window.innerHeight - 48) {
+    const comfortable = top >= header && top < window.innerHeight * 0.45;
+    if (!comfortable) {
       const root = document.documentElement;
       const prev = root.style.scrollBehavior;
       root.style.scrollBehavior = 'auto';
