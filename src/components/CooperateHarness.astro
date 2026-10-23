@@ -1,23 +1,15 @@
 ---
 /**
  * 合作工作台。对话走现有 /api/chat。
- * 邮件走 mailto，定金码 public/consult/pay-qr.png。无支付接口。
+ * 邮件走 mailto，飞书是名片二维码。不收款。
  */
 const { tool = '' } = Astro.props;
 const email = 'lily1326685527@gmail.com';
 const mailto = `mailto:${email}?subject=${encodeURIComponent('合作')}`;
 const needs = ['古画', '民乐音画', '展览 · 委托'] as const;
-const tiers = [
-  ['1', '¥1', '试收款'],
-  ['9.9', '¥9.9', '短咨询'],
-  ['49', '¥49', '半小时'],
-  ['99', '¥99', '正式咨询'],
-  ['custom', '自定义', '自己输入'],
-] as const;
 const names: Record<string, string> = {
   mail: '邮件',
   feishu: '飞书',
-  deposit: '定金',
   wechat: '微信',
 };
 const known = Object.keys(names);
@@ -64,26 +56,6 @@ const start = known.includes(tool) ? tool : '';
           </button>
         </div>
 
-        <div class="card" id="pane-deposit" hidden={start !== 'deposit'}>
-          <div class="tiers" role="group" aria-label="定金">
-            {tiers.map(([id, amount, name]) => (
-              <button type="button" data-tier={id} data-amount={amount} data-name={name} aria-pressed="false">
-                <b>{amount}</b>
-                <small>{name}</small>
-              </button>
-            ))}
-          </div>
-          <div class="pay" id="pay" hidden>
-            <button class="mark" type="button" data-zoom="/consult/pay-qr.png" data-cap="收款码">
-              <img src="/consult/pay-qr.png" alt="收款码" width="691" height="691"/>
-            </button>
-            <div>
-              <p class="pay-name" id="pay-name"></p>
-              <p class="after">付后 · <a href="#mail">邮件</a>或<a href="#feishu">飞书</a></p>
-            </div>
-          </div>
-        </div>
-
         <div class="card" id="wechat" hidden={start !== 'wechat'}>
           <p class="soon">还没有。</p>
         </div>
@@ -93,7 +65,6 @@ const start = known.includes(tool) ? tool : '';
         <div class="chips" role="toolbar">
           <button type="button" data-tool="mail" aria-pressed={start === 'mail' ? 'true' : 'false'}>邮件</button>
           <button type="button" data-tool="feishu" aria-pressed={start === 'feishu' ? 'true' : 'false'}>飞书</button>
-          <button type="button" data-tool="deposit" aria-pressed={start === 'deposit' ? 'true' : 'false'}>定金</button>
           <button type="button" data-tool="wechat" aria-pressed={start === 'wechat' ? 'true' : 'false'}>微信<span class="badge">待</span></button>
         </div>
         <form class="say" id="bench-say">
@@ -122,7 +93,7 @@ const start = known.includes(tool) ? tool : '';
   const form = document.getElementById('pane-mail');
   if (root && log && say && input && form) {
     const studio = 'lily1326685527@gmail.com';
-    const names = { mail: '邮件', feishu: '飞书', deposit: '定金', wechat: '微信' };
+    const names = { mail: '邮件', feishu: '飞书', wechat: '微信' };
     const buttons = [...root.querySelectorAll('button[data-tool]')];
     const status = document.getElementById('bench-status');
     const demoNote = document.getElementById('bench-demo');
@@ -130,11 +101,8 @@ const start = known.includes(tool) ? tool : '';
     const panes = {
       mail: form,
       feishu: document.getElementById('feishu'),
-      deposit: document.getElementById('pane-deposit'),
       wechat: document.getElementById('wechat'),
     };
-    const pay = document.getElementById('pay');
-    const payName = document.getElementById('pay-name');
     const light = document.getElementById('bench-light');
     const lightImg = document.getElementById('bench-light-img');
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -145,7 +113,7 @@ const start = known.includes(tool) ? tool : '';
 
     function hashTool() {
       const h = location.hash.replace('#', '');
-      if (h === 'mail' || h === 'feishu' || h === 'deposit' || h === 'wechat') return h;
+      if (h === 'mail' || h === 'feishu' || h === 'wechat') return h;
       if (h === 'start') return '';
       return null;
     }
@@ -165,16 +133,6 @@ const start = known.includes(tool) ? tool : '';
       if (wasHidden || pushHash) el.scrollIntoView({ block: 'nearest' });
     }
     buttons.forEach((b) => b.addEventListener('click', () => reveal(b.dataset.tool, true)));
-
-    root.querySelectorAll('[data-tier]').forEach((b) => {
-      b.addEventListener('click', () => {
-        root.querySelectorAll('[data-tier]').forEach((n) => n.setAttribute('aria-pressed', 'false'));
-        b.setAttribute('aria-pressed', 'true');
-        if (pay) pay.hidden = false;
-        if (payName) payName.textContent = b.dataset.amount + ' ' + b.dataset.name;
-        pay?.scrollIntoView({ block: 'nearest' });
-      });
-    });
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -511,7 +469,6 @@ const start = known.includes(tool) ? tool : '';
     gap: 8px;
   }
   .chips button,
-  .tiers button,
   .solid,
   .say button,
   .light button {
@@ -537,9 +494,7 @@ const start = known.includes(tool) ? tool : '';
     letter-spacing: 0.08em;
   }
   .chips button:hover,
-  .chips button[aria-pressed="true"],
-  .tiers button:hover,
-  .tiers button[aria-pressed="true"] {
+  .chips button[aria-pressed="true"] {
     background: var(--ink);
     color: #fff;
   }
@@ -692,33 +647,7 @@ const start = known.includes(tool) ? tool : '';
   .quiet:hover,
   .noscript a:hover { border-bottom-color: var(--muted); }
   .noscript { margin: 0; padding: 0 16px 16px; }
-  .soon,
-  .after,
-  .pay-name { margin: 0; }
-  .after { margin-top: 10px; font-size: 14px; letter-spacing: 0.04em; }
-  .after a {
-    color: var(--ink);
-    text-decoration: none;
-    border-bottom: 1px solid var(--ink);
-  }
-  .tiers { display: flex; flex-wrap: wrap; gap: 8px; }
-  .tiers button {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 3px;
-    min-width: 5.6rem;
-    padding: 8px 10px 9px;
-    text-align: left;
-  }
-  .tiers button b {
-    font-size: 16px;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
-  .tiers button small { font-size: 12px; letter-spacing: 0.04em; }
+  .soon { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
   .mark {
     display: block;
     width: min(200px, 100%);
@@ -734,21 +663,6 @@ const start = known.includes(tool) ? tool : '';
     height: auto;
     border-radius: 0;
   }
-  .pay {
-    display: grid;
-    grid-template-columns: 200px 1fr;
-    gap: 16px 18px;
-    align-items: center;
-    margin-top: 16px;
-  }
-  .pay-name {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.03em;
-    line-height: 1.1;
-  }
-  .soon { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
-  .pay[hidden],
   .card[hidden],
   .demo[hidden],
   .light[hidden] { display: none !important; }
@@ -794,7 +708,7 @@ const start = known.includes(tool) ? tool : '';
     .panel { min-height: 0; }
     .work h1 { font-size: 22px; }
     .bench { padding-top: 8px; }
-    .fields, .pay { grid-template-columns: 1fr; }
+    .fields { grid-template-columns: 1fr; }
     .wide { grid-column: auto; }
   }
 </style>
