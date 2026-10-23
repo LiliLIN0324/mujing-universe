@@ -12,13 +12,14 @@ Astro 静态站点，无前端框架运行时；唯一的动态能力是页面�
 
 | 路径 | 内容 |
 |---|---|
-| `/` | 首页 |
-| `/works/` | 作品列表 |
+| `/` | 首页（代表作全屏章节，悬停预览） |
+| `/works/` | 作品全库，按创作线筛选，网格或列表 |
 | `/works/<slug>/` | 单个作品 |
-| `/artist/` · `/studio/` | 艺术家与工作室 |
-| `/contact/` | 联系方式 |
+| `/news/` | 新闻（浅灰纸色列表） |
+| `/about/` | 关于 |
+| `/contact/` | 合作（写邮件；飞书、微信、Mimi 在次级） |
 
-`/about` 通过 `_redirects` 跳到 `/studio/`。
+`/artist` 与 `/studio` 通过 `_redirects` 跳到 `/about/`。
 
 ## AI 向导 Mimi
 
