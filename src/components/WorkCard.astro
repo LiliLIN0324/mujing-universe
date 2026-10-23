@@ -14,7 +14,6 @@ const desc = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
     <div class="im"><WorkCover w={w} eager={eager} /></div>
     <div class="cap">
       <h2><a href={href}><span class="ttl">{w.main}</span></a></h2>
-      <span class="tag">{w.line}</span>
       <div class="more" aria-hidden="true">
         {meta && <p class="m-meta">{meta}</p>}
         {desc && <p class="m-desc">{desc}</p>}
@@ -26,7 +25,6 @@ const desc = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
     <div class="im"><WorkCover w={w} eager={eager} /></div>
     <div class="cap">
       <h2><span class="ttl">{w.main}</span></h2>
-      <span class="tag">{w.line}</span>
       <div class="more" aria-hidden="true">
         {meta && <p class="m-meta">{meta}</p>}
         {desc && <p class="m-desc">{desc}</p>}
