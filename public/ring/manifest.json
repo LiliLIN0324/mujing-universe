@@ -1,44 +1,52 @@
 [
   {
+    "i": 0,
     "slug": "xihu-panorama",
-    "file": "0.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/01.jpg"
   },
   {
+    "i": 1,
     "slug": "mimi-agent",
-    "file": "1.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/mimi-agent/01.jpg"
   },
   {
+    "i": 2,
     "slug": "riffle-ai-game-generation-tool",
-    "file": "2.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/riffle/01.jpg"
   },
   {
+    "i": 3,
     "slug": "scendance",
-    "file": "3.jpg",
-    "source": "_sources/scendance-hero.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/scendance/01.jpg"
   },
   {
+    "i": 4,
     "slug": "zhuantang-yixun",
-    "file": null,
-    "local": "/works/zhuantang-yixun/home.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/01.jpg"
   },
   {
+    "i": 5,
     "slug": "bazi-fengshui-analysis",
-    "file": "5.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bazi/01.jpg"
   },
   {
+    "i": 6,
     "slug": "genshot-AI-video-generation-tool",
-    "file": "6.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genshot/01.jpg"
   },
   {
+    "i": 7,
     "slug": "genstyle",
-    "file": "7.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/genstyle/01.jpg"
   },
   {
+    "i": 8,
     "slug": "anyreal",
-    "file": "8.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/01.jpg"
   },
   {
+    "i": 9,
     "slug": "dragon-diffussion",
-    "file": "9.jpg"
+    "source": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/dragon-diffusion/01.jpg"
   }
 ]

@@ -17,13 +17,14 @@
   "腾讯地图"
  ],
  "images": [
-  "/works/zhuantang-yixun/home.jpg",
-  "/works/zhuantang-yixun/calendar.jpg",
-  "/works/zhuantang-yixun/qa-eval.png",
-  "/works/zhuantang-yixun/qa-performing-arts.png",
-  "/works/zhuantang-yixun/qa-research-ops.png"
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/06.jpg"
  ],
- "icon": "/works/zhuantang-yixun/home.jpg",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/01.jpg",
  "hasDemo": true,
  "flags": [],
  "source": "manual",
