@@ -77,16 +77,10 @@ const mail = 'mailto:lily1326685527@gmail.com';
     user-select: none;
   }
   .mimi-launch.is-drag { cursor: grabbing; }
-  .mimi-launch.is-drag .mimi-face {
-    box-shadow: inset 0 0 0 1px #1a1a1c;
-  }
-  .mimi-launch.is-hot .mimi-face {
-    box-shadow: inset 0 0 0 1px #1a1a1c;
-  }
   .mimi-halo {
     position: absolute;
     inset: -7px;
-    border-radius: 0;
+    border-radius: 50%;
     border: 2px solid transparent;
     border-top-color: #1a1a1c;
     border-right-color: #1a1a1c;
@@ -107,14 +101,14 @@ const mail = 'mailto:lily1326685527@gmail.com';
     display: block;
     width: 100%;
     height: 100%;
-    border-radius: 0;
+    border-radius: 50%;
     overflow: hidden;
-    background: #fff;
-    box-shadow: inset 0 0 0 1px #1a1a1c;
+    background: transparent;
+    box-shadow: none;
   }
   .mimi-launch.is-drag .mimi-face { transition: none; }
-  /* 橙圆在文件里不完整：画布顶上是透明的，静态图把圆顶裁掉了。
-     圆垫补上这块，画面再挪到圆的外接正方形，直角外框贴着整圆。角色仍是圆的。 */
+  /* 橙色圆直接贴在页面上，不套黑框，也不垫白底方框。
+     文件里缺的圆顶仍用同色圆补上。 */
   .mimi-ground {
     position: absolute;
     inset: 0;
