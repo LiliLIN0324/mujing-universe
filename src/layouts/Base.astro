@@ -7,6 +7,7 @@ const {
   image = '/ring/0.jpg',
   active = '',
   home = false,
+  fullscreen = false,
   navClass = '',
 } = Astro.props;
 const links = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '合作']];
@@ -41,7 +42,7 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
   <meta property="og:image:alt" content="幕景宇宙"/>
   <meta name="twitter:card" content="summary_large_image"/>
 </head>
-<body>
+<body class:list={[{ home, fullscreen }]}>
 <a class="skip" href="#content">跳到主要内容</a>
 {home ? (
 <header class:list={["top top--home", navClass]} id="home-nav" data-autohide>

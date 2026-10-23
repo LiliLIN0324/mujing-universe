@@ -58,13 +58,32 @@ const jobs = [
     document.dispatchEvent(new CustomEvent('mimi:open', { detail: { intent: 'coop' } }));
   });
   const copy = document.getElementById('copy-wx');
-  copy?.addEventListener('click', () => {
-    const done = () => {
-      copy.textContent = '已复制';
-      window.setTimeout(() => { copy.textContent = '复制微信号'; }, 1400);
-    };
+  copy?.addEventListener('click', async () => {
     const id = 'endTree-26';
-    if (navigator.clipboard) navigator.clipboard.writeText(id).then(done).catch(() => {});
+    let ok = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(id);
+        ok = true;
+      }
+    } catch { ok = false; }
+    if (!ok) {
+      const ta = document.createElement('textarea');
+      ta.value = id;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.top = '0';
+      ta.style.left = '0';
+      ta.style.opacity = '0';
+      document.body.append(ta);
+      ta.focus();
+      ta.select();
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+      ta.remove();
+    }
+    const prev = copy.textContent;
+    copy.textContent = ok ? '已复制' : '请长按微信号复制';
+    window.setTimeout(() => { copy.textContent = prev; }, 1400);
   });
 </script>
 <style>
