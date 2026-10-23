@@ -555,8 +555,9 @@ const mail = 'mailto:lily1326685527@gmail.com';
     z-index: 161;
     width: 22px;
     height: 22px;
-    border-radius: 0;
-    background: #1a1a1c;
+    border-radius: 50%;
+    background: #ff690a;
+    opacity: 0.82;
     pointer-events: none;
     animation: mimi-crumb 0.7s ease-out forwards;
   }
@@ -587,6 +588,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
     100% { opacity: 0; }
   }
   @keyframes mimi-crumb {
+    from { opacity: 0.82; transform: scale(1); }
     to { opacity: 0; transform: scale(0.3); }
   }
   @media (prefers-reduced-motion: reduce) {
