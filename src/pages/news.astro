@@ -34,7 +34,7 @@ function scanLine(item: NewsItem) {
 }
 
 function hasDetail(item: NewsItem) {
-  return Boolean(item.original || item.href || item.format || (!item.placeholder && item.summary));
+  return Boolean(item.image || item.original || item.href || item.format || (!item.placeholder && item.summary));
 }
 ---
 <Base
@@ -74,27 +74,34 @@ function hasDetail(item: NewsItem) {
               data-end={item.end || undefined}
               data-open={item.open ? '1' : undefined}
             >
-              {openable ? (
-                <button class="line hit" type="button" aria-expanded="false" aria-controls={detailId}>
-                  <time class="date" datetime={timeAttr(item)}>{dateLabel(item)}</time>
-                  <span class="sec">{SECTION_LABEL[item.section]}</span>
-                  <span class="main">
-                    <span class="title">{item.title}{item.placeholder && <span class="mark">占位</span>}<i class="plus" aria-hidden="true"></i></span>
-                    {where && <span class="where">{where}</span>}
-                  </span>
-                  <span class="who">{people}</span>
-                </button>
-              ) : (
-                <div class="line">
-                  <time class="date" datetime={timeAttr(item)}>{dateLabel(item)}</time>
-                  <span class="sec">{SECTION_LABEL[item.section]}</span>
-                  <span class="main">
-                    <span class="title">{item.title}{item.placeholder && <span class="mark">占位</span>}</span>
-                    {where && <span class="where">{where}</span>}
-                  </span>
-                  <span class="who">{people}</span>
-                </div>
-              )}
+              <div class="line">
+                {openable ? (
+                  <button class="hit" type="button" aria-expanded="false" aria-controls={detailId}>
+                    <time class="date" datetime={timeAttr(item)}>{dateLabel(item)}</time>
+                    <span class="sec">{SECTION_LABEL[item.section]}</span>
+                    <span class="copy">
+                      <span class="title">{item.title}{item.placeholder && <span class="mark">占位</span>}<i class="plus" aria-hidden="true"></i></span>
+                      {where && <span class="where">{where}</span>}
+                    </span>
+                    <span class="who">{people}</span>
+                  </button>
+                ) : (
+                  <div class="hit">
+                    <time class="date" datetime={timeAttr(item)}>{dateLabel(item)}</time>
+                    <span class="sec">{SECTION_LABEL[item.section]}</span>
+                    <span class="copy">
+                      <span class="title">{item.title}{item.placeholder && <span class="mark">占位</span>}</span>
+                      {where && <span class="where">{where}</span>}
+                    </span>
+                    <span class="who">{people}</span>
+                  </div>
+                )}
+                {item.image && (
+                  <button class="cover" type="button" aria-label="放大封面">
+                    <img src={item.image} alt="" width="240" height="180" loading="lazy" decoding="async" />
+                  </button>
+                )}
+              </div>
               {openable && (
                 <div class="detail" id={detailId} hidden>
                   <div class="detail-grid">
@@ -103,7 +110,15 @@ function hasDetail(item: NewsItem) {
                       {item.format && <p class="format">{item.format}</p>}
                       {item.original && <p class="original" lang="en">{item.original}</p>}
                       {!item.placeholder && item.summary && <p class="summary">{item.summary}</p>}
-                      {item.href && <p class="more"><a href={item.href}>{item.hrefLabel || '查看'}</a></p>}
+                      {item.href && (
+                        <p class="more">
+                          {item.href.startsWith('http') ? (
+                            <a href={item.href} target="_blank" rel="noopener noreferrer">{item.hrefLabel || '查看'}</a>
+                          ) : (
+                            <a href={item.href}>{item.hrefLabel || '查看'}</a>
+                          )}
+                        </p>
+                      )}
                     </div>
                     <span></span>
                   </div>
@@ -116,18 +131,21 @@ function hasDetail(item: NewsItem) {
       <p class="empty" id="news-empty" hidden>没有条目。</p>
     </div>
   </section>
+  <div class="light" id="news-light" hidden>
+    <button class="light-x" type="button">关闭</button>
+    <img alt="" />
+  </div>
 </main>
 
 <style>
 .news-page {
-  --stage: #F6F5F3;
   --paper-ink: #1A1A1C;
   --paper-dim: #6A655F;
   --paper-rule: #1A1A1C14;
 }
-.news-in { width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter))); margin-inline: auto; }
+.news-in { width: min(var(--measure), calc(100% - 2 * var(--gutter))); margin-inline: auto; }
 .stage {
-  background: var(--stage);
+  background: var(--bg);
   color: var(--paper-ink);
   min-height: calc(100svh - 80px);
   padding: 48px 0 88px;
@@ -175,24 +193,50 @@ function hasDetail(item: NewsItem) {
   border: 0;
 }
 .news-list { list-style: none; margin: 0; padding: 0; }
-.line, .detail-grid {
+.line { position: relative; border-bottom: 1px solid var(--paper-rule); }
+.hit, .detail-grid {
   display: grid;
   grid-template-columns: 156px 84px minmax(0, 1fr) 64px;
   column-gap: 28px;
-  align-items: baseline;
 }
-.line {
+.hit { align-items: center; width: 100%; }
+.detail-grid { align-items: start; }
+.copy { min-width: 0; }
+.line:has(.cover) .copy { padding-right: 140px; }
+.cover {
+  position: absolute;
+  z-index: 1;
+  right: calc(64px + 28px);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 120px;
+  aspect-ratio: 4 / 3;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  overflow: hidden;
+  background: none;
+  cursor: zoom-in;
+}
+.cover img {
   width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 0;
+}
+.hit {
   margin: 0;
   padding: 26px 0;
   border: 0;
-  border-bottom: 1px solid var(--paper-rule);
   background: none;
   color: inherit;
   font: inherit;
   text-align: left;
 }
-button.line { cursor: pointer; }
+button.hit { cursor: pointer; }
 .date, .sec, .who, .where {
   font-size: 13px;
   line-height: 1.5;
@@ -241,12 +285,40 @@ button.line { cursor: pointer; }
 .plus::after { left: 0; top: 4px; width: 9px; height: 1px; }
 .hit[aria-expanded="true"] .plus::before { opacity: 0; }
 .hit:hover .title { color: var(--paper-ink); }
-li:has(.hit[aria-expanded="true"]) .hit {
-  border-bottom-color: transparent;
-  padding-bottom: 10px;
-}
+li:has(.hit[aria-expanded="true"]) .line { border-bottom-color: transparent; }
+li:has(.hit[aria-expanded="true"]) .hit { padding-bottom: 10px; }
 .detail[hidden] { display: none; }
 .detail-grid { padding-bottom: 22px; border-bottom: 1px solid var(--paper-rule); }
+.light {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 72px 24px 32px;
+  background: #fff;
+}
+.light[hidden] { display: none; }
+.light img {
+  max-width: min(920px, 100%);
+  max-height: calc(100dvh - 120px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 0;
+}
+.light-x {
+  position: absolute;
+  top: 22px;
+  right: 28px;
+  border: 0;
+  background: none;
+  color: var(--paper-ink);
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  cursor: pointer;
+}
 .detail-body p { margin: 0 0 8px; max-width: 40em; font-size: 14px; line-height: 1.7; color: #4a463f; }
 .detail-body .original { font-family: var(--en), var(--sans); font-size: 13px; color: var(--paper-dim); }
 .detail-body .format { font-size: 13px; color: var(--paper-dim); }
@@ -256,7 +328,7 @@ li:has(.hit[aria-expanded="true"]) .hit {
 :global(footer.bot) { margin-top: 0; padding-top: 48px; }
 
 @media (max-width: 800px) {
-  .news-in { width: calc(100% - 2 * var(--page-gutter)); }
+  .news-in { width: calc(100% - 2 * var(--gutter)); }
   .stage { min-height: calc(100svh - 52px); padding: 28px 0 72px; }
   .news-page h1 { font-size: 32px; margin-bottom: 22px; }
   .bar { flex-direction: column; align-items: stretch; gap: 8px; }
@@ -267,15 +339,17 @@ li:has(.hit[aria-expanded="true"]) .hit {
     scrollbar-width: none;
   }
   .secs::-webkit-scrollbar, .whens::-webkit-scrollbar { display: none; }
-  .line, .detail-grid {
+  .hit, .detail-grid {
     grid-template-columns: 1fr auto;
     row-gap: 2px;
   }
-  .line { padding: 22px 0; }
+  .hit { padding: 22px 0; align-items: start; }
   .date { grid-column: 1; grid-row: 1; }
   .who { grid-column: 2; grid-row: 1; }
   .sec { grid-column: 1 / -1; grid-row: 2; }
-  .main { grid-column: 1 / -1; grid-row: 3; }
+  .copy { grid-column: 1 / -1; grid-row: 3; }
+  .line:has(.cover) .copy { padding-right: 100px; }
+  .cover { width: 88px; right: 0; top: auto; bottom: 22px; transform: none; }
   .title { font-size: 18px; }
   .where { white-space: normal; }
   .detail-grid > span { display: none; }
@@ -288,6 +362,46 @@ li:has(.hit[aria-expanded="true"]) .hit {
 
   const page = document.querySelector('.news-page');
   if (page) {
+    const light = page.querySelector<HTMLElement>('#news-light');
+    const lightImg = light?.querySelector('img');
+    const lightX = light?.querySelector<HTMLButtonElement>('.light-x');
+    let lightOpener: HTMLElement | null = null;
+    const closeLight = () => {
+      if (!light || light.hidden) return;
+      light.hidden = true;
+      lightImg?.removeAttribute('src');
+      document.body.style.overflow = '';
+      lightOpener?.focus();
+      lightOpener = null;
+    };
+    const openLight = (src: string, opener: HTMLElement) => {
+      if (!light || !lightImg) return;
+      lightImg.src = src;
+      light.hidden = false;
+      document.body.style.overflow = 'hidden';
+      lightOpener = opener;
+      lightX?.focus();
+    };
+    page.querySelectorAll<HTMLImageElement>('.cover img').forEach((img) => {
+      const fail = () => img.closest('.cover')?.remove();
+      if (img.complete && img.naturalWidth === 0) fail();
+      else img.addEventListener('error', fail);
+    });
+    page.querySelectorAll<HTMLButtonElement>('.cover').forEach((btn) => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const img = btn.querySelector('img');
+        const src = img?.currentSrc || img?.getAttribute('src') || '';
+        if (src) openLight(src, btn);
+      });
+    });
+    lightX?.addEventListener('click', closeLight);
+    light?.addEventListener('click', (event) => {
+      if (event.target === light) closeLight();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeLight();
+    });
     const rows = [...page.querySelectorAll<HTMLLIElement>('.news-list > li')];
     const secLinks = [...page.querySelectorAll<HTMLAnchorElement>('[data-section-link]')];
     const whenLinks = [...page.querySelectorAll<HTMLAnchorElement>('[data-when-link]')];
@@ -343,6 +457,7 @@ li:has(.hit[aria-expanded="true"]) .hit {
     };
 
     const apply = () => {
+      closeLight();
       closeDetails();
       let count = 0;
       rows.forEach((row) => {
