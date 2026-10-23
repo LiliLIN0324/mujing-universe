@@ -136,6 +136,18 @@ html {
   outline-offset: 3px;
 }
 a, button { touch-action: manipulation; }
+/* 仅屏幕阅读器可见。 */
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .skip {
   position: absolute;
   left: 12px;
