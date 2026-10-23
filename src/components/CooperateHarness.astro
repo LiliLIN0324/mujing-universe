@@ -1,7 +1,7 @@
 ---
 /**
- * 合作工作台。填表走 mailto，无后端。
- * 定金码 public/consult/pay-qr.png。
+ * 合作工作台。对话走现有 /api/chat。
+ * 邮件走 mailto，定金码 public/consult/pay-qr.png。无支付接口。
  */
 const { tool = '' } = Astro.props;
 const email = 'lily1326685527@gmail.com';
@@ -21,14 +21,14 @@ const names: Record<string, string> = {
   wechat: '微信',
 };
 const known = Object.keys(names);
-const start = known.includes(tool) ? tool : 'mail';
+const start = known.includes(tool) ? tool : '';
 ---
-<main class="bench" id="bench" data-tool={start}>
+<main class="bench" id="bench" data-tool={start} data-state="idle">
   <section class="panel" id="start" aria-label="Mimi">
     <header class="hd">
       <img class="face" src="/mimi/avatar-72.webp" alt="" width="72" height="72"/>
       <p class="who">Mimi</p>
-      <p class="status"><i aria-hidden="true"></i><span id="bench-status">{names[start]}</span></p>
+      <p class="status"><i aria-hidden="true"></i><span id="bench-status">{start ? names[start] : 'Mimi'}</span><span class="demo" id="bench-demo" hidden>本地演示</span></p>
     </header>
 
     <div class="side">
@@ -42,54 +42,65 @@ const start = known.includes(tool) ? tool : 'mail';
     </div>
 
     <div class="work">
-      <form class="pane" id="pane-mail" action={mailto} method="post" enctype="text/plain" hidden={start !== 'mail'}>
-        <div class="fields">
-          <label>称呼<input name="称呼" autocomplete="name" required/></label>
-          <label>品牌·单位<input name="品牌·单位" autocomplete="organization"/></label>
-          <label>邮箱<input name="邮箱" type="email" autocomplete="email" inputmode="email" required/></label>
-          <label>方向
-            <select name="方向">
-              <option value="" selected></option>
-              {needs.map((item) => <option value={item}>{item}</option>)}
-            </select>
-          </label>
-          <label class="wide">简述<textarea name="简述" rows="5"></textarea></label>
-        </div>
-        <div class="send">
-          <button class="solid" type="submit">发送</button>
-          <a class="quiet" href={mailto}>{email}</a>
-        </div>
-      </form>
+      <div class="log" id="bench-log" role="log" aria-live="polite" aria-relevant="additions">
+        <div class="msg bot"><p>你好，我是 Mimi。</p></div>
 
-      <div class="pane" id="feishu" hidden={start !== 'feishu'}>
-        <button class="mark" type="button" data-zoom="/mimi/feishu-qr.png" data-cap="终树的飞书名片">
-          <img src="/mimi/feishu-qr.png" alt="终树的飞书名片" width="431" height="568"/>
-        </button>
-      </div>
+        <form class="card" id="pane-mail" action={mailto} method="post" enctype="text/plain" hidden={start !== 'mail'}>
+          <div class="fields">
+            <label>称呼<input name="称呼" autocomplete="name" required/></label>
+            <label>品牌·单位<input name="品牌·单位" autocomplete="organization"/></label>
+            <label>邮箱<input name="邮箱" type="email" autocomplete="email" inputmode="email" required/></label>
+            <label>方向
+              <select name="方向">
+                <option value="" selected></option>
+                {needs.map((item) => <option value={item}>{item}</option>)}
+              </select>
+            </label>
+            <label class="wide">简述<textarea name="简述" rows="4"></textarea></label>
+          </div>
+          <div class="send">
+            <button class="solid" type="submit">发送</button>
+            <a class="quiet" href={mailto}>{email}</a>
+          </div>
+        </form>
 
-      <div class="pane" id="pane-deposit" hidden={start !== 'deposit'}>
-        <div class="tiers" role="group" aria-label="定金">
-          {tiers.map(([id, amount, name]) => (
-            <button type="button" data-tier={id} data-amount={amount} data-name={name} aria-pressed="false">
-              <b>{amount}</b>
-              <small>{name}</small>
-            </button>
-          ))}
-        </div>
-        <div class="pay" id="pay" hidden>
-          <button class="mark" type="button" data-zoom="/consult/pay-qr.png" data-cap="收款码">
-            <img src="/consult/pay-qr.png" alt="收款码" width="691" height="691"/>
+        <div class="card" id="feishu" hidden={start !== 'feishu'}>
+          <button class="mark" type="button" data-zoom="/mimi/feishu-qr.png" data-cap="终树的飞书名片">
+            <img src="/mimi/feishu-qr.png" alt="终树的飞书名片" width="431" height="568"/>
           </button>
-          <div>
-            <p class="pay-name" id="pay-name"></p>
-            <p class="after">付后 · <a href="#mail">邮件</a>或<a href="#feishu">飞书</a></p>
+        </div>
+
+        <div class="card" id="pane-deposit" hidden={start !== 'deposit'}>
+          <div class="tiers" role="group" aria-label="定金">
+            {tiers.map(([id, amount, name]) => (
+              <button type="button" data-tier={id} data-amount={amount} data-name={name} aria-pressed="false">
+                <b>{amount}</b>
+                <small>{name}</small>
+              </button>
+            ))}
+          </div>
+          <div class="pay" id="pay" hidden>
+            <button class="mark" type="button" data-zoom="/consult/pay-qr.png" data-cap="收款码">
+              <img src="/consult/pay-qr.png" alt="收款码" width="691" height="691"/>
+            </button>
+            <div>
+              <p class="pay-name" id="pay-name"></p>
+              <p class="after">付后 · <a href="#mail">邮件</a>或<a href="#feishu">飞书</a></p>
+            </div>
           </div>
         </div>
+
+        <div class="card" id="wechat" hidden={start !== 'wechat'}>
+          <p class="soon">还没有。</p>
+        </div>
       </div>
 
-      <div class="pane" id="wechat" hidden={start !== 'wechat'}>
-        <p class="soon">还没有。</p>
-      </div>
+      <form class="say" id="bench-say">
+        <label class="sr" for="bench-input">跟 Mimi 说</label>
+        <input id="bench-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send"/>
+        <button type="submit">发送</button>
+      </form>
+      <noscript><p class="noscript"><a href={mailto}>{email}</a></p></noscript>
     </div>
   </section>
 </main>
@@ -99,14 +110,21 @@ const start = known.includes(tool) ? tool : 'mail';
   <button type="button" id="bench-light-x">关闭</button>
 </div>
 
-<script is:inline>
+<script>
+  import { linkify, requestReply } from '../scripts/mimi-core.js';
+
   const root = document.getElementById('bench');
+  const log = document.getElementById('bench-log');
+  const say = document.getElementById('bench-say');
+  const input = document.getElementById('bench-input');
   const form = document.getElementById('pane-mail');
-  if (root && form) {
+  if (root && log && say && input && form) {
     const studio = 'lily1326685527@gmail.com';
     const names = { mail: '邮件', feishu: '飞书', deposit: '定金', wechat: '微信' };
     const buttons = [...root.querySelectorAll('button[data-tool]')];
     const status = document.getElementById('bench-status');
+    const demoNote = document.getElementById('bench-demo');
+    const sendBtn = say.querySelector('button');
     const panes = {
       mail: form,
       feishu: document.getElementById('feishu'),
@@ -117,24 +135,34 @@ const start = known.includes(tool) ? tool : 'mail';
     const payName = document.getElementById('pay-name');
     const light = document.getElementById('bench-light');
     const lightImg = document.getElementById('bench-light-img');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const turns = [];
+    let demo = false;
+    let busy = false;
+    let typer = 0;
 
     function hashTool() {
       const h = location.hash.replace('#', '');
       if (h === 'mail' || h === 'feishu' || h === 'deposit' || h === 'wechat') return h;
-      if (h === 'start') return 'mail';
+      if (h === 'start') return '';
       return null;
     }
-    function show(name, pushHash) {
-      const tool = panes[name] ? name : 'mail';
-      buttons.forEach((b) => b.setAttribute('aria-pressed', b.dataset.tool === tool ? 'true' : 'false'));
-      Object.entries(panes).forEach(([key, el]) => { if (el) el.hidden = key !== tool; });
-      if (status) status.textContent = names[tool];
+    function reveal(name, pushHash) {
+      const el = panes[name];
+      if (!el) return;
+      const wasHidden = el.hidden;
+      el.hidden = false;
+      if (wasHidden) log.append(el);
+      buttons.forEach((b) => b.setAttribute('aria-pressed', b.dataset.tool === name ? 'true' : 'false'));
+      if (status) status.textContent = names[name];
+      root.dataset.tool = name;
       if (pushHash) {
-        const next = '#' + tool;
+        const next = '#' + name;
         if (location.hash !== next) history.replaceState(null, '', next);
       }
+      if (wasHidden || pushHash) el.scrollIntoView({ block: 'nearest' });
     }
-    buttons.forEach((b) => b.addEventListener('click', () => show(b.dataset.tool, true)));
+    buttons.forEach((b) => b.addEventListener('click', () => reveal(b.dataset.tool, true)));
 
     root.querySelectorAll('[data-tier]').forEach((b) => {
       b.addEventListener('click', () => {
@@ -142,6 +170,7 @@ const start = known.includes(tool) ? tool : 'mail';
         b.setAttribute('aria-pressed', 'true');
         if (pay) pay.hidden = false;
         if (payName) payName.textContent = b.dataset.amount + ' ' + b.dataset.name;
+        pay?.scrollIntoView({ block: 'nearest' });
       });
     });
 
@@ -182,13 +211,122 @@ const start = known.includes(tool) ? tool : 'mail';
     });
     document.getElementById('bench-light-x')?.addEventListener('click', closeLight);
     light?.addEventListener('click', (e) => { if (e.target === light) closeLight(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLight(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && light && !light.hidden) closeLight(); });
+
+    function setState(next) {
+      root.dataset.state = next;
+      if (sendBtn) sendBtn.disabled = next === 'thinking';
+    }
+    function finishText(p, text, done) {
+      p.replaceChildren();
+      if (text) linkify(p, text);
+      if (root.dataset.state === 'answering') setState('idle');
+      if (done) done();
+    }
+    function typewrite(p, text, done) {
+      window.clearInterval(typer);
+      if (reduce || !text) {
+        finishText(p, text, done);
+        return;
+      }
+      const shown = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
+      let i = 0;
+      const step = shown.length > 70 ? 2 : 1;
+      typer = window.setInterval(() => {
+        i = Math.min(shown.length, i + step);
+        p.textContent = shown.slice(0, i);
+        log.scrollTop = log.scrollHeight;
+        if (i >= shown.length) {
+          window.clearInterval(typer);
+          finishText(p, text, done);
+        }
+      }, 18);
+    }
+    function append(role, text, typed = true, done) {
+      const item = document.createElement('div');
+      item.className = `msg ${role === 'user' ? 'user' : 'bot'}`;
+      const p = document.createElement('p');
+      item.append(p);
+      log.append(item);
+      if (role === 'user') p.textContent = text;
+      else if (typed) typewrite(p, text, done);
+      else finishText(p, text, done);
+      log.scrollTop = log.scrollHeight;
+      return p;
+    }
+
+    async function ask(text) {
+      const q = text.trim().slice(0, 400);
+      if (!q || busy) return;
+      busy = true;
+      window.clearInterval(typer);
+      append('user', q);
+      turns.push({ role: 'user', content: q });
+      input.value = '';
+      setState('thinking');
+      const t0 = performance.now();
+      let bubble = null;
+      const result = await requestReply({
+        messages: turns,
+        demo,
+        onDelta(shown) {
+          if (!bubble) {
+            setState('answering');
+            const item = document.createElement('div');
+            item.className = 'msg bot';
+            bubble = document.createElement('p');
+            item.append(bubble);
+            log.append(item);
+          }
+          bubble.textContent = shown;
+          log.scrollTop = log.scrollHeight;
+        },
+      });
+      if (result.demo) {
+        demo = true;
+        if (demoNote) demoNote.hidden = false;
+      }
+      let streamed = result.streamed;
+      if (result.threw && bubble?.parentElement) {
+        bubble.parentElement.remove();
+        bubble = null;
+        streamed = false;
+      }
+      const { reply, showCoop, failed } = result;
+      const after = () => { if (showCoop) reveal('feishu', false); };
+      if (failed) {
+        setState('error');
+        if (bubble) bubble.textContent = reply;
+        else append('bot', reply, false);
+        busy = false;
+        window.setTimeout(() => { if (root.dataset.state === 'error') setState('idle'); }, reduce ? 0 : 700);
+        return;
+      }
+      if (!streamed && !reduce) {
+        const wait = 360 - (performance.now() - t0);
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      }
+      if (streamed && bubble) finishText(bubble, reply, after);
+      else {
+        setState('answering');
+        append('bot', reply, true, after);
+      }
+      turns.push({ role: 'assistant', content: reply });
+      busy = false;
+    }
+
+    say.addEventListener('submit', (e) => {
+      e.preventDefault();
+      ask(input.value);
+    });
 
     const fromHash = hashTool();
-    show(fromHash === null ? (root.dataset.tool || 'mail') : fromHash, false);
+    const initial = fromHash === null ? (root.dataset.tool || '') : fromHash;
+    if (initial) reveal(initial, false);
     window.addEventListener('hashchange', () => {
       const h = hashTool();
-      if (h !== null) show(h, false);
+      if (h) reveal(h, false);
+      else if (h === '') input.focus();
     });
   }
 </script>
@@ -203,7 +341,7 @@ const start = known.includes(tool) ? tool : 'mail';
     display: grid;
     grid-template-columns: 280px 1fr;
     grid-template-rows: auto 1fr;
-    min-height: 480px;
+    min-height: min(640px, calc(100vh - 160px));
     border: 1px solid var(--ink);
     border-radius: 0;
     background: #fff;
@@ -243,6 +381,10 @@ const start = known.includes(tool) ? tool : 'mail';
     background: var(--ink);
     vertical-align: 1px;
   }
+  .bench[data-state="thinking"] .status i {
+    animation: bench-pulse 0.9s steps(2, end) infinite;
+  }
+  .demo { margin-left: 10px; color: var(--muted); letter-spacing: 0.08em; }
   .side {
     display: flex;
     flex-direction: column;
@@ -266,6 +408,7 @@ const start = known.includes(tool) ? tool : 'mail';
   .chips button,
   .tiers button,
   .solid,
+  .say button,
   .light button {
     border: 1px solid var(--ink);
     border-radius: 0;
@@ -297,7 +440,84 @@ const start = known.includes(tool) ? tool : 'mail';
   }
   .chips button:hover .badge,
   .chips button[aria-pressed="true"] .badge { color: #fff; }
-  .work { padding: 22px 20px 20px; }
+  .work {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 420px;
+    background: #fff;
+  }
+  .log {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 18px 18px 12px;
+  }
+  .msg {
+    max-width: min(40em, 100%);
+    margin: 0;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    background: #fff;
+    padding: 10px 12px;
+  }
+  .msg p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .msg a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--ink);
+    color: #fff;
+  }
+  .card {
+    align-self: stretch;
+    width: 100%;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    background: #fff;
+    padding: 14px;
+  }
+  .say {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px 16px;
+    border-top: 1px solid var(--ink);
+  }
+  .say input {
+    flex: 1;
+    min-width: 0;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 16px;
+  }
+  .say button {
+    flex: none;
+    min-height: 44px;
+    padding: 0 18px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 14px;
+    letter-spacing: 0.14em;
+  }
+  .say button:disabled { opacity: 0.45; cursor: default; }
   .fields {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -325,7 +545,19 @@ const start = known.includes(tool) ? tool : 'mail';
     letter-spacing: 0;
     line-height: 1.4;
   }
-  input,
+  .say input { width: auto; margin-top: 0; }
+  .say .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .fields input,
   select { height: 44px; padding: 0 12px; }
   select {
     appearance: none;
@@ -336,7 +568,7 @@ const start = known.includes(tool) ? tool : 'mail';
     background-repeat: no-repeat;
   }
   select:has(option[value=""]:checked) { color: var(--muted); }
-  textarea { min-height: 140px; padding: 10px 12px; resize: vertical; }
+  textarea { min-height: 96px; padding: 10px 12px; resize: vertical; }
   .send {
     display: flex;
     flex-wrap: wrap;
@@ -352,8 +584,10 @@ const start = known.includes(tool) ? tool : 'mail';
     font-size: 14px;
     letter-spacing: 0.14em;
   }
-  .solid:hover { opacity: 0.82; }
-  .quiet {
+  .solid:hover,
+  .say button:hover { opacity: 0.82; }
+  .quiet,
+  .noscript a {
     color: var(--muted);
     font-family: var(--en), var(--sans);
     font-size: 13px;
@@ -361,7 +595,9 @@ const start = known.includes(tool) ? tool : 'mail';
     text-decoration: none;
     border-bottom: 1px solid transparent;
   }
-  .quiet:hover { border-bottom-color: var(--muted); }
+  .quiet:hover,
+  .noscript a:hover { border-bottom-color: var(--muted); }
+  .noscript { margin: 0; padding: 0 16px 16px; }
   .soon,
   .after,
   .pay-name { margin: 0; }
@@ -419,7 +655,8 @@ const start = known.includes(tool) ? tool : 'mail';
   }
   .soon { font-size: 22px; font-weight: 600; letter-spacing: -0.03em; }
   .pay[hidden],
-  .pane[hidden],
+  .card[hidden],
+  .demo[hidden],
   .light[hidden] { display: none !important; }
   .light {
     position: fixed;
@@ -449,12 +686,17 @@ const start = known.includes(tool) ? tool : 'mail';
     font-size: 14px;
     letter-spacing: 0.12em;
   }
+  @media (prefers-reduced-motion: reduce) {
+    .bench[data-state="thinking"] .status i { animation: none; }
+  }
+  @keyframes bench-pulse { 50% { opacity: 0.25; } }
   @media (max-width: 720px) {
     .bench { width: calc(100% - 2 * var(--gutter)); padding-top: 16px; }
     .panel { grid-template-columns: 1fr; min-height: 0; }
     .side { gap: 16px; border-right: 0; border-bottom: 1px solid var(--ink); }
     .side h1 { font-size: 26px; }
     .chips { margin-top: 0; }
+    .work { min-height: 420px; }
     .fields, .pay { grid-template-columns: 1fr; }
     .wide { grid-column: auto; }
   }
