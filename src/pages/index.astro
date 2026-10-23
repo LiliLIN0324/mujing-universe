@@ -267,8 +267,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   left: var(--page-pad);
   bottom: 40px;
   z-index: 2;
-  width: min(460px, calc(100% - 140px));
-  padding: 26px 28px 22px;
+  width: min(400px, calc(100% - 120px));
+  padding: 18px 20px 16px;
   background: color-mix(in srgb, var(--bg) 94%, transparent);
   color: var(--ink);
 }
@@ -334,14 +334,13 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 .fs-rail {
   position: absolute;
   right: var(--page-pad);
-  top: 22%;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 4;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 8px 4px;
-  background: color-mix(in srgb, var(--bg) 92%, transparent);
-  border-radius: 0;
+  gap: 3px;
+  padding: 0;
 }
 .fs-dot {
   width: 28px; height: 16px; border: 0; padding: 0;
@@ -353,7 +352,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   left: 50%; top: 50%;
   width: 5px; height: 5px;
   border-radius: 0;
-  background: color-mix(in srgb, var(--ink) 32%, transparent);
+  background: color-mix(in srgb, var(--ink) 40%, transparent);
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.7));
   transform: translate(-50%, -50%);
   transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.36s cubic-bezier(0.22, 1, 0.36, 1);
 }
