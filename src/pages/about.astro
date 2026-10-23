@@ -8,7 +8,6 @@ const pickJs = `(function(){var L=${JSON.stringify(portraits)},im=document.getEl
 <main class="wrap about-page">
 
 <div class="studio-intro reveal">
-  <p class="kicker cap">About · 关于</p>
   <h1>以创作为核心的<br/>AIGC 文化艺术团队</h1>
   <p class="lead">幕景宇宙（Mujing Universe）是杭州的 AIGC 文化艺术团队。我们用 AI 重新看待古画与民乐，让传统审美以新的形态进入当代展览与公共空间。团队名称"幕景"来自艺术家作品《幕景 Scendance》。</p>
 </div>
@@ -50,8 +49,9 @@ const pickJs = `(function(){var L=${JSON.stringify(portraits)},im=document.getEl
 <style>
 .about-page { padding-top: 80px; }
 
-.studio-intro { max-width: 600px; margin-bottom: 80px; }
-.studio-intro h1 { font-size: clamp(2rem, 4vw, 2.6rem); font-weight: 600; letter-spacing: -0.03em; line-height: 1.25; margin: 16px 0 20px; }
+.studio-intro { margin-bottom: 80px; }
+.studio-intro .lead { max-width: 36em; }
+.studio-intro h1 { font-size: clamp(40px, 5vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.15; margin: 0 0 20px; }
 .lead { font-size: 1.05rem; color: var(--ink2); line-height: 1.8; }
 
 .members { display: flex; flex-direction: column; gap: 72px; }
@@ -88,7 +88,7 @@ const pickJs = `(function(){var L=${JSON.stringify(portraits)},im=document.getEl
 }
 .member-info p { font-size: 1rem; color: var(--ink2); line-height: 1.8; }
 
-.endcap { text-align: center; margin-top: 88px; }
+.endcap { text-align: left; margin-top: 88px; }
 .endcap .btn { margin: 6px; }
 
 @media (max-width: 760px) {

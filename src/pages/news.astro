@@ -125,7 +125,7 @@ function hasDetail(item: NewsItem) {
   --paper-dim: #6A655F;
   --paper-rule: #1A1A1C14;
 }
-.news-in { width: min(1120px, calc(100% - 128px)); margin-inline: auto; }
+.news-in { width: min(var(--measure), calc(100% - 2 * var(--gutter))); margin-inline: auto; }
 .stage {
   background: var(--stage);
   color: var(--paper-ink);
@@ -256,7 +256,7 @@ li:has(.hit[aria-expanded="true"]) .hit {
 :global(footer.bot) { margin-top: 0; padding-top: 48px; }
 
 @media (max-width: 800px) {
-  .news-in { width: calc(100% - 40px); }
+  .news-in { width: calc(100% - 2 * var(--gutter)); }
   .stage { min-height: calc(100svh - 52px); padding: 28px 0 72px; }
   .news-page h1 { font-size: 32px; margin-bottom: 22px; }
   .bar { flex-direction: column; align-items: stretch; gap: 8px; }
