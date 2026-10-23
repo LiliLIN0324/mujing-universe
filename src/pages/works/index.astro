@@ -1,6 +1,6 @@
 ---
 // 作品页是完整目录，按创作线筛选，可换成列表。首页负责代表作。
-// 有核对过的 mp4 才在悬停或点击时播放，页面不自动播放。
+// 有核对过的 mp4：细指针悬停整张卡片即静音循环，离开就停。触摸和减少动态仍点按。页面不自动播放。
 import Base from '../../layouts/Base.astro';
 import WorkCard from '../../components/WorkCard.astro';
 import { LINES, allWorks, splitTitle } from '../../lib';
@@ -322,6 +322,8 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   document.documentElement.classList.add('js');
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+  const coarse = window.matchMedia('(pointer: coarse)');
   const root = $('.wf');
   let sweepClips = () => {};
 
@@ -394,6 +396,8 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
   cards.forEach((el) => { if (!el.hidden) arm(el); });
 
   let pinned = null;
+  let over = null;
+  let held = null;
   const clips = () => $$('.wf .cv.has-clip');
   const videoOf = (cv) => cv.querySelector('.cv-video');
   const alive = (cv) => {
@@ -402,6 +406,17 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     if (root && root.dataset.mode !== 'grid') return false;
     return true;
   };
+  // 细指针，或没被标成粗指针的鼠标。手机是粗指针，仍点按。
+  const hoverMode = () => !reduce.matches && (fine.matches || !coarse.matches);
+  const hoverPointer = (e) => {
+    if (!hoverMode()) return false;
+    const t = e.pointerType;
+    return !t || t === 'mouse' || t === 'pen';
+  };
+  function wanted(cv) {
+    if (!alive(cv) || held === cv) return false;
+    return pinned === cv || (over === cv && hoverMode());
+  }
   function mark(cv, on) {
     cv.classList.toggle('is-on', on);
     const b = cv.querySelector('.cv-play');
@@ -417,7 +432,7 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     if (release) {
       v.dataset.dropping = '1';
       v.removeAttribute('src');
-      v.load();
+      try { v.load(); } catch (_) {}
       v.dataset.dropping = '';
     }
     mark(cv, false);
@@ -427,21 +442,31 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     clips().forEach((other) => {
       if (other === cv) return;
       if (pinned === other) pinned = null;
+      if (over === other) over = null;
       halt(other, true);
     });
     const v = videoOf(cv);
     if (!v.getAttribute('src') && v.dataset.src) v.src = v.dataset.src;
+    v.playsInline = true;
+    v.loop = true;
     v.muted = true;
+    v.defaultMuted = true;
     const attempt = v.play();
-    if (attempt) attempt.catch(() => {});
+    if (attempt) attempt.catch((err) => {
+      if (!err || err.name !== 'AbortError' || !wanted(cv)) return;
+      v.addEventListener('canplay', () => { if (wanted(cv)) v.play().catch(() => {}); }, { once: true });
+    });
   }
   function togglePin(cv) {
-    if (!videoOf(cv)) return;
-    if (pinned === cv) {
+    const v = videoOf(cv);
+    if (!v) return;
+    if (v.getAttribute('src') && !v.paused) {
       pinned = null;
+      held = cv;
       halt(cv, true);
       return;
     }
+    held = null;
     pinned = cv;
     start(cv);
   }
@@ -449,22 +474,30 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     clips().forEach((cv) => {
       if (alive(cv)) return;
       if (pinned === cv) pinned = null;
+      if (over === cv) over = null;
       halt(cv, true);
     });
   };
   clips().forEach((cv) => {
     const v = videoOf(cv);
     const b = cv.querySelector('.cv-play');
+    const card = cv.closest('.card') || cv;
     if (!v) return;
-    v.addEventListener('playing', () => mark(cv, true));
+    v.addEventListener('playing', () => {
+      if (pinned !== cv && over !== cv) { v.pause(); return; }
+      mark(cv, true);
+    });
     v.addEventListener('pause', () => mark(cv, false));
     v.addEventListener('error', () => {
       if (v.dataset.dropping === '1' || !v.getAttribute('src')) return;
       if (pinned === cv) pinned = null;
+      if (over === cv) over = null;
+      if (held === cv) held = null;
       v.remove();
       b?.remove();
       cv.classList.remove('has-clip', 'is-on');
     });
+    b?.addEventListener('pointerdown', (e) => e.stopPropagation());
     b?.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -472,16 +505,19 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     });
     cv.addEventListener('click', (e) => {
       if (e.target.closest('a, button')) return;
+      if (hoverMode() && (over === cv || (v.getAttribute('src') && !v.paused))) return;
       togglePin(cv);
     });
-    const host = cv.closest('.im') || cv;
-    host.addEventListener('pointerenter', (e) => {
-      if (reduce.matches || (e.pointerType !== 'mouse' && e.pointerType !== 'pen')) return;
+    card.addEventListener('pointerenter', (e) => {
+      if (!hoverPointer(e) || held === cv) return;
+      over = cv;
       start(cv);
     });
-    host.addEventListener('pointerleave', (e) => {
-      if (e.pointerType && e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
-      if (pinned === cv) return;
+    card.addEventListener('pointerleave', (e) => {
+      if (!hoverPointer(e)) return;
+      if (over === cv) over = null;
+      if (held === cv) held = null;
+      if (pinned === cv) pinned = null;
       halt(cv, true);
     });
   });
@@ -490,17 +526,21 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
       const cv = en.target;
       if (!en.isIntersecting || !alive(cv)) {
         const keep = pinned === cv;
-        if (videoOf(cv) && !videoOf(cv).paused) halt(cv, !keep);
+        const v = videoOf(cv);
+        if (v && !v.paused) halt(cv, !keep);
         else if (!keep) mark(cv, false);
         return;
       }
-      if (pinned === cv) start(cv);
+      if (wanted(cv)) start(cv);
     });
   }, { threshold: 0.4 });
   clips().forEach((cv) => seen.observe(cv));
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden) clips().forEach((cv) => { if (videoOf(cv) && !videoOf(cv).paused) videoOf(cv).pause(); });
-    else if (pinned && alive(pinned)) start(pinned);
+    if (document.hidden) {
+      clips().forEach((cv) => { const v = videoOf(cv); if (v && !v.paused) v.pause(); });
+      return;
+    }
+    clips().forEach((cv) => { if (wanted(cv)) start(cv); });
   });
 })();
 </script>
