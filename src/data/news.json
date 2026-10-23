@@ -1,5 +1,5 @@
 {
-  "note": "活动参与里的会议与工作坊来自 src/data/artist.json（talks 与奖项里的工作坊）。中文题名是译写，original 保留发表用英文。placeholder 为真的条目没有公开稿。source 为 work 的条目摘自作品页，界面标「作品页」。年份只精确到年的，start/end 用该年首尾日，界面只显示年份。",
+  "note": "活动参与里的会议与工作坊来自 src/data/artist.json（talks 与奖项里的工作坊）。中文题名是译写，original 保留发表用英文。placeholder 为真的条目没有公开稿。source 为 work 的条目摘自作品页，界面标「作品页」。年份只精确到年的，start/end 用该年首尾日，界面只显示年份。image 是封面，写站内路径或图片地址。有这个字段，列表和详情才显示图；没有就不要写，也不留空框。",
   "items": [
     {
       "id": "activity-aaai-2025-kg",
@@ -166,6 +166,21 @@
       "href": "/works/litflow/",
       "hrefLabel": "查看作品",
       "source": "work"
+    },
+    {
+      "id": "activity-intercity-hack-2026",
+      "section": "activity",
+      "title": "黑客松分享会",
+      "original": "Hackathon Content Night",
+      "summary": "杭州 DELTA SPACE 的黑客松分享会。终树参加选手对谈。",
+      "start": "2026-10-11",
+      "event": "INTERCITY HACK",
+      "place": "杭州 DELTA SPACE",
+      "format": "选手对谈",
+      "people": ["终树"],
+      "href": "https://mp.weixin.qq.com/s/Pxhsw_sAMysgqZKE1zeXxQ",
+      "hrefLabel": "微信文章",
+      "image": "/news/intercity-hack.jpg"
     },
     {
       "id": "activity-zhongshu-placeholder",
