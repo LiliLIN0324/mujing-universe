@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Cooperate from '../../components/Cooperate.astro';
-import { allWorks, coverClip, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
+import { allWorks, coverClip, pickBody, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
   // 下一件 follows the catalogue order; the last wraps to the first.
@@ -25,13 +25,10 @@ const sub = workSubtitle(w);
 const intro = pickBody(w);
 const tech = pickTech(w);
 const year = w.yearNum ? String(w.yearNum) : w.year;
-const deskMeta = [w.category, year, w.status].filter(Boolean).join('　·　');
-const mobileMeta = pickMeta(w);
 const abstract = w.abstract && w.abstract !== w.description ? w.abstract : '';
 // 角色: the works data has no role field, so it stays empty (hidden) until a real source exists.
 const role = '';
-const facts = [['角色', role], ['技术', tech.join(' · ')], ['年份', year], ['状态', w.status]].filter(([, v]) => v);
-const total = 1 + stills.length;
+const facts = [['分类', w.line], ['角色', role], ['技术', tech.join(' · ')], ['年份', year], ['状态', w.status]].filter(([, v]) => v);
 const pad = (n: number) => String(n).padStart(2, '0');
 const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' · ');
 const backHref = `/works/?line=${encodeURIComponent(w.line)}#archive`;
@@ -52,10 +49,8 @@ const backNote = w.line;
     <div class="wd-wrap">
       <div class="wd-head">
         <div>
-          <p class="wd-crumb"><a href="/works/#archive">作品</a>　/　<a href={backHref}>{w.line}</a></p>
           <h1>{w.title}</h1>
           {sub && <p class="wd-sub">{sub}</p>}
-          <p class="wd-meta"><b>{w.no}</b><span class="d">{deskMeta}</span><span class="m">{mobileMeta}</span></p>
         </div>
         {audio && <button class="wd-listen" id="wd-listen" type="button" aria-pressed="false"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>}
       </div>
@@ -81,7 +76,6 @@ const backNote = w.line;
       {stills.map((src, i) => (
         <figure class="wd-fig" data-hide-on-err>
           <img data-r2 src={src} alt={`${w.title} · 静帧 ${pad(i + 2)}`} referrerpolicy="no-referrer" loading="lazy"/>
-          <figcaption><span>静帧 {pad(i + 2)}</span><span>{pad(i + 2)} / {pad(total)}</span></figcaption>
         </figure>
       ))}
     </div>}
@@ -109,7 +103,7 @@ const backNote = w.line;
 /* 主视觉：压在一屏内（header + 预留标题区），保证项目名字首屏可见；宽图居中裁切。 */
 .wd-hero {
   position: relative;
-  height: min(568px, max(360px, calc(100svh - 300px)));
+  height: min(680px, max(320px, calc(100svh - 230px)));
   margin: 0;
   overflow: hidden;
   background: var(--wd-paper, #d8d2c4);
@@ -158,13 +152,8 @@ const backNote = w.line;
 .wd-cap { position: absolute; left: var(--page-pad); bottom: 22px; z-index: 2; color: rgba(255, 255, 255, 0.92); font-size: 12px; line-height: normal; letter-spacing: 0.24em; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }
 .wd-wrap { padding: 0 var(--page-pad); }
 .wd-head { display: grid; grid-template-columns: 1fr auto; align-items: end; padding-top: 56px; }
-.wd-crumb { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: var(--faint); margin-bottom: 22px !important; }
-.wd-crumb a { color: inherit; text-decoration: none; }
 .wd h1 { margin: 0; font-weight: 600; font-size: clamp(40px, 5vw, 56px); line-height: 1.05; letter-spacing: -0.04em; color: var(--ink); }
 .wd-sub { margin-top: 14px !important; font-size: 18px; line-height: normal; color: var(--ink-soft); letter-spacing: 0.03em; }
-.wd-meta { margin-top: 16px !important; font-size: 13px; line-height: normal; letter-spacing: 0.06em; color: var(--faint); }
-.wd-meta b { color: var(--ink); font-weight: 500; margin-right: 14px; }
-.wd-meta .m { display: none; }
 .wd-listen {
   display: flex;
   align-items: center;
@@ -218,12 +207,11 @@ const backNote = w.line;
 .wd-figs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 40px 8px;
-  margin: 40px var(--page-pad) 0;
+  gap: 8px;
+  margin: 32px var(--page-pad) 0;
 }
 .wd-fig { margin: 0; }
 .wd-fig img { width: 100%; display: block; }
-.wd-fig figcaption { margin-top: 10px; font-size: 12px; line-height: normal; letter-spacing: 0.14em; color: var(--faint); display: flex; justify-content: space-between; }
 .wd-pn { margin: 128px var(--page-pad) 0; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 40px 0 30px; }
 .wd-end { margin: 8px var(--page-pad) 48px; }
 .wd-pn .k { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: var(--faint); margin-bottom: 10px !important; }
@@ -244,13 +232,8 @@ const backNote = w.line;
   .wd-cap { display: none; }
   .wd-wrap { padding: 0 var(--page-gutter); }
   .wd-head { display: block; padding-top: 0; }
-  .wd-crumb { margin: 28px 0 0 !important; font-size: 11px; }
   .wd h1 { margin-top: 12px; font-size: 30px; line-height: 1.22; letter-spacing: 0.02em; }
   .wd-sub { margin-top: 10px !important; font-size: 15px; line-height: 1.6; letter-spacing: 0; }
-  .wd-meta { margin-top: 10px !important; font-size: 12px; letter-spacing: 0.08em; }
-  .wd-meta b { margin-right: 10px; }
-  .wd-meta .d { display: none; }
-  .wd-meta .m { display: inline; }
   .wd-listen { display: inline-flex; margin: 22px 0 0; padding: 12px 22px; font-size: 14px; }
   .wd-listen .ic { border-left-width: 8px; border-top-width: 5px; border-bottom-width: 5px; }
   .wd-body { display: block; margin-top: 32px; padding-top: 24px; }
@@ -268,8 +251,7 @@ const backNote = w.line;
   .wd-strip { margin-top: 14px; height: 200px; cursor: auto; }
   .wd-prog { margin: 12px var(--page-gutter) 0; }
   .wd-prog::after { width: 8%; transform: translateX(calc(var(--p) * (100% / 0.08 - 100%))); }
-  .wd-figs { grid-template-columns: 1fr 1fr; gap: 24px 6px; margin: 24px var(--page-gutter) 0; }
-  .wd-fig figcaption { margin-top: 8px; font-size: 11px; }
+  .wd-figs { grid-template-columns: 1fr 1fr; gap: 6px; margin: 16px var(--page-gutter) 0; }
   .wd-pn { display: block; margin: 64px var(--page-gutter) 0; padding: 22px 0 0; }
   .wd-end { margin: 8px var(--page-gutter) 32px; }
   .wd-back-col { display: none; }
