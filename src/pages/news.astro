@@ -139,9 +139,9 @@ function hasDetail(item: NewsItem) {
 
 <style>
 .news-page {
-  --paper-ink: #1A1A1C;
-  --paper-dim: #6A655F;
-  --paper-rule: #1A1A1C14;
+  --paper-ink: var(--ink);
+  --paper-dim: var(--muted);
+  --paper-rule: var(--rule);
 }
 .news-in { width: min(var(--measure), calc(100% - 2 * var(--gutter))); margin-inline: auto; }
 .stage {
@@ -265,7 +265,7 @@ button.hit { cursor: pointer; }
   margin-left: 10px;
   position: relative;
   vertical-align: 1px;
-  color: rgba(26, 26, 28, 0.4);
+  color: var(--ink2);
 }
 .plus::before, .plus::after {
   content: "";
