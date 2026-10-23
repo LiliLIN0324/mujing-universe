@@ -26,10 +26,10 @@ export type NewsItem = {
   source?: 'archive' | 'work' | 'placeholder';
 };
 
-export const SECTIONS: { id: SectionId; en: string; label: string; hint: string }[] = [
-  { id: 'tech', en: 'Tech', label: '技术动态', hint: '产品、工具，以及还在做的技术事情。' },
-  { id: 'activity', en: 'Activity', label: '活动参与', hint: '学术会议、工作坊和公开活动。林丽丽、终树。' },
-  { id: 'tutorial', en: 'Tutorial', label: '技术分享', hint: '可以读的方法。还没写出来的，标成占位。' },
+export const SECTIONS: { id: SectionId; label: string }[] = [
+  { id: 'tech', label: '技术动态' },
+  { id: 'activity', label: '活动参与' },
+  { id: 'tutorial', label: '技术分享' },
 ];
 
 export const SECTION_LABEL: Record<SectionId, string> = {
