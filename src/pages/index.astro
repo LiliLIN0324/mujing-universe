@@ -38,20 +38,24 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
 <section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图">
   <div class="hero-pan">
-    <img class="hero-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+    <img class="hero-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   </div>
-  <div class="hero-grad" aria-hidden="true"></div>
   <div class="hero-info">
-    <div class="hero-copy">
-      <p class="by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
-      <h1>当代西湖繁胜全景图</h1>
-      <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
-      <p class="meta">古画新绘　·　进行中　·　2026</p>
+    <div class="hero-plate">
+      <div class="hero-copy">
+        <p class="by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
+        <h1>当代西湖繁胜全景图</h1>
+        <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
+        <p class="meta">古画新绘　·　进行中　·　2026</p>
+      </div>
+      <div class="fs-actions">
+        <button id="snd-m" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+      </div>
+      <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
+      <p class="fs-hint">下滑看精选</p>
     </div>
   </div>
-  <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
 </section>
-<a class="m-down" href="#picks" aria-label="向下滚动至精选作品"><b>下滑</b><i></i><em>⌄</em></a>
 <a class="m-peek" href="#picks"><span>精选作品</span><span>{mobilePicks.length}</span></a>
 </div>
 
@@ -84,61 +88,60 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   </div>}
 </section>}
 
-{/* ---- Desktop: single fullscreen carousel, starts from 西湖长卷 ---- */}
-<div class="fs-stage" id="fs-stage" aria-label="精选作品">
-  {/* Slide 0: 西湖长卷 — hero work with video/audio */}
-  <div class="fs-slide is-active" data-i="0" aria-hidden="false">
-    <div class="fs-pan">
-      <img class="fs-still" src={SCROLL_STILL} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
-      <video
-        id="scroll-video"
-        class="fs-video"
-        muted
-        playsinline
-        webkit-playsinline
-        x5-playsinline
-        preload="none"
-        disablepictureinpicture
-        referrerpolicy="no-referrer"
-        data-src={SCROLL_VIDEO}
-        aria-hidden="true"
-      ></video>
-    </div>
-    <div class="fs-grad" aria-hidden="true"></div>
-    <div class="fs-info">
-      <p class="fs-by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
-      <h1 class="fs-title">{leadPick.title}</h1>
-      {leadPick.summary && <p class="fs-summary">{leadPick.summary}</p>}
-      <p class="fs-meta">古画新绘　·　进行中　·　2026</p>
-      <div class="fs-actions">
-        <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
-        <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
+{/* Desktop: one fullscreen chapter at a time. Scroll crossfades; nothing autoplays. */}
+{leadPick && <div class="fs-runway" id="fs-runway" data-hold="0.85" style={`--chapters:${ringWorks.length};--hold:0.85`}>
+  <div class="fs-stage" id="fs-stage" aria-label="精选作品">
+    <div class="fs-slide is-active" data-i="0" aria-hidden="false">
+      <div class="fs-pan">
+        <img class="fs-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+        <video
+          id="scroll-video"
+          class="fs-video"
+          muted
+          playsinline
+          webkit-playsinline
+          x5-playsinline
+          preload="none"
+          disablepictureinpicture
+          referrerpolicy="no-referrer"
+          data-src={SCROLL_VIDEO}
+          aria-hidden="true"
+        ></video>
+      </div>
+      <div class="fs-plate">
+        <p class="fs-kicker"><b>01</b> / {String(ringWorks.length).padStart(2, '0')}　音画 · 进行中</p>
+        <p class="fs-by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
+        <h1 class="fs-title">{leadPick.title}</h1>
+        {leadPick.summary && <p class="fs-summary">{leadPick.summary}</p>}
+        <div class="fs-actions">
+          <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+          <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
+        </div>
+        <p class="fs-hint">下滑换一件</p>
       </div>
     </div>
-  </div>
-  {/* Slides 1–9: other works */}
-  {ringWorks.slice(1).map((work, i) => (
-    <div class="fs-slide" data-i={i + 1} aria-hidden="true">
-      <img class="fs-bg" alt={work.title} width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
-      <div class="fs-grad" aria-hidden="true"></div>
-      <div class="fs-info">
-        <p class="fs-no">{String(i + 2).padStart(2, '0')}</p>
-        <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
-        {work.meta && <p class="fs-meta">{work.meta}</p>}
-        {work.summary && <p class="fs-summary">{work.summary}</p>}
-        <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
+    {ringWorks.slice(1).map((work, i) => (
+      <div class="fs-slide" data-i={i + 1} aria-hidden="true" inert>
+        <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+        <div class="fs-plate">
+          <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}{work.meta ? `　${work.meta}` : ''}</p>
+          <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
+          {work.summary && <p class="fs-summary">{work.summary}</p>}
+          <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
+          <p class="fs-hint">{i + 1 === ringWorks.length - 1 ? '再下滑，展览与合作' : '下滑换一件'}</p>
+        </div>
       </div>
+    ))}
+    <div class="fs-rail">
+      {ringWorks.map((work, i) => (
+        <button class:list={['fs-dot', { on: i === 0 }]} type="button" data-i={i} aria-label={`第 ${i + 1} 件，${work.title}`} aria-current={i === 0 ? 'true' : undefined}></button>
+      ))}
     </div>
-  ))}
-  <div class="fs-nav" aria-hidden="true">
-    {ringWorks.map((_, i) => <button class:list={['fs-dot', { on: i === 0 }]} type="button" data-i={i} aria-label={`作品 ${i + 1}`}></button>)}
   </div>
-  <button class="fs-arrow fs-prev" type="button" aria-label="上一件">‹</button>
-  <button class="fs-arrow fs-next" type="button" aria-label="下一件">›</button>
-  <a class="scroll-cue" id="scroll-cue" href="#cta" aria-label="向下滚动"><span>SCROLL</span><i></i></a>
-</div>
+</div>}
 
 <section class="narrow cta" id="cta" data-dwell={PAGE_DWELL.cta}>
+  <p class="kicker">杭州 · 幕景宇宙</p>
   <h2>展览 · 委托 · 合作</h2>
   <p>文旅数字展陈、AIGC 音画委托、品牌合作与驻留，由经纪人统一对接。</p>
   <a class="btn solid" href="/contact/">合作</a>
@@ -146,25 +149,39 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 
 
 <style>
-/* ---- Desktop fullscreen carousel ---- */
+/* Chapters: full-bleed picture, type on #F6F5F3 paper. No edge darkening. */
+.fs-runway { display: none; height: calc((var(--chapters) + var(--hold, 0.85)) * 100vh); background: #F6F5F3; }
 .fs-stage {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  background: #1a1a18;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  background: #F6F5F3;
 }
 @media (min-width: 769px) {
-  .fs-stage { display: block; }
+  .fs-runway { display: block; position: relative; width: auto; height: calc((var(--chapters) + var(--hold, 0.85)) * 100vh); overflow: visible; opacity: 1; pointer-events: auto; z-index: auto; }
   .first-screen { display: none; }
   .picks { display: none; }
-  .cta { position: relative; z-index: 1; margin-top: 100vh; }
+}
+@media (max-width: 768px) {
+  /* Kept in the tree so 聆听图景 can play the same file; not shown. */
+  .fs-runway {
+    display: block;
+    position: fixed;
+    left: 0; top: 0;
+    width: 2px; height: 2px;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+  .fs-still, .fs-bg { animation: none; }
 }
 .fs-slide {
   position: absolute;
   inset: 0;
   opacity: 0;
-  transition: opacity 0.8s ease;
+  transform: translate3d(0, 0, 0) scale(1.04);
   pointer-events: none;
 }
 .fs-slide.is-active { opacity: 1; pointer-events: auto; }
@@ -183,12 +200,12 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   width: auto;
   max-width: none;
   object-fit: initial;
-  animation: fs-pan 120s ease-in-out infinite alternate;
+  animation: fs-pan 140s linear infinite alternate;
   will-change: transform;
 }
 @keyframes fs-pan {
-  from { transform: translateX(0); }
-  to { transform: translateX(calc(-100% + 100vw)); }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(calc(-100% + 100vw), 0, 0); }
 }
 .fs-video {
   position: absolute;
@@ -197,137 +214,153 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   object-fit: cover;
   opacity: 0;
   pointer-events: none;
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
 }
-
-/* Other slides */
+.fs-video.is-on { opacity: 1; }
 .fs-bg {
   position: absolute;
   inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;
   display: block;
+  transform-origin: 50% 42%;
+  animation: fs-drift 40s linear infinite alternate;
 }
-
-.fs-grad {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0,0,0,0.15) 0%,
-    rgba(0,0,0,0) 40%,
-    rgba(0,0,0,0.6) 100%
-  );
+@keyframes fs-drift {
+  from { transform: translate3d(1%, 0.5%, 0) scale(1.06); }
+  to { transform: translate3d(-1%, -0.5%, 0) scale(1.06); }
 }
-.fs-info {
+.fs-plate {
   position: absolute;
-  inset: auto 0 0 0;
+  left: 48px;
+  bottom: 40px;
   z-index: 2;
-  padding: 0 72px 56px;
-  color: #fff;
+  width: min(460px, calc(100% - 140px));
+  padding: 26px 28px 22px;
+  background: rgba(246, 245, 243, 0.94);
+  color: var(--ink);
 }
+.fs-plate::after {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: rgba(26, 26, 28, 0.14);
+}
+.fs-plate::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: #1A1A1C;
+  transform: scaleY(var(--p, 0));
+  transform-origin: top center;
+  z-index: 1;
+}
+.fs-kicker {
+  margin: 0 0 12px;
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.16em;
+  color: var(--muted);
+}
+.fs-kicker b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
 .fs-by {
-  margin: 0 0 8px;
-  font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
-  font-size: clamp(18px, 1.8vw, 26px);
+  margin: 0 0 6px;
+  font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: rgba(255,255,255,0.88);
+  color: var(--ink);
 }
 .fs-by a { color: inherit; text-decoration: none; }
 .fs-by a:hover { opacity: 0.7; }
-.fs-by span { margin-left: 10px; font-family: var(--en), var(--sans); font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.55); letter-spacing: 0.06em; }
-.fs-no { margin: 0 0 8px; font-family: var(--en), var(--sans); font-size: 11px; letter-spacing: 0.2em; color: rgba(255,255,255,0.4); }
+.fs-by span { margin-left: 10px; font-family: var(--en), var(--sans); font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0.06em; }
 .fs-title {
   margin: 0 0 10px;
-  font-family: "Noto Serif SC", "Noto Serif CJK SC", serif;
-  font-size: clamp(30px, 4vw, 56px);
+  font-family: "Noto Serif SC", "Songti SC", "STSong", var(--sans);
+  font-size: clamp(28px, 3.2vw, 44px);
   font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
-  color: #fff;
+  line-height: 1.18;
+  letter-spacing: -0.03em;
+  color: var(--ink);
 }
 .fs-title a { color: inherit; text-decoration: none; }
-.fs-title a:hover { opacity: 0.8; }
-.fs-summary { margin: 0 0 10px; font-size: clamp(13px, 1.1vw, 16px); color: rgba(255,255,255,0.7); max-width: 38em; line-height: 1.65; }
-.fs-meta { margin: 0 0 20px; font-size: 12px; letter-spacing: 0.1em; color: rgba(255,255,255,0.42); }
-.fs-actions { display: flex; align-items: center; gap: 20px; }
+.fs-title a:hover { opacity: 0.72; }
+.fs-summary { margin: 0 0 18px; font-family: var(--sans); font-size: 15px; color: #4a463f; max-width: 36em; line-height: 1.65; }
+.fs-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .listen {
-  display: flex; align-items: center; gap: 10px;
-  border: 1px solid rgba(255,255,255,0.3);
-  background: rgba(255,255,255,0.07);
-  color: #fff; border-radius: 999px;
-  padding: 11px 22px;
-  font-family: inherit; font-size: 13px;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 0; background: #1A1A1C; color: #F6F5F3; border-radius: 999px;
+  padding: 11px 18px;
+  font-family: var(--sans); font-size: 13px;
   letter-spacing: 0.08em; cursor: pointer;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
 }
-.listen:hover { background: rgba(255,255,255,0.16); }
-.listen .ic { width: 0; height: 0; border-left: 7px solid #fff; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
-.listen[aria-pressed="true"] .ic { width: 7px; height: 10px; border: 0; border-left: 2px solid #fff; border-right: 2px solid #fff; }
+.listen:hover { opacity: 0.86; }
+.listen .ic { width: 0; height: 0; border-left: 7px solid #F6F5F3; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.listen[aria-pressed="true"] .ic { width: 8px; height: 10px; border: 0; border-left: 2px solid #F6F5F3; border-right: 2px solid #F6F5F3; }
 .listen:disabled { opacity: 0.35; cursor: not-allowed; }
 .fs-view {
-  display: inline-block; color: #fff;
-  font-size: 13px; letter-spacing: 0.1em;
+  display: inline-block; color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px; letter-spacing: 0.06em;
   text-decoration: none;
-  border-bottom: 1px solid rgba(255,255,255,0.4);
+  border-bottom: 1px solid rgba(26, 26, 28, 0.45);
   padding-bottom: 2px;
 }
-.fs-view:hover { border-bottom-color: #fff; }
-
-/* Nav dots */
-.fs-nav {
-  position: absolute; right: 32px; top: 50%; transform: translateY(-50%);
-  z-index: 3; display: flex; flex-direction: column; gap: 8px;
+.fs-view:hover { border-bottom-color: var(--ink); }
+.fs-hint {
+  margin: 16px 0 0;
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  color: #8a847c;
+}
+.fs-rail {
+  position: absolute;
+  right: 28px;
+  top: 22%;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 4px;
+  background: rgba(246, 245, 243, 0.92);
+  border-radius: 999px;
 }
 .fs-dot {
-  width: 5px; height: 5px; border-radius: 50%; border: 0;
-  background: rgba(255,255,255,0.28); cursor: pointer; padding: 0;
-  transition: background 0.25s, transform 0.25s;
+  width: 28px; height: 16px; border: 0; padding: 0;
+  background: transparent; cursor: pointer; position: relative;
 }
-.fs-dot.on { background: #fff; transform: scale(1.4); }
-.fs-dot:focus-visible { outline: 1px solid rgba(255,255,255,0.5); outline-offset: 3px; }
-
-/* Arrows */
-.fs-arrow {
-  position: absolute; top: 50%; transform: translateY(-50%); z-index: 3;
-  width: 44px; height: 44px; border: 1px solid rgba(255,255,255,0.22);
-  border-radius: 50%; background: rgba(0,0,0,0.18); color: #fff;
-  font-size: 20px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-  transition: background 0.2s;
+.fs-dot::before {
+  content: "";
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 5px; height: 5px;
+  border-radius: 99px;
+  background: rgba(26, 26, 28, 0.32);
+  transform: translate(-50%, -50%);
+  transition: height 0.45s cubic-bezier(0.22, 1, 0.36, 1), background 0.36s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.fs-arrow:hover { background: rgba(0,0,0,0.42); }
-.fs-prev { left: 20px; }
-.fs-next { right: 52px; }
+.fs-dot.on::before { height: 18px; background: #1A1A1C; }
+.fs-dot:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* Scroll cue */
-.scroll-cue {
-  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-  z-index: 3; display: flex; flex-direction: column; align-items: center; gap: 8px;
-  color: rgba(255,255,255,0.4); font-size: 10px; letter-spacing: 0.3em;
-  text-decoration: none; transition: opacity 0.4s;
-}
-.scroll-cue span { margin-right: -0.3em; }
-.scroll-cue i { display: block; width: 1px; height: 34px; background: rgba(255,255,255,0.2); position: relative; overflow: hidden; }
-.scroll-cue i::after { content: ""; position: absolute; left: 0; top: 8px; width: 1px; height: 12px; background: rgba(255,255,255,0.75); animation: scroll-drip 2.2s cubic-bezier(0.65,0,0.35,1) infinite; }
-@keyframes scroll-drip { 0% { transform: translateY(-36px); } 100% { transform: translateY(36px); } }
-.scroll-cue.is-gone { opacity: 0; pointer-events: none; }
-
-/* CTA */
-.cta { text-align: center; padding: 96px 24px 80px; background: var(--bg); }
+.cta { text-align: center; padding: 120px 24px 96px; background: #F6F5F3; }
+.cta .kicker { margin-bottom: 14px; }
 .cta h2 { margin: 0 0 12px; font-size: clamp(1.8rem, 3.4vw, 2.6rem); font-weight: 600; }
 .cta p { color: var(--ink2); margin-bottom: 22px; }
+.cta .kicker { color: var(--muted); }
 
 /* ---- Mobile ---- */
-.m-prog, .m-down, .m-peek { display: none; }
+.m-prog, .m-peek { display: none; }
 .first-screen {
   position: relative;
   height: 100vh; height: 100svh; height: 100dvh;
-  background: #1a1a18; color: #fff;
+  background: #F6F5F3; color: var(--ink);
 }
 .hero {
-  position: absolute; inset: 0; overflow: hidden;
+  position: absolute; inset: 0; overflow: hidden; background: #F6F5F3;
 }
 .hero-pan {
   position: absolute; top: 0; left: 0;
@@ -338,41 +371,34 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 .hero-still {
   position: relative; inset: auto; top: 0;
   height: 100%; width: auto; max-width: none; object-fit: initial;
-}
-.hero-grad {
-  position: absolute; inset: 0;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0) 40%, rgba(0,0,0,0.65) 100%);
+  transform-origin: 30% 50%;
 }
 .hero-info {
   position: absolute; inset: auto 0 0 0; z-index: 2;
-  padding: 0 24px 80px;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 12px;
+  padding: 0 20px 80px;
 }
-.hero-copy .by { margin: 0 0 6px; font-family: "Noto Serif SC", serif; font-weight: 600; font-size: 24px; color: rgba(255,255,255,0.9); }
+.hero-plate { background: rgba(246, 245, 243, 0.94); padding: 18px 18px 16px; }
+.hero-copy .by { margin: 0 0 6px; font-family: "Noto Serif SC", "Songti SC", serif; font-weight: 600; font-size: 20px; color: var(--ink); }
 .hero-copy .by a { color: inherit; text-decoration: none; }
-.hero-copy .by span { margin-left: 8px; font-family: var(--en), var(--sans); font-size: 13px; color: rgba(255,255,255,0.55); }
-.hero-copy h1 { margin: 0; color: #fff; font-family: "Noto Serif SC", serif; font-weight: 600; font-size: 30px; line-height: 1.15; }
-.hero-copy .sub { margin: 8px 0 0; font-size: 14px; color: rgba(255,255,255,0.68); line-height: 1.55; }
-.hero-copy .meta { margin: 6px 0 0; font-size: 11px; letter-spacing: 0.1em; color: rgba(255,255,255,0.38); }
+.hero-copy .by span { margin-left: 8px; font-family: var(--en), var(--sans); font-size: 13px; color: var(--muted); }
+.hero-copy h1 { margin: 0; color: var(--ink); font-family: "Noto Serif SC", "Songti SC", var(--sans); font-weight: 600; font-size: 28px; line-height: 1.2; letter-spacing: -0.03em; }
+.hero-copy .sub { margin: 8px 0 0; font-family: var(--sans); font-size: 14px; color: #4a463f; line-height: 1.55; }
+.hero-copy .meta { margin: 6px 0 14px; font-family: var(--sans); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.hero-plate .fs-actions { margin-top: 4px; }
+.hero-plate .listen { min-height: 44px; }
+@keyframes m-drift {
+  from { transform: translate3d(1.2%, 0.4%, 0) scale(1.05); }
+  to { transform: translate3d(-1.2%, -0.4%, 0) scale(1.05); }
+}
 @media (max-width: 768px) {
-  .m-prog {
-    position: absolute; left: 50%; bottom: 18px; z-index: 2;
-    transform: translateX(-50%); display: flex; align-items: center; gap: 10px;
-    white-space: nowrap; color: rgba(255,255,255,0.9); font-size: 11px;
-    letter-spacing: 0.2em; font-variant-numeric: tabular-nums; pointer-events: none;
+  .hero-still { animation: m-drift 40s linear infinite alternate; }
+  .hero-plate:has(.listen[aria-pressed="true"]) .m-prog {
+    display: flex; align-items: center; gap: 10px; margin-top: 12px;
+    color: var(--muted); font-size: 11px; letter-spacing: 0.14em;
+    font-variant-numeric: tabular-nums; pointer-events: none;
   }
-  .m-prog i { display: block; width: 120px; height: 1px; background: rgba(255,255,255,0.4); position: relative; }
-  .m-prog b { position: absolute; left: 0; top: 0; height: 1px; width: 100%; background: #fff; transform-origin: 0 50%; transform: scaleX(var(--prog, 0)); }
-  .m-down {
-    position: absolute; left: 50%; bottom: 74px; transform: translateX(-50%);
-    display: flex; flex-direction: column; align-items: center; gap: 6px;
-    color: rgba(255,255,255,0.45); font-size: 10px; letter-spacing: 0.3em; text-decoration: none;
-  }
-  .m-down b { font-weight: 400; margin-right: -0.3em; }
-  .m-down i { display: block; width: 1px; height: 30px; background: rgba(255,255,255,0.18); position: relative; overflow: hidden; }
-  .m-down i::after { content: ""; position: absolute; left: 0; top: 10px; width: 1px; height: 14px; background: rgba(255,255,255,0.7); animation: m-down-drip 2.2s cubic-bezier(0.65,0,0.35,1) infinite; }
-  @keyframes m-down-drip { 0% { transform: translateY(-26px); } 100% { transform: translateY(26px); } }
-  .m-down em { font-style: normal; font-size: 12px; line-height: 1; margin-top: -6px; }
+  .m-prog i { display: block; width: 96px; height: 1px; background: rgba(26, 26, 28, 0.18); position: relative; }
+  .m-prog b { position: absolute; left: 0; top: 0; height: 1px; width: 100%; background: #1A1A1C; transform-origin: 0 50%; transform: scaleX(var(--prog, 0)); }
   .m-peek {
     position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
     padding: 16px 24px 0; display: flex; justify-content: space-between;
@@ -425,86 +451,10 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .m-row.m-all .y { color: #9a958c; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fs-slide { transition: none; }
-  .fs-still { animation: none; }
-  .scroll-cue i::after { animation: none; }
+  .fs-still, .fs-bg, .hero-still, .fs-video, .fs-dot::before { animation: none; transition: none; }
+  .fs-slide.is-active { transform: none; }
 }
 </style>
-
-<script>
-// Desktop fullscreen carousel (≥769px only)
-const fsStage = document.getElementById('fs-stage');
-const isMobile = matchMedia('(max-width: 768px)');
-if (fsStage && !isMobile.matches) {
-  const slides = Array.from(fsStage.querySelectorAll<HTMLElement>('.fs-slide'));
-  const dots = Array.from(fsStage.querySelectorAll<HTMLElement>('.fs-dot'));
-  const video = document.getElementById('scroll-video') as HTMLVideoElement | null;
-  const listen = document.getElementById('snd') as HTMLButtonElement | null;
-  const listenLabel = listen?.querySelector('.lb');
-  let cur = 0, listening = false;
-
-  function setVolume(v: number) { try { if (video) video.volume = v; } catch {} }
-  function failSilent() {
-    listening = false;
-    if (video) { video.muted = true; video.defaultMuted = true; video.setAttribute('muted', ''); }
-    setVolume(0);
-    if (listen) { listen.disabled = false; listen.setAttribute('aria-pressed', 'false'); }
-    if (listenLabel) listenLabel.textContent = '聆听图景';
-  }
-  function setAudible(on: boolean) {
-    listening = on;
-    if (on) {
-      if (video) { video.muted = false; video.defaultMuted = false; video.removeAttribute('muted'); }
-      setVolume(1); listen?.setAttribute('aria-pressed', 'true');
-      if (listenLabel) listenLabel.textContent = '静音';
-    } else {
-      if (video) { video.muted = true; video.defaultMuted = true; video.setAttribute('muted', ''); }
-      setVolume(0); listen?.setAttribute('aria-pressed', 'false');
-      if (listenLabel) listenLabel.textContent = '聆听图景';
-    }
-  }
-  function attachSource() {
-    if (!video) return false;
-    const src = video.dataset.src; if (!src) return false;
-    video.playsInline = true; video.autoplay = true; video.loop = true;
-    if (!listening) { video.muted = true; video.defaultMuted = true; video.setAttribute('muted', ''); }
-    if (video.getAttribute('src') !== src) video.src = src;
-    return true;
-  }
-  video?.addEventListener('error', () => failSilent());
-  listen?.addEventListener('click', () => {
-    if (listen.disabled) return;
-    if (listening) { setAudible(false); return; }
-    if (!attachSource()) { failSilent(); return; }
-    setAudible(true);
-    const p = video?.play();
-    if (p) p.catch((err: Error) => { if (err?.name === 'AbortError') return; setAudible(false); if (video?.error) failSilent(); });
-  });
-
-  function goTo(i: number) {
-    cur = (i + slides.length) % slides.length;
-    slides.forEach((s, idx) => {
-      const active = idx === cur;
-      s.classList.toggle('is-active', active);
-      s.setAttribute('aria-hidden', String(!active));
-    });
-    dots.forEach((d, idx) => d.classList.toggle('on', idx === cur));
-  }
-  fsStage.querySelector('.fs-prev')?.addEventListener('click', () => goTo(cur - 1));
-  fsStage.querySelector('.fs-next')?.addEventListener('click', () => goTo(cur + 1));
-  dots.forEach((d, i) => d.addEventListener('click', () => goTo(i)));
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') goTo(cur + 1);
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goTo(cur - 1);
-  });
-  let timer = setInterval(() => goTo(cur + 1), 7000);
-  fsStage.addEventListener('click', () => { clearInterval(timer); timer = setInterval(() => goTo(cur + 1), 7000); });
-
-  // scroll-cue hides after user scrolls
-  const cue = document.getElementById('scroll-cue');
-  window.addEventListener('scroll', () => { cue?.classList.toggle('is-gone', window.scrollY > 40); }, { passive: true });
-}
-</script>
 
 <script>
 // Nav auto-hide (desktop)
@@ -527,9 +477,11 @@ window.addEventListener('scroll', () => {
 </script>
 
 <script>
+import { mountHomeChapters } from '../scripts/home-chapters.js';
 import { mountMobileHero } from '../scripts/mobile-hero.js';
 import { mountMobileStack } from '../scripts/mobile-stack.js';
 import { mountMobilePager } from '../scripts/mobile-pager.js';
+mountHomeChapters();
 const heroDwell = mountMobileHero();
 const mobileStackRoot = document.getElementById('m-feat');
 const stackDwell = mobileStackRoot ? mountMobileStack(mobileStackRoot) : null;

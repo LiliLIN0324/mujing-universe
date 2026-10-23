@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>方案 B · 留白镜框</title>
+<style>
+  :root { --bg:#F6F5F3; --ink:#1A1A1C; --muted:#6A655F; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font-family:"PingFang SC","Noto Sans SC",sans-serif; }
+  .frame {
+    height:100vh; height:100dvh;
+    display:grid;
+    grid-template-rows: 28px 1fr 132px;
+    padding:28px 48px 32px;
+    gap:20px;
+  }
+  .top { display:flex; justify-content:space-between; align-items:center; font-size:13px; letter-spacing:0.16em; }
+  .top b { font-weight:600; }
+  .top span { color:var(--muted); }
+  figure { margin:0; min-height:0; overflow:hidden; background:#e7e3dc; }
+  figure img { width:100%; height:100%; object-fit:cover; object-position:22% 50%; display:block; }
+  .cap { display:grid; grid-template-columns: 1fr auto; gap:24px; align-items:end; }
+  h1 { margin:0 0 6px; font-family:"Songti SC","Noto Serif SC",serif; font-size:36px; font-weight:600; letter-spacing:-0.03em; }
+  p { margin:0; color:#4a463f; font-size:15px; line-height:1.6; }
+  .side { text-align:right; font-size:12px; letter-spacing:0.16em; color:var(--muted); }
+  .side strong { display:block; color:var(--ink); font-size:13px; font-weight:500; margin-bottom:8px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="top"><b>幕景宇宙</b><span>作品　关于　新闻　联络</span></div>
+  <figure><img src="../../public/ring/0.jpg" alt="当代西湖繁胜全景图"/></figure>
+  <div class="cap">
+    <div>
+      <h1>当代西湖繁胜全景图</h1>
+      <p>以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
+    </div>
+    <div class="side"><strong>01 / 10</strong>音画 · 2026</div>
+  </div>
+</div>
+</body>
+</html>
