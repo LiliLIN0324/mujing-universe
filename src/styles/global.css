@@ -60,7 +60,7 @@
   src: local("Inter"), local("Inter Regular");
 }
 :root {
-  --bg: #F6F5F3;
+  --bg: #FFFFFF;
   --bg2: #EFEDE9;
   --paper: #FFFFFF;
   --ink: #1A1A1C;
@@ -71,7 +71,7 @@
   --gutter: 64px;
   --measure: 1440px;
   --cta-bg: #1A1A1C;
-  --cta-fg: #F6F5F3;
+  --cta-fg: #FFFFFF;
   --radius: 0;
   --sans: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
   --en: Inter, -apple-system, system-ui, sans-serif;
@@ -193,7 +193,7 @@ header.top {
   gap: 20px;
   min-height: 72px;
   padding: 16px 40px;
-  background: #F6F5F3;
+  background: var(--bg);
   border-bottom: 1px solid var(--rule);
 }
 .brand {
@@ -305,7 +305,7 @@ header.top.top--home {
   height: 80px;
   padding: 0 max(var(--gutter), calc((100% - var(--measure)) / 2));
   gap: 20px;
-  background: #F6F5F3;
+  background: var(--bg);
   border-bottom: 1px solid var(--rule);
   color: #1a1a18;
   font-family: var(--sans);
@@ -371,7 +371,7 @@ header.top.top--home:focus-within {
     height: 52px;
     padding: 0 24px;
     flex-wrap: nowrap;
-    background: #F6F5F3;
+    background: var(--bg);
     border-bottom: 1px solid var(--rule);
     opacity: 1;
     transform: none;
@@ -407,7 +407,7 @@ header.top.top--home:focus-within {
     align-items: stretch;
     gap: 0;
     padding: 6px 0;
-    background: #F6F5F3;
+    background: var(--bg);
     border: 1px solid var(--ink);
     border-radius: 0;
   }
@@ -433,7 +433,7 @@ header.top.top--home:focus-within {
 @media (max-width: 768px) {
   header.top.top--home { margin-bottom: -52px; }
   header.top.top--home.on-hero:not(.is-menu-open) {
-    background: #F6F5F3;
+    background: var(--bg);
     border-bottom: 1px solid var(--rule);
   }
 }
@@ -456,7 +456,7 @@ header.top.top--home:focus-within {
     opacity: 1;
     transform: none;
     pointer-events: auto;
-    background: #F6F5F3;
+    background: var(--bg);
     border-bottom: 1px solid var(--rule);
   }
 }

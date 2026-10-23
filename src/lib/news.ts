@@ -21,6 +21,11 @@ export type NewsItem = {
   people?: string[];
   href?: string;
   hrefLabel?: string;
+  /**
+   * 封面。站内路径（以 / 开头）或图片地址。
+   * 不写这个字段，列表和详情都不显示图。
+   */
+  image?: string;
   placeholder?: boolean;
   /** archive：艺术家档案。work：摘自作品页。placeholder：栏目位置。 */
   source?: 'archive' | 'work' | 'placeholder';

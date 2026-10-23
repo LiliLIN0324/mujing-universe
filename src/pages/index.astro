@@ -162,14 +162,14 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 
 
 <style>
-/* Chapters: full-bleed picture, type on #F6F5F3 paper. No edge darkening. */
-.fs-runway { display: none; height: calc((var(--chapters) + var(--hold, 0.85)) * 100vh); background: #F6F5F3; }
+/* Chapters: full-bleed picture, type on white. No edge darkening. */
+.fs-runway { display: none; height: calc((var(--chapters) + var(--hold, 0.85)) * 100vh); background: #FFFFFF; }
 .fs-stage {
   position: sticky;
   top: 0;
   height: 100vh;
   overflow: hidden;
-  background: #F6F5F3;
+  background: #FFFFFF;
 }
 @media (min-width: 769px) {
   .fs-runway { display: block; position: relative; width: auto; height: calc((var(--chapters) + var(--hold, 0.85)) * 100vh); overflow: visible; opacity: 1; pointer-events: auto; z-index: auto; }
@@ -278,7 +278,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   z-index: 2;
   width: min(460px, calc(100% - 140px));
   padding: 26px 28px 22px;
-  background: rgba(246, 245, 243, 0.94);
+  background: rgba(255, 255, 255, 0.94);
   color: var(--ink);
 }
 .fs-plate::after {
@@ -333,14 +333,14 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 .fs-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
 .listen {
   display: inline-flex; align-items: center; gap: 8px;
-  border: 0; background: #1A1A1C; color: #F6F5F3; border-radius: 0;
+  border: 0; background: #1A1A1C; color: #FFFFFF; border-radius: 0;
   padding: 11px 18px;
   font-family: var(--sans); font-size: 13px;
   letter-spacing: 0.08em; cursor: pointer;
 }
 .listen:hover { opacity: 0.86; }
-.listen .ic { width: 0; height: 0; border-left: 7px solid #F6F5F3; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
-.listen[aria-pressed="true"] .ic { width: 8px; height: 10px; border: 0; border-left: 2px solid #F6F5F3; border-right: 2px solid #F6F5F3; }
+.listen .ic { width: 0; height: 0; border-left: 7px solid #FFFFFF; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+.listen[aria-pressed="true"] .ic { width: 8px; height: 10px; border: 0; border-left: 2px solid #FFFFFF; border-right: 2px solid #FFFFFF; }
 .listen:disabled { opacity: 0.35; cursor: not-allowed; }
 .fs-view {
   display: inline-block; color: var(--ink);
@@ -367,7 +367,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   flex-direction: column;
   gap: 2px;
   padding: 8px 4px;
-  background: rgba(246, 245, 243, 0.92);
+  background: rgba(255, 255, 255, 0.92);
   border-radius: 0;
 }
 .fs-dot {
@@ -392,10 +392,10 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 .first-screen {
   position: relative;
   height: 100vh; height: 100svh; height: 100dvh;
-  background: #F6F5F3; color: var(--ink);
+  background: #FFFFFF; color: var(--ink);
 }
 .hero {
-  position: absolute; inset: 0; overflow: hidden; background: #F6F5F3;
+  position: absolute; inset: 0; overflow: hidden; background: #FFFFFF;
 }
 .hero-pan {
   position: absolute; top: 0; left: 0;
@@ -412,7 +412,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   position: absolute; inset: auto 0 0 0; z-index: 2;
   padding: 0 20px 80px;
 }
-.hero-plate { background: rgba(246, 245, 243, 0.94); padding: 18px 18px 16px; }
+.hero-plate { background: rgba(255, 255, 255, 0.94); padding: 18px 18px 16px; }
 .hero-copy .by { margin: 0 0 6px; font-family: var(--sans); font-weight: 600; font-size: 20px; color: var(--ink); }
 .hero-copy .by a { color: inherit; text-decoration: none; }
 .hero-copy .by span { margin-left: 8px; font-family: var(--en), var(--sans); font-size: 13px; color: var(--muted); }
@@ -437,11 +437,11 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   .m-peek {
     position: absolute; left: 0; right: 0; bottom: 0; height: 64px;
     padding: 16px 24px 0; display: flex; justify-content: space-between;
-    background: #F6F5F3; color: #9a958c; font-size: 12px; letter-spacing: 0.2em; text-decoration: none;
+    background: #FFFFFF; color: #9a958c; font-size: 12px; letter-spacing: 0.2em; text-decoration: none;
   }
   :global(html) { scroll-snap-type: y mandatory; }
   .first-screen, .picks { scroll-snap-align: start; scroll-snap-stop: always; }
-  .picks { min-height: 100vh; min-height: 100svh; padding-top: 52px; background: #F6F5F3; }
+  .picks { min-height: 100vh; min-height: 100svh; padding-top: 52px; background: #FFFFFF; }
 }
 
 /* Mobile featured card stack */
@@ -465,7 +465,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
     z-index: 2;
     left: 10px;
     bottom: 10px;
-    background: rgba(246, 245, 243, 0.94);
+    background: rgba(255, 255, 255, 0.94);
     border: 0;
     border-radius: 0;
     padding: 6px 12px;
