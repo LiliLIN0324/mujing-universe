@@ -26,8 +26,8 @@ const mobilePicks = ws.slice(0, 10).map((w, i) => ({
   href: `/works/${w.slug}/`,
   meta: pickTypeYear(w),
   body: pickBody(w),
-  cover: `/ring/${i}.jpg`,
-  fallback: workFallback(w) || '/ring/paper.jpg',
+  cover: workCovers(w)[0],
+  fallback: workFallback(w),
   clip: coverClip(w.slug),
 }));
 const mLead = mobilePicks[0];
@@ -39,7 +39,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
 <section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图" data-clip={coverClip('xihu-panorama') ? '1' : undefined}>
   <div class="hero-pan">
-    <img class="hero-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+    <img class="hero-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   </div>
   {coverClip('xihu-panorama') && (
     <video class="fs-clip" id="scroll-video-m" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={coverClip('xihu-panorama')}></video>
@@ -96,7 +96,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   <div class="fs-stage" id="fs-stage" aria-label="精选作品">
     <div class="fs-slide is-active" data-i="0" data-clip={leadPick.clip ? '1' : undefined} aria-hidden="false">
       <div class="fs-pan">
-        <img class="fs-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+        <img class="fs-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
         {leadPick.clip && (
           <video
             id="scroll-video"
@@ -127,11 +127,11 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
       <div class="fs-slide" data-i={i + 1} data-clip={work.clip ? '1' : undefined} aria-hidden="true" inert>
         {work.clip ? (
           <div class="fs-visual">
-            <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+            <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={work.stills[0]} data-fallback={work.fallback} loading="lazy"/>
             <video class="fs-clip" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
           </div>
         ) : (
-          <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+          <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={work.stills[0]} data-fallback={work.fallback} loading="lazy"/>
         )}
         <div class="fs-plate">
           <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}</p>
