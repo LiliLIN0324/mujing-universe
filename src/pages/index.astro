@@ -1,9 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
-import { allWorks, pickBody, pickDeskBody, pickIntro, pickSummary, pickTypeYear, workCovers, workFallback } from '../lib';
+import { allWorks, coverClip, pickBody, pickDeskBody, pickIntro, pickSummary, pickTypeYear, workCovers, workFallback } from '../lib';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
-const SCROLL_VIDEO = `${R2}/scroll-placeholder.mp4`;
 const SCROLL_STILL = `${R2}/01.jpg`;
 const picks = ws.map((w) => ({
   slug: w.slug,
@@ -16,6 +15,7 @@ const picks = ws.map((w) => ({
   body: pickDeskBody(w),
   stills: workCovers(w),
   fallback: workFallback(w),
+  clip: coverClip(w.slug),
 }));
 const leadPick = picks[0];
 const ringWorks = picks.slice(0, 10);
@@ -28,6 +28,7 @@ const mobilePicks = ws.slice(0, 10).map((w, i) => ({
   body: pickBody(w),
   cover: `/ring/${i}.jpg`,
   fallback: workFallback(w) || '/ring/paper.jpg',
+  clip: coverClip(w.slug),
 }));
 const mLead = mobilePicks[0];
 const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off', picks: 'on', cta: 'off' };
@@ -36,10 +37,13 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 
 {/* ---- Mobile: hero + card stack (≤768px only) ---- */}
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
-<section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图">
+<section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图" data-clip={coverClip('xihu-panorama') ? '1' : undefined}>
   <div class="hero-pan">
     <img class="hero-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   </div>
+  {coverClip('xihu-panorama') && (
+    <video class="fs-clip" id="scroll-video-m" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={coverClip('xihu-panorama')}></video>
+  )}
   <div class="hero-info">
     <div class="hero-plate">
       <div class="hero-copy">
@@ -49,7 +53,8 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
         <p class="meta">古画新绘　·　进行中　·　2026</p>
       </div>
       <div class="fs-actions">
-        <button id="snd-m" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+        <button id="snd-m" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video-m"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+        <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>
       </div>
       <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
       <p class="fs-hint">下滑看精选</p>
@@ -64,8 +69,10 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
     <div class="m-hd"><b>精选作品</b><span id="m-count">01 / {String(mobilePicks.length).padStart(2, '0')}</span></div>
     <div class="m-stage" id="m-stage" role="group" aria-roledescription="carousel" aria-label="精选作品">
       {mobilePicks.map((w, i) => (
-        <div class="m-card" data-i={i} aria-hidden={i === 0 ? 'false' : 'true'}>
+        <div class="m-card" data-i={i} data-clip={w.clip ? '1' : undefined} aria-hidden={i === 0 ? 'false' : 'true'}>
           <img src={w.cover} data-fallback={w.fallback} alt={w.title} width="1200" height="675" draggable="false" decoding="async" referrerpolicy="no-referrer" loading={i < 4 ? 'eager' : 'lazy'}/>
+          {w.clip && <video class="fs-clip" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={w.clip}></video>}
+          {w.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
         </div>
       ))}
     </div>
@@ -91,22 +98,24 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
 {/* Desktop: one fullscreen chapter at a time. Scroll crossfades; nothing autoplays. */}
 {leadPick && <div class="fs-runway" id="fs-runway" data-hold="0.85" style={`--chapters:${ringWorks.length};--hold:0.85`}>
   <div class="fs-stage" id="fs-stage" aria-label="精选作品">
-    <div class="fs-slide is-active" data-i="0" aria-hidden="false">
+    <div class="fs-slide is-active" data-i="0" data-clip={leadPick.clip ? '1' : undefined} aria-hidden="false">
       <div class="fs-pan">
         <img class="fs-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
-        <video
-          id="scroll-video"
-          class="fs-video"
-          muted
-          playsinline
-          webkit-playsinline
-          x5-playsinline
-          preload="none"
-          disablepictureinpicture
-          referrerpolicy="no-referrer"
-          data-src={SCROLL_VIDEO}
-          aria-hidden="true"
-        ></video>
+        {leadPick.clip && (
+          <video
+            id="scroll-video"
+            class="fs-video fs-clip"
+            muted
+            playsinline
+            webkit-playsinline
+            x5-playsinline
+            preload="none"
+            disablepictureinpicture
+            referrerpolicy="no-referrer"
+            data-src={leadPick.clip}
+            aria-hidden="true"
+          ></video>
+        )}
       </div>
       <div class="fs-plate">
         <p class="fs-kicker"><b>01</b> / {String(ringWorks.length).padStart(2, '0')}　音画 · 进行中</p>
@@ -115,19 +124,30 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
         {leadPick.summary && <p class="fs-summary">{leadPick.summary}</p>}
         <div class="fs-actions">
           <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+          {leadPick.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
           <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
         </div>
         <p class="fs-hint">下滑换一件</p>
       </div>
     </div>
     {ringWorks.slice(1).map((work, i) => (
-      <div class="fs-slide" data-i={i + 1} aria-hidden="true" inert>
-        <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+      <div class="fs-slide" data-i={i + 1} data-clip={work.clip ? '1' : undefined} aria-hidden="true" inert>
+        {work.clip ? (
+          <div class="fs-visual">
+            <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+            <video class="fs-clip" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
+          </div>
+        ) : (
+          <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
+        )}
         <div class="fs-plate">
           <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}{work.meta ? `　${work.meta}` : ''}</p>
           <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
           {work.summary && <p class="fs-summary">{work.summary}</p>}
-          <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
+          <div class="fs-actions">
+            {work.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
+            <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
+          </div>
           <p class="fs-hint">{i + 1 === ringWorks.length - 1 ? '再下滑，展览与合作' : '下滑换一件'}</p>
         </div>
       </div>
@@ -214,9 +234,37 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   object-fit: cover;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.fs-video.is-on { opacity: 1; }
+.fs-clip { transition: opacity 0.36s cubic-bezier(0.22, 1, 0.36, 1); }
+.fs-visual { position: absolute; inset: 0; }
+.fs-clip {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+  background: transparent;
+}
+[data-clip].is-on .fs-clip,
+[data-clip].is-on .fs-video { opacity: 1; }
+.fs-pin {
+  border: 0;
+  background: transparent;
+  padding: 0 0 2px;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(26, 26, 28, 0.45);
+  cursor: pointer;
+}
+.fs-pin[aria-pressed="true"] { border-bottom-color: var(--ink); }
+.hero .fs-clip { z-index: 1; }
+.hero-info { z-index: 2; }
 .fs-bg {
   position: absolute;
   inset: 0;
@@ -426,6 +474,17 @@ const PAGE_DWELL: Record<'hero' | 'picks' | 'cta', 'on' | 'off'> = { hero: 'off'
   .m-card:not([style]) { transform: translateX(24px); }
   .m-card:not([style]) ~ .m-card:not([style]) { opacity: 0; }
   .m-card img { width: 100%; height: 100%; object-fit: cover; display: block; max-width: none; pointer-events: none; }
+  .m-card .fs-pin {
+    position: absolute;
+    z-index: 2;
+    left: 10px;
+    bottom: 10px;
+    background: rgba(246, 245, 243, 0.94);
+    border: 0;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 12px;
+  }
   .m-bar { display: flex; gap: 6px; padding: 0 24px; }
   .m-bar i { flex: 1; height: 2px; background: #e1ddd6; transition: background 0.25s ease; }
   .m-bar i.on { background: #1a1a18; }
@@ -477,7 +536,9 @@ window.addEventListener('scroll', () => {
 </script>
 
 <script>
+import { mountHomeClips } from '../scripts/home-clips.js';
 import { mountHomeChapters } from '../scripts/home-chapters.js';
+mountHomeClips();
 import { mountMobileHero } from '../scripts/mobile-hero.js';
 import { mountMobileStack } from '../scripts/mobile-stack.js';
 import { mountMobilePager } from '../scripts/mobile-pager.js';
