@@ -283,11 +283,12 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   margin-top: 72px;
   border-top: 1px solid var(--ink);
   scroll-margin-top: 96px;
+  overflow-anchor: none;
 }
 .wf-fold summary {
   list-style: none;
   cursor: pointer;
-  padding: 16px 0;
+  padding: 16px 96px 16px 0;
   min-height: 48px;
 }
 .wf-fold summary::-webkit-details-marker { display: none; }
@@ -442,7 +443,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   .wf .card h3, .wf .lead h3 { font-size: 20px; }
   .wf-fold { margin-top: 40px; }
   .wf h2 em { display: none; }
-  .wf-fold summary { padding-right: 76px; }
+  .wf-fold summary { padding-right: 80px; }
   .wf-filters { gap: 0 16px; }
   .wf-filters button { min-height: 44px; }
   .wf-tools { width: 100%; justify-content: space-between; }
@@ -507,8 +508,18 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     });
   }));
   arch.addEventListener('toggle', () => {
-    if (!arch.open && location.hash === '#archive') {
+    if (arch.open) return;
+    if (location.hash === '#archive') {
       history.replaceState(null, '', location.pathname + location.search);
+    }
+    const top = arch.getBoundingClientRect().top;
+    const header = window.innerWidth <= 768 ? 64 : 96;
+    if (top < header || top > window.innerHeight - 48) {
+      const root = document.documentElement;
+      const prev = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
+      window.scrollTo({ top: Math.max(0, window.scrollY + top - header), behavior: 'auto' });
+      root.style.scrollBehavior = prev;
     }
   });
   if ((location.hash === '#archive' || line !== '全部') && !arch.open) arch.open = true;
