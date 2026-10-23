@@ -222,7 +222,7 @@ export function titleWidth(t: string): number {
   for (const ch of t) n += ch.codePointAt(0)! > 0x2e80 ? 2 : 1;
   return n;
 }
-/** 作品页封面：只有真实画面（作品 / 产品界面 / 渲染图）才用图，其余一律走排版封面。不自动猜图。 */
+/** 作品页封面：这里只放人工调过裁切/缩放的条目；未登记的作品由 WorkCover 自动用个人站 icon（设计过的封面图），无 icon 才走排版封面。 */
 export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: number }> = {
   'xihu-panorama': { src: `${R2_FIG}/xihu-panorama/01.jpg`, scale: 1.08 },
   'litflow': { src: `${R2_FIG}/litflow/03.png` },
