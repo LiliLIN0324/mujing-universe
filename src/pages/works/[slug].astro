@@ -98,7 +98,7 @@ const backNote = w.line;
 {audio && !clipIsAudio && <video id="wd-audio" class="wd-sound" data-src={audio} preload="none" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" aria-hidden="true"></video>}
 
 <style>
-:global(body) { background: #F6F5F3; }
+:global(body) { background: var(--bg); }
 .wd-sound { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .wd { color: #1a1a18; font-family: var(--sans); -webkit-font-smoothing: antialiased; }
 .wd p { margin: 0; }
