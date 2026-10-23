@@ -29,10 +29,13 @@ const kinds = [
   <section class="secondary" aria-label="其他联系">
     <div class="row" id="feishu">
       <h2>飞书</h2>
-      <details id="feishu-card">
-        <summary>看名片</summary>
-        <img src="/mimi/feishu-qr.png" alt="终树的飞书名片" width="431" height="568"/>
-      </details>
+      <div>
+        <details id="feishu-card">
+          <summary>看名片</summary>
+          <img src="/mimi/feishu-qr.png" alt="终树的飞书名片" width="431" height="568"/>
+        </details>
+        <p class="aside feishu-at">加完在群里 @Mimi</p>
+      </div>
     </div>
     <div class="row" id="wechat">
       <h2>微信</h2>
@@ -197,6 +200,7 @@ const kinds = [
     line-height: 1;
   }
   .aside { margin: 0; color: var(--ink2); font-size: 14px; }
+  .feishu-at { margin-top: 8px; }
   .ghost {
     border: 1px solid var(--ink);
     border-radius: 0;

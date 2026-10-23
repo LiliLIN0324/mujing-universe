@@ -1,22 +1,26 @@
 ---
-/** 全站 Mimi。不自动打开、不自动播放动效。密钥不在这里。 */
+/** 全站 Mimi。不自动打开面板。头像动画只在 public/mimi/mimi.riv 的状态机里，没有文件就停在静态头像。密钥不在这里。 */
 const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avatar-216.webp 216w, /mimi/avatar.webp 357w';
+const mail = 'mailto:lily1326685527@gmail.com';
 ---
-<div class="mimi" id="mimi" data-state="idle" data-side="right">
+<div class="mimi" id="mimi" data-state="idle" data-motion="idle" data-side="right">
   <button class="mimi-launch" type="button" aria-expanded="false" aria-controls="mimi-panel" aria-label="打开 Mimi 对话">
     <span class="mimi-halo" aria-hidden="true"></span>
     <span class="mimi-face">
-      <picture>
+      <span class="mimi-ground" aria-hidden="true"></span>
+      <canvas class="mimi-rive" width="144" height="144" hidden aria-hidden="true"></canvas>
+      <picture class="mimi-still">
         <source type="image/webp" srcset={srcset} sizes="(max-width: 768px) 60px, 72px" />
         <img src="/mimi/avatar.png" alt="" width="72" height="72" decoding="async" draggable="false" />
       </picture>
       <span class="mimi-dots" aria-hidden="true"><i></i><i></i><i></i></span>
     </span>
-    <span class="mimi-hi" role="tooltip">嗨，我是 Mimi</span>
+    <span class="mimi-hi" role="tooltip">嗨，我是 Mimi，带你随便看看。</span>
   </button>
   <section class="mimi-panel" id="mimi-panel" role="dialog" aria-modal="false" aria-labelledby="mimi-name" hidden>
     <header class="mimi-hd">
       <span class="mimi-face">
+        <span class="mimi-ground" aria-hidden="true"></span>
         <picture>
           <source type="image/webp" srcset={srcset} sizes="44px" />
           <img src="/mimi/avatar.png" alt="" width="44" height="44" decoding="async" draggable="false" />
@@ -25,23 +29,32 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       </span>
       <div class="mimi-id">
         <strong id="mimi-name">Mimi</strong>
-        <p>先听需求。合作请自己加飞书。</p>
-        <p class="mimi-demo" hidden>本地演示，未接通模型。</p>
+        <p class="mimi-demo">演示</p>
       </div>
       <button class="mimi-x" type="button" aria-label="关闭对话">×</button>
     </header>
     <div class="mimi-log" role="log" aria-live="polite" aria-relevant="additions"></div>
     <div class="mimi-quick" role="group" aria-label="快捷问题">
-      <button type="button">幕景是做什么的？</button>
-      <button type="button">看看代表作品</button>
-      <button type="button">Mimi 是怎么做出来的？</button>
-      <button type="button">聊合作</button>
+      <button type="button">作品在做什么</button>
+      <button type="button">怎么合作</button>
+      <button type="button">怎么找到你们</button>
+    </div>
+    <div class="mimi-cta">
+      <button class="mimi-feishu" type="button">看飞书名片</button>
+      <a class="mimi-mail" href={mail}>写邮件</a>
+    </div>
+    <div class="mimi-ims" role="group" aria-label="其他聊天">
+      <button class="mimi-im-feishu" type="button" aria-pressed="false">飞书</button>
+      <button type="button" disabled>企微/公众号<span>即将开放</span></button>
+      <button type="button" disabled>微信<span>即将开放</span></button>
+      <button type="button" disabled>钉钉<span>即将开放</span></button>
     </div>
     <form class="mimi-form">
       <label class="mimi-sr" for="mimi-input">输入问题</label>
       <input id="mimi-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send" placeholder="想了解幕景，直接问我" />
       <button class="mimi-send" type="submit">发送</button>
     </form>
+    <p class="mimi-foot">合作请自己加飞书。</p>
   </section>
 </div>
 
@@ -63,24 +76,24 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     border: 0;
     border-radius: 0;
     background: transparent;
+    outline: none;
+    box-shadow: none;
+    -webkit-tap-highlight-color: transparent;
     cursor: grab;
     touch-action: none;
-    perspective: 240px;
     -webkit-user-drag: none;
     -webkit-touch-callout: none;
     user-select: none;
   }
   .mimi-launch.is-drag { cursor: grabbing; }
-  .mimi-launch.is-drag .mimi-face {
-    box-shadow: inset 0 0 0 1px #1a1a1c;
-  }
-  .mimi-launch.is-hot .mimi-face {
-    box-shadow: inset 0 0 0 1px #1a1a1c;
+  .mimi-launch:focus,
+  .mimi-launch:focus-visible {
+    outline: none;
   }
   .mimi-halo {
     position: absolute;
     inset: -7px;
-    border-radius: 0;
+    border-radius: 50%;
     border: 2px solid transparent;
     border-top-color: #1a1a1c;
     border-right-color: #1a1a1c;
@@ -102,24 +115,64 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     width: 100%;
     height: 100%;
     border-radius: 0;
-    overflow: hidden;
-    background: #1a1a1c;
-    box-shadow: inset 0 0 0 1px #1a1a1c;
-    transition: transform 0.16s ease;
-    transform-style: preserve-3d;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+    outline: none;
   }
   .mimi-launch.is-drag .mimi-face { transition: none; }
+  /* 画布不缩放、不裁切。橙色圆外的白底在 mimi-rive.js 里按橙边清掉。
+     静态图的白角只处理图片自己，缺的圆顶用同色圆补。 */
+  .mimi-ground {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #ff690a;
+    pointer-events: none;
+  }
+  .mimi-face.is-rive .mimi-ground { visibility: hidden; }
+  .mimi-face picture {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 50%;
+  }
+  .mimi-face picture img {
+    position: absolute;
+    left: 0;
+    top: 3.48%;
+    width: 100%;
+    height: 100%;
+  }
   .mimi-face img,
   .mimi-launch img {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    max-width: none;
+    object-fit: fill;
     display: block;
     -webkit-user-drag: none;
     -webkit-touch-callout: none;
     user-select: none;
     pointer-events: none;
   }
+  .mimi-rive {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    border-radius: 0;
+    background: transparent;
+    object-fit: fill;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+  }
+  .mimi-rive[hidden] { display: none !important; }
+  .mimi-face.is-rive .mimi-still { visibility: hidden; }
   .mimi-hi {
     position: absolute;
     left: 50%;
@@ -128,10 +181,13 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     background: #1a1a1c;
     color: #f6f5f3;
     font-size: 13px;
-    line-height: 1;
+    line-height: 1.45;
     padding: 8px 12px;
     border-radius: 0;
-    white-space: nowrap;
+    width: max-content;
+    max-width: 196px;
+    text-align: left;
+    white-space: normal;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.16s ease, transform 0.16s ease;
@@ -163,14 +219,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   }
   .mimi-dots i:nth-child(2) { animation-delay: 0.15s; }
   .mimi-dots i:nth-child(3) { animation-delay: 0.3s; }
-  .mimi[data-state="answering"] .mimi-launch .mimi-face,
-  .mimi[data-state="answering"] .mimi-hd .mimi-face {
-    outline: 2px solid #1a1a1c;
-    outline-offset: 2px;
-  }
   .mimi[data-state="error"] .mimi-face {
-    outline: 2px solid #1a1a1c;
-    outline-offset: 2px;
     animation: mimi-shake 0.42s ease;
   }
   .mimi-panel {
@@ -210,21 +259,25 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     flex: none;
     box-shadow: none;
   }
-  .mimi-id { min-width: 0; }
+  .mimi-id {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    min-width: 0;
+  }
   .mimi-id strong {
-    display: block;
     font-size: 16px;
     font-weight: 600;
     letter-spacing: -0.03em;
     line-height: 1.2;
   }
-  .mimi-id p {
-    margin: 2px 0 0;
+  .mimi-demo {
+    margin: 0;
     color: #6b6b6b;
     font-size: 12px;
-    line-height: 1.45;
+    letter-spacing: 0.14em;
+    line-height: 1.2;
   }
-  .mimi-demo { color: #6a655f !important; }
   .mimi-x {
     margin-left: auto;
     width: 36px;
@@ -241,6 +294,9 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   .mimi-x:hover { background: rgba(26, 26, 28, 0.06); }
   .mimi-hd,
   .mimi-quick,
+  .mimi-cta,
+  .mimi-ims,
+  .mimi-foot,
   .mimi-form { flex: none; }
   .mimi-log {
     flex: 1;
@@ -371,6 +427,83 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     cursor: pointer;
   }
   .mimi-quick button:hover { background: #1a1a1c; color: #f6f5f3; }
+  .mimi-cta {
+    display: flex;
+    gap: 8px;
+    padding: 0 14px 4px;
+  }
+  .mimi-feishu,
+  .mimi-mail {
+    flex: 1;
+    height: 40px;
+    border-radius: 0;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1;
+    text-align: center;
+  }
+  .mimi-feishu {
+    border: 0;
+    background: #1a1a1c;
+    color: #f6f5f3;
+    cursor: pointer;
+  }
+  .mimi-feishu:hover { opacity: 0.86; }
+  .mimi-mail {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #1a1a1c;
+    background: transparent;
+    color: #1a1a1c;
+    text-decoration: none;
+  }
+  .mimi-mail:hover { background: #1a1a1c; color: #f6f5f3; }
+  .mimi-ims {
+    display: flex;
+    flex-direction: column;
+    margin: 8px 14px 0;
+    border: 1px solid rgba(26, 26, 28, 0.16);
+  }
+  .mimi-ims button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 0;
+    border-top: 1px solid rgba(26, 26, 28, 0.08);
+    background: transparent;
+    color: #1a1a1c;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    text-align: left;
+    cursor: pointer;
+  }
+  .mimi-ims > :first-child { border-top: 0; }
+  .mimi-ims button:not(:disabled):hover,
+  .mimi-ims button.is-on {
+    background: #1a1a1c;
+    color: #f6f5f3;
+  }
+  .mimi-ims button:disabled {
+    color: #9a9a9a;
+    cursor: not-allowed;
+  }
+  .mimi-ims button span {
+    color: #9a9a9a;
+    font-size: 12px;
+  }
+  .mimi-foot {
+    margin: 0;
+    padding: 8px 14px 12px;
+    color: #6b6b6b;
+    font-size: 12px;
+    line-height: 1.45;
+  }
   .mimi-form {
     display: flex;
     gap: 8px;
@@ -450,15 +583,9 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   }
   @keyframes mimi-spin { to { transform: rotate(360deg); } }
   @keyframes mimi-flash {
-    0% { opacity: 1; transform: scale(0.9); }
-    100% { opacity: 0; transform: scale(1.35); }
+    0% { opacity: 1; }
+    100% { opacity: 0; }
   }
-  @keyframes mimi-nod {
-    0%, 100% { transform: rotate(0deg) scale(0.92); }
-    35% { transform: rotate(-14deg) scale(0.92); }
-    70% { transform: rotate(14deg) scale(0.92); }
-  }
-  .mimi-launch.is-nod .mimi-face { animation: mimi-nod 0.48s ease; }
   @keyframes mimi-crumb {
     to { opacity: 0; transform: scale(0.3); }
   }
@@ -478,6 +605,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
 </style>
 
 <script>
+  import { mountMimiRive, mimiMotion } from '../scripts/mimi-rive.js';
   const root = document.getElementById('mimi');
   const launch = root?.querySelector('.mimi-launch');
   const face = launch?.querySelector('.mimi-face');
@@ -487,9 +615,12 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
   const input = document.getElementById('mimi-input');
   const demoNote = root?.querySelector('.mimi-demo');
   const quick = root?.querySelectorAll('.mimi-quick button');
+  const feishuBtn = root?.querySelector('.mimi-feishu');
+  const imFeishu = root?.querySelector('.mimi-im-feishu');
   const hi = launch?.querySelector('.mimi-hi');
-  if (root && launch && face && panel && log && form && input && demoNote && quick && hi) {
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canvas = launch?.querySelector('.mimi-rive');
+  if (root && launch && face && panel && log && form && input && demoNote && quick && feishuBtn && imFeishu && hi && canvas) {
+    let reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const BANNED = /西湖|繁胜全景|xihu-panorama/i;
     const STORE = 'mimi-dock';
     const history = [];
@@ -509,12 +640,14 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     const ANSWERS = {
       what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做古画、民乐音画，也做展览和委托。目录在[作品页](/works/)，怎么合作写在[合作页](/contact/)。',
       works: '作品目录在[作品页](/works/)，按音画、产品、游戏和研究分开。',
+      doing: '已经公开的在[作品页](/works/)，按音画、产品、游戏和研究分开。',
+      find: '飞书名片点「看飞书名片」，邮件写到 lily1326685527@gmail.com。加好友后在群里 @Mimi。这里不会自动拉群。',
       made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
       coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
       secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
-      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「聊合作」，或去[合作页](/contact/)。',
-      other: '这个问题我答不准，也不能替团队承诺。想合作，点「聊合作」，或去[合作页](/contact/)。',
-      en: 'I can’t answer that precisely. For a project, tap “聊合作” or open the [collaborate page](/contact/).',
+      skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「怎么合作」，或去[合作页](/contact/)。',
+      other: '这个问题我答不准，也不能替团队承诺。想合作，点「怎么合作」，或去[合作页](/contact/)。',
+      en: 'I can’t answer that precisely. For a project, tap “怎么合作” or open the [collaborate page](/contact/).',
       enCoop: 'Say what you want to make. Then add 终树 on Feishu with the card below and leave a note. This site will not create a group, and there is no 24-hour assistant.\n[[COOP]]',
     };
 
@@ -542,6 +675,8 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       if (BANNED.test(flat)) return ANSWERS.skip;
       if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
       if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
+      if (flat === '作品在做什么' || /在做什么/.test(flat)) return ANSWERS.doing;
+      if (flat === '怎么找到你们' || /怎么找|找到你们/.test(flat)) return ANSWERS.find;
       if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么|委托|合作|古画|民乐|音画/.test(flat))) return ANSWERS.works;
       if (flat === '幕景是做什么的？' || ((/幕景|你们/.test(flat)) && /做|是什么|干什么/.test(flat))) return ANSWERS.what;
       if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|档期|合同|版权|微信|飞书|终树|丁科智|古画|民乐|音画|展陈|委托/.test(flat)) return ANSWERS.coop;
@@ -846,7 +981,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       zoom.append(img);
       zoom.addEventListener('click', openLight);
       const note = document.createElement('p');
-      note.textContent = '扫码加终树为好友，备注项目。不会自动拉群。';
+      note.textContent = '扫码加终树为好友，备注项目。加完在群里 @Mimi。不会自动拉群。';
       const hint = document.createElement('p');
       hint.className = 'mimi-hint';
       hint.textContent = '点按放大。手机上长按图片，或点「保存图片」。';
@@ -895,12 +1030,82 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       else log.scrollTop += card.getBoundingClientRect().top - log.getBoundingClientRect().top;
     }
 
+    const motion = { hover: false, open: false, attention: false };
+    let rig = null;
+    let attentionTimer = 0;
+    let glanceQueued = false;
+    function applyMotion() {
+      root.dataset.motion = mimiMotion(motion);
+      if (!rig) return;
+      rig.setHover(motion.hover);
+      rig.setOpen(motion.open);
+    }
+    function pulseAttention() {
+      if (reduce) return;
+      motion.attention = true;
+      applyMotion();
+      if (rig) rig.attention();
+      else glanceQueued = true;
+      window.clearTimeout(attentionTimer);
+      attentionTimer = window.setTimeout(() => {
+        motion.attention = false;
+        applyMotion();
+      }, 900);
+    }
+    function watchWorks(el) {
+      if (reduce || !el || !el.getClientRects().length) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight || 1;
+      if (rect.top < vh * 0.7 && rect.bottom > vh * 0.3) return;
+      const io = new IntersectionObserver((entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        pulseAttention();
+        io.disconnect();
+      }, { threshold: 0.45 });
+      io.observe(el);
+    }
+    if (!reduce) {
+      window.setTimeout(pulseAttention, 1500);
+      watchWorks(document.getElementById('picks'));
+      watchWorks(document.getElementById('fs-stage'));
+      watchWorks(document.querySelector('.wf-top'));
+    }
+    mountMimiRive(canvas, reduce).then((next) => {
+      if (!next || reduce) {
+        next?.cleanup();
+        return;
+      }
+      rig = next;
+      applyMotion();
+      if (glanceQueued || motion.attention) {
+        rig.attention();
+        glanceQueued = false;
+      }
+    });
+    if (window.ResizeObserver) {
+      const ro = new ResizeObserver(() => rig?.resize());
+      ro.observe(face);
+    }
+    matchMedia('(prefers-reduced-motion: reduce)').addEventListener?.('change', (e) => {
+      reduce = e.matches;
+      if (!reduce) return;
+      window.clearTimeout(attentionTimer);
+      rig?.cleanup();
+      rig = null;
+      motion.attention = false;
+      motion.hover = false;
+      applyMotion();
+    });
+
     function hidePanel() {
       panel.hidden = true;
       window.clearTimeout(closeTimer);
     }
     function setOpen(open) {
       window.clearTimeout(closeTimer);
+      motion.open = open;
+      if (open) motion.attention = false;
+      applyMotion();
       if (open) {
         panel.hidden = false;
         placePanel();
@@ -924,13 +1129,12 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       }
     }
 
-    append('bot', '你好，我是 Mimi。想了解作品，直接问我。想合作，先说说需求，我再把飞书名片放出来。这里不会自动拉群。', false);
+    append('bot', '这卷西湖还在画。想听近况，或留下合作意向，都可以跟我说一句。', false);
 
     const onContact = /\/contact\/?$/.test(location.pathname);
     let coopPrimed = false;
     function dismissInvite() {
       launch.classList.remove('is-invite');
-      hi.textContent = '嗨，我是 Mimi';
       try { sessionStorage.setItem('mimi-invite', '1'); } catch { /* private mode */ }
     }
     function primeCoop() {
@@ -942,7 +1146,6 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     if (onContact) launch.setAttribute('aria-label', '先跟 Mimi 说需求');
     try {
       if (onContact && sessionStorage.getItem('mimi-invite') !== '1') {
-        hi.textContent = '先说需求';
         launch.classList.add('is-invite');
         requestAnimationFrame(() => placeBubble());
       }
@@ -953,13 +1156,6 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       if (e.detail?.intent === 'coop') primeCoop();
     });
 
-    function tilt(e) {
-      if (pointer) return;
-      const r = launch.getBoundingClientRect();
-      const dx = (e.clientX - r.left - r.width / 2) / (r.width / 2);
-      const dy = (e.clientY - r.top - r.height / 2) / (r.height / 2);
-      face.style.transform = `scale(1.14) rotateX(${(-dy * 12).toFixed(2)}deg) rotateY(${(dx * 16).toFixed(2)}deg)`;
-    }
     function placeBubble() {
       hi.style.marginLeft = '0px';
       const r = hi.getBoundingClientRect();
@@ -971,12 +1167,14 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
     launch.addEventListener('pointerenter', (e) => {
       if (!fineHover || e.pointerType !== 'mouse') return;
       launch.classList.add('is-hot');
-      if (!pointer) face.style.transform = 'scale(1.14)';
+      motion.hover = true;
+      applyMotion();
       placeBubble();
     });
     launch.addEventListener('pointerleave', () => {
       launch.classList.remove('is-hot');
-      if (!pointer) face.style.transform = '';
+      motion.hover = false;
+      applyMotion();
     });
 
     let lastCrumb = 0;
@@ -1000,45 +1198,11 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         el.addEventListener('animationend', () => el.remove());
       });
     }
-    function stretch(vx, vy) {
-      if (reduce) {
-        face.style.transform = '';
-        return;
-      }
-      const speed = Math.hypot(vx, vy);
-      const mag = Math.min(0.35, speed * 0.5);
-      if (speed < 0.05) {
-        face.style.transform = 'scale(1.15)';
-        return;
-      }
-      const ang = Math.atan2(vy, vx) * 180 / Math.PI;
-      face.style.transform = `rotate(${ang.toFixed(1)}deg) scale(${(1.15 + mag).toFixed(3)}, ${Math.max(0.8, 1.15 - mag).toFixed(3)})`;
-    }
     function bounceBack() {
       launch.classList.remove('is-press');
-      if (reduce) {
-        face.style.transform = '';
-        return;
-      }
+      if (reduce) return;
       launch.classList.add('is-flash');
-      face.style.transform = 'scale(1.08)';
-      window.setTimeout(() => {
-        if (!pointer) face.style.transform = '';
-      }, 170);
       window.setTimeout(() => launch.classList.remove('is-flash'), 460);
-    }
-    function squash() {
-      if (reduce) {
-        face.style.transform = '';
-        return;
-      }
-      face.style.transition = 'transform .14s ease';
-      face.style.transform = 'scale(1.22, 0.78)';
-      window.setTimeout(() => { face.style.transform = 'scale(0.94, 1.08)'; }, 140);
-      window.setTimeout(() => {
-        face.style.transform = '';
-        face.style.transition = '';
-      }, 300);
     }
 
     launch.addEventListener('dragstart', (e) => e.preventDefault());
@@ -1063,21 +1227,15 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       };
       if (e.pointerType === 'touch') {
         launch.classList.add('is-press');
-        if (!reduce) face.style.transform = 'scale(0.92)';
         pointer.holdTimer = window.setTimeout(() => {
           if (!pointer || pointer.moved) return;
           pointer.held = true;
-          launch.classList.add('is-nod');
-          if (!reduce) face.style.transform = '';
           placeBubble();
         }, 300);
       }
     });
     launch.addEventListener('pointermove', (e) => {
-      if (!pointer || e.pointerId !== pointer.id) {
-        if (e.pointerType === 'mouse') tilt(e);
-        return;
-      }
+      if (!pointer || e.pointerId !== pointer.id) return;
       const dx = e.clientX - pointer.x;
       const dy = e.clientY - pointer.y;
       if (!pointer.moved && Math.hypot(dx, dy) > 6) {
@@ -1085,6 +1243,8 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         window.clearTimeout(pointer.holdTimer);
         launch.classList.add('is-drag');
         launch.classList.remove('is-hot', 'is-press', 'is-nod');
+        motion.hover = false;
+        applyMotion();
         try { if (navigator.vibrate) navigator.vibrate(10); } catch { /* 桌面浏览器没有振动 */ }
       }
       if (!pointer.moved) return;
@@ -1098,7 +1258,6 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       pos.x = c.x; pos.y = c.y;
       setSide();
       paint();
-      stretch(vx, vy);
       crumb(pos.x + btnSize() / 2, pos.y + btnSize() / 2, vx, vy);
     });
     function endPointer(e) {
@@ -1114,7 +1273,6 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         justDragged = true;
         custom = true;
         launch.classList.remove('is-hot', 'is-nod');
-        squash();
         releasePlace();
         window.setTimeout(() => { suppressClick = false; justDragged = false; }, 400);
         return;
@@ -1127,7 +1285,6 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         return;
       }
       if (kind === 'touch') bounceBack();
-      else if (!launch.matches(':hover')) face.style.transform = '';
       suppressClick = true;
       setOpen(!root.classList.contains('is-open'));
       window.setTimeout(() => { suppressClick = false; }, 400);
@@ -1314,6 +1471,18 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       ask(input.value);
     });
     quick.forEach((btn) => btn.addEventListener('click', () => ask(btn.textContent || '')));
+    function showFeishuCard() {
+      imFeishu.classList.add('is-on');
+      imFeishu.setAttribute('aria-pressed', 'true');
+      const card = log.querySelector('.mimi-coop');
+      if (card) {
+        log.scrollTop += card.getBoundingClientRect().top - log.getBoundingClientRect().top;
+        return;
+      }
+      appendCoop();
+    }
+    feishuBtn.addEventListener('click', showFeishuCard);
+    imFeishu.addEventListener('click', showFeishuCard);
 
     const refit = () => {
       cancelAnimationFrame(springRaf);
@@ -1327,6 +1496,7 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
         save();
       }
       paint();
+      rig?.resize();
       document.body.classList.toggle('mimi-open', root.classList.contains('is-open') && window.innerWidth <= 768);
     };
     window.addEventListener('resize', refit);
