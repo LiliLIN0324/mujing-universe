@@ -68,8 +68,18 @@
   --muted: #6A655F;
   --rule: #1A1A1C14;
   --accent: #1A1A1C;
-  --gutter: 64px;
-  --measure: 1440px;
+  /* Page gutters. --page-gutter is 64px, and 24px at ≤768px.
+     --page-gutter-lg stays the desktop value.
+     --page-pad is the inline inset of a full-width element: at least the
+     gutter, and the side margin of a centered --page-max-width column when
+     the viewport is wider. The 100% resolves on the element that uses it.
+     --gutter / --measure are the same tokens, kept so older rules still track. */
+  --page-gutter-lg: 64px;
+  --page-gutter: var(--page-gutter-lg);
+  --page-max-width: 1440px;
+  --page-pad: max(var(--page-gutter), calc((100% - var(--page-max-width)) / 2));
+  --gutter: var(--page-gutter);
+  --measure: var(--page-max-width);
   --cta-bg: #1A1A1C;
   --cta-fg: #F6F5F3;
   --radius: 0;
@@ -139,8 +149,8 @@ h3 { font-size: 19px; font-weight: 500; }
 a { color: inherit; }
 p { margin: 0 0 0.8em; }
 
-.wrap { width: min(var(--measure), calc(100% - 2 * var(--gutter))); margin: 0 auto; }
-.narrow { width: min(720px, calc(100% - 2 * var(--gutter))); margin: 0 auto; }
+.wrap { width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter))); margin: 0 auto; }
+.narrow { width: min(720px, calc(100% - 2 * var(--page-gutter))); margin: 0 auto; }
 .cap, .kicker, .mono {
   font-family: var(--en), var(--sans);
   font-weight: 500;
@@ -192,7 +202,7 @@ header.top {
   justify-content: space-between;
   gap: 20px;
   min-height: 72px;
-  padding: 16px 40px;
+  padding: 16px var(--page-gutter);
   background: #F6F5F3;
   border-bottom: 1px solid var(--rule);
 }
@@ -237,7 +247,7 @@ footer.bot {
   justify-content: space-between;
   align-items: center;
   gap: 12px 28px;
-  width: min(var(--measure), calc(100% - 2 * var(--gutter)));
+  width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter)));
   margin: 0 auto;
   padding: 20px 0 28px;
   border-top: 1px solid var(--ink);
@@ -286,9 +296,9 @@ footer.bot .copy {
 }
 
 @media (max-width: 768px) {
-  :root { --gutter: 24px; }
-  .wrap, .narrow { width: calc(100% - 2 * var(--gutter)); }
-  header.top { padding: 12px 16px; flex-wrap: wrap; }
+  :root { --page-gutter: 24px; }
+  .wrap, .narrow { width: calc(100% - 2 * var(--page-gutter)); }
+  header.top { padding: 12px var(--page-gutter); flex-wrap: wrap; }
   header nav { gap: 14px; width: 100%; }
   footer.bot { gap: 12px; padding-bottom: 32px; }
 }
@@ -303,7 +313,7 @@ header.top.top--home {
   z-index: 40;
   min-height: 0;
   height: 80px;
-  padding: 0 max(var(--gutter), calc((100% - var(--measure)) / 2));
+  padding: 0 var(--page-pad);
   gap: 20px;
   background: #F6F5F3;
   border-bottom: 1px solid var(--rule);
@@ -349,7 +359,7 @@ header.top.top--home:focus-within {
 .top--home nav a:hover { opacity: 0.7; }
 .top--home nav a.pill:hover { opacity: 0.86; }
 @media (max-width: 760px) {
-  header.top.top--home { height: 64px; padding: 0 20px; flex-wrap: nowrap; }
+  header.top.top--home { height: 64px; padding: 0 var(--page-gutter); flex-wrap: nowrap; }
   .top--home nav { gap: 18px; width: auto; }
   .top--home .wordmark { font-size: 17px; }
 }
@@ -369,7 +379,7 @@ header.top.top--home:focus-within {
     right: auto;
     z-index: 200;
     height: 52px;
-    padding: 0 24px;
+    padding: 0 var(--page-gutter);
     flex-wrap: nowrap;
     background: #F6F5F3;
     border-bottom: 1px solid var(--rule);
@@ -400,7 +410,7 @@ header.top.top--home:focus-within {
     display: none;
     position: absolute;
     top: 52px;
-    right: 16px;
+    right: var(--page-gutter);
     width: auto;
     min-width: 148px;
     flex-direction: column;

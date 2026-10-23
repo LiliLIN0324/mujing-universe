@@ -8,12 +8,14 @@ export const BANNED = /西湖|繁胜全景|xihu-panorama/i;
 export const ANSWERS = {
   what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做古画、民乐音画，也做展览和委托。目录在[作品页](/works/)，怎么合作写在[合作页](/contact/)。',
   works: '作品目录在[作品页](/works/)，按音画、产品、游戏和研究分开。',
+  doing: '已经公开的在[作品页](/works/)，按音画、产品、游戏和研究分开。',
+  find: '飞书名片点「看飞书名片」，邮件写到 lily1326685527@gmail.com。加好友后在群里 @Mimi。这里不会自动拉群。',
   made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
   coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
   secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
-  skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「聊合作」，或去[合作页](/contact/)。',
-  other: '这个问题我答不准，也不能替团队承诺。想合作，点「聊合作」，或去[合作页](/contact/)。',
-  en: 'I can’t answer that precisely. For a project, tap “聊合作” or open the [collaborate page](/contact/).',
+  skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「怎么合作」，或去[合作页](/contact/)。',
+  other: '这个问题我答不准，也不能替团队承诺。想合作，点「怎么合作」，或去[合作页](/contact/)。',
+  en: 'I can’t answer that precisely. For a project, tap “怎么合作” or open the [collaborate page](/contact/).',
   enCoop: 'Say what you want to make. Then add 终树 on Feishu with the card below and leave a note. This site will not create a group, and there is no 24-hour assistant.\n[[COOP]]',
 };
 
@@ -42,6 +44,8 @@ export function localAnswer(q) {
   if (BANNED.test(flat)) return ANSWERS.skip;
   if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
   if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
+  if (flat === '作品在做什么' || /在做什么/.test(flat)) return ANSWERS.doing;
+  if (flat === '怎么找到你们' || /怎么找|找到你们/.test(flat)) return ANSWERS.find;
   if (flat === '看看代表作品' || /代表作/.test(flat) || (/作品/.test(flat) && !/做什么|委托|合作|古画|民乐|音画/.test(flat))) return ANSWERS.works;
   if (flat === '幕景是做什么的？' || ((/幕景|你们/.test(flat)) && /做|是什么|干什么/.test(flat))) return ANSWERS.what;
   if (flat === '聊合作' || /合作|咨询|联系|报价|多少钱|价格|档期|合同|版权|微信|飞书|终树|丁科智|古画|民乐|音画|展陈|委托/.test(flat)) return ANSWERS.coop;
