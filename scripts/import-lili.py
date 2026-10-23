@@ -7,6 +7,10 @@ SRC = os.environ.get('LILI_REPO', '/tmp/lili') + '/src/data/projects'
 OUT = os.environ.get('OUT_DIR') or os.path.join(os.path.dirname(__file__), '..', 'src', 'content', 'works')
 LINE = {'product': '产品', 'platform': '产品', 'games': '游戏', 'AI': '空间', 'planning': '空间'}
 # 中文名定稿（2026-10-24 林丽丽确认）：同步时覆盖个人站英文题名，别被回滚。
+CREDIT = {
+  'mimi-agent': '丁科智 endTree',
+  'zhuantang-yixun': '丁科智 endTree',
+}
 BY = {
   'mimi-agent': 'ding',
   'zhuantang-yixun': 'ding',
@@ -84,7 +88,7 @@ for f in sorted(glob.glob(os.path.join(SRC, '*', '*.md'))):
     d = fm(open(f, encoding='utf-8').read())
     if not d['slug'] or d['slug'] in SKIP: continue
     d.update(line=LINE[folder], source=f'https://lililin0324.github.io/#/{ {"games":"game","AI":"ai"}.get(folder,folder) }/{d["slug"]}',
-             sourceFile=os.path.relpath(f, SRC).replace(os.sep, '/'), yearNum=year_num(d['year']), status='已完成', flags=[], by=BY.get(d['slug'], 'lin'))
+             sourceFile=os.path.relpath(f, SRC).replace(os.sep, '/'), yearNum=year_num(d['year']), status='已完成', flags=[], by=BY.get(d['slug'], 'lin'), credit=CREDIT.get(d['slug'], ''))
     if d['slug'] in TITLE_CN: d['title'] = TITLE_CN[d['slug']]
     items.append(d)
 # 检测重复/模板文案
