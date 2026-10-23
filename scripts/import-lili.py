@@ -7,6 +7,17 @@ SRC = os.environ.get('LILI_REPO', '/tmp/lili') + '/src/data/projects'
 OUT = os.environ.get('OUT_DIR') or os.path.join(os.path.dirname(__file__), '..', 'src', 'content', 'works')
 LINE = {'product': '产品', 'platform': '产品', 'games': '游戏', 'AI': '空间', 'planning': '空间'}
 # 中文名定稿（2026-10-24 林丽丽确认）：同步时覆盖个人站英文题名，别被回滚。
+BY = {
+  'mimi-agent': 'ding',
+  'zhuantang-yixun': 'ding',
+  '72-hour-game-jam': 'collab',
+  'bmw-meta-island': 'collab',
+  'peace-elite-hust-campus': 'collab',
+  'guangzhou-xinyuan-tech': 'collab',
+  'campus-public-space-vitality-modeling': 'collab',
+  'hongqiqu': 'collab',
+  '1037pinpin': 'collab',
+}
 TITLE_CN = {
   'riffle-ai-game-generation-tool': 'AI 生成小游戏',
   'scendance': 'AI 活动布置平台',
@@ -37,6 +48,15 @@ TITLE_CN = {
   '1037pinpin': '华科校园拼单平台',
   'mimi-agent': 'Mimi 智能体',
   'zhuantang-yixun': '转塘艺讯',
+  'mimi-agent': 'ding',
+  'zhuantang-yixun': 'ding',
+  '72-hour-game-jam': 'collab',
+  'bmw-meta-island': 'collab',
+  'peace-elite-hust-campus': 'collab',
+  'guangzhou-xinyuan-tech': 'collab',
+  'campus-public-space-vitality-modeling': 'collab',
+  'hongqiqu': 'collab',
+  '1037pinpin': 'collab',
 }
 SKIP = {'epstein-mystery-archive', 'how-to-use-unity-making-wechat-minigames', 'how-to-use-cocos-creator-making-games'}
 def fm(text):
@@ -64,7 +84,7 @@ for f in sorted(glob.glob(os.path.join(SRC, '*', '*.md'))):
     d = fm(open(f, encoding='utf-8').read())
     if not d['slug'] or d['slug'] in SKIP: continue
     d.update(line=LINE[folder], source=f'https://lililin0324.github.io/#/{ {"games":"game","AI":"ai"}.get(folder,folder) }/{d["slug"]}',
-             sourceFile=os.path.relpath(f, SRC).replace(os.sep, '/'), yearNum=year_num(d['year']), status='已完成', flags=[])
+             sourceFile=os.path.relpath(f, SRC).replace(os.sep, '/'), yearNum=year_num(d['year']), status='已完成', flags=[], by=BY.get(d['slug'], 'lin'))
     if d['slug'] in TITLE_CN: d['title'] = TITLE_CN[d['slug']]
     items.append(d)
 # 检测重复/模板文案
