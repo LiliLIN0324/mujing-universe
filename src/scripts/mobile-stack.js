@@ -10,7 +10,8 @@ const GAP = 14;           // px between the current card and the one leaving
 const PEEK = 20;          // px each stacked card sits further right
 const SHRINK = 0.08;      // scale step per stacked card
 const TILT = 8;           // deg rotateY per stacked card (0 with reduced motion)
-const LEFT = 24;          // current card left margin
+const PEEK_RIGHT = 66;   // stacked cards; not a page gutter
+let leftInset = 24;      // current card left margin, from --page-gutter
 const SETTLE_MS = 450;
 const AXIS_SLOP = 8;
 
@@ -62,7 +63,9 @@ export function mountMobileStack(root) {
   let cardW = 300;
 
   function measure() {
-    cardW = cards[0].offsetWidth || Math.max(200, window.innerWidth - 90);
+    const n = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--page-gutter'));
+    leftInset = Number.isFinite(n) ? n : 24;
+    cardW = cards[0].offsetWidth || Math.max(200, window.innerWidth - leftInset - PEEK_RIGHT);
   }
 
   function layout() {
@@ -72,10 +75,10 @@ export function mountMobileStack(root) {
       const card = cards[i];
       let x, s, ry, op;
       if (p <= 0) {
-        x = LEFT + p * (cardW + GAP);
+        x = leftInset + p * (cardW + GAP);
         s = 1; ry = 0; op = p <= -1 ? 0 : 1;
       } else {
-        x = LEFT + p * PEEK;
+        x = leftInset + p * PEEK;
         s = 1 - p * SHRINK;
         ry = -tilt * p;
         op = p <= 1 ? 1 : p <= 3 ? 1 - (p - 1) * 0.35 : Math.max(0, 0.3 * (4 - p));

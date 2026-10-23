@@ -2,7 +2,7 @@
 import Base from '../layouts/Base.astro';
 ---
 <Base title="页面不存在 · 幕景宇宙">
-<main class="narrow miss">
+<main class="wrap miss">
   <p class="kicker cap">404</p>
   <h1>这个页面不存在</h1>
   <p>链接可能写错了，或这一页已经挪走。</p>
@@ -12,6 +12,6 @@ import Base from '../layouts/Base.astro';
 .miss { padding-top: 72px; text-align: left; }
 .miss h1 { margin: 0 0 12px; font-size: clamp(40px, 5vw, 56px); letter-spacing: -0.04em; line-height: 1.05; }
 .acts { margin-top: 22px; }
-.acts .btn { margin: 6px; }
+.acts .btn { margin: 6px 12px 6px 0; }
 </style>
 </Base>

@@ -52,7 +52,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
 <style is:global>
 .wf {
   --rule1: rgba(26, 26, 28, .10);
-  width: min(var(--measure), calc(100% - 2 * var(--gutter)));
+  width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter)));
   margin: 0 auto;
   padding: 8px 0 32px;
   color: var(--ink);
@@ -298,7 +298,7 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
   .wf .go { transform: none; }
 }
 @media (max-width: 1100px) {
-  .wf { width: min(var(--measure), calc(100% - 2 * var(--gutter))); }
+  .wf { width: min(var(--page-max-width), calc(100% - 2 * var(--page-gutter))); }
   .wf-cards { grid-template-columns: 1fr 1fr; }
 }
 @media (max-width: 768px) {
@@ -306,7 +306,7 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
   #archive { scroll-margin-top: 64px; }
 }
 @media (max-width: 700px) {
-  .wf { width: auto; margin: 0; padding: 4px var(--gutter) 24px; }
+  .wf { width: auto; margin: 0; padding: 4px var(--page-gutter) 24px; }
   .wf-bar { align-items: stretch; flex-wrap: wrap; gap: 0; }
   .wf-view { width: 100%; justify-content: flex-end; }
   .wf-cards { grid-template-columns: 1fr; row-gap: 36px; }
