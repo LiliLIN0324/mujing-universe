@@ -26,9 +26,8 @@ export type NewsItem = {
    * 不写这个字段，列表和详情都不显示图。
    */
   image?: string;
-  placeholder?: boolean;
-  /** archive：艺术家档案。work：摘自作品页。placeholder：栏目位置。 */
-  source?: 'archive' | 'work' | 'placeholder';
+  /** archive：艺术家档案。work：摘自作品页。 */
+  source?: 'archive' | 'work';
 };
 
 export const SECTIONS: { id: SectionId; label: string }[] = [
