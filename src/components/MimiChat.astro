@@ -43,6 +43,12 @@ const mail = 'mailto:lily1326685527@gmail.com';
       <button class="mimi-feishu" type="button">看飞书名片</button>
       <a class="mimi-mail" href={mail}>写邮件</a>
     </div>
+    <div class="mimi-ims" role="group" aria-label="其他聊天">
+      <a href="/contact/#feishu">飞书</a>
+      <button type="button" disabled>企微/公众号<span>即将开放</span></button>
+      <button type="button" disabled>微信<span>即将开放</span></button>
+      <button type="button" disabled>钉钉<span>即将开放</span></button>
+    </div>
     <form class="mimi-form">
       <label class="mimi-sr" for="mimi-input">输入问题</label>
       <input id="mimi-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send" placeholder="想了解幕景，直接问我" />
@@ -288,6 +294,7 @@ const mail = 'mailto:lily1326685527@gmail.com';
   .mimi-hd,
   .mimi-quick,
   .mimi-cta,
+  .mimi-ims,
   .mimi-foot,
   .mimi-form { flex: none; }
   .mimi-log {
@@ -451,6 +458,41 @@ const mail = 'mailto:lily1326685527@gmail.com';
     text-decoration: none;
   }
   .mimi-mail:hover { background: #1a1a1c; color: #f6f5f3; }
+  .mimi-ims {
+    display: flex;
+    flex-direction: column;
+    margin: 8px 14px 0;
+    border: 1px solid rgba(26, 26, 28, 0.16);
+  }
+  .mimi-ims a,
+  .mimi-ims button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px;
+    border: 0;
+    border-radius: 0;
+    border-top: 1px solid rgba(26, 26, 28, 0.08);
+    background: transparent;
+    color: #1a1a1c;
+    font: inherit;
+    font-size: 13px;
+    line-height: 1;
+    text-align: left;
+    text-decoration: none;
+  }
+  .mimi-ims > :first-child { border-top: 0; }
+  .mimi-ims a:hover { background: #1a1a1c; color: #f6f5f3; }
+  .mimi-ims button:disabled {
+    color: #9a9a9a;
+    cursor: not-allowed;
+  }
+  .mimi-ims button span {
+    color: #9a9a9a;
+    font-size: 12px;
+  }
   .mimi-foot {
     margin: 0;
     padding: 8px 14px 12px;
