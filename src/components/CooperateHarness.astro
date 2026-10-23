@@ -31,7 +31,7 @@ const start = known.includes(tool) ? tool : '';
         <span class="face-dots" aria-hidden="true"><i></i><i></i><i></i></span>
       </span>
       <p class="who">Mimi</p>
-      <p class="status"><i aria-hidden="true"></i><span id="bench-status">{start ? names[start] : 'Mimi'}</span><span class="demo" id="bench-demo" hidden>本地演示</span></p>
+      <p class="status"><i aria-hidden="true"></i><span id="bench-status">{start ? names[start] : 'Mimi'}</span><span class="demo" id="bench-demo" hidden>未接通</span></p>
     </header>
 
     <div class="work">
@@ -98,7 +98,7 @@ const start = known.includes(tool) ? tool : '';
         </div>
         <form class="say" id="bench-say">
           <label class="sr" for="bench-input">跟 Mimi 说</label>
-          <input id="bench-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send"/>
+          <textarea id="bench-input" name="q" rows="1" maxlength="400" enterkeyhint="send"></textarea>
           <button type="submit">发送</button>
         </form>
       </div>
@@ -217,9 +217,17 @@ const start = known.includes(tool) ? tool : '';
 
     function setState(next) {
       root.dataset.state = next;
-      if (sendBtn) sendBtn.disabled = next === 'thinking';
+      if (sendBtn) sendBtn.disabled = busy;
+    }
+    function pin() {
+      log.scrollTop = log.scrollHeight;
+    }
+    function fitInput() {
+      input.style.height = '44px';
+      input.style.height = Math.min(120, input.scrollHeight) + 'px';
     }
     let waitEl = null;
+    let offlineNoted = false;
     function showWait() {
       waitEl?.remove();
       waitEl = document.createElement('div');
@@ -231,7 +239,7 @@ const start = known.includes(tool) ? tool : '';
       for (let i = 0; i < 3; i += 1) p.append(document.createElement('i'));
       waitEl.append(p);
       log.append(waitEl);
-      log.scrollTop = log.scrollHeight;
+      pin();
     }
     function clearWait() {
       waitEl?.remove();
@@ -240,7 +248,7 @@ const start = known.includes(tool) ? tool : '';
     function finishText(p, text, done) {
       p.replaceChildren();
       if (text) linkify(p, text);
-      if (root.dataset.state === 'answering') setState('idle');
+      pin();
       if (done) done();
     }
     function typewrite(p, text, done) {
@@ -255,7 +263,7 @@ const start = known.includes(tool) ? tool : '';
       typer = window.setInterval(() => {
         i = Math.min(shown.length, i + step);
         p.textContent = shown.slice(0, i);
-        log.scrollTop = log.scrollHeight;
+        pin();
         if (i >= shown.length) {
           window.clearInterval(typer);
           finishText(p, text, done);
@@ -271,18 +279,54 @@ const start = known.includes(tool) ? tool : '';
       if (role === 'user') p.textContent = text;
       else if (typed) typewrite(p, text, done);
       else finishText(p, text, done);
-      log.scrollTop = log.scrollHeight;
-      return p;
+      pin();
+      return item;
+    }
+    function settle() {
+      busy = false;
+      setState('idle');
+    }
+    function noteOffline() {
+      demo = true;
+      if (demoNote) demoNote.hidden = false;
+      if (offlineNoted) return;
+      offlineNoted = true;
+      append('bot', '未接通。', false);
+    }
+    function showFail(text) {
+      clearWait();
+      const item = document.createElement('div');
+      item.className = 'msg bot is-fail';
+      const p = document.createElement('p');
+      p.textContent = text;
+      const retry = document.createElement('button');
+      retry.type = 'button';
+      retry.className = 'retry';
+      retry.textContent = '重试';
+      item.append(p, retry);
+      log.append(item);
+      pin();
+      retry.addEventListener('click', () => {
+        item.remove();
+        const last = [...turns].reverse().find((t) => t.role === 'user');
+        settle();
+        if (last) ask(last.content, true);
+      });
+      settle();
+      setState('error');
     }
 
-    async function ask(text) {
-      const q = text.trim().slice(0, 400);
+    async function ask(text, retrying = false) {
+      const q = String(text || '').trim().slice(0, 400);
       if (!q || busy) return;
       busy = true;
       window.clearInterval(typer);
-      append('user', q);
-      turns.push({ role: 'user', content: q });
-      input.value = '';
+      if (!retrying) {
+        append('user', q);
+        turns.push({ role: 'user', content: q });
+        input.value = '';
+        fitInput();
+      }
       setState('thinking');
       showWait();
       const t0 = performance.now();
@@ -301,28 +345,30 @@ const start = known.includes(tool) ? tool : '';
             log.append(item);
           }
           bubble.textContent = shown;
-          log.scrollTop = log.scrollHeight;
+          pin();
         },
       });
-      if (result.demo) {
-        demo = true;
-        if (demoNote) demoNote.hidden = false;
-      }
-      let streamed = result.streamed;
       if (result.threw && bubble?.parentElement) {
         bubble.parentElement.remove();
         bubble = null;
-        streamed = false;
+      }
+      if (result.demo) {
+        const hold = 280 - (performance.now() - t0);
+        if (hold > 0) await new Promise((r) => setTimeout(r, hold));
+        clearWait();
+        noteOffline();
+        settle();
+        return;
       }
       const { reply, showCoop, failed } = result;
-      const after = () => { if (showCoop) reveal('feishu', false); };
+      const streamed = result.threw ? false : result.streamed;
+      const after = () => {
+        if (showCoop) reveal('feishu', false);
+        settle();
+      };
       if (failed) {
-        clearWait();
-        setState('error');
-        if (bubble) bubble.textContent = reply;
-        else append('bot', reply, false);
-        busy = false;
-        window.setTimeout(() => { if (root.dataset.state === 'error') setState('idle'); }, reduce ? 0 : 700);
+        if (bubble?.parentElement) bubble.parentElement.remove();
+        showFail(/歇/.test(reply) ? '稍后再问。' : '没发出去。');
         return;
       }
       if (!streamed) {
@@ -337,13 +383,18 @@ const start = known.includes(tool) ? tool : '';
         append('bot', reply, true, after);
       }
       turns.push({ role: 'assistant', content: reply });
-      busy = false;
     }
 
     say.addEventListener('submit', (e) => {
       e.preventDefault();
       ask(input.value);
     });
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' || e.shiftKey || e.isComposing || e.keyCode === 229) return;
+      e.preventDefault();
+      say.requestSubmit();
+    });
+    input.addEventListener('input', fitInput);
 
     const fromHash = hashTool();
     const initial = fromHash === null ? (root.dataset.tool || '') : fromHash;
@@ -360,12 +411,18 @@ const start = known.includes(tool) ? tool : '';
   .bench {
     width: min(960px, calc(100% - 2 * var(--gutter)));
     margin: 0 auto;
-    padding: 28px 0 64px;
+    padding: 12px 0;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
   }
   .panel {
     display: flex;
     flex-direction: column;
-    min-height: min(640px, calc(100vh - 160px));
+    flex: 1;
+    min-height: 0;
     border: 1px solid var(--ink);
     border-radius: 0;
     background: #fff;
@@ -383,13 +440,20 @@ const start = known.includes(tool) ? tool : '';
     width: 28px;
     height: 28px;
     flex: none;
+    border: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    background: transparent;
+    box-shadow: none;
   }
   .face {
     width: 28px;
     height: 28px;
+    border: 0;
     border-radius: 50%;
     object-fit: cover;
     display: block;
+    box-shadow: none;
   }
   .face-dots {
     display: none;
@@ -484,8 +548,9 @@ const start = known.includes(tool) ? tool : '';
   .work {
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-width: 0;
-    min-height: 420px;
+    min-height: 0;
     background: #fff;
   }
   .log {
@@ -516,19 +581,26 @@ const start = known.includes(tool) ? tool : '';
   }
   .say {
     display: flex;
+    align-items: flex-end;
     gap: 8px;
   }
-  .say input {
+  .say textarea {
     flex: 1;
+    width: auto;
     min-width: 0;
     height: 44px;
-    padding: 0 12px;
+    min-height: 44px;
+    max-height: 120px;
+    margin: 0;
+    padding: 10px 12px;
+    resize: none;
     border: 1px solid var(--ink);
     border-radius: 0;
     background: #fff;
     color: var(--ink);
     font: inherit;
     font-size: 16px;
+    line-height: 1.4;
   }
   .say button {
     flex: none;
@@ -567,7 +639,7 @@ const start = known.includes(tool) ? tool : '';
     letter-spacing: 0;
     line-height: 1.4;
   }
-  .say input { width: auto; margin-top: 0; }
+  .say textarea { width: auto; margin-top: 0; }
   .say .sr {
     position: absolute;
     width: 1px;
@@ -721,12 +793,29 @@ const start = known.includes(tool) ? tool : '';
     .bench { width: calc(100% - 2 * var(--gutter)); padding-top: 16px; }
     .panel { min-height: 0; }
     .work h1 { font-size: 22px; }
-    .work { min-height: 420px; }
+    .bench { padding-top: 8px; }
     .fields, .pay { grid-template-columns: 1fr; }
     .wide { grid-column: auto; }
   }
 </style>
 <style is:global>
+  html:has(#bench),
+  body:has(#bench) {
+    height: 100%;
+    overflow: hidden;
+    background: #fff;
+  }
+  body:has(#bench) {
+    display: flex;
+    flex-direction: column;
+  }
+  body:has(#bench) header.top { flex: none; }
+  body:has(#bench) #content {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
   body:has(#bench),
   body:has(#bench) header.top.top--home,
   body:has(#bench) header.top.top--home.top--page,
@@ -736,7 +825,7 @@ const start = known.includes(tool) ? tool : '';
     background: #fff;
   }
   body:has(#bench) #mimi { display: none !important; }
-  body:has(#bench) footer.bot { padding-bottom: 28px; }
+  body:has(#bench) footer.bot { flex: none; padding-top: 12px; padding-bottom: 12px; }
   #bench .msg {
     align-self: flex-start;
     max-width: min(34em, 86%);
@@ -764,6 +853,19 @@ const start = known.includes(tool) ? tool : '';
     color: inherit;
     text-decoration: none;
     border-bottom: 1px solid currentColor;
+  }
+  #bench .retry {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 10px;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    background: #fff;
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
   }
   #bench .dots {
     display: flex;
