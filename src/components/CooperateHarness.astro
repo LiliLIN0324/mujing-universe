@@ -26,22 +26,16 @@ const start = known.includes(tool) ? tool : '';
 <main class="bench" id="bench" data-tool={start} data-state="idle">
   <section class="panel" id="start" aria-label="Mimi">
     <header class="hd">
-      <img class="face" src="/mimi/avatar-72.webp" alt="" width="72" height="72"/>
+      <span class="face-wrap">
+        <img class="face" src="/mimi/avatar-72.webp" alt="" width="72" height="72"/>
+        <span class="face-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+      </span>
       <p class="who">Mimi</p>
       <p class="status"><i aria-hidden="true"></i><span id="bench-status">{start ? names[start] : 'Mimi'}</span><span class="demo" id="bench-demo" hidden>本地演示</span></p>
     </header>
 
-    <div class="side">
-      <h1>你好，我是 Mimi。</h1>
-      <div class="chips" role="toolbar">
-        <button type="button" data-tool="mail" aria-pressed={start === 'mail' ? 'true' : 'false'}>邮件</button>
-        <button type="button" data-tool="feishu" aria-pressed={start === 'feishu' ? 'true' : 'false'}>飞书</button>
-        <button type="button" data-tool="deposit" aria-pressed={start === 'deposit' ? 'true' : 'false'}>定金</button>
-        <button type="button" data-tool="wechat" aria-pressed={start === 'wechat' ? 'true' : 'false'}>微信<span class="badge">待</span></button>
-      </div>
-    </div>
-
     <div class="work">
+      <h1>你好，我是 Mimi。</h1>
       <div class="log" id="bench-log" role="log" aria-live="polite" aria-relevant="additions">
         <div class="msg bot"><p>你好，我是 Mimi。</p></div>
 
@@ -95,11 +89,19 @@ const start = known.includes(tool) ? tool : '';
         </div>
       </div>
 
-      <form class="say" id="bench-say">
-        <label class="sr" for="bench-input">跟 Mimi 说</label>
-        <input id="bench-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send"/>
-        <button type="submit">发送</button>
-      </form>
+      <div class="dock">
+        <div class="chips" role="toolbar">
+          <button type="button" data-tool="mail" aria-pressed={start === 'mail' ? 'true' : 'false'}>邮件</button>
+          <button type="button" data-tool="feishu" aria-pressed={start === 'feishu' ? 'true' : 'false'}>飞书</button>
+          <button type="button" data-tool="deposit" aria-pressed={start === 'deposit' ? 'true' : 'false'}>定金</button>
+          <button type="button" data-tool="wechat" aria-pressed={start === 'wechat' ? 'true' : 'false'}>微信<span class="badge">待</span></button>
+        </div>
+        <form class="say" id="bench-say">
+          <label class="sr" for="bench-input">跟 Mimi 说</label>
+          <input id="bench-input" name="q" maxlength="400" autocomplete="off" enterkeyhint="send"/>
+          <button type="submit">发送</button>
+        </form>
+      </div>
       <noscript><p class="noscript"><a href={mailto}>{email}</a></p></noscript>
     </div>
   </section>
@@ -217,6 +219,24 @@ const start = known.includes(tool) ? tool : '';
       root.dataset.state = next;
       if (sendBtn) sendBtn.disabled = next === 'thinking';
     }
+    let waitEl = null;
+    function showWait() {
+      waitEl?.remove();
+      waitEl = document.createElement('div');
+      waitEl.className = 'msg bot is-wait';
+      waitEl.setAttribute('role', 'status');
+      const p = document.createElement('p');
+      p.className = 'dots';
+      p.setAttribute('aria-label', 'Mimi');
+      for (let i = 0; i < 3; i += 1) p.append(document.createElement('i'));
+      waitEl.append(p);
+      log.append(waitEl);
+      log.scrollTop = log.scrollHeight;
+    }
+    function clearWait() {
+      waitEl?.remove();
+      waitEl = null;
+    }
     function finishText(p, text, done) {
       p.replaceChildren();
       if (text) linkify(p, text);
@@ -264,6 +284,7 @@ const start = known.includes(tool) ? tool : '';
       turns.push({ role: 'user', content: q });
       input.value = '';
       setState('thinking');
+      showWait();
       const t0 = performance.now();
       let bubble = null;
       const result = await requestReply({
@@ -271,6 +292,7 @@ const start = known.includes(tool) ? tool : '';
         demo,
         onDelta(shown) {
           if (!bubble) {
+            clearWait();
             setState('answering');
             const item = document.createElement('div');
             item.className = 'msg bot';
@@ -295,6 +317,7 @@ const start = known.includes(tool) ? tool : '';
       const { reply, showCoop, failed } = result;
       const after = () => { if (showCoop) reveal('feishu', false); };
       if (failed) {
+        clearWait();
         setState('error');
         if (bubble) bubble.textContent = reply;
         else append('bot', reply, false);
@@ -302,12 +325,14 @@ const start = known.includes(tool) ? tool : '';
         window.setTimeout(() => { if (root.dataset.state === 'error') setState('idle'); }, reduce ? 0 : 700);
         return;
       }
-      if (!streamed && !reduce) {
-        const wait = 360 - (performance.now() - t0);
-        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+      if (!streamed) {
+        const hold = (reduce ? 280 : 520) - (performance.now() - t0);
+        if (hold > 0) await new Promise((r) => setTimeout(r, hold));
+        clearWait();
       }
       if (streamed && bubble) finishText(bubble, reply, after);
       else {
+        clearWait();
         setState('answering');
         append('bot', reply, true, after);
       }
@@ -338,16 +363,14 @@ const start = known.includes(tool) ? tool : '';
     padding: 28px 0 64px;
   }
   .panel {
-    display: grid;
-    grid-template-columns: 280px 1fr;
-    grid-template-rows: auto 1fr;
+    display: flex;
+    flex-direction: column;
     min-height: min(640px, calc(100vh - 160px));
     border: 1px solid var(--ink);
     border-radius: 0;
     background: #fff;
   }
   .hd {
-    grid-column: 1 / -1;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -355,13 +378,38 @@ const start = known.includes(tool) ? tool : '';
     padding: 0 16px;
     border-bottom: 1px solid var(--ink);
   }
+  .face-wrap {
+    position: relative;
+    width: 28px;
+    height: 28px;
+    flex: none;
+  }
   .face {
     width: 28px;
     height: 28px;
     border-radius: 50%;
     object-fit: cover;
-    flex: none;
+    display: block;
   }
+  .face-dots {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: 1px;
+    transform: translateX(-50%);
+    gap: 2px;
+    padding: 2px 3px;
+    background: rgba(26, 26, 28, 0.78);
+  }
+  .bench[data-state="thinking"] .face-dots { display: flex; }
+  .face-dots i {
+    width: 3px;
+    height: 3px;
+    background: #fff;
+    animation: bench-dot 1s infinite;
+  }
+  .face-dots i:nth-child(2) { animation-delay: 0.15s; }
+  .face-dots i:nth-child(3) { animation-delay: 0.3s; }
   .who {
     margin: 0;
     font-size: 15px;
@@ -385,16 +433,10 @@ const start = known.includes(tool) ? tool : '';
     animation: bench-pulse 0.9s steps(2, end) infinite;
   }
   .demo { margin-left: 10px; color: var(--muted); letter-spacing: 0.08em; }
-  .side {
-    display: flex;
-    flex-direction: column;
-    gap: 28px;
-    padding: 22px 16px 16px;
-    border-right: 1px solid var(--ink);
-  }
-  .side h1 {
+  .work h1 {
     margin: 0;
-    font-size: clamp(26px, 3vw, 32px);
+    padding: 16px 18px 0;
+    font-size: 26px;
     font-weight: 600;
     letter-spacing: -0.04em;
     line-height: 1.2;
@@ -403,7 +445,6 @@ const start = known.includes(tool) ? tool : '';
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-top: auto;
   }
   .chips button,
   .tiers button,
@@ -455,32 +496,15 @@ const start = known.includes(tool) ? tool : '';
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
-    padding: 18px 18px 12px;
+    padding: 16px 18px 12px;
   }
-  .msg {
-    max-width: min(40em, 100%);
-    margin: 0;
-    border: 1px solid var(--ink);
-    border-radius: 0;
+  .dock {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 16px 16px;
+    border-top: 1px solid var(--ink);
     background: #fff;
-    padding: 10px 12px;
-  }
-  .msg p {
-    margin: 0;
-    font-size: 15px;
-    line-height: 1.55;
-    white-space: pre-wrap;
-    overflow-wrap: anywhere;
-  }
-  .msg a {
-    color: inherit;
-    text-decoration: none;
-    border-bottom: 1px solid currentColor;
-  }
-  .msg.user {
-    align-self: flex-end;
-    background: var(--ink);
-    color: #fff;
   }
   .card {
     align-self: stretch;
@@ -493,8 +517,6 @@ const start = known.includes(tool) ? tool : '';
   .say {
     display: flex;
     gap: 8px;
-    padding: 12px 16px 16px;
-    border-top: 1px solid var(--ink);
   }
   .say input {
     flex: 1;
@@ -687,15 +709,18 @@ const start = known.includes(tool) ? tool : '';
     letter-spacing: 0.12em;
   }
   @media (prefers-reduced-motion: reduce) {
-    .bench[data-state="thinking"] .status i { animation: none; }
+    .bench[data-state="thinking"] .status i,
+    .face-dots i { animation: none; }
   }
   @keyframes bench-pulse { 50% { opacity: 0.25; } }
+  @keyframes bench-dot {
+    0%, 80%, 100% { opacity: 0.25; }
+    40% { opacity: 1; }
+  }
   @media (max-width: 720px) {
     .bench { width: calc(100% - 2 * var(--gutter)); padding-top: 16px; }
-    .panel { grid-template-columns: 1fr; min-height: 0; }
-    .side { gap: 16px; border-right: 0; border-bottom: 1px solid var(--ink); }
-    .side h1 { font-size: 26px; }
-    .chips { margin-top: 0; }
+    .panel { min-height: 0; }
+    .work h1 { font-size: 22px; }
     .work { min-height: 420px; }
     .fields, .pay { grid-template-columns: 1fr; }
     .wide { grid-column: auto; }
@@ -712,4 +737,54 @@ const start = known.includes(tool) ? tool : '';
   }
   body:has(#bench) #mimi { display: none !important; }
   body:has(#bench) footer.bot { padding-bottom: 28px; }
+  #bench .msg {
+    align-self: flex-start;
+    max-width: min(34em, 86%);
+    margin: 0;
+    border: 1px solid var(--ink);
+    border-radius: 0;
+    background: #fff;
+    color: var(--ink);
+    padding: 10px 12px;
+  }
+  #bench .msg.user {
+    align-self: flex-end;
+    margin-left: 14%;
+    background: var(--ink);
+    color: #fff;
+  }
+  #bench .msg p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  #bench .msg a {
+    color: inherit;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+  #bench .dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 36px;
+    min-height: 18px;
+  }
+  #bench .dots i {
+    width: 5px;
+    height: 5px;
+    background: currentColor;
+    animation: bench-dot 1s infinite;
+  }
+  #bench .dots i:nth-child(2) { animation-delay: 0.15s; }
+  #bench .dots i:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes bench-dot {
+    0%, 80%, 100% { opacity: 0.25; }
+    40% { opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #bench .dots i { animation: none; opacity: 1; }
+  }
 </style>
