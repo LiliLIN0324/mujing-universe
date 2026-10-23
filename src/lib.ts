@@ -166,6 +166,7 @@ export function workAudio(w: { slug: string }): string | null {
 /**
  * 封面预览：只有 R2 上核对过的 mp4。没有片的作品不在这里，封面保持静图。
  * 路径用 Range 请求确认过（206、video/mp4），不按 slug 猜。
+ * 首页章节和作品库用同一份名单。
  */
 const COVER_CLIP: Record<string, string> = {
   'xihu-panorama': `${R2_FIG}/xihu-panorama/scroll-placeholder.mp4`,
@@ -193,7 +194,7 @@ const COVER_CLIP: Record<string, string> = {
   'hongqiqu': `${R2_FIG}/hongqiqu/cover.mp4`,
   'previous-archi-work': `${R2_FIG}/previous-archi-work/cover.mp4`,
 };
-/** 作品库封面 / 详情主视觉用的真实预览。没有就返回 null。 */
+/** 首页章节、作品库封面和详情主视觉的真实预览。没有就返回 null，保持静图。 */
 export function coverClip(slug: string): string | null {
   return COVER_CLIP[slug] ?? null;
 }
