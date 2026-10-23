@@ -47,17 +47,13 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   <div class="hero-info">
     <div class="hero-plate">
       <div class="hero-copy">
-        <p class="by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
         <h1>当代西湖繁胜全景图</h1>
         <p class="sub">以宋画长卷重绘当代西湖，画面由声音转译生成。</p>
-        <p class="meta">古画新绘　·　进行中　·　2026</p>
       </div>
       <div class="fs-actions">
         <button id="snd-m" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video-m"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
-        <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>
       </div>
       <div class="m-prog" id="m-prog" aria-hidden="true"><i><b id="m-prog-fill"></b></i><span id="m-prog-time">00:00 / 00:00</span></div>
-      <p class="fs-hint">下滑看精选</p>
     </div>
   </div>
 </section>
@@ -118,16 +114,13 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
         )}
       </div>
       <div class="fs-plate">
-          <p class="fs-kicker"><b>01</b> / {String(ringWorks.length).padStart(2, '0')}　数字艺术 · 进行中</p>
-        <p class="fs-by"><a href="/about/">林丽丽</a><span lang="en">Lili Lin</span></p>
+          <p class="fs-kicker"><b>01</b> / {String(ringWorks.length).padStart(2, '0')}</p>
         <h1 class="fs-title">{leadPick.title}</h1>
         {leadPick.summary && <p class="fs-summary">{leadPick.summary}</p>}
         <div class="fs-actions">
           <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
-          {leadPick.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
           <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
         </div>
-        <p class="fs-hint">下滑换一件</p>
       </div>
     </div>
     {ringWorks.slice(1).map((work, i) => (
@@ -141,14 +134,12 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
           <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i + 1}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
         )}
         <div class="fs-plate">
-          <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}{work.meta ? `　${work.meta}` : ''}</p>
+          <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}</p>
           <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
           {work.summary && <p class="fs-summary">{work.summary}</p>}
           <div class="fs-actions">
-            {work.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
             <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
           </div>
-          {i + 1 < ringWorks.length - 1 && <p class="fs-hint">下滑换一件</p>}
         </div>
       </div>
     ))}
@@ -307,17 +298,6 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   color: var(--muted);
 }
 .fs-kicker b { color: var(--ink); font-weight: 500; font-variant-numeric: tabular-nums; }
-.fs-by {
-  margin: 0 0 6px;
-  font-family: var(--sans);
-  font-size: 18px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  color: var(--ink);
-}
-.fs-by a { color: inherit; text-decoration: none; }
-.fs-by a:hover { opacity: 0.7; }
-.fs-by span { margin-left: 10px; font-family: var(--en), var(--sans); font-size: 13px; font-weight: 400; color: var(--muted); letter-spacing: 0.06em; }
 .fs-title {
   margin: 0 0 10px;
   font-family: var(--sans);
@@ -351,13 +331,6 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   padding-bottom: 2px;
 }
 .fs-view:hover { border-bottom-color: var(--ink); }
-.fs-hint {
-  margin: 16px 0 0;
-  font-family: var(--sans);
-  font-size: 12px;
-  letter-spacing: 0.18em;
-  color: var(--faint);
-}
 .fs-rail {
   position: absolute;
   right: var(--page-pad);
@@ -413,12 +386,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   padding: 0 var(--page-gutter) 80px;
 }
 .hero-plate { background: color-mix(in srgb, var(--bg) 94%, transparent); padding: 18px 18px 16px; }
-.hero-copy .by { margin: 0 0 6px; font-family: var(--sans); font-weight: 600; font-size: 20px; color: var(--ink); }
-.hero-copy .by a { color: inherit; text-decoration: none; }
-.hero-copy .by span { margin-left: 8px; font-family: var(--en), var(--sans); font-size: 13px; color: var(--muted); }
 .hero-copy h1 { margin: 0; color: var(--ink); font-family: var(--sans); font-weight: 600; font-size: 28px; line-height: 1.2; letter-spacing: -0.03em; }
 .hero-copy .sub { margin: 8px 0 0; font-family: var(--sans); font-size: 14px; color: var(--ink-soft); line-height: 1.55; }
-.hero-copy .meta { margin: 6px 0 14px; font-family: var(--sans); font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
 .hero-plate .fs-actions { margin-top: 4px; }
 .hero-plate .listen { min-height: 44px; }
 @keyframes m-drift {
