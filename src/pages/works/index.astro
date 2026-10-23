@@ -124,18 +124,17 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     position: absolute;
     inset: -56px -14px -118px;
     z-index: -1;
-    background: #1a1a1c;
+    background: var(--cta-bg);
     opacity: 0;
     transition: opacity 0.22s ease;
     pointer-events: none;
   }
-  html.dark .wf .card::before { background: #0c0c0e; }
   /* 压过页脚（z-index 1），最后一行的色板不被裁掉。 */
   .wf .card:hover { z-index: 2; }
   .wf .card:hover::before,
   .wf .card:focus-within::before { opacity: 1; }
   .wf .card:hover .cap h2,
-  .wf .card:focus-within .cap h2 { color: #fff; }
+  .wf .card:focus-within .cap h2 { color: var(--cta-fg); }
   .wf .m-top { display: none; }
   .wf .card:hover .m-top,
   .wf .card:focus-within .m-top {
@@ -150,7 +149,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     margin: 0;
     font-size: 13px;
     letter-spacing: .04em;
-    color: rgba(255, 255, 255, 0.85);
+    color: color-mix(in srgb, var(--cta-fg) 78%, transparent);
   }
   .wf .more { display: none; }
   .wf .card:hover .more,
@@ -167,14 +166,14 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     font-size: 14px;
     font-weight: 600;
     letter-spacing: 0.02em;
-    color: #fff;
+    color: var(--cta-fg);
   }
-  .wf .more .m-by span { margin-left: 6px; font-family: var(--en), var(--sans); font-size: 12px; font-weight: 400; color: rgba(255, 255, 255, 0.72); }
+  .wf .more .m-by span { margin-left: 6px; font-family: var(--en), var(--sans); font-size: 12px; font-weight: 400; color: color-mix(in srgb, var(--cta-fg) 72%, transparent); }
   .wf .more .m-desc {
     margin: 4px 0 0;
     font-size: 13px;
     line-height: 1.65;
-    color: rgba(255, 255, 255, 0.82);
+    color: color-mix(in srgb, var(--cta-fg) 78%, transparent);
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 3;
