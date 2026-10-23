@@ -851,11 +851,29 @@ const srcset = '/mimi/avatar-72.webp 72w, /mimi/avatar-144.webp 144w, /mimi/avat
       id.type = 'button';
       id.textContent = 'endTree-26';
       id.addEventListener('click', () => {
-        const done = () => {
-          id.textContent = '已复制';
-          window.setTimeout(() => { id.textContent = 'endTree-26'; }, 1200);
-        };
-        if (navigator.clipboard) navigator.clipboard.writeText('endTree-26').then(done).catch(() => {});
+        id.textContent = '已复制';
+        const back = () => window.setTimeout(() => { id.textContent = 'endTree-26'; }, 1200);
+        const ta = document.createElement('textarea');
+        ta.value = 'endTree-26';
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.append(ta);
+        ta.focus();
+        ta.select();
+        let ok = false;
+        try { ok = document.execCommand('copy'); } catch { ok = false; }
+        ta.remove();
+        if (ok) { back(); return; }
+        if (navigator.clipboard && window.isSecureContext) {
+          const timer = window.setTimeout(back, 500);
+          navigator.clipboard.writeText('endTree-26').then(() => {
+            window.clearTimeout(timer);
+            back();
+          }).catch(back);
+          return;
+        }
+        back();
       });
       wx.append(id);
       card.append(title, zoom, note, hint, save, more, wx);
