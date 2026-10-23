@@ -2,10 +2,12 @@
 /** /works/ 16:9 封面。有核对过的视频时叠一层静音预览，没有就只留静图或排版封面。 */
 import { WORKS_COVER, coverClip, splitTitle, titleWidth } from '../lib';
 const { w, eager = false } = Astro.props;
-// 手工调过裁切的封面优先；其余作品用个人站设计好的 icon 封面，两者都没有才走排版封面。
+// 手工调过裁切的封面优先；其余作品自动用设计好的第一张静帧（images[0]），再退 icon，最后才走排版封面。
 const curated = WORKS_COVER[w.slug];
-const icon = w.icon && /\.(jpe?g|png|webp)(?:$|\?)/i.test(w.icon) && !w.icon.includes('scroll-placeholder') ? { src: w.icon } : undefined;
-const c = curated ?? icon;
+const isImg = (u) => typeof u === 'string' && /\.(jpe?g|png|webp)(?:$|\?)/i.test(u) && !u.includes('scroll-placeholder');
+const firstStill = (w.images || []).find(isImg);
+const auto = firstStill ? { src: firstStill } : (isImg(w.icon) ? { src: w.icon } : undefined);
+const c = curated ?? auto;
 const clip = coverClip(w.slug);
 const [main] = splitTitle(w.title);
 const style = c ? [`object-position:${c.pos || '50% 50%'}`, c.scale ? `transform:scale(${c.scale})` : ''].filter(Boolean).join(';') : '';
