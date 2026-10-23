@@ -1,7 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Cooperate from '../../components/Cooperate.astro';
-import { allWorks, isFeaturedSlug, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
+import { allWorks, coverClip, isFeaturedSlug, pickBody, pickMeta, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
   // 下一件 follows the catalogue order; the last wraps to the first.
@@ -19,6 +19,8 @@ const fallback = workFallback(w);
 const stills = workStills(w);
 const strip = workStrip(w);
 const audio = workAudio(w);
+const clip = coverClip(w.slug);
+const clipIsAudio = !!(clip && audio && clip === audio);
 const sub = workSubtitle(w);
 const intro = pickBody(w);
 const tech = pickTech(w);
@@ -40,9 +42,11 @@ const backNote = inFeatured ? '代表作' : '全部作品';
 <Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
   <section class="wd-page wd-p1" data-dwell={PAGE_DWELL.intro}>
-    <figure class="wd-hero" style={paper ? `--wd-paper:${paper}` : undefined}>
+    <figure class:list={['wd-hero', clip && 'has-motion']} style={paper ? `--wd-paper:${paper}` : undefined}>
       <img src={hero} data-fallback={fallback} alt={w.title} referrerpolicy="no-referrer" fetchpriority="high"/>
-      <figcaption class="wd-cap" aria-hidden="true">{w.slug === 'xihu-panorama' ? '长卷 · 静帧 01' : '静帧 01'}</figcaption>
+      {clip && <video class="wd-motion" id={clipIsAudio ? 'wd-audio' : undefined} data-src={clip} data-audio={clipIsAudio ? '1' : undefined} muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true"></video>}
+      {clip && <button class="wd-play" id="wd-hero-play" type="button" aria-pressed="false">播放</button>}
+      <figcaption class="wd-cap" aria-hidden="true">{clip ? (w.slug === 'xihu-panorama' ? '长卷 · 画面' : '画面') : (w.slug === 'xihu-panorama' ? '长卷 · 静帧 01' : '静帧 01')}</figcaption>
     </figure>
     <div class="wd-wrap">
       <div class="wd-head">
@@ -92,7 +96,7 @@ const backNote = inFeatured ? '代表作' : '全部作品';
     <Cooperate />
   </section>
 </div>
-{audio && <video id="wd-audio" class="wd-sound" data-src={audio} preload="none" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" aria-hidden="true"></video>}
+{audio && !clipIsAudio && <video id="wd-audio" class="wd-sound" data-src={audio} preload="none" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" aria-hidden="true"></video>}
 
 <style>
 :global(body) { background: #fff; }
@@ -110,7 +114,33 @@ const backNote = inFeatured ? '代表作' : '全部作品';
   transform: translateX(-50%);
   display: block;
 }
-.wd-cap { position: absolute; left: 64px; bottom: 22px; color: rgba(255, 255, 255, 0.92); font-size: 12px; line-height: normal; letter-spacing: 0.24em; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }
+.wd-hero .wd-motion {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  z-index: 1;
+  background: transparent;
+}
+.wd-hero.is-on .wd-motion { opacity: 1; }
+.wd-play {
+  position: absolute;
+  right: 24px;
+  bottom: 18px;
+  z-index: 2;
+  border: 0;
+  background: rgba(26, 26, 24, 0.82);
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  padding: 10px 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.wd-cap { position: absolute; left: 64px; bottom: 22px; z-index: 2; color: rgba(255, 255, 255, 0.92); font-size: 12px; line-height: normal; letter-spacing: 0.24em; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }
 .wd-wrap { padding: 0 64px; }
 .wd-head { display: grid; grid-template-columns: 1fr auto; align-items: end; padding-top: 56px; }
 .wd-crumb { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: #9a958c; margin-bottom: 22px !important; }
@@ -188,6 +218,7 @@ const backNote = inFeatured ? '代表作' : '全部作品';
   .wd-page { scroll-snap-align: start; scroll-snap-stop: always; min-height: calc(100vh - 52px); min-height: calc(100svh - 52px); }
   .wd-p3 { min-height: 0; }
   .wd-hero { height: auto; aspect-ratio: 16 / 9; }
+  .wd-play { right: 12px; bottom: 12px; }
   .wd-cap { display: none; }
   .wd-wrap { padding: 0 24px; }
   .wd-head { display: block; padding-top: 0; }
