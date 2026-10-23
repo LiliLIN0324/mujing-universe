@@ -10,25 +10,25 @@ const meta = [w.category, w.year].filter(Boolean).join(' · ');
 const desc = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
 ---
 {clip ? (
-  <article class="card rise" data-slug={w.slug} data-line={w.line}>
+  <article class="card rise" data-slug={w.slug} data-line={w.line} data-by={w.by || 'lin'}>
     <div class="im"><WorkCover w={w} eager={eager} /></div>
     <div class="cap">
       <h2><a href={href}><span class="ttl">{w.main}</span></a></h2>
-      <div class="m-top" aria-hidden="true">{meta && <p class="m-meta">{meta}</p>}</div>
       <div class="more" aria-hidden="true">
-        {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
+        {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
+        {meta && <p class="m-meta">{meta}</p>}
         {desc && <p class="m-desc">{desc}</p>}
       </div>
     </div>
   </article>
 ) : (
-  <a class="card rise" href={href} data-slug={w.slug} data-line={w.line}>
+  <a class="card rise" href={href} data-slug={w.slug} data-line={w.line} data-by={w.by || 'lin'}>
     <div class="im"><WorkCover w={w} eager={eager} /></div>
     <div class="cap">
       <h2><span class="ttl">{w.main}</span></h2>
-      <div class="m-top" aria-hidden="true">{meta && <p class="m-meta">{meta}</p>}</div>
       <div class="more" aria-hidden="true">
-        {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
+        {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
+        {meta && <p class="m-meta">{meta}</p>}
         {desc && <p class="m-desc">{desc}</p>}
       </div>
     </div>
