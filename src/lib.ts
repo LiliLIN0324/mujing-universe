@@ -182,10 +182,10 @@ const COVER_CLIP: Record<string, string> = {
 export function coverClip(slug: string): string | null {
   return COVER_CLIP[slug] ?? null;
 }
-/** 详情页静帧：主图之后的全部 R2 图片（西湖为 02）。 */
+/** 详情页静帧：全部帧（01 打头，西湖为 01/02 两张）。 */
 export function workStills(w: { slug: string; images?: string[]; icon?: string }): string[] {
-  if (w.slug === 'xihu-panorama') return workCovers(w).slice(1);
-  return (w.images ?? []).slice(1).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
+  if (w.slug === 'xihu-panorama') return workCovers(w);
+  return (w.images ?? []).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
 }
 /** 详情页主图：西湖与幕景用精选环同一张静帧，其它用第一张图或 icon。 */
 export function workHero(w: { slug: string; images?: string[]; icon?: string }): string {
