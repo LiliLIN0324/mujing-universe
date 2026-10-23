@@ -1,0 +1,32 @@
+{
+ "slug": "mimi-agent",
+ "title": "Mimi 智能体",
+ "category": "AI 向导",
+ "year": "2026",
+ "yearNum": 2026,
+ "line": "AIGC 产品",
+ "status": "已上线",
+ "description": "官网里负责发现和导流：合作页可以真聊，也可以写信、看飞书名片。飞书群里是干活的助手，可以 @ 它、读文档、排日程。",
+ "abstract": "使用说明以后补。",
+ "challenge": "来看作品的人要找得到合作入口，群里的日程和文档也要有人接着办。",
+ "solution": "官网用对话、邮件和飞书名片做导流。群助手负责 @、读文档和日历。",
+ "tech": [
+  "Astro",
+  "Cloudflare Pages Functions",
+  "SiliconFlow",
+  "Rive",
+  "飞书"
+ ],
+ "images": [
+  "/works/mimi-agent/cover.png"
+ ],
+ "icon": "/works/mimi-agent/cover.png",
+ "hasDemo": true,
+ "flags": [
+  "使用说明待补"
+ ],
+ "source": "manual",
+ "sourceFile": "endTree",
+ "note": "群助手开源模板：https://github.com/endtree-FDE/feishu-group-agent",
+ "link": "https://mujing-universe.pages.dev/contact/"
+}
