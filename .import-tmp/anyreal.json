@@ -1,0 +1,34 @@
+{
+ "id": "02",
+ "slug": "anyreal",
+ "title": "AnyReal - AI 虚拟影棚",
+ "category": "UI&UX Design",
+ "year": "2024",
+ "description": "三步生成高真实度商品营销图的 AIGC 内容生产引擎，面向电商与品牌营销场景。",
+ "abstract": "AnyReal 是一款面向电商与品牌营销场景的 AI 虚拟影棚 / AIGC 营销内容生产引擎，解决商品营销物料生产成本高、周期长、门槛高的痛点。底层依托自研视觉大模型与 AIGC 联合实验室的科研能力，以真实场景 + 可控可调 + AI 模特为核心差异。",
+ "challenge": "传统商品图拍摄需要 10-20 天、成本 8000-20000 元。市面 AI 工具多为背景替换，无法改变商品展示角度，光影不变，效果不真实。",
+ "solution": "设计了三步生图工作流：上传 3D 资产 → 选场景模板 → 调角度大小生成。搭配背景模版中台、文生图/图生图、图像后处理、视频生成等模块，将生图效率从\"天级\"降到\"分钟级\"。",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/logo.jpg",
+ "tech": [
+  "Figma",
+  "AI Product Design",
+  "SaaS"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/08.jpg"
+ ],
+ "hasDemo": true,
+ "line": "AIGC 产品",
+ "source": "https://lililin0324.github.io/#/product/anyreal",
+ "sourceFile": "product/02_anyreal.md",
+ "yearNum": 2024,
+ "status": "已完成",
+ "flags": []
+}

@@ -16,7 +16,10 @@
   "Supabase",
   "Cloudflare Pages"
  ],
- "images": [],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/scendance/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/scendance/02.jpg"
+ ],
  "hasDemo": true,
  "line": "AIGC 产品",
  "source": "https://lililin0324.github.io/#/product/scendance",

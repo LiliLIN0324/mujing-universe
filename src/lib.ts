@@ -29,7 +29,6 @@ export function workCovers(w: { slug: string; images?: string[]; icon?: string }
   if (w.slug === 'xihu-panorama') {
     return [`${R2_FIG}/xihu-panorama/01.jpg`, `${R2_FIG}/xihu-panorama/02.jpg`];
   }
-  if (w.slug === 'scendance') return ['/ring/_sources/scendance-hero.jpg'];
   if (BROKEN_COVERS.has(w.slug)) return [LOCAL_COVER];
   const photos = (w.images ?? []).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
   if (photos.length) return photos.slice(0, 2);
@@ -39,7 +38,6 @@ export function workCovers(w: { slug: string; images?: string[]; icon?: string }
 }
 
 export function workFallback(w: { slug: string; icon?: string }) {
-  if (w.slug === 'scendance') return '/ring/_sources/scendance-hero.jpg';
   if (BROKEN_COVERS.has(w.slug)) return LOCAL_COVER;
   const icon = w.icon ?? '';
   if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon) && !icon.includes('scroll-placeholder')) return icon;
@@ -222,10 +220,9 @@ export function titleWidth(t: string): number {
   for (const ch of t) n += ch.codePointAt(0)! > 0x2e80 ? 2 : 1;
   return n;
 }
-/** 作品页封面：这里只放人工调过裁切/缩放的条目；未登记的作品由 WorkCover 自动用个人站 icon（设计过的封面图），无 icon 才走排版封面。 */
+/** 作品页封面：这里只放人工调过裁切/缩放的条目；未登记的作品由 WorkCover 自动用第一张静帧，无图才走排版封面。 */
 export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: number }> = {
   'xihu-panorama': { src: `${R2_FIG}/xihu-panorama/01.jpg`, scale: 1.08 },
-  'litflow': { src: `${R2_FIG}/litflow/01.png` },
   'riffle-ai-game-generation-tool': { src: `${R2_FIG}/riffle/01.jpg` },
   'bazi-fengshui-analysis': { src: `${R2_FIG}/bazi/01.jpg` },
   'kittylovecarrots': { src: `${R2_FIG}/kittylovecarrots/01.png` },
@@ -233,5 +230,4 @@ export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: nu
   'neurotopia': { src: `${R2_FIG}/neurotopia/01.jpg`, pos: '50% 0%' },
   'chicken-utopia': { src: `${R2_FIG}/chicken-utopia/01.jpg`, pos: '50% 30%' },
   'hongqiqu': { src: `${R2_FIG}/hongqiqu/01.jpg`, pos: '50% 60%' },
-  'scendance': { src: '/ring/_sources/scendance-hero.jpg' },
 };

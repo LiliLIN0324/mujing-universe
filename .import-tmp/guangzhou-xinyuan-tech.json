@@ -1,0 +1,37 @@
+{
+ "id": "04",
+ "slug": "guangzhou-xinyuan-tech",
+ "title": "广州心源科技有限公司（Bilibili 游戏子公司）",
+ "category": "Game",
+ "year": "2023-7-5~2023-9-1",
+ "description": "我在广州心源科技有限公司完成的第一段正式游戏实习，完整参与了主场景概念设计、单体制作与 UE5 场景搭建的全流程。",
+ "abstract": "这是我第一段正式游戏实习，也是第一次完整参与游戏主场景概念设计与制作流程。",
+ "challenge": "如何将大湾区文化、磁带未来与科幻军事等元素整合为具有明确空间特征的主场景概念，并在后续制作中完成从概念到 UE5 落地的完整闭环。",
+ "solution": "先尝试将广州城市元素整合为宏观地图，随后在评审后聚焦广州琶醍，以工业遗产和滨江空间为基础，结合建模与 Stable Diffusion 完成未来场景概设；在制作阶段再通过单体原画、Polygon 建模、UV、贴图与 UE5 场景搭建打通完整流程。",
+ "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/logo.jpg",
+ "tech": [
+  "Scene Concept Design",
+  "Polygon Modeling",
+  "UV Unwrapping",
+  "Texture Painting",
+  "UE5",
+  "Stable Diffusion"
+ ],
+ "images": [
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/01.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/02.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/03.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/04.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/05.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/06.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/07.jpg",
+  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/guangzhou-xinyuan/08.jpg"
+ ],
+ "hasDemo": false,
+ "line": "游戏",
+ "source": "https://lililin0324.github.io/#/game/guangzhou-xinyuan-tech",
+ "sourceFile": "games/04_guangzhou-xinyuan-tech.md",
+ "yearNum": 2023,
+ "status": "已完成",
+ "flags": []
+}
