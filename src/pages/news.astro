@@ -29,8 +29,7 @@ function timeAttr(item: NewsItem) {
 
 /** 扫视用的一行：会议或地点。标题里已经有的会名不再重复。 */
 function scanLine(item: NewsItem) {
-  const event = item.event && !item.title.includes(item.event) ? item.event : '';
-  return [event, item.place].filter(Boolean).join(' · ');
+  return item.summary || '';
 }
 
 function hasDetail(item: NewsItem) {
@@ -45,7 +44,7 @@ function hasDetail(item: NewsItem) {
 <main class="news-page">
   <section class="stage" id="list" aria-label="新闻列表">
     <div class="news-in">
-      <h1>新闻</h1>
+      <h1 class="sr">新闻</h1>
       <div class="bar">
         <div class="secs" role="group" aria-label="按板块筛选">
           <a href="/news/" data-section-link="all" class="on" aria-current="page">全部</a>
@@ -63,7 +62,6 @@ function hasDetail(item: NewsItem) {
       <ol class="news-list">
         {items.map((item) => {
           const where = scanLine(item);
-          const people = (item.people || []).join('、');
           const openable = hasDetail(item);
           const detailId = `d-${item.id}`;
           return (
@@ -83,7 +81,6 @@ function hasDetail(item: NewsItem) {
                       <span class="title">{item.title}<i class="plus" aria-hidden="true"></i></span>
                       {where && <span class="where">{where}</span>}
                     </span>
-                    <span class="who">{people}</span>
                   </button>
                 ) : (
                   <div class="hit">
@@ -93,7 +90,6 @@ function hasDetail(item: NewsItem) {
                       <span class="title">{item.title}</span>
                       {where && <span class="where">{where}</span>}
                     </span>
-                    <span class="who">{people}</span>
                   </div>
                 )}
                 {item.image && (
@@ -196,7 +192,7 @@ function hasDetail(item: NewsItem) {
 .line { position: relative; border-bottom: 1px solid var(--paper-rule); }
 .hit, .detail-grid {
   display: grid;
-  grid-template-columns: 156px 84px minmax(0, 1fr) 64px;
+  grid-template-columns: 156px 84px minmax(0, 1fr);
   column-gap: 28px;
 }
 .hit { align-items: center; width: 100%; }
@@ -206,7 +202,7 @@ function hasDetail(item: NewsItem) {
 .cover {
   position: absolute;
   z-index: 1;
-  right: calc(64px + 28px);
+  right: 28px;
   top: 50%;
   transform: translateY(-50%);
   width: 120px;
@@ -237,13 +233,12 @@ function hasDetail(item: NewsItem) {
   text-align: left;
 }
 button.hit { cursor: pointer; }
-.date, .sec, .who, .where {
+.date, .sec, .where {
   font-size: 13px;
   line-height: 1.5;
   color: var(--paper-dim);
 }
 .date { font-variant-numeric: tabular-nums; }
-.who { text-align: right; }
 .title {
   font-size: 20px;
   font-weight: 600;
@@ -336,7 +331,6 @@ li:has(.hit[aria-expanded="true"]) .hit { padding-bottom: 10px; }
   }
   .hit { padding: 22px 0; align-items: start; }
   .date { grid-column: 1; grid-row: 1; }
-  .who { grid-column: 2; grid-row: 1; }
   .sec { grid-column: 1 / -1; grid-row: 2; }
   .copy { grid-column: 1 / -1; grid-row: 3; }
   .line:has(.cover) .copy { padding-right: 100px; }
