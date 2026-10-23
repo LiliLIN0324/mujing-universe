@@ -149,8 +149,16 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     margin-top: 8px;
     color: color-mix(in srgb, var(--cta-fg) 78%, transparent);
   }
-  .wf .more .m-meta {
+  .wf .more .m-by {
     margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: var(--cta-fg);
+  }
+  .wf .more .m-by span { margin-left: 6px; font-family: var(--en), var(--sans); font-size: 12px; font-weight: 400; color: color-mix(in srgb, var(--cta-fg) 72%, transparent); }
+  .wf .more .m-meta {
+    margin: 2px 0 0;
     font-size: 13px;
     letter-spacing: .04em;
   }
