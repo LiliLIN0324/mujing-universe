@@ -121,10 +121,10 @@ function hasDetail(item: NewsItem) {
 <style>
 .news-page {
   --song: "Songti SC", "STSong", "Noto Serif SC", "Noto Serif CJK SC", "SimSun", serif;
-  --stage: #141413;
-  --paper-ink: #efeae2;
-  --paper-dim: #8a847c;
-  --paper-rule: rgba(239, 234, 226, 0.14);
+  --stage: #F6F5F3;
+  --paper-ink: #1A1A1C;
+  --paper-dim: #6A655F;
+  --paper-rule: #1A1A1C14;
 }
 .news-in { width: min(1120px, calc(100% - 128px)); margin-inline: auto; }
 .stage {
@@ -223,7 +223,7 @@ button.line { cursor: pointer; }
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.16em;
-  color: rgba(239, 234, 226, 0.38);
+  color: rgba(26, 26, 28, 0.38);
   white-space: nowrap;
 }
 .plus {
@@ -233,7 +233,7 @@ button.line { cursor: pointer; }
   margin-left: 10px;
   position: relative;
   vertical-align: 1px;
-  color: rgba(239, 234, 226, 0.4);
+  color: rgba(26, 26, 28, 0.4);
 }
 .plus::before, .plus::after {
   content: "";
@@ -243,14 +243,14 @@ button.line { cursor: pointer; }
 .plus::before { left: 4px; top: 0; width: 1px; height: 9px; }
 .plus::after { left: 0; top: 4px; width: 9px; height: 1px; }
 .hit[aria-expanded="true"] .plus::before { opacity: 0; }
-.hit:hover .title { color: #fff; }
+.hit:hover .title { color: var(--paper-ink); }
 li:has(.hit[aria-expanded="true"]) .hit {
   border-bottom-color: transparent;
   padding-bottom: 10px;
 }
 .detail[hidden] { display: none; }
 .detail-grid { padding-bottom: 22px; border-bottom: 1px solid var(--paper-rule); }
-.detail-body p { margin: 0 0 8px; max-width: 40em; font-size: 14px; line-height: 1.7; color: #b7b1a6; }
+.detail-body p { margin: 0 0 8px; max-width: 40em; font-size: 14px; line-height: 1.7; color: #4a463f; }
 .detail-body .original { font-family: var(--en), var(--sans); font-size: 13px; color: var(--paper-dim); }
 .detail-body .format { font-size: 13px; color: var(--paper-dim); }
 .detail-body a { color: var(--paper-ink); text-underline-offset: 3px; }
