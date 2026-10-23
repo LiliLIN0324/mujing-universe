@@ -126,7 +126,7 @@ const backNote = w.line;
 .wd-hero.is-on .wd-motion { opacity: 1; }
 .wd-play {
   position: absolute;
-  right: 24px;
+  right: var(--page-pad);
   bottom: 18px;
   z-index: 2;
   border: 0;
@@ -139,8 +139,8 @@ const backNote = w.line;
   min-height: 44px;
   cursor: pointer;
 }
-.wd-cap { position: absolute; left: 64px; bottom: 22px; z-index: 2; color: rgba(255, 255, 255, 0.92); font-size: 12px; line-height: normal; letter-spacing: 0.24em; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }
-.wd-wrap { padding: 0 max(var(--gutter), calc((100% - var(--measure)) / 2)); }
+.wd-cap { position: absolute; left: var(--page-pad); bottom: 22px; z-index: 2; color: rgba(255, 255, 255, 0.92); font-size: 12px; line-height: normal; letter-spacing: 0.24em; text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35); }
+.wd-wrap { padding: 0 var(--page-pad); }
 .wd-head { display: grid; grid-template-columns: 1fr auto; align-items: end; padding-top: 56px; }
 .wd-crumb { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: #9a958c; margin-bottom: 22px !important; }
 .wd-crumb a { color: inherit; text-decoration: none; }
@@ -197,13 +197,13 @@ const backNote = w.line;
 .wd-strip::-webkit-scrollbar { display: none; }
 .wd-strip.is-drag { cursor: grabbing; }
 .wd-strip img { height: 100%; max-height: 627px; width: auto; max-width: none; display: block; pointer-events: none; }
-.wd-prog { --p: 0; margin: 16px max(var(--gutter), calc((100% - var(--measure)) / 2)) 0; height: 1px; background: #e7e3dc; position: relative; }
+.wd-prog { --p: 0; margin: 16px var(--page-pad) 0; height: 1px; background: #e7e3dc; position: relative; }
 .wd-prog::after { content: ""; position: absolute; left: 0; top: 0; height: 1px; width: 18%; background: #1a1a18; transform: translateX(calc(var(--p) * (100% / 0.18 - 100%))); }
-.wd-fig { margin: 96px max(var(--gutter), calc((100% - var(--measure)) / 2)) 0; }
+.wd-fig { margin: 96px var(--page-pad) 0; }
 .wd-fig img { width: 100%; display: block; }
 .wd-fig figcaption { margin-top: 14px; font-size: 12px; line-height: normal; letter-spacing: 0.14em; color: #9a958c; display: flex; justify-content: space-between; }
-.wd-pn { margin: 128px max(var(--gutter), calc((100% - var(--measure)) / 2)) 0; border-top: 1px solid #e3dfd8; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 40px 0 30px; }
-.wd-end { margin: 8px max(var(--gutter), calc((100% - var(--measure)) / 2)) 48px; }
+.wd-pn { margin: 128px var(--page-pad) 0; border-top: 1px solid #e3dfd8; display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 40px 0 30px; }
+.wd-end { margin: 8px var(--page-pad) 48px; }
 .wd-pn .k { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: #9a958c; margin-bottom: 10px !important; }
 .wd-back { display: inline-block; font-size: 14px; line-height: normal; letter-spacing: 0.12em; color: #1a1a18; text-decoration: none; border-bottom: 1px solid #1a1a18; padding-bottom: 3px; }
 .wd-next { text-align: right; color: inherit; text-decoration: none; }
@@ -220,7 +220,7 @@ const backNote = w.line;
   .wd-hero { height: auto; aspect-ratio: 16 / 9; }
   .wd-play { right: 12px; bottom: 12px; }
   .wd-cap { display: none; }
-  .wd-wrap { padding: 0 24px; }
+  .wd-wrap { padding: 0 var(--page-gutter); }
   .wd-head { display: block; padding-top: 0; }
   .wd-crumb { margin: 28px 0 0 !important; font-size: 11px; }
   .wd h1 { margin-top: 12px; font-size: 30px; line-height: 1.22; letter-spacing: 0.02em; }
@@ -244,12 +244,12 @@ const backNote = w.line;
   .wd-sec .d { display: none; }
   .wd-sec .m { display: inline; }
   .wd-strip { margin-top: 14px; height: 200px; cursor: auto; }
-  .wd-prog { margin: 12px 24px 0; }
+  .wd-prog { margin: 12px var(--page-gutter) 0; }
   .wd-prog::after { width: 8%; transform: translateX(calc(var(--p) * (100% / 0.08 - 100%))); }
   .wd-fig { margin: 44px 0 0; }
-  .wd-fig figcaption { margin: 10px 24px 0; font-size: 11px; }
-  .wd-pn { display: block; margin: 64px 24px 0; padding: 22px 0 0; }
-  .wd-end { margin: 8px 24px 32px; }
+  .wd-fig figcaption { margin: 10px var(--page-gutter) 0; font-size: 11px; }
+  .wd-pn { display: block; margin: 64px var(--page-gutter) 0; padding: 22px 0 0; }
+  .wd-end { margin: 8px var(--page-gutter) 32px; }
   .wd-back-col { display: none; }
   .wd-pn .k { font-size: 11px; margin-bottom: 0 !important; }
   .wd-pn .k .d { display: none; }
