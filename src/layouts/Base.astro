@@ -1,10 +1,11 @@
 ---
 import '../styles/global.css';
 import MimiChat from '../components/MimiChat.astro';
+import wordmarkSvg from '/public/brand/wordmark.svg?raw';
 const {
   title = '幕景宇宙 · 林丽丽艺术工作室',
   description = '幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。',
-  image = '/ring/0.jpg',
+  image = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/01.jpg',
   active = '',
   home = false,
   fullscreen = false,
@@ -59,7 +60,7 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 <a class="skip" href="#content">跳到主要内容</a>
 {home ? (
 <header class:list={["top top--home", navClass]} id="home-nav" data-autohide>
-  <a class="wordmark" href="/" translate="no">幕景宇宙</a>
+  <a class="wordmark" href="/" aria-label="幕景宇宙"><Fragment set:html={wordmarkSvg} /></a>
   <div class="top-right">
     <nav id="home-menu">
       {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
@@ -73,7 +74,7 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 </header>
 ) : (
 <header class:list={["top top--home top--page", pageNav]} id="home-nav">
-  <a class="wordmark" href="/" translate="no">幕景宇宙</a>
+  <a class="wordmark" href="/" aria-label="幕景宇宙"><Fragment set:html={wordmarkSvg} /></a>
   <div class="top-right">
     <nav id="home-menu">
       {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}

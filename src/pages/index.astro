@@ -18,9 +18,24 @@ const picks = ws.map((w) => ({
   fallback: workFallback(w),
   clip: coverClip(w.slug),
 }));
-const leadPick = picks[0];
-const ringWorks = picks.slice(0, 10);
-const mobilePicks = ws.slice(0, 10).map((w, i) => ({
+// 首页精选固定名单（顺序即轮播顺序）；不在名单里的作品不进首页。
+const HOME_PICKS = [
+  'xihu-panorama',
+  'genshot-AI-video-generation-tool',
+  'anyreal',
+  'scendance',
+  'bazi-fengshui-analysis',
+  '72-hour-game-jam',
+  'bmw-meta-island',
+  'peace-elite-hust-campus',
+  'chicken-utopia',
+  'neurotopia',
+];
+const homeWs = HOME_PICKS.map((slug) => ws.find((w) => w.slug === slug)).filter(Boolean);
+const homePicks = homeWs.map((w) => picks.find((p) => p.slug === w.slug));
+const leadPick = homePicks[0];
+const ringWorks = homePicks;
+const mobilePicks = homeWs.map((w, i) => ({
   no: String(i + 1).padStart(2, '0'),
   title: w.title,
   year: w.yearNum || w.year,

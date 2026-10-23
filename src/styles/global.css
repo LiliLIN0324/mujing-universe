@@ -373,12 +373,15 @@ header.top.top--home:focus-within {
 }
 .top-right { display: flex; align-items: center; gap: 32px; }
 .top--home .wordmark {
+  display: inline-flex;
+  align-items: center;
   color: var(--ink);
-  font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  font-weight: 600;
-  font-size: 20px;
-  letter-spacing: 0.12em;
   text-decoration: none;
+}
+.top--home .wordmark svg {
+  height: 30px;
+  width: auto;
+  color: var(--ink); /* SVG 用 currentColor */
 }
 .top--home .top-right nav { display: flex; align-items: center; gap: 32px; }
 .top--home nav a {
@@ -446,7 +449,7 @@ html.dark .theme-btn .i-moon { display: none; }
     pointer-events: auto;
     transition: none;
   }
-  .top--home .wordmark { font-size: 17px; font-weight: 600; letter-spacing: 0.16em; line-height: 1; }
+  .top--home .wordmark svg { height: 26px; }
   .top--home .top-right { gap: 8px; margin-left: auto; }
   .top--home .top-right nav { gap: 18px; width: auto; }
   .top--home .menu-btn {
