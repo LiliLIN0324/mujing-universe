@@ -42,7 +42,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
     <img class="hero-still" src={SCROLL_STILL} data-fallback="/ring/0.jpg" alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
   </div>
   {coverClip('xihu-panorama') && (
-    <video class="fs-clip" id="scroll-video-m" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={coverClip('xihu-panorama')}></video>
+    <video class="fs-clip" id="scroll-video-m" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={coverClip('xihu-panorama')}></video>
   )}
   <div class="hero-info">
     <div class="hero-plate">
@@ -67,7 +67,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
       {mobilePicks.map((w, i) => (
         <div class="m-card" data-i={i} data-clip={w.clip ? '1' : undefined} aria-hidden={i === 0 ? 'false' : 'true'}>
           <img src={w.cover} data-fallback={w.fallback} alt={w.title} width="1200" height="675" draggable="false" decoding="async" referrerpolicy="no-referrer" loading={i < 4 ? 'eager' : 'lazy'}/>
-          {w.clip && <video class="fs-clip" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={w.clip}></video>}
+          {w.clip && <video class="fs-clip" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={w.clip}></video>}
           {w.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
         </div>
       ))}
@@ -128,7 +128,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
         {work.clip ? (
           <div class="fs-visual">
             <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
-            <video class="fs-clip" muted loop playsinline webkit-playsinline preload="none" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
+            <video class="fs-clip" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
           </div>
         ) : (
           <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={`/ring/${i}.jpg`} data-fallback={work.fallback || '/ring/paper.jpg'} loading="lazy"/>
