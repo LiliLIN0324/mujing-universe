@@ -451,7 +451,6 @@ html.dark .theme-btn .i-moon { display: none; }
   }
   .top--home .wordmark svg { height: 26px; }
   .top--home .top-right { gap: 8px; margin-left: auto; }
-  .top--home .top-right nav { gap: 18px; width: auto; }
   .top--home .menu-btn {
     display: flex;
     flex-direction: column;
@@ -469,7 +468,8 @@ html.dark .theme-btn .i-moon { display: none; }
   .top--home .menu-btn i { display: block; width: 20px; height: 1.5px; background: var(--ink); transition: transform 0.25s ease; }
   .top--home.is-menu-open .menu-btn i:first-child { transform: translateY(3.75px) rotate(45deg); }
   .top--home.is-menu-open .menu-btn i:last-child { transform: translateY(-3.75px) rotate(-45deg); }
-  .top--home nav {
+  /* Beat desktop `.top--home .top-right nav { display:flex }` (same element, higher specificity). */
+  .top--home .top-right nav {
     display: none;
     position: absolute;
     top: 52px;
@@ -484,7 +484,7 @@ html.dark .theme-btn .i-moon { display: none; }
     border: 1px solid var(--ink);
     border-radius: 0;
   }
-  .top--home.is-menu-open nav { display: flex; }
+  .top--home.is-menu-open .top-right nav { display: flex; }
   .top--home nav a,
   .top--home nav a.pill {
     display: flex;
