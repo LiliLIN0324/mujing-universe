@@ -39,6 +39,13 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 const backHref = `/works/?line=${encodeURIComponent(w.line)}#archive`;
 const backText = '← 作品';
 const backNote = w.line;
+// Demo 只认 demo 里的真实网址。报道只认 link。个人站 source 不当体验入口。
+const httpUrl = (value?: string) => {
+  const url = (value || '').trim();
+  return /^https?:\/\//i.test(url) ? url : '';
+};
+const demoHref = httpUrl(w.demo);
+const newsHref = httpUrl(w.link);
 ---
 <Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
@@ -64,7 +71,10 @@ const backNote = w.line;
           {intro && <p class="wd-intro">{intro}</p>}
           {abstract && <p class="wd-more">{abstract}</p>}
           {w.note && <p class="wd-more">{w.note}</p>}
-          {w.link && <p class="wd-more"><a href={w.link} target="_blank" rel="noopener noreferrer">相关报道 / 链接 ↗</a></p>}
+          {(demoHref || newsHref) && <div class="wd-links">
+            {demoHref && <p class="wd-more"><a href={demoHref} target="_blank" rel="noopener noreferrer">打开 Demo ↗</a></p>}
+            {newsHref && <p class="wd-more"><a href={newsHref} target="_blank" rel="noopener noreferrer">相关报道 ↗</a></p>}
+          </div>}
         </div>
         {facts.length > 0 && <dl class="wd-facts">{facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
       </div>
@@ -128,6 +138,10 @@ const backNote = w.line;
   .wd-page.wd-p1 { height: 100svh; display: flex; flex-direction: column; overflow: hidden; }
   .wd-page.wd-p1 .wd-hero { flex: 1 1 auto; min-height: 0; }
   .wd-page.wd-p1 .wd-wrap { flex: none; max-height: 17%; overflow: hidden; padding-bottom: 28px; }
+  /* 第一屏只留画面和标题。长文会把入口裁掉，所以宽屏只留开头那句，两行链接跟在它下面。 */
+  .wd-page.wd-p1 .wd-wrap:has(.wd-links) { max-height: 360px; }
+  .wd-page.wd-p1 .wd-wrap:has(.wd-links) .wd-facts,
+  .wd-page.wd-p1 .wd-wrap:has(.wd-links) .wd-text > .wd-more { display: none; }
 }
 .wd-motion {
   position: absolute;
