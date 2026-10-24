@@ -434,8 +434,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 @media (max-width: 768px) {
   .picks { height: auto; padding-bottom: 8px; }
   .m-feat {
-    /* 100% of the stage (not 100vw) and room for 3×20px peeks, so the right edge stays inside the viewport. */
-    --cw: calc(100% - var(--page-gutter) - 76px); --ch: calc(var(--cw) * 9 / 16);
+    /* vw (not %) so --ch stays a length; 76px covers the 3×20px right peeks. */
+    --cw: calc(100vw - var(--page-gutter) - 76px); --ch: calc(var(--cw) * 9 / 16);
     display: block; color: var(--ink); font-family: "Noto Sans SC", "Noto Sans CJK SC", sans-serif;
   }
   .m-hd { display: flex; justify-content: space-between; align-items: baseline; padding: 14px var(--page-gutter) 0; line-height: normal; }
