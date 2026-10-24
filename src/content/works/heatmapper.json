@@ -22,6 +22,7 @@
  "hasDemo": true,
  "line": "空间",
  "source": "https://lililin0324.github.io/#/planning/heatmapper",
+ "demo": "https://geomapper-pi.vercel.app/",
  "sourceFile": "planning/08_heatmapper.md",
  "yearNum": 2025,
  "status": "已完成",
