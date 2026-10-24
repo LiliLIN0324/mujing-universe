@@ -9,7 +9,7 @@ const ws = (await allWorks()).map((w) => {
   const [main, sub] = splitTitle(w.title);
   return { ...w, main, sub };
 });
-const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w) => w.line === line).length])] as [string, number][];
+const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w) => w.line === line).length] as [string, number]).filter(([, n]) => n > 0)];
 ---
 <Base title="作品 · 幕景宇宙" description="幕景宇宙的作品目录，按创作线筛选。" active="/works/">
 <main class="wf" id="archive" data-mode="grid">
