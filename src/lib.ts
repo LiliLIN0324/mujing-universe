@@ -161,22 +161,9 @@ const COVER_CLIP: Record<string, string> = {
   'anyreal': `${R2_FIG}/anyreal/cover.mp4`,
   'dragon-diffussion': `${R2_FIG}/dragon-diffusion/cover.mp4`,
   'bazi-fengshui-analysis': `${R2_FIG}/bazi/cover.mp4`,
-  'guangzhou-xinyuan-tech': `${R2_FIG}/guangzhou-xinyuan/cover.mp4`,
   'bmw-meta-island': `${R2_FIG}/bmw-meta-island/cover.mp4`,
   'peace-elite-hust-campus': `${R2_FIG}/peace-elite-hust/cover.mp4`,
   '72-hour-game-jam': `${R2_FIG}/game-jam/cover.mp4`,
-  'prompt-engineering-agentic-rag': `${R2_FIG}/agentic-rag/cover.mp4`,
-  'knowledge-graph-urban-planning': `${R2_FIG}/knowledge-graph-urban-planning/cover.mp4`,
-  'urban-heat-resilience-machine-learning': `${R2_FIG}/urban-heat-resilience-ml/cover.mp4`,
-  'participatory-urban-regeneration-empowered-by-artificial-intelligence': `${R2_FIG}/participatory-urban-regeneration/cover.mp4`,
-  'local-climate-zones-urban-heat-resilience': `${R2_FIG}/local-climate-zones/cover.mp4`,
-  'heatmapper': `${R2_FIG}/heatmapper/cover.mp4`,
-  'cluster-visualizer-3d': `${R2_FIG}/cluster-visualizer-3d/cover.mp4`,
-  'campus-public-space-vitality-modeling': `${R2_FIG}/campus-public-space-vitality-modeling/cover.mp4`,
-  'neurotopia': `${R2_FIG}/neurotopia/cover.mp4`,
-  'chicken-utopia': `${R2_FIG}/chicken-utopia/cover.mp4`,
-  'hongqiqu': `${R2_FIG}/hongqiqu/cover.mp4`,
-  'previous-archi-work': `${R2_FIG}/previous-archi-work/cover.mp4`,
 };
 /** 首页章节、作品库封面和详情主视觉的真实预览。没有就返回 null，保持静图。 */
 export function coverClip(slug: string): string | null {
@@ -225,9 +212,4 @@ export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: nu
   'xihu-panorama': { src: `${R2_FIG}/xihu-panorama/01.jpg`, scale: 1.08 },
   'riffle-ai-game-generation-tool': { src: `${R2_FIG}/riffle/01.jpg` },
   'bazi-fengshui-analysis': { src: `${R2_FIG}/bazi/01.jpg` },
-  'kittylovecarrots': { src: `${R2_FIG}/kittylovecarrots/01.png` },
-  'heatmapper': { src: `${R2_FIG}/heatmapper/01.png` },
-  'neurotopia': { src: `${R2_FIG}/neurotopia/01.jpg`, pos: '50% 0%' },
-  'chicken-utopia': { src: `${R2_FIG}/chicken-utopia/01.jpg`, pos: '50% 30%' },
-  'hongqiqu': { src: `${R2_FIG}/hongqiqu/01.jpg`, pos: '50% 60%' },
 };

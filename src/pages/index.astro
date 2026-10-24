@@ -21,15 +21,11 @@ const picks = ws.map((w) => ({
 // 首页精选固定名单（顺序即轮播顺序）；不在名单里的作品不进首页。
 const HOME_PICKS = [
   'xihu-panorama',
-  'genshot-AI-video-generation-tool',
-  'anyreal',
   'scendance',
-  'bazi-fengshui-analysis',
-  '72-hour-game-jam',
-  'bmw-meta-island',
+  'anyreal',
+  'genshot-AI-video-generation-tool',
+  'mimi-agent',
   'peace-elite-hust-campus',
-  'chicken-utopia',
-  'neurotopia',
 ];
 const homeWs = HOME_PICKS.map((slug) => ws.find((w) => w.slug === slug)).filter(Boolean);
 const homePicks = homeWs.map((w) => picks.find((p) => p.slug === w.slug));
