@@ -1,5 +1,5 @@
 {
- "note": "活动参与里的会议与工作坊来自 src/data/artist.json（talks 与奖项里的工作坊）。中文题名是译写，original 保留发表用英文。source 为 work 的条目摘自作品页，界面标「作品页」。年份只精确到年的，start/end 用该年首尾日，界面只显示年份。image 是封面，写站内路径或图片地址。有这个字段，列表和详情才显示图。同一作品的多条新闻各用一张不同的真实图，不共用。没有另一张就不写 image，也不留空框。",
+ "note": "活动参与里的会议与工作坊来自 src/data/artist.json（talks 与奖项里的工作坊）。中文题名是译写，original 保留发表用英文。source 为 work 的条目摘自作品页，界面标「作品页」。年份只精确到年的，start/end 用该年首尾日，界面只显示年份。image 是封面，写站内路径或图片地址。有这个字段，列表和详情才显示图。同一作品的多条新闻各用一张不同的真实图，不共用。没有另一张就不写 image，也不留空框。多张图写 images，按顺序切换，列表封面仍用 image。只有一张时不写 images。",
  "items": [
   {
    "id": "activity-aaai-2025-kg",
@@ -49,7 +49,18 @@
    "people": [
     "林丽丽"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/knowledge-graph-urban-planning/08.jpg",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/04.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/05.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/06.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/07.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/08.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/09.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -83,7 +94,14 @@
    "people": [
     "林丽丽"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/03.png",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/04.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/05.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -116,7 +134,15 @@
    "people": [
     "林丽丽"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/urban-heat-resilience-ml/02.png",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/04.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/05.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/06.jpg"
+   ],
    "source": "archive"
   },
   {

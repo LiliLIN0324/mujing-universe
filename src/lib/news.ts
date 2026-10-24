@@ -23,12 +23,24 @@ export type NewsItem = {
   hrefLabel?: string;
   /**
    * 封面。站内路径（以 / 开头）或图片地址。
-   * 不写这个字段，列表和详情都不显示图。
+   * 列表优先用它；没有它时用 images 的第一张。
    */
   image?: string;
+  /**
+   * 同一条新闻的多张图，按这个顺序切换。
+   * 列表封面仍用 image。空数组当作没写。
+   */
+  images?: string[];
   /** archive：艺术家档案。work：摘自作品页。 */
   source?: 'archive' | 'work';
 };
+
+/** 可切换的图。images 非空就用它，否则用封面。 */
+export function galleryOf(item: Pick<NewsItem, 'image' | 'images'>): string[] {
+  const many = (item.images ?? []).filter((src) => typeof src === 'string' && src.length > 0);
+  if (many.length) return many;
+  return item.image ? [item.image] : [];
+}
 
 export const SECTIONS: { id: SectionId; label: string }[] = [
   { id: 'tech', label: '技术动态' },
