@@ -49,7 +49,18 @@
    "people": [
     "林丽丽"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/knowledge-graph-urban-planning/08.jpg",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/04.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/05.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/06.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/07.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/08.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/09.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -83,13 +94,13 @@
    "people": [
     "林丽丽"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/acsp2025/01.jpg",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/01.jpg",
    "images": [
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/acsp2025/01.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/acsp2025/02.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/acsp2025/03.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/acsp2025/04.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/acsp2025/05.jpg"
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/04.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-acsp-2025-heat/05.jpg"
    ],
    "source": "archive"
   },
@@ -123,14 +134,14 @@
    "people": [
     "林丽丽"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/iacp2026/01.jpg",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/01.jpg",
    "images": [
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/iacp2026/01.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/iacp2026/02.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/iacp2026/03.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/iacp2026/04.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/iacp2026/05.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/iacp2026/06.jpg"
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/04.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/05.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2026-seoul/06.jpg"
    ],
    "source": "archive"
   },
