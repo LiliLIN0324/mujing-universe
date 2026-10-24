@@ -39,12 +39,12 @@ const nextMeta = [next.line, next.yearNum || next.year].filter(Boolean).join(' �
 const backHref = `/works/?line=${encodeURIComponent(w.line)}#archive`;
 const backText = '← 作品';
 const backNote = w.line;
-// Demo 只认 source，报道只认 link。两个都是网址才各自出现，互不顶替。
+// Demo 只认 demo 里的真实网址。报道只认 link。个人站 source 不当体验入口。
 const httpUrl = (value?: string) => {
   const url = (value || '').trim();
   return /^https?:\/\//i.test(url) ? url : '';
 };
-const demoHref = httpUrl(w.source);
+const demoHref = httpUrl(w.demo);
 const newsHref = httpUrl(w.link);
 ---
 <Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
