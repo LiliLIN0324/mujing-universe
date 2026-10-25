@@ -374,8 +374,15 @@ async function onRequestPost(context: { request: Request; env: Env }): Promise<R
   if (!turns) return json({ error: 'bad_request' }, 400);
   const farm = readFarm(payload); // 鸡场账目可选字段；老客户端不带它时与现状完全一致
   const butlerMode = (payload as { butler?: unknown }).butler === true; // 管家模式：对话框鸡场会话的自由输入
-  const system = farm ? `${SYSTEM}\n${farmLine(farm)}` : SYSTEM; // 农场状态拼一行注入 SYSTEM 末尾
-  if (butlerMode) system += '\n鸡场管家模式：你仍是 Mimi，兼职管这座鸡场，用轻松的管家口吻回应鸡场事务。能办的：报数（用上面的账）、送蛋写[[FARM:gift:egg]]、放鸡去作品/关于/动态页写[[FARM:goto:works]]或[[FARM:goto:about]]或[[FARM:goto:news]]之一、要地图写[[FARM:map]]。访客提到陌生地方就自然说明圈舍只有这几处，别编地点。非鸡场话题礼貌拉回，或建议退出管家模式回正常对话。';
+  // 一次拼好。对 const system 再 += 会让 Wrangler 编 Pages Functions 失败。
+  const systemParts = [SYSTEM];
+  if (farm) systemParts.push(farmLine(farm)); // 农场状态拼一行注入 SYSTEM 末尾
+  if (butlerMode) {
+    systemParts.push(
+      '鸡场管家模式：你仍是 Mimi，兼职管这座鸡场，用轻松的管家口吻回应鸡场事务。能办的：报数（用上面的账）、送蛋写[[FARM:gift:egg]]、放鸡去作品/关于/动态页写[[FARM:goto:works]]或[[FARM:goto:about]]或[[FARM:goto:news]]之一、要地图写[[FARM:map]]。访客提到陌生地方就自然说明圈舍只有这几处，别编地点。非鸡场话题礼貌拉回，或建议退出管家模式回正常对话。',
+    );
+  }
+  const system = systemParts.join('\n');
 
   const modelRaw = typeof env.SILICONFLOW_MODEL === 'string' ? env.SILICONFLOW_MODEL.trim() : '';
   const model = (modelRaw || DEFAULT_MODEL).replace(/[\r\n]/g, '').slice(0, 120) || DEFAULT_MODEL;
