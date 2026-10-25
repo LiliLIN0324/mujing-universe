@@ -1,0 +1,1198 @@
+---
+/**
+ * 幕景鸡场 v2：全站隐形舞台层。交互基准：chicken-farm-demo.html（原型 v0）。
+ * 整页是一层透明的固定舞台（z-index 90，pointer-events:none）：小鸡全网页乱跑、光标即小鸡、
+ * 点空白处下蛋、点导航链接正常跳转；对话框（Mimi/管家）保持本职，鸡场只是叠加的一层系统。
+ * 结构分七块：常量 / store（存储）/ bus（事件总线，供管家对话层调用）/
+ *   fsm（蛋与鸡的状态机）/ draw（渲染原语，从原型平移）/ audio（WebAudio 事件音）/ tick（主循环）。
+ * 开合：所有页面默认开（localStorage 'mujing-farm-on'，只有显式收起记 '0'）；?farm=1 强制开；
+ *   window 事件 'farm:toggle'=切换、'farm:open'=强制开；开着时 body 挂 .farm-on（全站 cursor:none）。
+ * 音符：无背景音乐。只有事件音——出壳一声品种音（金·元宝保留 C 大三琶音）、点鸡一声，
+ *   发声处浮起品种色 ♪；色音映射见 assets/palette.md。
+ * 页签隐藏暂停并落盘；reduced-motion 静止降级；不引外部依赖，声音全部现场合成。
+ * 数据 schema 见 farm-state.md；正式仓库路径 src/components/ChickenFarm.astro。
+ */
+const { page = 'home' } = Astro.props;
+---
+<div class="farm" id="farm" data-page={page} hidden>
+  <div class="farm-stage" id="farm-stage">
+    <div class="farm-layer" id="farm-layer"></div>
+
+    <div class="farm-hud farm-ui">
+      <div class="farm-stats">
+        <span class="farm-stat farm-brand">幕景鸡场</span>
+        <span class="farm-stat">蛋 <b id="farm-n-eggs">0</b></span>
+        <span class="farm-stat">鸡 <b id="farm-n-chicks">0</b></span>
+        <span class="farm-stat">图鉴 <b id="farm-n-dex">0/7</b></span>
+      </div>
+      <div class="farm-btns">
+        <button type="button" class="farm-btn" id="farm-btn-butler">管家</button>
+        <button type="button" class="farm-btn" id="farm-btn-book">手册</button>
+        <button type="button" class="farm-btn" id="farm-btn-map">地图</button>
+        <button type="button" class="farm-btn" id="farm-btn-close">收起×</button>
+      </div>
+    </div>
+
+    <p class="farm-hint" id="farm-hint">点空白处下蛋 · 点小鸡听它说话</p>
+
+    <div class="farm-wrap farm-ui" id="farm-book" hidden>
+      <div class="farm-scrim" id="farm-book-scrim"></div>
+      <div class="farm-card" role="dialog" aria-label="鸡场手册">
+        <div class="farm-cardhead"><b>鸡场手册 · 图鉴</b><button type="button" class="farm-btn" id="farm-book-x" aria-label="关闭">×</button></div>
+        <div class="farm-grid" id="farm-bookgrid"></div>
+        <div class="farm-cardfoot">
+          <span class="farm-tip">点击页面空白处下蛋，孵出的小鸡自动入册；概率写在方案里，不玩暗改那套。</span>
+          <button type="button" class="farm-btn" id="farm-btn-reset">重开鸡场</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="farm-wrap farm-ui" id="farm-map" hidden>
+      <div class="farm-scrim" id="farm-map-scrim"></div>
+      <div class="farm-card" role="dialog" aria-label="鸡场地图">
+        <div class="farm-cardhead"><b>鸡场地图 · 一页一圈舍</b><button type="button" class="farm-btn" id="farm-map-x" aria-label="关闭">×</button></div>
+        <div class="farm-maprows" id="farm-maprows"></div>
+        <p class="farm-tip">鸡在哪，账就在哪。管家说「放几只去别的页面」，账就记到那一页。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 图形符号：丽丽贴纸矢量化 v1（integration-draft/assets/chickens.svg 转入），色音映射见 assets/palette.md -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="farm-sym-youji" viewBox="0 0 100 120">
+    <path fill="#F3CD4A" d="M50 13 C70 17 80 42 80 60 C80 81 68 93 50 93 C32 93 20 81 20 60 C20 42 30 17 50 13 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M44 14 C41 7 36 8 39 12"/>
+      <path d="M50 12 C49 4 44 4 47 9"/>
+      <path d="M55 14 C58 7 62 9 58 13"/>
+      <path d="M22 56 C10 48 5 56 13 60"/>
+      <path d="M22 63 C9 59 7 68 15 69"/>
+      <path d="M58 54 C65 50 72 53 71 59 C77 61 76 68 70 69 C73 74 67 79 61 76 C56 74 54 61 58 54 Z"/>
+      <path d="M43 92 L41.5 109"/>
+      <path d="M41.5 109 L34.5 115"/>
+      <path d="M41.5 109 L41 116"/>
+      <path d="M41.5 109 L48 114.5"/>
+      <path d="M57 92 L58.5 109"/>
+      <path d="M58.5 109 L52 114.5"/>
+      <path d="M58.5 109 L59 116"/>
+      <path d="M58.5 109 L65.5 115"/>
+    </g>
+    <path fill="#E07C1B" d="M46 37 L59 41.5 L46 46 Z"/>
+    <circle cx="38.5" cy="33" r="1.9" fill="#221E19"/>
+    <circle cx="55.5" cy="32.5" r="1.9" fill="#221E19"/>
+    <g fill="#221E19">
+      <circle cx="63" cy="60" r="1.3"/>
+      <circle cx="67" cy="65" r="1.3"/>
+      <circle cx="62" cy="69" r="1.3"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-shiji" viewBox="0 0 100 120">
+    <path fill="#FB9032" d="M50 16 C71 20 81 42 81 60 C81 80 68 92 50 92 C32 92 19 80 19 60 C19 42 29 20 50 16 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M45 17 C42 10 37 11 40 15"/>
+      <path d="M51 15 C50 7 45 7 48 12"/>
+      <path d="M56 17 C59 10 63 12 59 16"/>
+      <path d="M21 58 C11 52 8 60 15 63"/>
+      <path d="M58 54 C65 50 72 53 71 59 C77 61 76 68 70 69 C73 74 67 79 61 76 C56 74 54 61 58 54 Z"/>
+      <path d="M43 91 L41.5 108"/>
+      <path d="M41.5 108 L34.5 114"/>
+      <path d="M41.5 108 L41 115"/>
+      <path d="M41.5 108 L48 113.5"/>
+      <path d="M57 91 L58.5 108"/>
+      <path d="M58.5 108 L52 113.5"/>
+      <path d="M58.5 108 L59 115"/>
+      <path d="M58.5 108 L65.5 114"/>
+    </g>
+    <path fill="#E07C1B" d="M46 37 L59 41.5 L46 46 Z"/>
+    <circle cx="38.5" cy="33" r="1.9" fill="#221E19"/>
+    <circle cx="55.5" cy="32.5" r="1.9" fill="#221E19"/>
+    <g fill="#221E19">
+      <circle cx="63" cy="60" r="1.3"/>
+      <circle cx="67" cy="65" r="1.3"/>
+      <circle cx="62" cy="69" r="1.3"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-douji" viewBox="0 0 100 120">
+    <path fill="#5DB25F" d="M50 22 C67 26 75 44 75 60 C75 78 64 89 50 89 C36 89 25 78 25 60 C25 44 33 26 50 22 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M45 23 C42 16 37 17 40 21"/>
+      <path d="M51 21 C50 13 45 13 48 18"/>
+      <path d="M56 23 C59 16 63 18 59 22"/>
+      <path d="M26 54 C15 47 11 55 18 58"/>
+      <path d="M26 60 C14 57 12 65 19 65"/>
+      <path d="M56 52 C62 48 68 51 67 57 C72 59 71 65 66 66 C68 70 63 74 58 71 C54 69 52 58 56 52 Z"/>
+      <path d="M44 88 L42.5 104"/>
+      <path d="M42.5 104 L36 109.5"/>
+      <path d="M42.5 104 L42 110.5"/>
+      <path d="M42.5 104 L48.5 109"/>
+      <path d="M56 88 L57.5 104"/>
+      <path d="M57.5 104 L51.5 109"/>
+      <path d="M57.5 104 L58 110.5"/>
+      <path d="M57.5 104 L64 109"/>
+    </g>
+    <path fill="#E07C1B" d="M46 36 L58.5 40.5 L46 45 Z"/>
+    <circle cx="39" cy="33" r="1.8" fill="#221E19"/>
+    <circle cx="55" cy="32.5" r="1.8" fill="#221E19"/>
+    <g fill="#221E19">
+      <circle cx="60.5" cy="58" r="1.2"/>
+      <circle cx="64" cy="62.5" r="1.2"/>
+      <circle cx="59.5" cy="66" r="1.2"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-wuji" viewBox="0 0 100 120">
+    <path fill="#8296AF" d="M50 10 C70 15 79 40 79 60 C79 82 67 93 50 93 C33 93 21 82 21 60 C21 40 30 15 50 10 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M44 11 C41 4 36 5 39 9"/>
+      <path d="M50 9 C49 1 44 1 47 6"/>
+      <path d="M55 11 C58 4 62 6 58 10"/>
+      <path d="M22 52 C8 42 3 52 12 58"/>
+      <path d="M22 60 C7 55 5 66 14 69"/>
+      <path d="M23 67 C12 65 10 75 18 76"/>
+      <path d="M58 54 C65 50 72 53 71 59 C77 61 76 68 70 69 C73 74 67 79 61 76 C56 74 54 61 58 54 Z"/>
+      <path d="M43 92 L41.5 109"/>
+      <path d="M41.5 109 L34.5 115"/>
+      <path d="M41.5 109 L41 116"/>
+      <path d="M41.5 109 L48 114.5"/>
+      <path d="M57 92 L58.5 109"/>
+      <path d="M58.5 109 L52 114.5"/>
+      <path d="M58.5 109 L59 116"/>
+      <path d="M58.5 109 L65.5 115"/>
+    </g>
+    <path fill="#E07C1B" d="M46 36 L59 40.5 L46 45 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round">
+      <path d="M34 33 Q38 37 42 33"/>
+      <path d="M50 32 Q54 36 58 32"/>
+    </g>
+    <g fill="#221E19">
+      <circle cx="63" cy="60" r="1.3"/>
+      <circle cx="67" cy="65" r="1.3"/>
+      <circle cx="62" cy="69" r="1.3"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-taoji" viewBox="0 0 100 120">
+    <path fill="#EAA98D" d="M50 17 C77 21 87 45 85 64 C83 83 69 93 50 93 C30 93 15 82 16 62 C17 43 29 21 50 17 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M46 18 C43 11 38 12 41 16"/>
+      <path d="M52 16 C51 8 46 8 49 13"/>
+      <path d="M22 58 C11 51 7 59 14 62"/>
+      <path d="M58 54 C65 50 72 53 71 59 C77 61 76 68 70 69 C73 74 67 79 61 76 C56 74 54 61 58 54 Z"/>
+      <path d="M43 92 L41.5 109"/>
+      <path d="M41.5 109 L34.5 115"/>
+      <path d="M41.5 109 L41 116"/>
+      <path d="M41.5 109 L48 114.5"/>
+      <path d="M57 92 L58.5 109"/>
+      <path d="M58.5 109 L52 114.5"/>
+      <path d="M58.5 109 L59 116"/>
+      <path d="M58.5 109 L65.5 115"/>
+    </g>
+    <path fill="#E07C1B" d="M46 37 L59 41.5 L46 46 Z"/>
+    <circle cx="38.5" cy="33" r="1.9" fill="#221E19"/>
+    <circle cx="55.5" cy="32.5" r="1.9" fill="#221E19"/>
+    <g fill="#221E19">
+      <circle cx="63" cy="60" r="1.3"/>
+      <circle cx="67" cy="65" r="1.3"/>
+      <circle cx="62" cy="69" r="1.3"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-guizu" viewBox="0 0 100 120">
+    <path fill="#9C9C93" d="M50 12 C71 17 80 42 80 62 C80 82 68 93 50 93 C32 93 20 82 20 62 C20 42 29 17 50 12 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M42 13 C38 5 45 1 47 8 C48 1 56 1 55 9 C58 3 63 6 59 13"/>
+      <path d="M30 48 C10 38 4 58 22 63"/>
+      <path d="M30 55 C8 49 6 70 24 72"/>
+      <path d="M31 62 C12 60 12 80 28 79"/>
+      <path d="M46 46 C43 55 50 58 52 51 C53 47 49 44 46 46"/>
+      <path d="M58 54 C65 50 72 53 71 59 C77 61 76 68 70 69 C73 74 67 79 61 76 C56 74 54 61 58 54 Z"/>
+      <path d="M43 92 L41.5 111"/>
+      <path d="M41.5 111 L34.5 117"/>
+      <path d="M41.5 111 L41 118"/>
+      <path d="M41.5 111 L48 116.5"/>
+      <path d="M57 92 L58.5 111"/>
+      <path d="M58.5 111 L52 116.5"/>
+      <path d="M58.5 111 L59 118"/>
+      <path d="M58.5 111 L65.5 117"/>
+    </g>
+    <path fill="#E07C1B" d="M45 37 L59 41 L45 45 Z"/>
+    <circle cx="38.5" cy="33" r="1.9" fill="#221E19"/>
+    <circle cx="55.5" cy="32.5" r="1.9" fill="#221E19"/>
+    <g fill="#221E19">
+      <circle cx="63" cy="60" r="1.3"/>
+      <circle cx="67" cy="65" r="1.3"/>
+      <circle cx="62" cy="69" r="1.3"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-yuanbao" viewBox="0 0 100 120">
+    <path fill="url(#yuanbao-grad)" d="M50 15 C73 19 82 43 82 62 C82 82 68 93 50 93 C32 93 18 82 18 62 C18 43 27 19 50 15 Z"/>
+    <ellipse cx="37" cy="42" rx="9" ry="15" fill="#FFF3C9" opacity="0.5" transform="rotate(-14 37 42)"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M44 16 C41 9 36 10 39 14"/>
+      <path d="M50 14 C49 6 44 6 47 11"/>
+      <path d="M55 16 C58 9 62 11 58 15"/>
+      <path d="M20 56 C12 51 10 58 16 60"/>
+      <path d="M20 62 C10 59 8 67 15 68"/>
+      <path d="M59 55 C66 51 73 54 72 60 C78 62 77 69 71 70 C74 75 68 80 62 77 C57 75 55 62 59 55 Z"/>
+      <path d="M43 92 L41.5 109"/>
+      <path d="M41.5 109 L34.5 115"/>
+      <path d="M41.5 109 L41 116"/>
+      <path d="M41.5 109 L48 114.5"/>
+      <path d="M57 92 L58.5 109"/>
+      <path d="M58.5 109 L52 114.5"/>
+      <path d="M58.5 109 L59 116"/>
+      <path d="M58.5 109 L65.5 115"/>
+    </g>
+    <path fill="#E07C1B" d="M46 37 L59 41.5 L46 46 Z"/>
+    <circle cx="38.5" cy="33" r="1.9" fill="#221E19"/>
+    <circle cx="55.5" cy="32.5" r="1.9" fill="#221E19"/>
+    <g fill="#221E19">
+      <circle cx="64" cy="61" r="1.3"/>
+      <circle cx="68" cy="66" r="1.3"/>
+      <circle cx="63" cy="70" r="1.3"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-egg" viewBox="0 0 100 120">
+    <path fill="#E9BA4A" d="M50 16 C67 16 79 40 79 62 C79 84 66 101 50 101 C34 101 21 84 21 62 C21 40 33 16 50 16 Z"/>
+    <g fill="#7A5A21">
+      <circle cx="38" cy="40" r="1.7"/>
+      <circle cx="53" cy="32" r="1.4"/>
+      <circle cx="63" cy="47" r="1.8"/>
+      <circle cx="34" cy="56" r="1.4"/>
+      <circle cx="48" cy="59" r="1.6"/>
+      <circle cx="61" cy="71" r="1.5"/>
+      <circle cx="41" cy="77" r="1.8"/>
+      <circle cx="54" cy="87" r="1.4"/>
+      <circle cx="30" cy="70" r="1.3"/>
+      <circle cx="45" cy="44" r="1.2"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-egg-cracked" viewBox="0 0 100 120">
+    <path fill="#E9BA4A" d="M27 46 L33 54 L39 46 L45 54 L51 46 L57 54 L63 46 L69 54 L73 46 C76 54 79 58 79 64 C79 85 66 101 50 101 C34 101 21 85 21 64 C21 58 24 52 27 46 Z"/>
+    <path fill="#E9BA4A" transform="translate(-4 -7) rotate(-8 50 40)" d="M27 44 C30 28 38 16 50 16 C62 16 70 28 73 44 L67 50 L61 44 L55 50 L49 44 L43 50 L37 44 L31 50 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M27 46 L33 54 L39 46 L45 54 L51 46 L57 54 L63 46 L69 54 L73 46"/>
+      <path transform="translate(-4 -7) rotate(-8 50 40)" d="M27 44 C30 28 38 16 50 16 C62 16 70 28 73 44 L67 50 L61 44 L55 50 L49 44 L43 50 L37 44 L31 50 Z"/>
+    </g>
+  </symbol>
+    <symbol id="farm-sym-shell-half" viewBox="0 0 100 120">
+    <path fill="#E9BA4A" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
+    <path fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
+  </symbol>
+    <symbol id="farm-sym-shelltop" viewBox="0 0 100 120"><g transform="rotate(180 50 60)">
+    <path fill="#E9BA4A" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
+    <path fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
+  </g></symbol>
+    <symbol id="farm-sym-feather" viewBox="0 0 100 120">
+    <path fill="#F1EBD6" stroke="#221E19" stroke-width="1.4" stroke-linejoin="round" d="M31 92 C29 62 42 30 66 20 C71 18 76 22 74 27 C67 51 52 76 35 93 C33 95 31 94 31 92 Z"/>
+    <g fill="none" stroke="#221E19" stroke-width="1.2" stroke-linecap="round">
+      <path d="M34 90 C46 72 58 50 70 30"/>
+      <path d="M50 58 L44 54"/>
+      <path d="M58 44 L52 41"/>
+    </g>
+  </symbol>
+  </defs>
+</svg>
+
+<!-- 样式全局：蛋/鸡/气泡/蛋壳/图鉴格全是 JS 现场创建的 DOM，拿不到 Astro 的 scoped 属性，故整块 is:global；类名全部带 farm- 前缀防撞。 -->
+<style is:global>
+  /* v2：全站隐形舞台。#farm 本体透明、不挡点击（pointer-events:none），只有鸡/蛋/HUD/浮层可交互。 */
+  .farm {
+    --ink: #1a1a1c;
+    --paper: #f6f5f3;
+    --card: #fffdf4;
+    --orange: #ff690a;
+    color: var(--ink);
+    font-family: "Alibaba PuHuiTi 3.0", "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    line-height: 1.4;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    pointer-events: none;
+    overflow: hidden;
+    background: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .farm * { box-sizing: border-box; margin: 0; padding: 0; }
+  .farm [hidden] { display: none !important; }
+
+  .farm-stage {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    pointer-events: none;
+  }
+  .farm-layer { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+
+  /* 光标即小鸡：开着时全站藏系统光标（reduced-motion 例外，见文末） */
+  body.farm-on, body.farm-on * { cursor: none !important; }
+  /* 对话框、面板、表单内恢复真光标：那里没有小鸡，不能让指针失明 */
+  body.farm-on :is(.mimi-panel, .farm-card, input, textarea, select),
+  body.farm-on :is(.mimi-panel, .farm-card, input, textarea, select) * { cursor: auto !important; }
+  /* 触发点微光：精确落点的橙色光点（小鸡是身体，光点是喙）+ 可点元素橙色描边 */
+  .farm-dot {
+    position: fixed; left: 0; top: 0; width: 7px; height: 7px;
+    margin: -3px 0 0 -3px; background: #ff690a;
+    box-shadow: 0 0 6px 2px rgba(255, 105, 10, 0.55);
+    z-index: 1001; pointer-events: none; will-change: transform;
+    opacity: 0; transition: opacity 0.15s ease;
+  }
+  .farm-dot.is-live { opacity: 1; }
+  .farm-dot.is-hidden { opacity: 0; }
+  .farm-glow { outline: 2px solid #ff690a; outline-offset: 1px; }
+  @media (hover: none), (pointer: coarse) { .farm-dot { display: none; } }
+
+  /* HUD：左下角小药丸 */
+  .farm-hud {
+    position: fixed; left: 14px; bottom: 14px;
+    display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
+    pointer-events: auto; z-index: 1100;
+    background: var(--card); border: 1px solid var(--ink);
+    padding: 3px 4px 3px 6px;
+    max-width: calc(100vw - 28px); overflow-x: auto; scrollbar-width: none;
+  }
+  .farm-hud::-webkit-scrollbar { display: none; }
+  .farm-stats { display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; }
+  .farm-stat {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: transparent; border: 0;
+    padding: 2px 4px; font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .farm-stat b { font-size: 12px; font-variant-numeric: tabular-nums; }
+  .farm-brand { background: var(--ink); color: var(--paper); padding: 3px 7px; }
+  .farm-btns { display: flex; gap: 2px; flex-wrap: nowrap; pointer-events: auto; }
+  .farm-btn {
+    font: inherit; font-size: 12px; font-weight: 600;
+    background: transparent; border: 1px solid transparent;
+    padding: 3px 7px; cursor: pointer; color: var(--ink); white-space: nowrap;
+  }
+  .farm-btn:hover { background: var(--orange); color: #fff; }
+  .farm-btn:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  .farm-btn[aria-pressed="true"] { background: var(--orange); color: #fff; }
+
+  .farm-hint {
+    position: fixed; left: 14px; bottom: 52px;
+    background: var(--card); border: 1px solid var(--ink);
+    padding: 3px 8px; font-size: 12px; font-weight: 600; white-space: nowrap;
+    z-index: 1050; pointer-events: none; transition: opacity 0.4s ease;
+  }
+  .farm-hint.is-off { opacity: 0; }
+
+  /* 跟随光标的小鸡：悬停 UI 面板/输入聚焦时淡出（updateCursorVisibility 控制 opacity） */
+  .farm-cursor { position: absolute; left: 0; top: 0; width: 56px; height: 67px; z-index: 1000; pointer-events: none; will-change: transform; transition: opacity 0.2s ease; }
+  .farm-cursor-in { width: 100%; height: 100%; transform-origin: 50% 88%; }
+  .farm-cursor svg { width: 100%; height: 100%; display: block; }
+  .farm-cursor-in.is-squat { animation: farm-squat 0.34s ease both; }
+  @keyframes farm-squat { 0% { transform: translateY(0) scaleY(1); } 45% { transform: translateY(5px) scaleY(0.72); } 100% { transform: translateY(0) scaleY(1); } }
+
+  /* 游走的小鸡 */
+  .farm-chick { position: absolute; left: 0; top: 0; width: 40px; height: 48px; pointer-events: auto; will-change: transform; }
+  .farm-chick-wob, .farm-chick-in { width: 100%; height: 100%; transform-origin: 50% 90%; }
+  .farm-chick svg { width: 100%; height: 100%; display: block; }
+  .farm-chick.is-fade { opacity: 0; transition: opacity 0.8s linear; }
+  .farm-chick-in.is-pop { animation: farm-pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+  @keyframes farm-pop { 0% { transform: scale(0.1) translateY(8px); } 70% { transform: scale(1.14) translateY(-5px); } 100% { transform: scale(1) translateY(0); } }
+  .farm-chick-in.is-hop { animation: farm-hop 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+  @keyframes farm-hop { 0%, 100% { transform: translateY(0); } 40% { transform: translateY(-16px); } }
+  .farm-chick-in.is-peck { animation: farm-peck 0.9s ease-in-out both; }
+  @keyframes farm-peck { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(24deg); } 45% { transform: rotate(2deg); } 65% { transform: rotate(21deg); } }
+
+  /* 蛋与蛋壳（蛋可点，作为世界的一部分） */
+  .farm-egg { position: absolute; left: 0; top: 0; width: 34px; height: 41px; margin-left: -17px; margin-top: -41px; pointer-events: auto; }
+  .farm-egg svg { width: 100%; height: 100%; display: block; transform-origin: 50% 100%; }
+  .farm-egg.is-drop svg { animation: farm-drop 0.5s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+  @keyframes farm-drop { 0% { transform: translateY(-64px); } 55% { transform: translateY(0); } 72% { transform: translateY(-12px); } 86% { transform: translateY(0); } 100% { transform: translateY(0); } }
+  .farm-egg.is-wob svg { animation: farm-wob 1.15s ease-in-out both; }
+  @keyframes farm-wob { 0% { transform: rotate(0); } 15% { transform: rotate(-9deg); } 35% { transform: rotate(8deg); } 55% { transform: rotate(-7deg); } 75% { transform: rotate(5deg); } 90% { transform: rotate(-3deg); } 100% { transform: rotate(0); } }
+  .farm-egg.is-crack { --cfcrack: 1; }
+  .farm-shells { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
+  .farm-shl { position: absolute; display: block; }
+  .farm-shl-b { width: 30px; height: 20px; left: -15px; top: -19px; animation: farm-shlb 0.75s ease both; }
+  .farm-shl-t { width: 30px; height: 22px; left: -15px; top: -43px; animation: farm-shlt 0.75s cubic-bezier(0.2, 0.7, 0.4, 1) both; }
+  @keyframes farm-shlb { 0% { transform: translateY(0); opacity: 1; } 35% { transform: translateY(-7px); opacity: 1; } 100% { transform: translateY(1px); opacity: 0; } }
+  @keyframes farm-shlt { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(-34px, -42px) rotate(-130deg); opacity: 0; } }
+
+  /* 视觉音符：品种音发声处浮起一枚 ♪（品种色、12-18px、上浮 40px 渐隐 1.6s） */
+  .farm-note {
+    position: absolute; z-index: 950; pointer-events: none;
+    font-weight: 700; line-height: 1;
+    transform: translate(-50%, -100%);
+    text-shadow: 0 1px 0 rgba(255, 253, 244, 0.85);
+    will-change: transform, opacity;
+    animation: farm-noteup 1.6s ease-out both;
+  }
+  @keyframes farm-noteup {
+    0% { opacity: 0; transform: translate(-50%, -100%); }
+    15% { opacity: 1; }
+    100% { opacity: 0; transform: translate(-50%, calc(-100% - 40px)); }
+  }
+
+  /* 气泡 */
+  .farm-bubble {
+    position: absolute; transform: translate(-50%, -100%);
+    background: var(--card); border: 1px solid var(--ink);
+    padding: 4px 9px; font-size: 12px; font-weight: 600; white-space: nowrap;
+    z-index: 900; pointer-events: none;
+    animation: farm-bubin 0.16s ease both, farm-bubout 0.3s ease 1.55s both;
+  }
+  .farm-bubble::after {
+    content: ""; position: absolute; left: 50%; bottom: -4.5px; width: 7px; height: 7px;
+    background: var(--card); border-right: 1px solid var(--ink); border-bottom: 1px solid var(--ink);
+    transform: translateX(-50%) rotate(45deg);
+  }
+  @keyframes farm-bubin { 0% { transform: translate(-50%, -30%) scale(0.6); opacity: 0; } 100% { transform: translate(-50%, -100%) scale(1); opacity: 1; } }
+  @keyframes farm-bubout { to { opacity: 0; } }
+
+  /* 手册与地图浮层（全屏遮罩 + 居中卡片） */
+  .farm-wrap { position: absolute; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; pointer-events: none; padding: 12px; }
+  .farm-scrim { position: absolute; inset: 0; background: rgba(26, 26, 28, 0.3); pointer-events: auto; cursor: pointer; }
+  .farm-card {
+    position: relative; pointer-events: auto; cursor: auto;
+    background: var(--card); border: 1px solid var(--ink);
+    width: min(560px, 100%); max-height: 100%; overflow: auto; padding: 14px;
+  }
+  .farm-cardhead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .farm-cardhead b { font-size: 15px; }
+  .farm-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(108px, 1fr)); gap: 8px; }
+  .farm-cell { border: 1px solid var(--ink); background: var(--paper); padding: 8px 6px; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; }
+  .farm-cellimg { position: relative; width: 46px; height: 46px; }
+  .farm-cellimg svg { width: 46px; height: 46px; }
+  .farm-sil { filter: brightness(0); opacity: 0.45; }
+  .farm-q { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 800; }
+  .farm-cellname { font-size: 12px; font-weight: 700; }
+  .farm-cellct { font-size: 11px; opacity: 0.75; }
+  .farm-rar { font-size: 10px; border: 1px solid var(--ink); padding: 0 4px; background: var(--card); }
+  .farm-rar-l { background: var(--orange); color: #fff; }
+  .farm-cardfoot { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .farm-tip { font-size: 11px; color: rgba(26, 26, 28, 0.6); }
+  .farm-maprows { display: flex; flex-direction: column; border: 1px solid var(--ink); }
+  .farm-maprow { display: flex; justify-content: space-between; gap: 8px; padding: 7px 12px; font-size: 13px; border-top: 1px solid rgba(26, 26, 28, 0.08); }
+  .farm-maprow:first-child { border-top: 0; }
+  .farm-maprow b { font-variant-numeric: tabular-nums; }
+  .farm-maprow.is-here span::after { content: "（本页）"; color: var(--orange); font-size: 11px; }
+  a.farm-maprow { color: inherit; text-decoration: none; cursor: pointer; }
+  a.farm-maprow:hover { background: var(--orange); color: #fff; }
+
+  @media (max-width: 768px) {
+    .farm-hud { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-width: calc(100vw - 20px); }
+    .farm-hint { left: 10px; bottom: calc(50px + env(safe-area-inset-bottom, 0px)); }
+    .farm-chick, .farm-cursor { width: 36px; height: 43px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .farm *, .farm *::before, .farm *::after { animation: none !important; transition: none !important; }
+    /* reduced-motion 不藏光标：光标小鸡本身也隐藏 */
+    body.farm-on, body.farm-on * { cursor: auto !important; }
+    .farm-cursor { display: none; }
+  }
+</style>
+
+<script>
+  const root = document.getElementById('farm');
+  const stage = document.getElementById('farm-stage');
+  if (root && stage && !stage.dataset.farmInit) {
+    stage.dataset.farmInit = '1';
+
+    /* ===== 模块〇：常量与工具 ===== */
+    const $ = (id) => document.getElementById(id);
+    const layer = $('farm-layer');
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const HERE = root.dataset.page || document.body.dataset.page || 'home';
+    const MAX_PAGE = window.innerWidth <= 768 ? 8 : 14; // 同屏上限（方案 §二.4）
+    const MAX_FLOCK = 40; // 在册记录上限，超出「装篮」只进计数（方案 §五·五.7）
+
+    /* 色音映射（斯克里亚宾调性-色彩圈，palette.md）：黄=D4 橙=G3 绿=A3 蓝白=E4 粉=Bb3 灰=Eb3 金=C 大三琶音 */
+    const BREEDS = [
+      { id: 'butter', name: '黄·油鸡', svg: 'youji', color: '#f3cd4a', rarity: 'common', f: 293.66 },
+      { id: 'mist', name: '蓝·雾鸡', svg: 'wuji', color: '#8296af', rarity: 'common', f: 329.63 },
+      { id: 'persimmon', name: '橙·柿鸡', svg: 'shiji', color: '#fb9032', rarity: 'common', f: 196.0 },
+      { id: 'bean', name: '绿·豆鸡', svg: 'douji', color: '#5db25f', rarity: 'common', f: 220.0 },
+      { id: 'peach', name: '粉·桃鸡', svg: 'taoji', color: '#eaa98d', rarity: 'common', f: 233.08 },
+      { id: 'noble', name: '灰·贵族', svg: 'guizu', color: '#9c9c93', rarity: 'rare', f: 155.56 },
+      { id: 'ingot', name: '金·元宝', svg: 'yuanbao', color: '#d9ac55', rarity: 'legendary', f: 261.63 },
+    ];
+    const WEIGHTS = { common: 16, rare: 18, legendary: 2 }; // 普通 5 色共 80%，稀有 18%，传说 2%
+    const PAGES = ['home', 'works', 'about', 'news', 'contact'];
+    const PAGE_NAMES = { home: '首页', works: '作品页', about: '关于页', news: '动态页', contact: '合作页' };
+    /* 地图即索引：一页一圈舍，圈舍行是普通链接（鸡篮/累计出鸡仍是纯统计） */
+    const PAGE_HREF = { home: '/', works: '/works/', about: '/about/', news: '/news/', contact: '/contact/' };
+
+    const rand = (a, b) => a + Math.random() * (b - a);
+    const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+
+    /* 软保底（方案 §五·五.1）：前 30 次纯运气；第 31 次起传说权重翻倍递增，约 40 次内必出。
+       概率在鸡场手册里写明——「不玩暗改那套」本身就是态度。 */
+    const PITY_START = 30;
+    function pickBreed() {
+      const pity = Math.max(0, (state.pity | 0) - PITY_START);
+      const weightOf = (r) => {
+        if (r !== 'legendary' || pity <= 0) return WEIGHTS[r];
+        return WEIGHTS[r] * Math.pow(2, Math.min(5, pity)); // 2%→4%→8%→16%→32%→64%
+      };
+      let total = 0;
+      for (const b of BREEDS) total += weightOf(b.rarity);
+      let r = Math.random() * total;
+      for (const b of BREEDS) { r -= weightOf(b.rarity); if (r <= 0) return b; }
+      return BREEDS[0];
+    }
+
+    /* ===== 模块一：存储 store（schema 与迁移见 farm-state.md） ===== */
+    const KEY = 'mujing-farm-v1';
+    const OLD_KEY = 'mujing-chicken-farm-v0'; // 原型 v0 的计数键，读到即迁移
+
+    let state = { v: 1, seq: 0, eggs: 0, hatched: 0, pity: 0, dex: {}, chickens: [] };
+    (function load() {
+      try {
+        const old = JSON.parse(localStorage.getItem(OLD_KEY) || '');
+        if (old && typeof old === 'object') {
+          state.eggs = old.eggs | 0;
+          state.hatched = old.hatched | 0;
+          state.pity = old.pity | 0;
+          if (old.dex && typeof old.dex === 'object') state.dex = old.dex;
+        }
+      } catch { /* 没有旧档或隐私模式 */ }
+      try {
+        const raw = JSON.parse(localStorage.getItem(KEY) || '');
+        if (raw && typeof raw === 'object' && raw.v === 1) state = raw;
+      } catch { /* 首次进入或隐私模式 */ }
+    })();
+
+    function save() {
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch { /* 隐私模式退化为内存态 */ }
+    }
+
+    /* 总线快照：给对话层做「报告鸡场」插值，也随 /api/chat payload 上送（见 chat.ts.farm-patch.md） */
+    function snapshot() {
+      const breeds = {};
+      const pagesMap = {};
+      let here = 0;
+      for (const c of state.chickens) {
+        breeds[c.breed] = (breeds[c.breed] || 0) + 1;
+        pagesMap[c.page] = (pagesMap[c.page] || 0) + 1;
+        if (c.page === HERE) here += 1;
+      }
+      let found = 0;
+      for (const b of BREEDS) if ((state.dex[b.id] | 0) > 0) found += 1;
+      return {
+        eggs: state.eggs,
+        chickens: state.hatched, // 含装篮，报数口径
+        breeds,
+        pagesMap,
+        here,
+        elsewhere: state.chickens.length - here,
+        dex_left: BREEDS.length - found,
+      };
+    }
+
+    /* ===== 模块二：总线 bus（对话层由此驱动鸡场，契约见 README 第三节） ===== */
+    const emitState = () => window.dispatchEvent(new CustomEvent('farm:state', { detail: snapshot() }));
+    const emitSay = (text) => window.dispatchEvent(new CustomEvent('farm:say', { detail: { text } }));
+    const emitCmd = (type) => window.dispatchEvent(new CustomEvent('farm:cmd', { detail: { type } }));
+
+    window.addEventListener('farm:cmd', (e) => {
+      const type = String(e.detail?.type || '');
+      if (type === 'gift:egg') giftEgg();
+      else if (type.startsWith('goto:')) sendAway(type.slice(5));
+      else if (type === 'map') openMap();
+      /* 'butler' 由对话框自己消费；未知命令一律忽略（白名单边界） */
+    });
+
+    /* ===== 模块三：渲染原语（从原型平移；装饰与星星省略，见原型 130-137/549-562 行） ===== */
+    function chickSVG(breed) {
+      const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      s.setAttribute('viewBox', '0 0 100 120');
+      s.setAttribute('aria-hidden', 'true');
+      s.innerHTML = `<use href="#farm-sym-${breed.svg}"/>`;
+      return s;
+    }
+
+    function bubble(x, y, text) {
+      const b = document.createElement('div');
+      b.className = 'farm-bubble';
+      b.textContent = text;
+      b.style.left = `${clamp(x, 70, Math.max(72, stage.clientWidth - 70))}px`;
+      b.style.top = `${clamp(y - 46, 30, Math.max(32, stage.clientHeight))}px`;
+      layer.appendChild(b);
+      window.setTimeout(() => b.remove(), 1900);
+    }
+
+    /* ===== 模块四：状态机 =====
+       蛋：'drop' →（540ms）→ 'wob' →（1100ms）→ 'crack' →（340ms）→ hatch 出鸡
+           reduced-motion：drop 直接 500ms 后 hatch。
+       鸡：'wait' ⇄ 'walk'，到点随机转 'peck'（CSS 动画自理，完事回 'wait'）；
+           'leave' 是终态（被派去别的页面或装篮），走出屏销毁。
+       收集：hatch 时写 dex 与 chickens 记录，即「收集」。 */
+    let flock = []; // 在场 DOM 鸡（本页投影），与 state.chickens（全场账本）分离
+    let eggTimers = [];
+
+    function layEgg(x, y) {
+      state.eggs += 1;
+      state.pity = (state.pity | 0) + 1; // 软保底计数
+      const breed = pickBreed(); // 蛋一落地品种就定了，图鉴概率不趁机变动
+      save(); refreshHUD();
+      /* 品种事件音：下蛋 = 品种音短音，发声处浮起视觉音符 */
+      play((t) => {
+        cluck(t, breed.f * rand(0.98, 1.02), 0.14);
+        noteFloat(x, y - 46, breed.color);
+      });
+
+      const egg = document.createElement('div');
+      egg.className = reduce ? 'farm-egg' : 'farm-egg is-drop';
+      egg.style.left = `${x}px`;
+      egg.style.top = `${y}px`;
+      egg.style.zIndex = String(Math.round(y));
+      egg.innerHTML = '<svg viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-egg"/><g style="opacity:var(--cfcrack,0)"><use href="#farm-sym-egg-cracked"/></g></svg>';
+      layer.appendChild(egg);
+
+      if (reduce) {
+        eggTimers.push(window.setTimeout(() => { egg.remove(); hatch(x, y, breed); }, 500));
+        return;
+      }
+      eggTimers.push(window.setTimeout(() => { egg.classList.remove('is-drop'); egg.classList.add('is-wob'); }, 540));
+      eggTimers.push(window.setTimeout(() => egg.classList.add('is-crack'), 1640));
+      eggTimers.push(window.setTimeout(() => { egg.remove(); hatch(x, y, breed); }, 1980));
+    }
+
+    function hatch(x, y, breed) {
+      /* 出壳 = 一声品种音（金·元宝保留 C 大三琶音，palette.md），发声处浮起视觉音符 */
+      play((t) => {
+        if (breed.rarity === 'legendary') {
+          [261.63, 329.63, 392.0, 523.25].forEach((f, i) => cluck(t + i * 0.09, f, 0.16));
+        } else {
+          cluck(t, breed.f, 0.14);
+        }
+        noteFloat(x, y - 46, breed.color);
+      });
+      state.hatched += 1;
+      state.dex[breed.id] = (state.dex[breed.id] | 0) + 1;
+      if (state.chickens.length < MAX_FLOCK) {
+        state.seq += 1;
+        state.chickens.push({
+          id: `c-${state.seq}`,
+          breed: breed.id,
+          page: HERE,
+          pos: [+(x / stage.clientWidth).toFixed(3), +(y / stage.clientHeight).toFixed(3)],
+          lastSeen: Date.now(),
+        });
+      }
+      save(); refreshHUD();
+
+      if (!reduce) shells(x, y);
+      addChick(x, y, breed, true);
+      trimFlock();
+      emitState();
+      if (breed.rarity === 'legendary') {
+        state.pity = 0; // 传说出壳，保底清零
+        /* 唯一一次主动开口留给传说出壳（方案 §五·五.4），由对话层决定怎么播 */
+        emitSay(`金·元宝出壳了。第 ${state.eggs} 次点击，传说～`);
+      }
+    }
+
+    function shells(x, y) {
+      const s = document.createElement('div');
+      s.className = 'farm-shells';
+      s.style.left = `${x}px`;
+      s.style.top = `${y}px`;
+      s.style.zIndex = String(Math.round(y) + 1);
+      s.innerHTML = '<svg class="farm-shl farm-shl-b" viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-shell-half"/></svg>' +
+        '<svg class="farm-shl farm-shl-t" viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-shelltop"/></svg>';
+      layer.appendChild(s);
+      window.setTimeout(() => s.remove(), 800);
+    }
+
+    function addChick(x, y, breed, fresh) {
+      const el = document.createElement('div');
+      el.className = 'farm-chick';
+      const wob = document.createElement('div');
+      wob.className = 'farm-chick-wob';
+      const inn = document.createElement('div');
+      inn.className = `farm-chick-in${fresh && !reduce ? ' is-pop' : ''}`;
+      inn.appendChild(chickSVG(breed));
+      wob.appendChild(inn);
+      el.appendChild(wob);
+      layer.appendChild(el);
+
+      const c = {
+        el, wob, inn, breed,
+        id: fresh ? state.chickens[state.chickens.length - 1]?.id || '' : '',
+        x, y, tx: x, ty: y,
+        flip: Math.random() < 0.5 ? -1 : 1,
+        speed: rand(36, 68),
+        mode: 'wait', // fsm：wait | walk | peck(转瞬) | leave
+        wait: rand(0.4, 1.2),
+        phase: rand(0, 6.28),
+        notes: 0, // 同时漂浮的视觉音符数（每鸡上限 3）
+        dead: false,
+        timers: [],
+      };
+      el.addEventListener('pointerdown', (e) => { e.stopPropagation(); poke(c); });
+      if (!reduce) { c.mode = 'walk'; newTarget(c); }
+      draw(c, 0);
+      flock.push(c);
+      return c;
+    }
+
+    function newTarget(c) {
+      c.tx = rand(44, Math.max(46, stage.clientWidth - 44));
+      c.ty = rand(36, Math.max(38, stage.clientHeight - 56));
+    }
+
+    function decide(c) {
+      const r = Math.random();
+      if (r < 0.32) { c.mode = 'wait'; c.wait = rand(0.7, 1.8); }
+      else if (r < 0.6) { peck(c); c.mode = 'wait'; c.wait = 1.0; }
+      else { c.mode = 'walk'; newTarget(c); }
+    }
+
+    function stepChick(c, dt, t) {
+      if (c.mode === 'leave') {
+        const d = c.tx - c.x;
+        const sp = c.speed * 1.5 * dt;
+        if (Math.abs(d) <= sp) { kill(c); return; }
+        c.x += d > 0 ? sp : -sp;
+        draw(c, t);
+        return;
+      }
+      if (c.mode === 'wait') {
+        c.wait -= dt;
+        if (c.wait <= 0) decide(c);
+        return;
+      }
+      const dx = c.tx - c.x;
+      const dy = c.ty - c.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 5) { decide(c); return; }
+      const sp = c.speed * dt;
+      c.x += (dx / dist) * sp;
+      c.y += (dy / dist) * sp;
+      if (Math.abs(dx) > 2) c.flip = dx < 0 ? -1 : 1;
+      draw(c, t);
+    }
+
+    function draw(c, t) {
+      const wobA = reduce ? 0 : Math.sin(t * 11 + c.phase) * 6;
+      c.x = clamp(c.x, 20, Math.max(24, stage.clientWidth - 20));
+      c.y = clamp(c.y, 30, Math.max(34, stage.clientHeight - 20));
+      c.el.style.transform = `translate3d(${c.x - 23}px, ${c.y - 42}px, 0)`;
+      c.wob.style.transform = `rotate(${wobA.toFixed(2)}deg) scaleX(${c.flip})`;
+      c.el.style.zIndex = String(Math.round(c.y));
+    }
+
+    function peck(c) {
+      c.inn.classList.remove('is-peck');
+      void c.inn.offsetWidth;
+      c.inn.classList.add('is-peck');
+      c.timers.push(window.setTimeout(() => c.inn.classList.remove('is-peck'), 950));
+    }
+
+    function kill(c) {
+      c.dead = true;
+      while (c.timers.length) window.clearTimeout(c.timers.pop());
+      c.el.remove();
+    }
+
+    function trimFlock() {
+      const active = flock.filter((c) => c.mode !== 'leave' && !c.dead);
+      if (active.length <= MAX_PAGE) return;
+      const old = active[0];
+      old.mode = 'leave';
+      old.tx = old.x < stage.clientWidth / 2 ? -80 : stage.clientWidth + 80; // 装篮：走出屏，账还在
+      if (reduce) {
+        old.el.classList.add('is-fade');
+        old.timers.push(window.setTimeout(() => { old.dead = true; old.el.remove(); }, 900));
+      } else {
+        old.timers.push(window.setTimeout(() => old.el.classList.add('is-fade'), 500));
+      }
+    }
+
+    /* 点小鸡：冒气泡 + 品种音 */
+    const LINES = ['咯咯～', '是我孵的哦。', '别摸头，会掉毛的。', '咦，那边有颗蛋。', '今天适合下蛋。', '嗨，你来啦。', '今日蛋 {E} 枚。'];
+    const RARE_LINES = { noble: '咳，贵族气质。', ingot: '金光护体，大吉大利。' };
+
+    function poke(c) {
+      if (!reduce) {
+        c.inn.classList.remove('is-hop');
+        void c.inn.offsetWidth;
+        c.inn.classList.add('is-hop');
+        c.timers.push(window.setTimeout(() => c.inn.classList.remove('is-hop'), 520));
+      }
+      const line = RARE_LINES[c.breed.id] && Math.random() < 0.7 ? RARE_LINES[c.breed.id] : LINES[Math.floor(Math.random() * LINES.length)];
+      bubble(c.x, c.y, line.replace('{E}', String(state.eggs)));
+      c.lastSeen = Date.now();
+      /* poke = 品种音，发声处浮起视觉音符 */
+      play((t) => {
+        cluck(t, c.breed.f * rand(0.97, 1.03), 0.15);
+        noteFloat(c.x, c.y - 50, c.breed.color, c);
+      });
+    }
+
+    /* ===== 模块四·二：总线命令的落点（gift / goto / map） ===== */
+    let lastPoint = null;
+
+    function giftEgg() {
+      /* 管家送蛋：走完整孵化流程，品种概率不动（稀缺性守恒，方案 §三.2） */
+      const x = lastPoint ? clamp(lastPoint.x, 30, stage.clientWidth - 30) : stage.clientWidth / 2;
+      const y = lastPoint ? clamp(lastPoint.y, 40, stage.clientHeight - 50) : stage.clientHeight * 0.55;
+      layEgg(Math.round(x), Math.round(y));
+    }
+
+    function sendAway(target) {
+      if (!PAGES.includes(target) || target === HERE) return;
+      const gone = state.chickens.filter((r) => r.page === HERE).slice(0, 3); // 「放几只」：一次至多 3 只
+      if (!gone.length) { emitSay('眼下本页一只可放的都没有。先下几颗蛋吧。'); return; }
+      for (const r of gone) {
+        r.page = target;
+        r.pos = [rand(0.3, 0.7), rand(0.4, 0.8)];
+        r.lastSeen = Date.now();
+        const dom = flock.find((c) => c.id === r.id && !c.dead && c.mode !== 'leave');
+        if (dom) { // 账面先转移，画面上走出屏（目标页下次载入时恢复）
+          dom.mode = 'leave';
+          dom.tx = dom.x < stage.clientWidth / 2 ? -80 : stage.clientWidth + 80;
+        }
+      }
+      save(); refreshHUD(); emitState();
+      bubble(stage.clientWidth / 2, stage.clientHeight * 0.3, `去 ${PAGE_NAMES[target]} 的，走好。`);
+    }
+
+    function openMap() {
+      const snap = snapshot();
+      const rows = PAGES.map((p) => {
+        const n = snap.pagesMap[p] | 0;
+        return `<a class="farm-maprow${p === HERE ? ' is-here' : ''}" href="${PAGE_HREF[p] || '/'}" aria-label="去${PAGE_NAMES[p]}看鸡"><span>${PAGE_NAMES[p]}</span><b>${n} 只</b></a>`;
+      }).join('');
+      const basket = snap.chickens - state.chickens.length; // 装篮的只进计数
+      $('farm-maprows').innerHTML = rows +
+        `<div class="farm-maprow"><span>装篮（只记数）</span><b>${basket} 只</b></div>` +
+        `<div class="farm-maprow"><span>累计出鸡</span><b>${snap.chickens} 只</b></div>`;
+      $('farm-map').hidden = false;
+    }
+
+    /* 地图点击 = 普通跳转；先记「开」偏好，落地页 prefOn() 命中自动开鸡场 */
+    $('farm-maprows').addEventListener('click', (e) => {
+      if (!e.target || !e.target.closest || !e.target.closest('a.farm-maprow')) return;
+      try { localStorage.setItem('mujing-farm-on', '1'); } catch { /* 隐私模式 */ }
+    });
+
+    /* ===== 模块五：交互（指针、HUD、手册、音符开关） ===== */
+    const elEggs = $('farm-n-eggs');
+    const elChicks = $('farm-n-chicks');
+    const elDex = $('farm-n-dex');
+    const hint = $('farm-hint');
+
+    function refreshHUD() {
+      elEggs.textContent = String(state.eggs);
+      elChicks.textContent = String(state.hatched);
+      let found = 0;
+      for (const b of BREEDS) if ((state.dex[b.id] | 0) > 0) found += 1;
+      elDex.textContent = `${found}/${BREEDS.length}`;
+      renderBook();
+      if (state.eggs >= 2) hint.classList.add('is-off');
+    }
+
+    function renderBook() {
+      let html = '';
+      for (const b of BREEDS) {
+        const n = state.dex[b.id] | 0;
+        const tag = b.rarity === 'rare' ? '<span class="farm-rar">稀有</span>' : b.rarity === 'legendary' ? '<span class="farm-rar farm-rar-l">传说</span>' : '';
+        if (n > 0) {
+          html += `<div class="farm-cell"><div class="farm-cellimg">${chickSVG(b).outerHTML}</div><div class="farm-cellname">${b.name}</div>${tag}<div class="farm-cellct">已养 ×${n}</div></div>`;
+        } else {
+          html += `<div class="farm-cell"><div class="farm-cellimg">${chickSVG(b.color).outerHTML.replace('<svg ', '<svg class="farm-sil" ')}</div><div class="farm-cellname">？？？</div>${tag}<div class="farm-cellct">未发现</div></div>`;
+        }
+      }
+      $('farm-bookgrid').innerHTML = html;
+    }
+
+    /* 指针：光标小鸡全站跟随（window pointermove）；点空白处下蛋（document 捕获）；
+       链接、按钮、表单、对话框等交互元素正常用，不下蛋。 */
+    const curEl = document.createElement('div');
+    curEl.className = 'farm-cursor';
+    curEl.setAttribute('aria-hidden', 'true');
+    curEl.innerHTML = '<div class="farm-cursor-in"><svg viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-youji"/></svg></div>';
+    if (!reduce) stage.appendChild(curEl);
+    const curIn = curEl.firstChild;
+    const cur = { x: 0, y: 0, tx: 0, ty: 0, flip: 1, spd: 0 };
+    cur.x = cur.tx = window.innerWidth / 2;
+    cur.y = cur.ty = window.innerHeight * 0.55;
+    /* 触发点微光：落点光点 + 可点元素描边（指针精确位置可视，解决「点不到按钮」） */
+    const dotEl = document.createElement('div');
+    dotEl.className = 'farm-dot';
+    dotEl.setAttribute('aria-hidden', 'true');
+    stage.appendChild(dotEl);
+    const FARM_HIT = 'a,button,input,textarea,select,label,[role="button"],summary';
+    let glowEl = null;
+
+    window.addEventListener('pointermove', (e) => {
+      lastPoint = { x: e.clientX, y: e.clientY };
+      cur.tx = clamp(e.clientX, 26, Math.max(28, window.innerWidth - 26));
+      cur.ty = clamp(e.clientY, 30, Math.max(32, window.innerHeight - 40));
+      cursorOnUI = !!(e.target && e.target.closest && e.target.closest(CURSOR_HIDE));
+      updateCursorVisibility();
+      dotEl.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      dotEl.classList.toggle('is-hidden', cursorOnUI);
+      if (!cursorOnUI) {
+        dotEl.classList.add('is-live');
+        const hitEl = document.elementFromPoint(e.clientX, e.clientY);
+        const hit = hitEl && hitEl.closest ? hitEl.closest(FARM_HIT) : null;
+        if (hit !== glowEl) {
+          if (glowEl) glowEl.classList.remove('farm-glow');
+          if (hit) hit.classList.add('farm-glow');
+          glowEl = hit;
+        }
+      } else if (glowEl) {
+        glowEl.classList.remove('farm-glow');
+        glowEl = null;
+      }
+    });
+
+    /* 不下蛋的元素：页面自身的一切交互件 + 鸡场自有 UI + 鸡/蛋（它们有自己的交互）+ 对话框/浮层面板 */
+    const EGG_SKIP = 'a,button,input,textarea,select,label,[role="button"],[contenteditable],.mimi-launch,.mimi-panel,.butter-box,.farm-ui,.farm-card,[role="dialog"],[role="button"]';
+    /* 下蛋处理器纯旁观：永不 preventDefault / stopPropagation，原生点击行为一律不受影响。 */
+    document.addEventListener('pointerdown', (e) => {
+      if (!opened) return; // 鸡场收起中：整层退场，不添蛋
+      ensureAudio();
+      if (e.button !== undefined && e.button !== 0) return;
+      const t = e.target;
+      if (!t || !t.closest) return;
+      if (t.closest(EGG_SKIP)) return;
+      if (t.closest('.farm-chick,.farm-egg,.farm-shells')) return; // 鸡与蛋自持交互（点鸡=说话）
+      const x = clamp(e.clientX, 16, Math.max(18, window.innerWidth - 16));
+      const y = clamp(e.clientY, 16, Math.max(18, window.innerHeight - 16));
+      cur.tx = x; cur.ty = y;
+      lastPoint = { x, y };
+      layEgg(Math.round(x), Math.round(y));
+    }, true);
+
+    /* 光标小鸡让位：悬停对话框/面板上、或输入框聚焦期间淡出（opacity 0, 0.2s），离开/失焦恢复 */
+    const CURSOR_HIDE = '.mimi-panel,.butter-box,.farm-card,[role="dialog"]';
+    let cursorOnUI = false;
+    function updateCursorVisibility() {
+      const a = document.activeElement;
+      const typing = !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable);
+      curEl.style.opacity = cursorOnUI || typing ? '0' : '';
+      dotEl.classList.toggle('is-hidden', cursorOnUI || typing);
+    }
+    document.addEventListener('focusin', updateCursorVisibility);
+    /* focusout 时 activeElement 尚未切换，推一拍再判定，失焦后光标小鸡才回得来 */
+    document.addEventListener('focusout', () => window.setTimeout(updateCursorVisibility, 0));
+
+    /* 手册开合与两步确认重开 */
+    $('farm-btn-book').addEventListener('click', () => { ensureAudio(); $('farm-book').hidden = !$('farm-book').hidden; });
+    $('farm-book-x').addEventListener('click', () => { $('farm-book').hidden = true; });
+    $('farm-book-scrim').addEventListener('click', () => { $('farm-book').hidden = true; });
+    $('farm-btn-map').addEventListener('click', openMap);
+    $('farm-map-x').addEventListener('click', () => { $('farm-map').hidden = true; });
+    $('farm-map-scrim').addEventListener('click', () => { $('farm-map').hidden = true; });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      $('farm-book').hidden = true;
+      $('farm-map').hidden = true;
+    });
+
+    let resetArmed = false;
+    let resetTimer = 0;
+    $('farm-btn-reset').addEventListener('click', () => {
+      ensureAudio();
+      if (!resetArmed) {
+        resetArmed = true;
+        $('farm-btn-reset').textContent = '确认重开？再点一次';
+        window.clearTimeout(resetTimer);
+        resetTimer = window.setTimeout(disarmReset, 4000);
+        return;
+      }
+      disarmReset();
+      for (const c of flock) kill(c);
+      flock = [];
+      eggTimers.forEach(window.clearTimeout);
+      eggTimers = [];
+      layer.replaceChildren();
+      state = { v: 1, seq: 0, eggs: 0, hatched: 0, dex: {}, chickens: [] };
+      save(); refreshHUD(); emitState();
+      hint.classList.remove('is-off');
+    });
+    function disarmReset() {
+      resetArmed = false;
+      $('farm-btn-reset').textContent = '重开鸡场';
+    }
+
+    /* ===== 模块六：音效（纯 WebAudio 现场合成，零素材；音高映射见 palette.md） =====
+       无背景音乐：只有事件音（出壳/点鸡/下蛋各一声品种音），play() 不设总开关。 */
+    let actx = null;
+    let master = null;
+    let noiseBuf = null;
+
+    function ensureAudio() {
+      if (actx) { if (actx.state === 'suspended') { try { actx.resume(); } catch { /* 忽略 */ } } return; }
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        actx = new AC();
+        /* 总链：master(0.5) → [干声 + 反馈延迟湿声(0.29s, fb 0.22, wet 0.18)] → lowpass(2400) → destination */
+        master = actx.createGain();
+        master.gain.value = 0.5;
+        const lp = actx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 2400;
+        const delay = actx.createDelay(1);
+        delay.delayTime.value = 0.29;
+        const fb = actx.createGain();
+        fb.gain.value = 0.22;
+        const wet = actx.createGain();
+        wet.gain.value = 0.18;
+        master.connect(lp);
+        master.connect(delay);
+        delay.connect(fb); fb.connect(delay);
+        delay.connect(wet); wet.connect(lp);
+        lp.connect(actx.destination);
+      } catch { actx = null; }
+    }
+
+    /* 音色：triangle + 短噪声瞬态，柔而不吵 */
+    function noiseHit(t, g) {
+      if (!actx || g <= 0) return;
+      if (!noiseBuf) {
+        noiseBuf = actx.createBuffer(1, Math.max(256, Math.floor(actx.sampleRate * 0.04)), actx.sampleRate);
+        const d = noiseBuf.getChannelData(0);
+        for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+      }
+      const src = actx.createBufferSource();
+      src.buffer = noiseBuf;
+      const gn = actx.createGain();
+      gn.gain.value = g;
+      const hp = actx.createBiquadFilter();
+      hp.type = 'highpass';
+      hp.frequency.value = 1500;
+      src.connect(hp); hp.connect(gn); gn.connect(master);
+      src.start(t); src.stop(t + 0.05);
+    }
+
+    function cluck(t, f, g) {
+      if (!actx) return;
+      const o = actx.createOscillator();
+      const gn = actx.createGain();
+      o.type = 'triangle';
+      o.frequency.setValueAtTime(f, t);
+      o.frequency.exponentialRampToValueAtTime(Math.max(60, f * 0.5), t + 0.08);
+      gn.gain.setValueAtTime(0.0001, t);
+      gn.gain.exponentialRampToValueAtTime(g, t + 0.015);
+      gn.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+      o.connect(gn); gn.connect(master);
+      o.start(t); o.stop(t + 0.15);
+      noiseHit(t, Math.min(g, 0.14) * 0.5);
+    }
+
+    function play(fn) {
+      if (!actx) return;
+      if (actx.state === 'suspended') { try { actx.resume(); } catch { /* 忽略 */ } }
+      try { fn(actx.currentTime); } catch { /* 忽略 */ }
+    }
+
+    /* 视觉音符：品种音发声处浮起一枚 ♪（品种色、12-18px、上浮 40px 渐隐 1.6s、每鸡同时最多 3 枚；
+       reduced-motion 不浮）。owner 传鸡对象即按鸡计上限。 */
+    function noteFloat(x, y, color, owner) {
+      if (reduce || root.hidden) return;
+      if (owner) {
+        owner.notes = owner.notes || 0;
+        if (owner.notes >= 3) return;
+        owner.notes += 1;
+      }
+      const n = document.createElement('span');
+      n.className = 'farm-note';
+      n.textContent = '♪';
+      n.style.left = `${clamp(x, 12, Math.max(14, stage.clientWidth - 12))}px`;
+      n.style.top = `${Math.max(18, y)}px`;
+      n.style.color = color;
+      n.style.fontSize = `${(12 + Math.random() * 6).toFixed(0)}px`;
+      layer.appendChild(n);
+      window.setTimeout(() => { n.remove(); if (owner) owner.notes -= 1; }, 1650);
+    }
+
+    /* pad 和声进行与闲逛轻唱已按需求整体撤下：没有背景音乐，只有事件音（出壳/点鸡/下蛋）。 */
+
+    $('farm-btn-butler').addEventListener('click', () => emitCmd('butler'));
+
+    /* ===== 模块七：主循环（单 rAF；页签隐藏即暂停并落盘） ===== */
+    let raf = 0;
+    let lastT = -1;
+    function tick(now) {
+      const t = now / 1000;
+      const dt = lastT < 0 ? 0.016 : Math.min(0.05, t - lastT);
+      lastT = t;
+      /* 光标小鸡缓动：0.28/帧贴紧指针 */
+      const k = reduce ? 1 : 0.28;
+      const nx = cur.x + (cur.tx - cur.x) * k;
+      const ny = cur.y + (cur.ty - cur.y) * k;
+      const mvx = nx - cur.x;
+      const mvy = ny - cur.y;
+      cur.x = nx; cur.y = ny;
+      const sp = Math.hypot(mvx, mvy) / Math.max(dt, 0.001);
+      cur.spd += (sp - cur.spd) * Math.min(1, dt * 12);
+      if (Math.abs(mvx) > 0.5) cur.flip = mvx < 0 ? -1 : 1;
+      if (!reduce) {
+        curEl.style.transform = `translate3d(${cur.x - 32}px, ${cur.y - 58}px, 0)`;
+        curIn.style.transform = `rotate(${(Math.sin(t * 11) * Math.min(8, cur.spd * 0.1)).toFixed(2)}deg) scaleX(${cur.flip})`;
+      }
+      for (const c of flock) if (!c.dead) stepChick(c, dt, t);
+      if (flock.some((c) => c.dead)) flock = flock.filter((c) => !c.dead);
+      raf = requestAnimationFrame(tick);
+    }
+    function startLoop() { if (!raf) { lastT = -1; raf = requestAnimationFrame(tick); } }
+    function stopLoop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { stopLoop(); save(); } // 藏起来先把账记了（lastSeen 粒度够用）
+      else if (!root.hidden) startLoop(); // 鸡场收起中不空转
+    });
+
+    /* ===== 恢复：换页时把 page===HERE 的鸡放回本页（详见 farm-state.md 第三节） ===== */
+    function restore() {
+      const w = stage.clientWidth || 1;
+      const h = stage.clientHeight || 1;
+      const mine = state.chickens.filter((r) => r.page === HERE).slice(0, MAX_PAGE);
+      for (const r of mine) {
+        const breed = BREEDS.find((b) => b.id === r.breed) || BREEDS[0];
+        const x = clamp((r.pos[0] || 0.5) * w, 40, Math.max(42, w - 40));
+        const y = clamp((r.pos[1] || 0.6) * h, 40, Math.max(42, h - 60));
+        const c = addChick(x, y, breed, false);
+        c.id = r.id; // 对上账本，goto 时好点名
+      }
+      trimFlock();
+    }
+
+    refreshHUD();
+    emitState();
+
+    /* ===== 开合与默认：所有页面默认开（含手机），只有显式收起才记 '0'；?farm=1 强制开。
+       'farm:toggle'=切换（Mimi 面板「进鸡场」与合作页「鸡场」chip 派发），'farm:open'=强制开。
+       开着时 body 挂 .farm-on（全站 cursor:none、光标小鸡接管）；收起移除，页面零痕迹。 */
+    const ON_KEY = 'mujing-farm-on';
+    function prefOn() {
+      try {
+        if (new URLSearchParams(location.search).get('farm') === '1') return true;
+        return localStorage.getItem(ON_KEY) !== '0';
+      } catch { return true; }
+    }
+    let opened = false; // restore 只在首次打开时跑一次
+    let isOpen = false; // 当前开合状态（farm:toggle 依据）
+    function openFarm(persist) {
+      root.hidden = false;
+      isOpen = true;
+      document.body.classList.add('farm-on');
+      if (persist) { try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ } }
+      if (!opened) { opened = true; restore(); } // 布局尺寸就绪后再把本页的鸡放回来
+      startLoop();
+    }
+    function closeFarm(persist) {
+      if (glowEl) { glowEl.classList.remove('farm-glow'); glowEl = null; }
+      root.hidden = true;
+      isOpen = false;
+      document.body.classList.remove('farm-on');
+      $('farm-book').hidden = true;
+      $('farm-map').hidden = true;
+      if (persist) { try { localStorage.setItem(ON_KEY, '0'); } catch { /* 隐私模式 */ } }
+      stopLoop();
+    }
+    window.addEventListener('farm:toggle', () => { isOpen ? closeFarm(true) : openFarm(true); });
+    window.addEventListener('farm:open', () => { openFarm(false); }); // 强制开，不改偏好
+    $('farm-btn-close').addEventListener('click', () => { closeFarm(true); });
+    if (prefOn()) openFarm(false);
+  }
+</script>

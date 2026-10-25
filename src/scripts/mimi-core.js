@@ -13,9 +13,9 @@ export const ANSWERS = {
   made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
   coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
   secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
-  skip: '这一件我这边不介绍。已经公开的作品在[作品页](/works/)。想合作就点「怎么合作」，或去[合作页](/contact/)。',
+  skip: '这一件还在保密期，我不方便展开。已经公开的作品在[作品页](/works/)。想聊类似方向的合作，去[合作页](/contact/)跟我说。', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
   other: '这个问题我答不准，也不能替团队承诺。想合作，点「怎么合作」，或去[合作页](/contact/)。',
-  en: 'I can’t answer that precisely. For a project, tap “怎么合作” or open the [collaborate page](/contact/).',
+  en: 'I can’t answer that precisely. For a project, open the [collaborate page](/contact/).', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
   enCoop: 'Say what you want to make. Then add 终树 on Feishu with the card below and leave a note. This site will not create a group, and there is no 24-hour assistant.\n[[COOP]]',
 };
 
@@ -88,6 +88,7 @@ export async function readSse(res, onDelta) {
   let buf = '';
   let text = '';
   let coop = false;
+  let farm = ''; // 鸡场命令（服务端扣留 [[FARM:*]] 后随 done 事件下发）
   let failed = false;
   const take = (block) => {
     for (const line of block.split(/\r?\n/)) {
@@ -101,6 +102,7 @@ export async function readSse(res, onDelta) {
       if (typeof msg.replace === 'string') {
         text = msg.replace;
         coop = false;
+        farm = '';
         onDelta(text);
       } else if (typeof msg.delta === 'string' && msg.delta) {
         text += msg.delta;
@@ -108,7 +110,10 @@ export async function readSse(res, onDelta) {
         if (view.coop) coop = true;
         onDelta(view.shown);
       }
-      if (msg.done) coop = msg.coop === true || coop;
+      if (msg.done) {
+        coop = msg.coop === true || coop;
+        if (typeof msg.farm === 'string') farm = msg.farm;
+      }
     }
   };
   while (true) {
@@ -124,14 +129,28 @@ export async function readSse(res, onDelta) {
   }
   if (buf.trim()) take(buf);
   const view = holdMark(text);
-  return { text: view.shown.trim(), coop: coop || view.coop, failed };
+  return { text: view.shown.trim(), coop: coop || view.coop, farm, failed };
 }
 
 const RATE = '提问有点多，我先歇一会儿，稍后再问哦。';
 const FAIL = '抱歉，这次没能生成回答，请稍后再试。';
 const COOP_LINE = '想合作的话，用下面的名片自己加飞书好友。官网不会自动拉群。';
 
-export async function requestReply({ messages, demo, onDelta }) {
+/* 鸡场问题的演示态兜底：仅当 /api/chat 不可用（501/断网）走演示分支时使用；
+   线上主路径由后端把农场账注入 SYSTEM（AI Native），不走这里。 */
+const FARM_CN = { home: '首页', works: '作品页', about: '关于页', news: '动态页', contact: '合作页' };
+const FARM_Q = /我的.{0,6}鸡|小鸡|鸡场|鸡都?在|鸡群|出鸡|孵化|图鉴|蛋.{0,8}(哪|多少|几颗|几只)/;
+function farmReply(q, farm) {
+  if (!farm || !FARM_Q.test(q)) return null;
+  const where = Object.entries(farm.pagesMap || farm.pages || {}).filter(([, n]) => n > 0)
+    .map(([p, n]) => `${FARM_CN[p] || p} ${n} 只`);
+  const lines = [`东家清点：鸡 ${farm.chickens} 只。`];
+  lines.push(where.length ? `${where.join('，')}；还有 ${Math.max(0, farm.eggs - farm.chickens)} 颗蛋没孵。` : '都在鸡篮里待着，还没放出本页。');
+  lines.push(farm.dex_left > 0 ? `图鉴还差 ${farm.dex_left} 个品种，点空白处多下几颗蛋就有了。` : '图鉴已经集齐，就等东家来领证书。');
+  return lines.join('');
+}
+
+export async function requestReply({ messages, demo, farm, butler, onDelta }) {
   const q = String(messages[messages.length - 1]?.content || '');
   let reply = '';
   let failed = false;
@@ -139,21 +158,26 @@ export async function requestReply({ messages, demo, onDelta }) {
   let streamed = false;
   let nextDemo = !!demo;
   let threw = false;
+  let farmCmd = ''; // 鸡场命令透传：只有 SSE 分支可能带，其余分支恒为空
   try {
     if (nextDemo) {
-      const parsed = splitCoop(localAnswer(q));
+      const parsed = splitCoop(farmReply(q, farm) || localAnswer(q));
       reply = parsed.clean;
       showCoop = parsed.coop;
     } else {
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ messages: messages.slice(-8) }),
+        body: JSON.stringify({
+          messages: messages.slice(-8),
+          ...(farm ? { farm } : {}),
+          ...(butler ? { butler: true } : {}),
+        }),
       });
       const ctype = res.headers.get('content-type') || '';
       if (res.status === 501 || res.status === 404) {
         nextDemo = true;
-        const parsed = splitCoop(localAnswer(q));
+        const parsed = splitCoop(farmReply(q, farm) || localAnswer(q));
         reply = parsed.clean;
         showCoop = parsed.coop;
       } else if (res.status === 429) {
@@ -167,6 +191,7 @@ export async function requestReply({ messages, demo, onDelta }) {
         const result = await readSse(res, onDelta);
         reply = result.text;
         showCoop = result.coop;
+        farmCmd = result.farm || '';
         if (!reply && showCoop) reply = COOP_LINE;
         failed = result.failed || !reply;
         if (failed && !reply) reply = FAIL;
@@ -186,7 +211,7 @@ export async function requestReply({ messages, demo, onDelta }) {
     streamed = false;
     nextDemo = true;
     failed = false;
-    const parsed = splitCoop(localAnswer(q));
+    const parsed = splitCoop(farmReply(q, farm) || localAnswer(q));
     reply = parsed.clean;
     showCoop = parsed.coop;
   }
@@ -194,5 +219,5 @@ export async function requestReply({ messages, demo, onDelta }) {
     reply = splitCoop(ANSWERS.skip).clean;
     showCoop = false;
   }
-  return { reply, showCoop, failed, streamed, demo: nextDemo, threw };
+  return { reply, showCoop, failed, streamed, demo: nextDemo, threw, farm: farmCmd };
 }
