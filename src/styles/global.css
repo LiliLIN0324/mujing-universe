@@ -312,6 +312,15 @@ footer.bot .social a {
 }
 footer.bot .social a:hover { color: var(--ink); }
 footer.bot .social svg { width: 18px; height: 18px; display: block; flex: none; }
+/* 页脚鸡场入口：一枚小蛋，链接切 ?farm=1（farm-dev 临时接线，随鸡场一起回滚）。 */
+footer.bot .farm-egg {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 2px;
+  color: var(--muted);
+}
+footer.bot .farm-egg:hover { color: var(--ink); }
+footer.bot .farm-egg svg { width: 14px; height: 17px; display: block; }
 footer.bot .copy {
   margin: 0;
   color: var(--muted);
