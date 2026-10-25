@@ -1,0 +1,255 @@
+{
+  "meta": {
+    "id": "butler-script",
+    "version": 1,
+    "root": "start",
+    "title": "管家 Mimi · 鸡场剧本树",
+    "note": "扁平节点字典 + 显式 next + vars + 行级 tags（ink/Yarn 式，前端本地执行，零 API 成本）。台词走文绉绉冷幽默，不感叹号轰炸。",
+    "grammar": {
+      "node": "nodes.{id} = { lines, choices?, next?, llm?, back? }。lines 顺序播放；choices 出现后等待点击；next 为播放完的落脚点；llm:true 表示该节点交自由聊（走 /api/chat）；back 是自由聊结束后的返回节点。",
+      "reserved": "__llm 自由聊节点、__close 关闭对话框。",
+      "line": "{ text, tags? }。text 里的 [[FARM:*]] / [[COOP]] 标记不进正文，由 ButlerDialogueBox 解释成 farm:cmd 事件发给鸡场总线；{key} 是插值占位。",
+      "tags": [
+        "if:VAR —— VAR 真值才显示该行（vars 优先，farm 快照兜底：chickens/eggs/各品种 id/各页面 slug/pages/dex_left）",
+        "if:!VAR —— VAR 假值才显示",
+        "if:VAR>N / if:VAR>=N / if:VAR=N / if:VAR<N / if:VAR<=N —— 数值比较",
+        "set:VAR=值 —— 该行显示时写入（true/false/数字）；set:VAR=+N 累加"
+      ],
+      "vars": {
+        "met_before": "localStorage 持久，首次见面后置 true",
+        "gift_used": "sessionStorage，每次会话限送一颗蛋（不进 localStorage）",
+        "trust": "localStorage 持久，跑腿与收礼各 +1，影响 hub 开场白"
+      },
+      "interp": "{chickens} {eggs} {noble} {ingot} {pages} {dex_left} 由对话层填：pages 渲染成「作品页 3 只、动态页 1 只」这类短语"
+    }
+  },
+  "vars": {
+    "met_before": false,
+    "gift_used": false,
+    "trust": 0
+  },
+  "nodes": {
+    "start": {
+      "lines": [
+        {
+          "text": "嗨，我是 Mimi～这窝鸡是我孵的，随便看，随便问。",
+          "tags": [
+            "if:!met_before",
+            "set:met_before=true"
+          ]
+        },
+        {
+          "text": "想办什么，下面挑一个就行。",
+          "tags": [
+            "if:!met_before"
+          ]
+        },
+        {
+          "text": "回来啦。你的鸡我都记着呢，想看想逗随你。",
+          "tags": [
+            "if:met_before"
+          ]
+        }
+      ],
+      "next": "hub"
+    },
+    "hub": {
+      "lines": [
+        {
+          "text": "老朋友～今天想让它们干点什么？",
+          "tags": [
+            "if:trust>=3"
+          ]
+        },
+        {
+          "text": "想做什么？下面挑一个，或者直接打字。",
+          "tags": [
+            "if:trust<3"
+          ]
+        }
+      ],
+      "choices": [
+        {
+          "label": "报告鸡场",
+          "next": "report"
+        },
+        {
+          "label": "送我一颗蛋",
+          "next": "gift",
+          "if": "!gift_used"
+        },
+        {
+          "label": "放几只去别的页面",
+          "next": "goto_pick"
+        },
+        {
+          "label": "要一张地图",
+          "next": "map"
+        },
+        {
+          "label": "找丽丽聊合作",
+          "next": "coop"
+        },
+        {
+          "label": "随便聊聊",
+          "next": "__llm"
+        },
+        {
+          "label": "先这样，我去遛遛",
+          "next": "bye"
+        }
+      ]
+    },
+    "report": {
+      "lines": [
+        {
+          "text": "现在鸡 {chickens} 只，蛋 {eggs} 颗。",
+          "tags": [
+            "if:chickens>0"
+          ]
+        },
+        {
+          "text": "分布是这样的：{pages}。",
+          "tags": [
+            "if:pages>0"
+          ]
+        },
+        {
+          "text": "灰贵族 {noble} 只，走路带风的那种。",
+          "tags": [
+            "if:noble>0"
+          ]
+        },
+        {
+          "text": "金·元宝 {ingot} 只，全场最亮就是它。",
+          "tags": [
+            "if:ingot>0"
+          ]
+        },
+        {
+          "text": "鸡 0 只，蛋 0 颗——点空白处下第一颗蛋就好。",
+          "tags": [
+            "if:chickens=0"
+          ]
+        },
+        {
+          "text": "图鉴还差 {dex_left} 个品种，多点几回就集齐了～",
+          "tags": [
+            "if:dex_left>0"
+          ]
+        }
+      ],
+      "next": "hub"
+    },
+    "gift": {
+      "lines": [
+        {
+          "text": "今天那颗已经送啦，明天再来～",
+          "tags": [
+            "if:gift_used"
+          ]
+        },
+        {
+          "text": "这颗给你。是龙是凤，孵出来才知道。[[FARM:gift:egg]]",
+          "tags": [
+            "if:!gift_used",
+            "set:gift_used=true",
+            "set:trust=+1"
+          ]
+        }
+      ],
+      "next": "hub"
+    },
+    "goto_pick": {
+      "lines": [
+        {
+          "text": "想让它们去哪儿逛逛？"
+        }
+      ],
+      "choices": [
+        {
+          "label": "作品页",
+          "next": "goto_works"
+        },
+        {
+          "label": "关于页",
+          "next": "goto_about"
+        },
+        {
+          "label": "动态页",
+          "next": "goto_news"
+        },
+        {
+          "label": "算了，都在这儿挺好",
+          "next": "hub"
+        }
+      ]
+    },
+    "goto_works": {
+      "lines": [
+        {
+          "text": "好嘞，去作品页见识一下什么叫 AIGC。[[FARM:goto:works]]",
+          "tags": [
+            "set:trust=+1"
+          ]
+        }
+      ],
+      "next": "hub"
+    },
+    "goto_about": {
+      "lines": [
+        {
+          "text": "去关于页转转，丽丽的履历都在那儿。[[FARM:goto:about]]",
+          "tags": [
+            "set:trust=+1"
+          ]
+        }
+      ],
+      "next": "hub"
+    },
+    "goto_news": {
+      "lines": [
+        {
+          "text": "动态页交给它们去打听了。[[FARM:goto:news]]",
+          "tags": [
+            "set:trust=+1"
+          ]
+        }
+      ],
+      "next": "hub"
+    },
+    "map": {
+      "lines": [
+        {
+          "text": "地图来啦——点哪行就飞去哪页。[[FARM:map]]"
+        }
+      ],
+      "next": "hub"
+    },
+    "coop": {
+      "lines": [
+        {
+          "text": "聊合作的话，丽丽直接对接，名片给你。[[COOP]]"
+        }
+      ],
+      "next": "hub"
+    },
+    "bye": {
+      "lines": [
+        {
+          "text": "去玩吧，鸡我看着～"
+        }
+      ],
+      "next": "__close"
+    },
+    "__llm": {
+      "lines": [
+        {
+          "text": "行，那就不挑了，想问什么直接说～"
+        }
+      ],
+      "llm": true,
+      "back": "hub"
+    }
+  }
+}
