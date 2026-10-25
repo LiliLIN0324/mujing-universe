@@ -500,7 +500,7 @@
 
   const landmarks = [
     { id: "duanqiao", name: "断桥", en: "DUAN QIAO · LINGERING SNOW", x: 330, y: -322, z: 40, r: 78,
-      desc: "白堤东端的一道石拱桥。雪后桥阳雪融、桥阴未消，远望似断非断，便有了“断桥残雪”。" },
+      desc: "白堤东端的一道石拱桥。雪后桥阳雪融、桥阴未消，远望似断非断，便有了“断桥残雪”。桥头四柱华表按南宋形制示意（宋桥无亭，非测绘级）。" },
     { id: "bai", name: "白堤", en: "BAI CAUSEWAY · WILLOWS IN MIST", x: -40, y: -518, z: 12, path: baiPath, w: 38,
       desc: "西湖北缘的长堤，东起断桥、西至平湖秋月，桃柳相间，雨雾里像一笔淡墨。" },
     { id: "su", name: "苏堤", en: "SU CAUSEWAY · SIX BRIDGES", x: -420, y: 12, z: 12, path: suPath, w: 44,
@@ -1011,6 +1011,26 @@
         ctx.beginPath();
         ctx.arc(sx, sy - 10 * s, Math.max(2 * s, .9), 0, TAU);
         ctx.fill();
+      }
+    }
+
+    /* 南宋形制：桥头华表四柱（柱头十字木、顶白鹤）。考据红线：宋桥无亭。 */
+    for (const end of [-1, 1]) {
+      for (const m of [-1, 1]) {
+        const bx = mid[0] + dx * end * (L / 2 + 8) + nx * m * 15;
+        const by = mid[1] + dy * end * (L / 2 + 8) + ny * m * 15;
+        const [hx, hy] = project(bx, by, 4);
+        const H = 44 * s;
+        ctx.strokeStyle = col("stoneDeep");
+        ctx.lineWidth = Math.max(2.4 * s, .9);
+        ctx.beginPath(); ctx.moveTo(hx, hy); ctx.lineTo(hx, hy - H); ctx.stroke();
+        /* 柱头十字木 */
+        ctx.lineWidth = Math.max(1.6 * s, .7);
+        ctx.beginPath(); ctx.moveTo(hx - 7 * s, hy - H * .8); ctx.lineTo(hx + 7 * s, hy - H * .8); ctx.stroke();
+        /* 柱顶白鹤 */
+        ctx.fillStyle = "rgba(246,244,237,.95)";
+        ctx.beginPath(); ctx.ellipse(hx, hy - H - 3 * s, Math.max(4 * s, 1.4), Math.max(2.4 * s, 1), 0, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(hx + 3.2 * s, hy - H - 5 * s, Math.max(1.6 * s, .8), 0, TAU); ctx.fill();
       }
     }
   }
@@ -1690,6 +1710,14 @@
       const lm = landmarks.find(l => l.id === b.dataset.place);
       if (lm) select(lm);
     });
+  });
+
+  /* 壳联动：接收集成壳选中（postMessage {xihuSelect: placeId}），与点 dock 按钮同路径 */
+  window.addEventListener("message", e => {
+    const id = e.data && e.data.xihuSelect;
+    if (!id) return;
+    const lm = landmarks.find(l => l.id === id);
+    if (lm) select(lm);
   });
 
   document.getElementById("cardClose").addEventListener("click", closeCard);
