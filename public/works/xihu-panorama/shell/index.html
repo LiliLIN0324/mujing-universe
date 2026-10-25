@@ -83,20 +83,28 @@ const SCENES=[
  {id:'leifeng',label:'雷峰夕照'},
  {id:'nanping',label:'南屏晚钟'}
 ];
-/* 每层对齐表：true=有对齐可跟随；false=暂无对齐（不假飞，出 §7.3 提示） */
-const ALIGN={
- all:       {huajuan:true, fuyuan:true,  jintu:true},
- duanqiao:  {huajuan:true, fuyuan:true,  jintu:true},
- sudi:      {huajuan:true, fuyuan:true,  jintu:true},
- pinghu:    {huajuan:true, fuyuan:false, jintu:false},
- quyuan:    {huajuan:true, fuyuan:false, jintu:true},
- huagang:   {huajuan:true, fuyuan:false, jintu:false},
- liulang:   {huajuan:true, fuyuan:false, jintu:false},
- santan:    {huajuan:true, fuyuan:false, jintu:true},
- shuangfeng:{huajuan:true, fuyuan:false, jintu:false},
- leifeng:   {huajuan:true, fuyuan:true,  jintu:true},
- nanping:   {huajuan:true, fuyuan:false, jintu:false}
+/* ===== 数据一层：统一选中 id 映射（西湖_id映射_12.md；null=暂无对齐，不假飞）===== */
+/* 层对齐判定：画卷看 gx / 复原看 fuyuan / 今图看 geo */
+const ID_MAP={
+ duanqiao:  {name:'断桥残雪', gx:26000, fuyuan:'断桥',   geo:[120.1439,30.2588]},
+ sudi:      {name:'苏堤春晓', gx:null,  fuyuan:'苏堤',   geo:[120.1300,30.2420]},
+ pinghu:    {name:'平湖秋月', gx:null,  fuyuan:null,     geo:[120.1386,30.2520]},
+ quyuan:    {name:'曲院风荷', gx:null,  fuyuan:'曲院风荷', geo:[120.1290,30.2470]},
+ huagang:   {name:'花港观鱼', gx:null,  fuyuan:null,     geo:[120.1370,30.2280]},
+ liulang:   {name:'柳浪闻莺', gx:null,  fuyuan:null,     geo:[120.1530,30.2400]},
+ santan:    {name:'三潭印月', gx:null,  fuyuan:'三潭印月', geo:[120.1417,30.2390]},
+ shuangfeng:{name:'双峰插云', gx:null,  fuyuan:null,     geo:null},
+ leifeng:   {name:'雷峰夕照', gx:11600, fuyuan:'雷峰塔', geo:[120.1487,30.2312]},
+ nanping:   {name:'南屏晚钟', gx:null,  fuyuan:null,     geo:[120.1440,30.2260]},
+ baoshuta:  {name:'保叔塔',   gx:24705, fuyuan:'保俶塔', geo:[120.1386,30.2669], scene:null},
+ gushan:    {name:'孤山',     gx:null,  fuyuan:null,     geo:[120.1360,30.2540], scene:null},
+ xitaiyi:   {name:'西太乙',   gx:null,  fuyuan:null,     geo:null, scene:null}, /* 慎用档挂起 */
+ zhaoxian:  {name:'招贤寺',   gx:null,  fuyuan:null,     geo:null, scene:null}  /* 慎用档挂起 */
 };
+function layerAnchor(layer,id){
+  const m=ID_MAP[id];if(!m)return null;
+  return layer==='huajuan'?m.gx:layer==='fuyuan'?m.fuyuan:m.geo;
+}
 const NAMES={duanqiao:'duanqiao',baoshuta:'all',leifengta:'leifeng'}; // 细选地名 → 所属十景
 const state={layer:'huajuan',scene:'all',yx:false}; // yx=圆相观感态（壳内，不升第四层）
 
@@ -150,10 +158,10 @@ function render(){
       ? '圆相观感：用其自带「叠合 / 仅今 / 仅圆」与章节 A–E 对照。'
       : '圆相随壳选中「'+label+'」：请在圆相内用叠合模式对照该景；自动飞行待其开放深链接口。';
   }else{
-    const aligned=ALIGN[state.scene][state.layer];
-    // §7.3：缺对齐不假飞，弱提示一行
+    // §7.3：读表判定——锚为 null 即暂无对齐，不假飞
+    const aligned=state.scene==='all'?true:layerAnchor(state.layer,state.scene)!==null;
     notice.textContent=aligned
-      ? (state.scene==='all'?'':'已收束到「'+label+'」——本层有对齐。')
+      ? (state.scene==='all'?'':'已收束到「'+label+'」——本层有对照锚（层内手动定位，自动跟随待接线）。')
       : '此层暂无对齐 · 换层或换名再试';
   }
   // 圆相次级入口（仅复原/今图层露出；壳内切换，不跳站）
