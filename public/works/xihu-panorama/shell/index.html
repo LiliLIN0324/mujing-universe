@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
@@ -36,6 +36,15 @@ h1{margin:2px 0 0;font-size:19px;letter-spacing:.04em;font-weight:600}
 footer{flex:0 0 auto;padding:10px 22px 12px;font-size:11.5px;color:var(--faint);letter-spacing:.05em;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 footer .names button{border:0;background:none;font:inherit;font-size:11.5px;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0 4px}
 footer .names button.on{color:var(--accent)}
+#journey-btn{border:1px solid var(--rule);background:#fff;font:inherit;font-size:12px;color:var(--ink);padding:4px 14px;cursor:pointer;border-radius:999px}
+#journey-btn:hover{border-color:var(--ink)}
+/* 看完一程：底部抽屉播放器（不占第四格） */
+#journey{display:none;position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--rule);padding:10px 22px;z-index:30;align-items:center;gap:14px;flex-wrap:wrap}
+#journey.on{display:flex}
+#journey .prog{font-size:11px;letter-spacing:.14em;color:var(--faint);white-space:nowrap}
+#journey .cap{flex:1 1 260px;font-size:13.5px;color:var(--ink)}
+#journey .ctl button{border:1px solid var(--rule);background:none;font:inherit;font-size:12.5px;padding:4px 12px;cursor:pointer;color:var(--soft);margin-left:6px}
+#journey .ctl button:hover{color:var(--ink);border-color:var(--ink)}
 @media(max-width:760px){
   header{padding:10px 14px 0}
   h1{font-size:16px}
@@ -66,8 +75,16 @@ footer .names button.on{color:var(--accent)}
 </div>
 <footer>
   <span>古今对照为示意，非测绘级。</span>
+  <span><button id="journey-btn">▶ 看完一程</button></span>
   <span class="names" id="names">细选：<button data-name="duanqiao">断桥</button><button data-name="baoshuta">保叔塔</button><button data-name="leifengta">雷峰塔</button></span>
 </footer>
+<div id="journey" role="dialog" aria-label="看完一程">
+  <span class="prog" id="j-prog"></span>
+  <span class="cap" id="j-cap"></span>
+  <span class="ctl">
+    <button id="j-toggle">暂停</button><button id="j-next">下一站 →</button><button id="j-exit">✕ 退出</button>
+  </span>
+</div>
 <script>
 /* ===== 选中总线（同一壳、同一选中态）===== */
 const SCENES=[
@@ -175,6 +192,42 @@ function render(){
   // URL 深链：壳 + 层 + 十景 + 圆相态（禁深链到独立站）
   history.replaceState(null,'','#layer='+state.layer+'&scene='+state.scene+(state.yx?'&yx=1':''));
 }
+/* ===== 看完一程：跋序 6 站，壳内串层（脚本见 西湖_看完一程_脚本.md）===== */
+const JOURNEY=[
+ {scene:'duanqiao', layer:'huajuan', dwell:8, cap:'卷从断桥起——宋桥无亭，桥头立的是华表'},
+ {scene:'duanqiao', layer:'fuyuan',  dwell:8, cap:'同一座桥，走进湖山里看它今天的样子（层内手动定位断桥）'},
+ {scene:'pinghu',   layer:'huajuan', dwell:7, cap:'过孤山，卷面滑到平湖——此处层内暂无对齐，看卷就好'},
+ {scene:'quyuan',   layer:'fuyuan',  dwell:8, cap:'曲院风荷，在 2.5D 湖山里找它的位置'},
+ {scene:'leifeng',  layer:'jintu',   dwell:9, cap:'雷峰塔：南宋是五层八面木檐，今日是重建新塔——对照着看'},
+ {scene:'santan',   layer:'jintu',   dwell:7, cap:'湖心收束，一程走完——退出后回全卷可自行再看'}
+];
+const jEl=document.getElementById('journey'),jProg=document.getElementById('j-prog'),
+      jCap=document.getElementById('j-cap'),jToggle=document.getElementById('j-toggle');
+const journey={i:-1,timer:null,playing:false};
+function journeyGo(i){
+  journey.i=i;const s=JOURNEY[i];
+  if(state.yx)toggleYx(false);
+  selectScene(s.scene);selectLayer(s.layer);
+  jProg.textContent=(i+1)+' / '+JOURNEY.length+' 站';
+  jCap.textContent=s.cap;
+  clearTimeout(journey.timer);
+  if(journey.playing){
+    if(i<JOURNEY.length-1)journey.timer=setTimeout(()=>journeyGo(i+1),s.dwell*1000);
+    else journey.timer=setTimeout(journeyExit,s.dwell*1000);
+  }
+}
+function journeyStart(){journey.playing=true;jEl.classList.add('on');jToggle.textContent='暂停';journeyGo(0);}
+function journeyExit(){journey.playing=false;clearTimeout(journey.timer);jEl.classList.remove('on');selectScene('all');selectLayer('huajuan');}
+document.getElementById('journey-btn').onclick=()=>journey.playing?journeyExit():journeyStart();
+jToggle.onclick=()=>{
+  journey.playing=!journey.playing;jToggle.textContent=journey.playing?'暂停':'继续';
+  if(journey.playing)journeyGo(journey.i);else clearTimeout(journey.timer);
+};
+document.getElementById('j-next').onclick=()=>{
+  if(journey.i<JOURNEY.length-1)journeyGo(journey.i+1);else journeyExit();
+};
+document.getElementById('j-exit').onclick=journeyExit;
+
 /* 深链还原 */
 const h=location.hash.match(/layer=(\w+)/),hs=location.hash.match(/scene=(\w+)/),hyx=/yx=1/.test(location.hash);
 if(hs&&SCENES.some(s=>s.id===hs[1]))selectScene(hs[1]);
