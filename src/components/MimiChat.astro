@@ -839,7 +839,7 @@ const email = 'lily1326685527@gmail.com';
     const canvas = launch?.querySelector('.mimi-rive');
     const hi = launch?.querySelector('.mimi-hi');
 
-    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const EMAIL = 'lily1326685527@gmail.com';
     const GREETING = '这卷西湖还在画。想听近况，或留下合作意向，都可以跟我说一句。';
     const COOP_LINE = '可以说古画、民乐音画，或一个合作项目。说完我把飞书名片放出来，你自己加好友。官网不会自动拉群。我们接什么在[合作页](/contact/#start)。';
