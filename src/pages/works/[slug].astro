@@ -46,13 +46,8 @@ const httpUrl = (value?: string) => {
 };
 const demoHref = httpUrl(w.demo);
 const newsHref = httpUrl(w.link);
-/* 西湖清趣四层体验：同壳四段切换，内容内嵌 iframe 不外跳。04 待成片，灰显不可点。 */
-const XIHU_LAYERS = w.slug === 'xihu-panorama' ? [
-  { id: 'scroll', n: '01', tab: '展卷', short: '听', s: '听着走完这一卷', src: 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/index.html', btn: '▶ 聆听', btnTip: '有声版待上线' },
-  { id: 'lakeside', n: '02', tab: '今日湖山', short: '看', s: '今天湖山长这样', src: '/works/xihu-panorama/lakeside/', btn: '进入拖看' },
-  { id: 'yuanxiang', n: '03', tab: '古名今岸', short: '比', s: '古名钉在今岸', src: 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024', btn: '叠合对照', btnTip: '当前为叠合对照模式' },
-  { id: 'film', n: '04', tab: '看完一程', short: '走', s: '二十四秒看完一程', pending: true },
-] : [];
+/* 西湖清趣：官网只留一条进壳入口（进度5 收口），壳在 /works/xihu-panorama/shell/ */
+const XIHU_SHELL = w.slug === 'xihu-panorama';
 ---
 <Base title={`${w.title} · 幕景宇宙`} description={intro ? intro.slice(0, 140) : undefined} active="/works/" home navClass="top--work">
 <div class="wd">
@@ -88,40 +83,15 @@ const XIHU_LAYERS = w.slug === 'xihu-panorama' ? [
     </div>
   </section>
 
-  {XIHU_LAYERS.length > 0 && <section class="wd-page wd-layers" id="layers" aria-labelledby="layers-h" data-dwell={PAGE_DWELL.scroll}>
+  {XIHU_SHELL && <section class="wd-page wd-layers" id="layers" aria-labelledby="layers-h" data-dwell={PAGE_DWELL.scroll}>
     <div class="wd-wrap">
-      <p class="wl-brand">当代西湖 · 听 / 看 / 比 / 走</p>
-      <h2 class="wl-title" id="layers-h">同一卷西湖的四种看法</h2>
-      <p class="wl-lead">先听古画上的名字，再看今天的湖山；把古名按回今天的岸，最后坐下来看完一程。</p>
-      <div class="wl-shell">
-        <div class="wl-tabs" role="tablist" aria-label="四层体验">
-          {XIHU_LAYERS.map((l, i) => (
-            <button type="button" role="tab" aria-selected={i === 0 ? 'true' : 'false'} aria-controls={`wl-panel-${l.id}`} id={`wl-tab-${l.id}`} data-tab={l.id} class:list={['wl-tab', l.pending && 'is-pending', i === 0 && 'is-active']} disabled={l.pending} tabindex={i === 0 ? 0 : -1}>
-              <span class="wl-tab-n">{l.n}</span>
-              <span class="wl-tab-t">{l.tab}</span>
-              <span class="wl-tab-s">{l.short}</span>
-            </button>
-          ))}
-        </div>
-        <div class="wl-panels">
-          {XIHU_LAYERS.map((l, i) => (
-            <div role="tabpanel" id={`wl-panel-${l.id}`} aria-labelledby={`wl-tab-${l.id}`} data-panel={l.id} class:list={['wl-panel', i === 0 && 'is-active']} hidden={i !== 0}>
-              <p class="wl-sentence">{l.s}</p>
-              {l.pending ? (
-                <div class="wl-stage is-empty"><p class="wl-empty">待成片上传后开放</p></div>
-              ) : (
-                <div class="wl-stage">
-                  <iframe data-src={l.src} title={`${l.tab}体验`} loading="lazy" referrerpolicy="no-referrer" allow="fullscreen"></iframe>
-                </div>
-              )}
-              {!l.pending && l.btn && <div class="wl-actions">
-                <button type="button" class="wl-btn" data-action={l.id} disabled={!!l.btnTip} title={l.btnTip || undefined}>{l.btn}</button>
-              </div>}
-              <p class="wl-foot">古今对照为示意，非测绘级。</p>
-            </div>
-          ))}
-        </div>
+      <p class="wl-brand">当代西湖 · 画卷 / 复原 / 今图</p>
+      <h2 class="wl-title" id="layers-h">同一卷西湖，三种看法</h2>
+      <p class="wl-lead">画清趣长卷，游南宋复原，对今日湖山——同一片西湖，一个壳里切换。</p>
+      <div class="wl-actions" style="margin-top:28px">
+        <a class="wl-btn" href="/works/xihu-panorama/shell/" style="text-decoration:none">进入西湖清趣壳 →</a>
       </div>
+      <p class="wl-foot">古今对照为示意，非测绘级。</p>
     </div>
   </section>}
 
@@ -405,66 +375,5 @@ if (heroImg) heroImg.addEventListener('error', () => {
   const next = heroImg.dataset.fallback;
   if (next && heroImg.getAttribute('src') !== next) heroImg.src = next;
 }, { once: true });
-
-// 西湖清趣 · 四层体验：同壳四段切换
-const tabs = document.querySelectorAll('.wl-tab');
-const panels = document.querySelectorAll('.wl-panel');
-if (tabs.length && panels.length) {
-  const loadIframe = (panel) => {
-    const iframe = panel.querySelector('iframe[data-src]');
-    if (iframe) {
-      iframe.src = iframe.dataset.src;
-      iframe.removeAttribute('data-src');
-    }
-  };
-  const activate = (id) => {
-    tabs.forEach((t) => {
-      const on = t.dataset.tab === id;
-      t.classList.toggle('is-active', on);
-      t.setAttribute('aria-selected', on ? 'true' : 'false');
-      t.tabIndex = on ? 0 : -1;
-    });
-    panels.forEach((p) => {
-      const on = p.dataset.panel === id;
-      p.classList.toggle('is-active', on);
-      if (on) { p.hidden = false; loadIframe(p); }
-      else p.hidden = true;
-    });
-  };
-  // 默认签：展卷——首屏即加载其 iframe
-  const activeTab = document.querySelector('.wl-tab.is-active:not(:disabled)');
-  if (activeTab) loadIframe(document.querySelector(`.wl-panel[data-panel="${activeTab.dataset.tab}"]`));
-  tabs.forEach((t) => {
-    if (t.disabled) return;
-    t.addEventListener('click', () => activate(t.dataset.tab));
-  });
-  // 键盘左右切换
-  const tabList = document.querySelector('.wl-tabs');
-  if (tabList) {
-    tabList.addEventListener('keydown', (e) => {
-      const enabled = [...tabs].filter((t) => !t.disabled);
-      const idx = enabled.indexOf(document.activeElement);
-      if (idx < 0) return;
-      let next = -1;
-      if (e.key === 'ArrowRight') next = (idx + 1) % enabled.length;
-      else if (e.key === 'ArrowLeft') next = (idx - 1 + enabled.length) % enabled.length;
-      else if (e.key === 'Home') next = 0;
-      else if (e.key === 'End') next = enabled.length - 1;
-      if (next >= 0) {
-        e.preventDefault();
-        enabled[next].focus();
-        activate(enabled[next].dataset.tab);
-      }
-    });
-  }
-  // 主按钮：进入拖看 → 聚焦 iframe 便于拖动
-  document.querySelectorAll('.wl-btn[data-action]').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const panel = btn.closest('.wl-panel');
-      const iframe = panel?.querySelector('iframe');
-      iframe?.focus();
-    });
-  });
-}
 </script>
 </Base>
