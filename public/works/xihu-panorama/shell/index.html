@@ -1,0 +1,279 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>西湖清趣 · 集成壳（三层 + 十景）</title>
+<style>
+:root{--ink:#1c1a16;--soft:#5a554b;--faint:#9a9384;--rule:#ddd5c6;--bg:#f7f4ec;--accent:#8a2f2f}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.7 "Songti SC","STSong",serif;height:100vh;display:flex;flex-direction:column}
+header{padding:14px 22px 0;flex:0 0 auto}
+.brand{font-size:11px;letter-spacing:.18em;color:var(--faint)}
+h1{margin:2px 0 0;font-size:19px;letter-spacing:.04em;font-weight:600}
+/* §7.1 Segment 三段 */
+.seg{display:inline-flex;margin-top:12px;border:1px solid var(--rule);background:#fff}
+.seg button{border:0;background:none;font:inherit;font-size:15px;padding:8px 26px;cursor:pointer;color:var(--soft);border-right:1px solid var(--rule)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:#fff}
+/* §7.2 十景 chips：Segment 下方一条横滑 */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;padding:5px 14px;border:1px solid var(--rule);border-radius:999px;background:#fff;font:inherit;font-size:13px;color:var(--soft);cursor:pointer;white-space:nowrap}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.chip:hover{color:var(--ink)}
+.chip.on:hover{color:#fff}
+/* §7.3 缺对齐弱提示 */
+.notice{min-height:22px;font-size:12.5px;color:var(--faint);letter-spacing:.03em;padding:2px 2px 0}
+/* 主画区 */
+.stage{position:relative;flex:1 1 auto;margin:6px 22px 0;border:1px solid var(--rule);background:#fff;overflow:hidden}
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
+.stage iframe.on{display:block}
+/* 层内次级入口（圆相）与章节串（看完一程）：不抢主按钮 */
+.sub{position:absolute;right:14px;bottom:12px;font-size:12.5px;color:var(--faint);background:rgba(255,255,255,.88);padding:4px 10px;border:1px solid var(--rule)}
+.sub button{border:0;background:none;font:inherit;font-size:12.5px;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.sub button:hover{color:var(--ink)}
+/* 载入垫底（XQ-08：iframe 未就绪前不露白） */
+.loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--faint);font-size:13px;letter-spacing:.2em;background:var(--bg);z-index:5;pointer-events:none}
+.loading.on{display:flex}
+footer{flex:0 0 auto;padding:10px 22px 12px;font-size:11.5px;color:var(--faint);letter-spacing:.05em;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+footer .names button{border:0;background:none;font:inherit;font-size:11.5px;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0 4px}
+footer .names button.on{color:var(--accent)}
+#journey-btn{border:1px solid var(--rule);background:#fff;font:inherit;font-size:12px;color:var(--ink);padding:4px 14px;cursor:pointer;border-radius:999px}
+#journey-btn:hover{border-color:var(--ink)}
+/* 看完一程：底部抽屉播放器（不占第四格） */
+#journey{display:none;position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.96);border-top:1px solid var(--rule);padding:10px 22px;z-index:30;align-items:center;gap:14px;flex-wrap:wrap}
+#journey.on{display:flex}
+#journey .prog{font-size:11px;letter-spacing:.14em;color:var(--faint);white-space:nowrap}
+#journey .cap{flex:1 1 260px;font-size:13.5px;color:var(--ink)}
+#journey .ctl button{border:1px solid var(--rule);background:none;font:inherit;font-size:12.5px;padding:4px 12px;cursor:pointer;color:var(--soft);margin-left:6px}
+#journey .ctl button:hover{color:var(--ink);border-color:var(--ink)}
+@media(max-width:760px){
+  header{padding:10px 14px 0}
+  h1{font-size:16px}
+  .seg{display:flex}.seg button{flex:1;padding:8px 0;font-size:14px}
+  .stage{margin:4px 12px 0}
+  footer{padding:8px 14px 10px}
+}
+</style>
+</head>
+<body>
+<header>
+  <p class="brand">西湖清趣 · 集成壳（进度3 原型）</p>
+  <h1>同一卷西湖 · 三层互指</h1>
+  <div class="seg" role="tablist" aria-label="三层切换" id="seg">
+    <button data-layer="huajuan" class="on">画卷</button>
+    <button data-layer="fuyuan">复原</button>
+    <button data-layer="jintu">今图</button>
+  </div>
+  <div class="chips" id="chips" aria-label="十景滤镜"></div>
+  <p class="notice" id="notice"></p>
+</header>
+<div class="stage" id="stage">
+  <iframe data-layer="huajuan" class="on" title="画卷层" src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/index.html" referrerpolicy="no-referrer"></iframe>
+  <iframe data-layer="fuyuan" title="南宋复原层" data-src="../lakeside/" referrerpolicy="no-referrer"></iframe>
+  <iframe data-layer="jintu" title="今图对照层" data-src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024" referrerpolicy="no-referrer"></iframe>
+  <iframe data-layer="yuanxiang" title="圆相观感（壳内）" data-src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024" referrerpolicy="no-referrer"></iframe>
+  <div class="sub" id="sub"></div>
+  <div class="loading" id="loading"></div>
+</div>
+<footer>
+  <span>古今对照为示意，非测绘级。</span>
+  <span><button id="journey-btn">▶ 看完一程</button></span>
+  <span class="names" id="names">细选：<button data-name="duanqiao">断桥</button><button data-name="baoshuta">保叔塔</button><button data-name="leifengta">雷峰塔</button></span>
+</footer>
+<div id="journey" role="dialog" aria-label="看完一程">
+  <span class="prog" id="j-prog"></span>
+  <span class="cap" id="j-cap"></span>
+  <span class="ctl">
+    <button id="j-toggle">暂停</button><button id="j-next">下一站 →</button><button id="j-exit">✕ 退出</button>
+  </span>
+</div>
+<script>
+/* ===== 选中总线（同一壳、同一选中态）===== */
+const SCENES=[
+ {id:'all',label:'全卷'},
+ {id:'duanqiao',label:'断桥残雪'},
+ {id:'sudi',label:'苏堤春晓'},
+ {id:'pinghu',label:'平湖秋月'},
+ {id:'quyuan',label:'曲院风荷'},
+ {id:'huagang',label:'花港观鱼'},
+ {id:'liulang',label:'柳浪闻莺'},
+ {id:'santan',label:'三潭印月'},
+ {id:'shuangfeng',label:'双峰插云'},
+ {id:'leifeng',label:'雷峰夕照'},
+ {id:'nanping',label:'南屏晚钟'}
+];
+/* ===== 数据一层：统一选中 id 映射（西湖_id映射_12.md；null=暂无对齐，不假飞）===== */
+/* 层对齐判定：画卷看 gx / 复原看 fuyuan / 今图看 geo */
+const ID_MAP={
+ duanqiao:  {name:'断桥残雪', gx:26000, fuyuan:'duanqiao', geo:[120.1439,30.2588]},
+ sudi:      {name:'苏堤春晓', gx:null,  fuyuan:'su',      geo:[120.1300,30.2420]},
+ pinghu:    {name:'平湖秋月', gx:null,  fuyuan:null,      geo:[120.1386,30.2520]},
+ quyuan:    {name:'曲院风荷', gx:null,  fuyuan:'quyuan',  geo:[120.1290,30.2470]},
+ huagang:   {name:'花港观鱼', gx:null,  fuyuan:null,      geo:[120.1370,30.2280]},
+ liulang:   {name:'柳浪闻莺', gx:null,  fuyuan:null,      geo:[120.1530,30.2400]},
+ santan:    {name:'三潭印月', gx:null,  fuyuan:'santan',  geo:[120.1417,30.2390]},
+ shuangfeng:{name:'双峰插云', gx:null,  fuyuan:null,      geo:null},
+ leifeng:   {name:'雷峰夕照', gx:11600, fuyuan:'leifeng', geo:[120.1487,30.2312]},
+ nanping:   {name:'南屏晚钟', gx:null,  fuyuan:null,      geo:[120.1440,30.2260]},
+ baoshuta:  {name:'保叔塔',   gx:24705, fuyuan:'baochu',  geo:[120.1386,30.2669], scene:null},
+ gushan:    {name:'孤山',     gx:null,  fuyuan:null,      geo:[120.1360,30.2540], scene:null},
+ xitaiyi:   {name:'西太乙',   gx:null,  fuyuan:null,      geo:null, scene:null}, /* 慎用档挂起 */
+ zhaoxian:  {name:'招贤寺',   gx:null,  fuyuan:null,      geo:null, scene:null}  /* 慎用档挂起 */
+};
+function layerAnchor(layer,id){
+  const m=ID_MAP[id];if(!m)return null;
+  return layer==='huajuan'?m.gx:layer==='fuyuan'?m.fuyuan:m.geo;
+}
+const NAMES={duanqiao:'duanqiao',baoshuta:'baoshuta',leifengta:'leifeng'}; // 细选地名 → 统一 id
+const state={layer:'huajuan',scene:'all',yx:false,name:null}; // yx=圆相观感态（壳内，不升第四层）
+
+const seg=document.getElementById('seg'),chips=document.getElementById('chips'),
+      notice=document.getElementById('notice'),sub=document.getElementById('sub'),
+      frames=[...document.querySelectorAll('.stage iframe')];
+
+SCENES.forEach(s=>{
+  const b=document.createElement('button');
+  b.className='chip'+(s.id==='all'?' on':'');b.textContent=s.label;b.dataset.scene=s.id;
+  b.onclick=()=>selectScene(s.id===state.scene?'all':s.id); // 再点同 chip 取消回全卷
+  chips.appendChild(b);
+});
+
+seg.addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;selectLayer(b.dataset.layer);
+});
+document.getElementById('names').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  const id=NAMES[b.dataset.name];const m=ID_MAP[id];
+  const sc=m?(m.scene===null?'all':(m.scene||id)):'all';
+  selectScene(sc);state.name=id;
+  [...document.querySelectorAll('#names button')].forEach(x=>x.classList.toggle('on',x===b));
+  if(m&&m.scene===null){
+    // 非十景地名：诚实出锚信息，不假装收束（修走查假动作 B）
+    const bits=[m.gx!=null&&'画卷 gx≈'+m.gx, m.fuyuan!=null&&'复原层可点到', m.geo&&'今址可对照'].filter(Boolean);
+    notice.textContent=m.name+'（不属十景）：'+(bits.length?bits.join(' · '):'考据挂起中');
+  }
+  pushFuyuan();
+});
+
+/* ===== 层内真跟随：复原层（2.5D 同源）postMessage 选中 ===== */
+function pushFuyuan(){
+  const f=frames.find(x=>x.dataset.layer==='fuyuan');
+  if(!f||!f.src||!f.contentWindow)return;
+  const m=ID_MAP[state.name||state.scene];
+  const anchor=m?m.fuyuan:null;
+  if(anchor){ try{ f.contentWindow.postMessage({xihuSelect:anchor},'*'); }catch(_){} }
+}
+/* ===== 载入垫底（XQ-08 防白闪外露） ===== */
+const loading=document.getElementById('loading');
+const LOADTXT={huajuan:'长卷载入中…',fuyuan:'湖山载入中…',jintu:'底图载入中…',yuanxiang:'圆相载入中…'};
+frames.forEach(f=>f.addEventListener('load',()=>{
+  f.dataset.loaded='1';updateLoading();
+  if(f.dataset.layer==='fuyuan')pushFuyuan(); // 载好后补一次选中（防消息丢失）
+}));
+function updateLoading(){
+  const cur=state.yx?'yuanxiang':state.layer;
+  const f=frames.find(x=>x.dataset.layer===cur);
+  const show=f&&f.src&&!f.dataset.loaded;
+  loading.classList.toggle('on',!!show);
+  if(show)loading.textContent=LOADTXT[cur]||'载入中…';
+}
+
+function selectLayer(l){
+  state.layer=l;state.yx=false;
+  [...seg.children].forEach(b=>b.classList.toggle('on',b.dataset.layer===l));
+  frames.forEach(f=>{
+    const on=f.dataset.layer===l;
+    if(on&&!f.src&&f.dataset.src)f.src=f.dataset.src; // 懒加载
+    f.classList.toggle('on',on);
+  });
+  updateLoading();
+  if(l==='fuyuan')pushFuyuan();
+  render();
+}
+function toggleYx(on){
+  state.yx=on;
+  const f=frames.find(x=>x.dataset.layer==='yuanxiang');
+  if(on&&!f.src)f.src=f.dataset.src; // 首次进入才载；之后常驻不卸（XQ-08 防白闪）
+  frames.forEach(x=>x.classList.toggle('on',x.dataset.layer===(on?'yuanxiang':state.layer)));
+  updateLoading();
+  render();
+}
+function selectScene(s){
+  state.scene=s;state.name=null;
+  [...chips.children].forEach(c=>c.classList.toggle('on',c.dataset.scene===s));
+  render();
+  pushFuyuan();
+}
+function render(){
+  const label=SCENES.find(s=>s.id===state.scene).label;
+  if(state.yx){
+    // 圆相跟选中：本机无其源码、无深链 API，不假飞——出对照指引（诚实态）
+    notice.textContent=state.scene==='all'
+      ? '圆相观感：用其自带「叠合 / 仅今 / 仅圆」与章节 A–E 对照。'
+      : '圆相随壳选中「'+label+'」：请在圆相内用叠合模式对照该景；自动飞行待其开放深链接口。';
+  }else{
+    // §7.3：读表判定——锚为 null 即暂无对齐，不假飞
+    const aligned=state.scene==='all'?true:layerAnchor(state.layer,state.scene)!==null;
+    notice.textContent=aligned
+      ? (state.scene==='all'?'':state.layer==='fuyuan'
+        ? '已收束到「'+label+'」——复原层已联动定位。'
+        : '已收束到「'+label+'」——本层有对照锚（层内手动定位，自动跟随待接线）。')
+      : '此层暂无对齐 · 换层或换名再试';
+  }
+  // 圆相次级入口（仅复原/今图层露出；壳内切换，不跳站）
+  if(state.yx){
+    sub.innerHTML='<button id="yx-off">← 返回本层</button>';
+    document.getElementById('yx-off').onclick=()=>toggleYx(false);
+  }else if(state.layer==='fuyuan'||state.layer==='jintu'){
+    sub.innerHTML='次级入口：<button id="yx-on">圆相</button>';
+    document.getElementById('yx-on').onclick=()=>toggleYx(true);
+  }else sub.innerHTML='';
+  // URL 深链：壳 + 层 + 十景 + 圆相态（禁深链到独立站）
+  history.replaceState(null,'','#layer='+state.layer+'&scene='+state.scene+(state.yx?'&yx=1':''));
+}
+/* ===== 看完一程：跋序 6 站，壳内串层（脚本见 西湖_看完一程_脚本.md）===== */
+const JOURNEY=[
+ {scene:'duanqiao', layer:'huajuan', dwell:8, cap:'卷从断桥起——宋桥无亭，桥头立的是华表'},
+ {scene:'duanqiao', layer:'fuyuan',  dwell:8, cap:'同一座桥，走进湖山里看它今天的样子（层内手动定位断桥）'},
+ {scene:'pinghu',   layer:'huajuan', dwell:7, cap:'过孤山，卷面滑到平湖——此处层内暂无对齐，看卷就好'},
+ {scene:'quyuan',   layer:'fuyuan',  dwell:8, cap:'曲院风荷，在 2.5D 湖山里找它的位置'},
+ {scene:'leifeng',  layer:'jintu',   dwell:9, cap:'雷峰塔：南宋是五层八面木檐，今日是重建新塔——对照着看'},
+ {scene:'santan',   layer:'jintu',   dwell:7, cap:'湖心收束，一程走完——退出后回全卷可自行再看'}
+];
+const jEl=document.getElementById('journey'),jProg=document.getElementById('j-prog'),
+      jCap=document.getElementById('j-cap'),jToggle=document.getElementById('j-toggle');
+const journey={i:-1,timer:null,playing:false};
+function journeyGo(i){
+  journey.i=i;const s=JOURNEY[i];
+  if(state.yx)toggleYx(false);
+  selectScene(s.scene);selectLayer(s.layer);
+  jProg.textContent=(i+1)+' / '+JOURNEY.length+' 站';
+  jCap.textContent=s.cap;
+  clearTimeout(journey.timer);
+  if(journey.playing){
+    if(i<JOURNEY.length-1)journey.timer=setTimeout(()=>journeyGo(i+1),s.dwell*1000);
+    else journey.timer=setTimeout(journeyExit,s.dwell*1000);
+  }
+}
+function journeyStart(){journey.playing=true;jEl.classList.add('on');jToggle.textContent='暂停';journeyGo(0);}
+function journeyExit(){journey.playing=false;clearTimeout(journey.timer);jEl.classList.remove('on');selectScene('all');selectLayer('huajuan');}
+document.getElementById('journey-btn').onclick=()=>journey.playing?journeyExit():journeyStart();
+jToggle.onclick=()=>{
+  journey.playing=!journey.playing;jToggle.textContent=journey.playing?'暂停':'继续';
+  if(journey.playing)journeyGo(journey.i);else clearTimeout(journey.timer);
+};
+document.getElementById('j-next').onclick=()=>{
+  if(journey.i<JOURNEY.length-1)journeyGo(journey.i+1);else journeyExit();
+};
+document.getElementById('j-exit').onclick=journeyExit;
+
+/* 深链还原 */
+const h=location.hash.match(/layer=(\w+)/),hs=location.hash.match(/scene=(\w+)/),hyx=/yx=1/.test(location.hash);
+if(hs&&SCENES.some(s=>s.id===hs[1]))selectScene(hs[1]);
+if(h&&['huajuan','fuyuan','jintu'].includes(h[1]))selectLayer(h[1]);else render();
+if(hyx&&(state.layer==='fuyuan'||state.layer==='jintu'))toggleYx(true);
+</script>
+</body>
+</html>
