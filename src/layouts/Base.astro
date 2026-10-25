@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import MimiChat from '../components/MimiChat.astro';
+import ChickenFarm from '../components/ChickenFarm.astro';
 import wordmarkSvg from '/public/brand/wordmark.svg?raw';
 const {
   title = '幕景宇宙 · 林丽丽艺术工作室',
@@ -17,6 +18,12 @@ const links = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'
 const pageNav = navClass.split(' ').filter((c) => c && c !== 'top--unified').join(' ');
 const canonical = Astro.site ? new URL(Astro.url.pathname + Astro.url.search, Astro.site).href : '';
 const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
+// 鸡场接线（farm-dev 临时，一键回滚 = 删掉这几行 + 模板里 farm-egg / 两个组件标签 + global.css 的 .farm-egg 段）：
+// 站点是纯静态构建，构建期看不到 query，所以组件在非 /contact/ 页常驻输出、由组件脚本自查 ?farm=1 决定是否启用。
+const farmPath = Astro.url.pathname;
+const isContact = farmPath.startsWith('/contact');
+const page = isContact ? 'contact' : farmPath.startsWith('/works') ? 'works' : farmPath.startsWith('/about') ? 'about' : farmPath.startsWith('/news') ? 'news' : 'home';
+const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡场时由页脚脚本纠正为关闭
 ---
 <html lang="zh-CN">
 <head>
@@ -56,7 +63,7 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
   <meta property="og:image:alt" content="幕景宇宙"/>
   <meta name="twitter:card" content="summary_large_image"/>
 </head>
-<body class:list={[{ home, fullscreen }]}>
+<body class:list={[{ home, fullscreen }]} data-page={page}>
 <a class="skip" href="#content">跳到主要内容</a>
 {home ? (
 <header class:list={["top top--home", navClass]} id="home-nav" data-autohide>
@@ -90,6 +97,7 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 <div id="content">
 <slot/>
 </div>
+<ChickenFarm page={page} />
 <footer class="bot">
   <nav class="social" aria-label="社交">
     <a href="/contact/#feishu">
@@ -113,6 +121,11 @@ const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
       <span>Instagram</span>
     </a>
   </nav>
+  {!isContact && (
+    <a class="farm-egg" href={farmHref} aria-label="打开鸡场" title="幕景鸡场">
+      <svg viewBox="0 0 60 72" aria-hidden="true"><path fill="currentColor" d="M30 4C44 4 54 24 54 42C54 58 43.5 68 30 68C16.5 68 6 58 6 42C6 24 16 4 30 4Z"/></svg>
+    </a>
+  )}
   <p class="copy">© 2026 幕景宇宙</p>
 </footer>
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
@@ -162,7 +175,23 @@ themeBtn?.addEventListener('click', () => {
 document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
   img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
 }));
+// 鸡场蛋按钮：静态构建看不到 query，客户端把 href/标签纠正（?farm=1 时点一下回干净地址）。
+const eggBtn = document.querySelector('a.farm-egg');
+if (eggBtn && new URLSearchParams(location.search).get('farm') === '1') {
+  eggBtn.setAttribute('href', location.pathname);
+}
+// 三入口一致（浮层 chips / 合作页 chips / 页脚蛋）：蛋 = 开↔收，同一 farm:toggle；
+// 收起后 ChickenFarm 移除 body.farm-on，全站 cursor 恢复。标签随状态同步。
+if (eggBtn) {
+  eggBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.dispatchEvent(new CustomEvent('farm:toggle'));
+  });
+  const syncEgg = () => eggBtn.setAttribute('aria-label', document.body.classList.contains('farm-on') ? '关闭鸡场' : '打开鸡场');
+  new MutationObserver(syncEgg).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  syncEgg();
+}
 </script>
-<MimiChat />
+{!isContact && <MimiChat />}
 </body>
 </html>
