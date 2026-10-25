@@ -1,0 +1,1824 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#dfe7e0" id="themeColor">
+  <meta name="description" content="一处可游、可看的程序化西湖 2.5D 山水。">
+  <title>湖山清远 · 西湖 2.5D</title>
+  <style>
+    :root {
+      --ui-ink: #263b37;
+      --ui-soft: #5a6961;
+      --paper: #eeeadd;
+      --paper-rgb: 238, 234, 221;
+      --line: rgba(38, 59, 55, .26);
+      --accent: #a96f4c;
+      --seal: #9e4e3f;
+      --shadow: rgba(26, 43, 39, .17);
+      --display: "FangSong", "STFangsong", "Songti SC", "SimSun", serif;
+      --body: "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    body[data-mood="dusk"] {
+      --paper: #f2e4cb;
+      --paper-rgb: 242, 228, 203;
+      --line: rgba(88, 58, 40, .28);
+      --shadow: rgba(70, 40, 20, .22);
+    }
+
+    body[data-mood="night"] {
+      --ui-ink: #e7e0cd;
+      --ui-soft: #a9a795;
+      --paper: #1b2530;
+      --paper-rgb: 27, 37, 48;
+      --line: rgba(231, 224, 205, .24);
+      --accent: #d8a35e;
+      --seal: #c58a68;
+      --shadow: rgba(0, 0, 0, .45);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #d9dfd7;
+    }
+
+    body {
+      color: var(--ui-ink);
+      font-family: var(--body);
+      -webkit-font-smoothing: antialiased;
+      overscroll-behavior: none;
+      transition: background .8s ease;
+    }
+
+    button { color: inherit; font: inherit; }
+
+    button:focus-visible {
+      outline: 1px solid var(--accent);
+      outline-offset: 4px;
+    }
+
+    #scene {
+      position: fixed;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+      cursor: grab;
+      outline: none;
+    }
+
+    #scene.is-dragging { cursor: grabbing; }
+    #scene.is-pointing { cursor: pointer; }
+
+    .grain {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      opacity: .55;
+      background-image:
+        radial-gradient(120% 90% at 50% 42%, transparent 55%, rgba(26, 35, 32, .12) 100%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+
+    .ui {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .ui button, .ui a { pointer-events: auto; }
+
+    .masthead {
+      position: absolute;
+      top: clamp(20px, 4vw, 54px);
+      left: clamp(18px, 4.5vw, 64px);
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      animation: arrive 1s cubic-bezier(.2, .7, .25, 1) both;
+    }
+
+    .seal {
+      width: 38px;
+      height: 50px;
+      border: 1px solid var(--seal);
+      box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px rgba(158, 78, 63, .7);
+      background: var(--seal);
+      color: #f0e9da;
+      display: grid;
+      place-content: center;
+      line-height: 1.15;
+      font-family: var(--display);
+      font-size: 17px;
+      margin-top: 3px;
+      opacity: .92;
+      writing-mode: vertical-rl;
+      letter-spacing: 2px;
+    }
+
+    .title-block {
+      padding-left: 16px;
+      border-left: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 8px;
+      letter-spacing: .25em;
+      color: var(--ui-soft);
+      white-space: nowrap;
+    }
+
+    h1 {
+      margin: 0 0 14px;
+      font-family: var(--display);
+      font-size: clamp(26px, 3.4vw, 40px);
+      font-weight: 600;
+      letter-spacing: .14em;
+      line-height: 1.25;
+    }
+
+    .moods {
+      display: inline-flex;
+      gap: 2px;
+      margin-top: 4px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(var(--paper-rgb), .55);
+      backdrop-filter: blur(6px);
+    }
+
+    .moods button {
+      border: 0;
+      background: transparent;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: .2em;
+      text-indent: .2em;
+      cursor: pointer;
+      color: var(--ui-soft);
+      transition: background .3s ease, color .3s ease;
+    }
+
+    .moods button.is-on {
+      background: var(--ui-ink);
+      color: var(--paper);
+    }
+
+    body[data-mood="night"] .moods button.is-on {
+      background: #e7e0cd;
+      color: #1b2530;
+    }
+
+    .dock {
+      position: absolute;
+      left: 50%;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      max-width: min(92vw, 720px);
+      padding: 7px 9px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(var(--paper-rgb), .88);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 12px 32px -14px var(--shadow);
+      animation: arrive 1s .15s cubic-bezier(.2, .7, .25, 1) both;
+    }
+
+    .dock::-webkit-scrollbar { display: none; }
+
+    .dock button {
+      flex: 0 0 auto;
+      border: 0;
+      background: transparent;
+      padding: 6px 13px;
+      border-radius: 999px;
+      font-family: var(--display);
+      font-size: 14px;
+      letter-spacing: .1em;
+      cursor: pointer;
+      color: var(--ui-ink);
+      transition: background .25s ease;
+      white-space: nowrap;
+    }
+
+    .dock button:hover { background: rgba(var(--paper-rgb), .9); }
+    .dock button.is-on {
+      background: var(--accent);
+      color: #f7efe2;
+    }
+
+    .tools {
+      position: absolute;
+      bottom: max(18px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      animation: arrive 1s .25s cubic-bezier(.2, .7, .25, 1) both;
+    }
+
+    .tools-left { left: clamp(14px, 3vw, 28px); }
+    .tools-right { right: clamp(14px, 3vw, 28px); }
+
+    .tools button {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: rgba(var(--paper-rgb), .88);
+      backdrop-filter: blur(8px);
+      font-size: 15px;
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      box-shadow: 0 8px 22px -14px var(--shadow);
+      transition: transform .2s ease, background .25s ease;
+    }
+
+    .tools button:hover { transform: translateY(-2px); background: rgba(var(--paper-rgb), .95); }
+
+    #home {
+      font-family: var(--display);
+      font-size: 16px;
+      color: var(--seal);
+    }
+
+    body[data-mood="night"] #home { color: var(--accent); }
+
+    .card {
+      position: absolute;
+      left: clamp(18px, 4.5vw, 64px);
+      bottom: 108px;
+      width: min(340px, calc(100vw - 36px));
+      padding: 22px 24px 20px;
+      border: 1px solid var(--line);
+      background: var(--paper);
+      box-shadow: 0 24px 60px -30px var(--shadow);
+      opacity: 0;
+      transform: translateY(14px);
+      pointer-events: none;
+      transition: opacity .45s cubic-bezier(.2, .7, .25, 1), transform .45s cubic-bezier(.2, .7, .25, 1);
+    }
+
+    .card.is-open {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--seal);
+    }
+
+    .card-close {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      border: 0;
+      background: transparent;
+      font-size: 18px;
+      line-height: 1;
+      padding: 6px;
+      cursor: pointer;
+      color: var(--ui-soft);
+    }
+
+    .card-eyebrow {
+      margin: 0 0 8px;
+      font-size: 8px;
+      letter-spacing: .22em;
+      color: var(--ui-soft);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-family: var(--display);
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: .12em;
+    }
+
+    .card-desc {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.9;
+      color: var(--ui-ink);
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      .masthead { gap: 12px; }
+      .seal { width: 32px; height: 43px; font-size: 14px; }
+      h1 { font-size: 24px; margin-bottom: 10px; }
+      .moods button { padding: 4px 11px; font-size: 11px; }
+      .card {
+        left: 14px;
+        right: 14px;
+        bottom: 96px;
+        width: auto;
+        padding: 18px 20px 16px;
+      }
+      .tools { bottom: 84px; }
+      .tools-left { left: 12px; }
+      .tools-right { right: 12px; }
+      .tools button { width: 32px; height: 32px; font-size: 13px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .masthead, .dock, .tools { animation: none; }
+      .card { transition: none; }
+    }
+  </style>
+</head>
+<body data-mood="dawn">
+  <canvas id="scene" tabindex="0" aria-label="西湖二点五维山水。拖拽平移，滚轮或加减键缩放，Q 和 E 旋转视角，数字 1、2、3 切换晨雾、暮色、夜泊。"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div class="ui">
+    <header class="masthead">
+      <div class="seal" aria-hidden="true">湖山</div>
+      <div class="title-block">
+        <p class="eyebrow">WEST LAKE · A LIVING SCROLL</p>
+        <h1>湖山清远</h1>
+        <div class="moods" role="group" aria-label="切换天色">
+          <button type="button" data-mood="dawn" class="is-on">晨雾</button>
+          <button type="button" data-mood="dusk">暮色</button>
+          <button type="button" data-mood="night">夜泊</button>
+        </div>
+      </div>
+    </header>
+
+    <nav class="dock" aria-label="景点">
+      <button type="button" data-place="duanqiao">断桥</button>
+      <button type="button" data-place="bai">白堤</button>
+      <button type="button" data-place="su">苏堤</button>
+      <button type="button" data-place="quyuan">曲院风荷</button>
+      <button type="button" data-place="huxinting">湖心亭</button>
+      <button type="button" data-place="santan">三潭印月</button>
+      <button type="button" data-place="leifeng">雷峰塔</button>
+      <button type="button" data-place="baochu">保俶塔</button>
+    </nav>
+
+    <div class="tools tools-left">
+      <button type="button" id="rotL" aria-label="逆时针旋转">↺</button>
+      <button type="button" id="rotR" aria-label="顺时针旋转">↻</button>
+    </div>
+    <div class="tools tools-right">
+      <button type="button" id="zoomIn" aria-label="放大">＋</button>
+      <button type="button" id="zoomOut" aria-label="缩小">－</button>
+      <button type="button" id="home" aria-label="复位视角">归</button>
+    </div>
+
+    <aside class="card" id="card" aria-hidden="true">
+      <button type="button" class="card-close" id="cardClose" aria-label="关闭">×</button>
+      <p class="card-eyebrow" id="cardEn"></p>
+      <h2 id="cardName"></h2>
+      <p class="card-desc" id="cardDesc"></p>
+    </aside>
+  </div>
+
+  <script>
+  "use strict";
+
+  /* ================= utils ================= */
+  const TAU = Math.PI * 2;
+  const TILT = 0.52;
+  const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+  const mulberry32 = seed => {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  };
+
+  const canvas = document.getElementById("scene");
+  const ctx = canvas.getContext("2d", { alpha: false });
+  const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let W = 0, H = 0, dpr = 1, baseFit = 1;
+
+  /* ================= palettes ================= */
+  const PALETTES = {
+    dawn: {
+      sky0: [233, 239, 232], sky1: [213, 226, 219], haze: [233, 236, 228],
+      sun: [242, 226, 184],
+      ridgeFar: [197, 209, 199], ridgeMid: [168, 186, 172], ridgeNear: [134, 158, 144],
+      mist: [233, 238, 233],
+      ground: [215, 220, 204], shore: [202, 198, 177],
+      water0: [189, 207, 197], water1: [151, 178, 168], ripple: [240, 245, 240],
+      grass: [163, 185, 157], grassDeep: [125, 151, 127], sand: [206, 199, 176],
+      leaf: [93, 128, 97], leafDeep: [66, 101, 76], trunk: [104, 84, 66], peach: [226, 170, 172],
+      lotusLeaf: [96, 138, 104], lotusFlower: [230, 162, 172],
+      stone: [188, 184, 170], stoneDeep: [138, 136, 124], roof: [73, 83, 79], body: [170, 152, 122],
+      lantern: [255, 190, 110], boat: [96, 74, 58], canopy: [212, 202, 172],
+      island: [150, 172, 138], rock: [150, 152, 140], ink: [38, 59, 55],
+      mistStrong: .9, night: 0, sunR: 22, sunX: .70, sunY: .15, sunA: .5, reflSun: 0, reflMoon: 0
+    },
+    dusk: {
+      sky0: [244, 214, 170], sky1: [232, 178, 140], haze: [242, 206, 166],
+      sun: [255, 172, 92],
+      ridgeFar: [203, 166, 150], ridgeMid: [171, 138, 128], ridgeNear: [128, 102, 98],
+      mist: [242, 214, 180],
+      ground: [208, 196, 168], shore: [196, 178, 150],
+      water0: [227, 181, 132], water1: [168, 138, 120], ripple: [255, 226, 182],
+      grass: [168, 160, 120], grassDeep: [120, 116, 88], sand: [205, 190, 158],
+      leaf: [96, 110, 70], leafDeep: [70, 86, 54], trunk: [96, 72, 54], peach: [230, 150, 140],
+      lotusLeaf: [110, 125, 80], lotusFlower: [236, 150, 140],
+      stone: [190, 172, 148], stoneDeep: [145, 130, 112], roof: [70, 60, 58], body: [152, 112, 82],
+      lantern: [255, 182, 100], boat: [90, 62, 48], canopy: [215, 190, 150],
+      island: [150, 150, 105], rock: [150, 140, 125], ink: [52, 44, 42],
+      mistStrong: .45, night: 0, sunR: 56, sunX: .60, sunY: .24, sunA: .95, reflSun: 1, reflMoon: 0
+    },
+    night: {
+      sky0: [16, 26, 38], sky1: [28, 40, 54], haze: [40, 54, 68],
+      sun: [230, 233, 222],
+      ridgeFar: [36, 50, 62], ridgeMid: [30, 42, 52], ridgeNear: [24, 34, 44],
+      mist: [70, 88, 100],
+      ground: [26, 36, 44], shore: [40, 50, 56],
+      water0: [30, 48, 62], water1: [17, 31, 43], ripple: [120, 150, 165],
+      grass: [40, 56, 46], grassDeep: [30, 44, 36], sand: [52, 58, 54],
+      leaf: [34, 52, 40], leafDeep: [24, 40, 30], trunk: [40, 34, 28], peach: [120, 90, 95],
+      lotusLeaf: [36, 56, 44], lotusFlower: [150, 100, 105],
+      stone: [70, 78, 80], stoneDeep: [48, 54, 56], roof: [12, 16, 20], body: [62, 52, 44],
+      lantern: [255, 176, 92], boat: [36, 28, 22], canopy: [90, 84, 70],
+      island: [44, 58, 48], rock: [60, 64, 60], ink: [10, 14, 18],
+      mistStrong: .3, night: 1, sunR: 28, sunX: .74, sunY: .13, sunA: .9, reflSun: 0, reflMoon: 1
+    }
+  };
+
+  const COLOR_KEYS = Object.keys(PALETTES.dawn).filter(k => Array.isArray(PALETTES.dawn[k]));
+  const NUM_KEYS = Object.keys(PALETTES.dawn).filter(k => !Array.isArray(PALETTES.dawn[k]));
+
+  const cur = {};
+  const tgt = {};
+  function assignPalette(dst, src) {
+    for (const k of COLOR_KEYS) dst[k] = src[k].slice();
+    for (const k of NUM_KEYS) dst[k] = src[k];
+  }
+  assignPalette(cur, PALETTES.dawn);
+  assignPalette(tgt, PALETTES.dawn);
+
+  const col = (k, a) => {
+    const c = cur[k];
+    return "rgba(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + "," + (a == null ? 1 : a) + ")";
+  };
+
+  /* ================= world data ================= */
+  const LAKE = { x: -20, y: 60, rx: 800, ry: 640 };
+
+  const suPath = [[-444, -680], [-452, -512], [-456, -344], [-450, -175], [-438, 5], [-418, 180], [-405, 350], [-386, 510], [-370, 620]];
+  const baiPath = [[-366, -604], [-255, -581], [-140, -550], [-35, -518], [72, -480], [174, -435], [258, -388]];
+  const duanqiaoPath = [[258, -388], [330, -322], [405, -256]];
+
+  const landmarks = [
+    { id: "duanqiao", name: "断桥", en: "DUAN QIAO · LINGERING SNOW", x: 330, y: -322, z: 40, r: 78,
+      desc: "白堤东端的一道石拱桥。雪后桥阳雪融、桥阴未消，远望似断非断，便有了“断桥残雪”。" },
+    { id: "bai", name: "白堤", en: "BAI CAUSEWAY · WILLOWS IN MIST", x: -40, y: -518, z: 12, path: baiPath, w: 38,
+      desc: "西湖北缘的长堤，东起断桥、西至平湖秋月，桃柳相间，雨雾里像一笔淡墨。" },
+    { id: "su", name: "苏堤", en: "SU CAUSEWAY · SIX BRIDGES", x: -420, y: 12, z: 12, path: suPath, w: 44,
+      desc: "苏轼疏浚西湖，以葑泥筑成三里长堤。六桥卧波，烟柳夹岸，春晨尤宜缓行。" },
+    { id: "quyuan", name: "曲院风荷", en: "BREEZE-STIRRED LOTUS", x: -300, y: -390, z: 8, r: 100,
+      desc: "南宋时此处有酿酒曲院，临荷而开。夏日风过，荷香与酒香一并上岸。" },
+    { id: "huxinting", name: "湖心亭", en: "MID-LAKE PAVILION", x: 78, y: 75, z: 40, r: 62,
+      desc: "湖心小岛上的一座临水亭。停舟暂歇，四望皆水，晴雨各有清趣。" },
+    { id: "santan", name: "三潭印月", en: "THREE POOLS MIRRORING THE MOON", x: 150, y: 430, z: 16, r: 105,
+      desc: "三座小石塔立在湖心亭南。月夜塔内点灯，圆孔透光映水，与天上月影相叠。" },
+    { id: "leifeng", name: "雷峰塔", en: "LEIFENG PAGODA · EVENING GLOW", x: 592, y: 570, z: 170, r: 84,
+      desc: "立在西湖南岸的夕照山上。塔影入湖，暮色里最见苍古，也牵着白娘子的旧传说。" },
+    { id: "baochu", name: "保俶塔", en: "BAOCHU PAGODA · NEEDLE IN THE HILLS", x: 449, y: -744, z: 118, r: 70,
+      desc: "宝石山上的细长古塔，与雷峰塔隔湖相望。一秀一厚，都是西湖远山里的旧识。" }
+  ];
+
+  const hills = [
+    { x: -640, y: -740, rx: 320, ry: 125, rise: 52, seed: 3 },
+    { x: 430, y: -810, rx: 340, ry: 135, rise: 64, seed: 5 },
+    { x: 780, y: -450, rx: 250, ry: 95, rise: 40, seed: 8 },
+    { x: -820, y: -180, rx: 230, ry: 100, rise: 36, seed: 17 },
+    { x: 600, y: 660, rx: 300, ry: 128, rise: 56, seed: 7 },
+    { x: -700, y: 690, rx: 290, ry: 112, rise: 42, seed: 11 },
+    { x: 870, y: 340, rx: 240, ry: 100, rise: 38, seed: 13 }
+  ];
+
+  function samplePath(path, step) {
+    const out = [];
+    let acc = step;
+    for (let i = 0; i < path.length - 1; i++) {
+      const [x1, y1] = path[i], [x2, y2] = path[i + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1), ang = Math.atan2(y2 - y1, x2 - x1);
+      while (acc <= len) {
+        const t = acc / len;
+        out.push({ x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t, ang });
+        acc += step;
+      }
+      acc -= len;
+    }
+    return out;
+  }
+
+  function pathLength(path) {
+    let L = 0;
+    for (let i = 0; i < path.length - 1; i++) L += Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]);
+    return L;
+  }
+
+  function pointAt(path, d) {
+    for (let i = 0; i < path.length - 1; i++) {
+      const [x1, y1] = path[i], [x2, y2] = path[i + 1];
+      const len = Math.hypot(x2 - x1, y2 - y1);
+      if (d <= len) {
+        const t = d / len;
+        return { x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t, ang: Math.atan2(y2 - y1, x2 - x1) };
+      }
+      d -= len;
+    }
+    const [x, y] = path[path.length - 1];
+    return { x, y, ang: 0 };
+  }
+
+  /* trees along causeways + shores */
+  const trees = [];
+  {
+    const suPts = samplePath(suPath, 86);
+    suPts.forEach((p, i) => {
+      const side = i % 2 ? 1 : -1;
+      const nx = -Math.sin(p.ang), ny = Math.cos(p.ang);
+      trees.push({ x: p.x + nx * side * 30, y: p.y + ny * side * 30, type: "willow", s: .9 + (i % 3) * .1, ph: i * 1.7 });
+    });
+    const baiPts = samplePath(baiPath, 92);
+    baiPts.forEach((p, i) => {
+      const side = i % 2 ? 1 : -1;
+      const nx = -Math.sin(p.ang), ny = Math.cos(p.ang);
+      trees.push({ x: p.x + nx * side * 27, y: p.y + ny * side * 27, type: i % 4 === 2 ? "peach" : "willow", s: .82 + (i % 3) * .09, ph: i * 2.3 });
+    });
+    const shoreSeeds = [
+      [-690, -520, 1.05], [-600, -590, .88], [-510, 660, .92], [-665, 390, 1.1],
+      [-760, 130, .9], [-747, -70, 1.0], [640, -372, .9], [706, -195, .8],
+      [720, 218, .92], [560, 545, .86], [318, 700, .82], [115, 730, .9],
+      [-72, 712, .86], [-268, 680, .94], [543, -492, .8], [409, -600, .76]
+    ];
+    shoreSeeds.forEach(([x, y, s], i) => trees.push({ x, y, type: "willow", s, ph: i * 1.1 }));
+  }
+
+  const reeds = [
+    [-715, -300, .9], [-735, 210, 1.1], [660, 390, .9],
+    [505, 600, 1], [-265, 700, 1.05], [-820, 15, .8], [720, 60, .85]
+  ];
+
+  const lotusClusters = [
+    [298, 255, 1.0, 15], [438, 342, .78, 11], [180, 420, .9, 13],
+    [-105, 330, .74, 10], [-322, 300, .72, 10], [530, 92, .66, 9],
+    [-300, -390, 1.3, 26], [-380, -320, .9, 12]
+  ];
+
+  const boats = [
+    { route: [[-90, 116], [85, 70], [255, 128], [367, 246], [298, 365], [112, 378], [-42, 290]], speed: .0085, ph: .05, s: 1.05, lantern: true },
+    { route: [[-520, -260], [-300, -160], [-120, -200], [40, -120], [180, -40], [60, 20], [-160, 0], [-380, -60]], speed: .0062, ph: .5, s: .85, lantern: false },
+    { route: [[500, 120], [620, 230], [560, 360], [430, 420], [360, 300], [420, 180]], speed: .0072, ph: .72, s: .9, lantern: true }
+  ];
+  boats.forEach(b => { b.len = pathLength(b.route); });
+
+  const quyuanWalk = [[-385, -330], [-332, -368], [-292, -348], [-256, -394], [-218, -378]];
+
+  const santanPts = [0, 1, 2].map(i => {
+    const a = Math.PI / 2 + i * TAU / 3;
+    return { x: 150 + Math.cos(a) * 62, y: 430 + Math.sin(a) * 62 };
+  });
+
+  const ripples = [];
+  {
+    const rng = mulberry32(20261024);
+    for (let i = 0; i < 64; i++) {
+      const a = rng() * TAU, r = Math.sqrt(rng()) * .9;
+      ripples.push({
+        x: LAKE.x + Math.cos(a) * LAKE.rx * r,
+        y: LAKE.y + Math.sin(a) * LAKE.ry * r,
+        len: 26 + rng() * 60, ph: rng() * TAU, sp: .5 + rng() * .8, w: .8 + rng() * 1.4
+      });
+    }
+  }
+
+  const stars = [];
+  {
+    const rng = mulberry32(77);
+    for (let i = 0; i < 70; i++) stars.push({ x: rng(), y: rng() * .3, r: .5 + rng() * .9, ph: rng() * TAU });
+  }
+
+  /* ================= camera ================= */
+  const cam = { x: -20, y: 80, z: 1, th: 0, tx: -20, ty: 80, tz: 1, tth: 0 };
+  let cosT = 1, sinT = 0;
+
+  function project(x, y, z) {
+    z = z || 0;
+    const dx = x - cam.x, dy = y - cam.y;
+    const rx = dx * cosT - dy * sinT, ry = dx * sinT + dy * cosT;
+    const s = baseFit * cam.z;
+    return [W / 2 + rx * s, H / 2 + ry * s * TILT - z * s, ry];
+  }
+
+  function screenDeltaToWorld(dxS, dyS) {
+    const s = baseFit * cam.z;
+    const rx = dxS / s, ry = dyS / (s * TILT);
+    return [rx * cosT + ry * sinT, -rx * sinT + ry * cosT];
+  }
+
+  function clampTargets() {
+    cam.tx = clamp(cam.tx, -760, 860);
+    cam.ty = clamp(cam.ty, -720, 900);
+    cam.tz = clamp(cam.tz, .5, 2.6);
+    cam.tth = clamp(cam.tth, -.8, .8);
+  }
+
+  function zoomAt(sx, sy, factor) {
+    const z2 = clamp(cam.tz * factor, .5, 2.6);
+    if (Math.abs(z2 - cam.tz) < 1e-4) return;
+    const s1 = baseFit * cam.z;
+    const rx = (sx - W / 2) / s1, ry = (sy - H / 2) / (s1 * TILT);
+    const wx = cam.x + rx * cosT + ry * sinT;
+    const wy = cam.y - rx * sinT + ry * cosT;
+    const s2 = baseFit * z2;
+    const rx2 = (sx - W / 2) / s2, ry2 = (sy - H / 2) / (s2 * TILT);
+    cam.tx = wx - (rx2 * cosT + ry2 * sinT);
+    cam.ty = wy - (-rx2 * sinT + ry2 * cosT);
+    cam.tz = z2;
+    clampTargets();
+  }
+
+  /* ================= drawing ================= */
+  let speckle = null;
+  function makeSpeckle() {
+    const c = document.createElement("canvas");
+    c.width = c.height = 200;
+    const g = c.getContext("2d");
+    const rng = mulberry32(9);
+    for (let i = 0; i < 420; i++) {
+      g.fillStyle = "rgba(60,70,60," + (0.02 + rng() * 0.05) + ")";
+      g.fillRect(rng() * 200, rng() * 200, 1.4, 1.4);
+    }
+    speckle = ctx.createPattern(c, "repeat");
+  }
+
+  function lakePath() {
+    const p = new Path2D();
+    for (let i = 0; i <= 72; i++) {
+      const a = i / 72 * TAU;
+      const wob = 1 + .045 * Math.sin(a * 3 + 1.7) + .03 * Math.sin(a * 7 + .4);
+      const [sx, sy] = project(LAKE.x + Math.cos(a) * LAKE.rx * wob, LAKE.y + Math.sin(a) * LAKE.ry * wob, 0);
+      i ? p.lineTo(sx, sy) : p.moveTo(sx, sy);
+    }
+    p.closePath();
+    return p;
+  }
+
+  function drawSky(time) {
+    const g = ctx.createLinearGradient(0, 0, 0, H * .6);
+    g.addColorStop(0, col("sky0"));
+    g.addColorStop(1, col("sky1"));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+
+    if (cur.night > .02) {
+      for (const st of stars) {
+        const tw = RM ? .7 : .45 + .55 * Math.abs(Math.sin(time * 1.6 + st.ph));
+        ctx.fillStyle = "rgba(235,238,230," + (cur.night * tw * .8) + ")";
+        ctx.beginPath();
+        ctx.arc(st.x * W, st.y * H, st.r, 0, TAU);
+        ctx.fill();
+      }
+    }
+
+    const sx = cur.sunX * W, sy = cur.sunY * H, r = cur.sunR;
+    const glow = ctx.createRadialGradient(sx, sy, 0, sx, sy, r * 4);
+    glow.addColorStop(0, col("sun", .5 * cur.sunA));
+    glow.addColorStop(1, col("sun", 0));
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(sx, sy, r * 4, 0, TAU); ctx.fill();
+    ctx.fillStyle = col("sun", .9 * cur.sunA);
+    ctx.beginPath(); ctx.arc(sx, sy, r, 0, TAU); ctx.fill();
+    if (cur.night > .5) {
+      ctx.fillStyle = col("sky0", .5);
+      ctx.beginPath(); ctx.arc(sx - r * .35, sy - r * .2, r * .8, 0, TAU); ctx.fill();
+    }
+  }
+
+  function drawRidge(baseY, amp, seed, fill, drift) {
+    ctx.beginPath();
+    ctx.moveTo(-40, H);
+    const f1 = .004 + seed * .0004, f2 = .011 + seed * .0006;
+    for (let x = -40; x <= W + 40; x += 14) {
+      const y = baseY
+        + Math.sin((x + drift) * f1 + seed * 2.3) * amp
+        + Math.sin((x + drift) * f2 + seed * 5.1) * amp * .35;
+      ctx.lineTo(x, y);
+    }
+    ctx.lineTo(W + 40, H);
+    ctx.closePath();
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+
+  function drawMistBand(yFrac, hFrac, alpha, drift) {
+    if (alpha < .01) return;
+    const y = H * yFrac, h = H * hFrac;
+    const g = ctx.createLinearGradient(0, y, 0, y + h);
+    g.addColorStop(0, col("mist", 0));
+    g.addColorStop(.5, col("mist", alpha));
+    g.addColorStop(1, col("mist", 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(-40 + drift, y, W + 80, h);
+  }
+
+  function drawGround() {
+    const horizon = H * .40;
+    ctx.fillStyle = col("ground");
+    ctx.fillRect(0, horizon, W, H - horizon);
+    if (speckle) {
+      ctx.save();
+      ctx.globalAlpha = .6;
+      ctx.fillStyle = speckle;
+      ctx.fillRect(0, horizon, W, H - horizon);
+      ctx.restore();
+    }
+    /* haze blends ground into the far ridge line */
+    const hb = ctx.createLinearGradient(0, horizon - H * .06, 0, horizon + H * .05);
+    hb.addColorStop(0, col("haze", 0));
+    hb.addColorStop(.6, col("haze", .55));
+    hb.addColorStop(1, col("haze", 0));
+    ctx.fillStyle = hb;
+    ctx.fillRect(0, horizon - H * .06, W, H * .11);
+    /* soft grass patches around the lake */
+    const patches = [
+      [-560, -480, 260, 120], [420, -560, 300, 130], [-640, 320, 240, 130],
+      [520, 420, 260, 120], [-80, 640, 340, 130], [240, -640, 260, 110]
+    ];
+    ctx.save();
+    for (const [x, y, rx, ry] of patches) {
+      const [sx, sy] = project(x, y, 0);
+      const s = baseFit * cam.z;
+      ctx.fillStyle = col("grass", .35);
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, rx * s, ry * s * TILT, 0, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  function drawHill(h) {
+    const s = baseFit * cam.z;
+    const [bx, by] = project(h.x, h.y, 0);
+    const topY = by - h.rise * s;
+    const rng = mulberry32(h.seed);
+    ctx.beginPath();
+    ctx.moveTo(bx - h.rx * s, by);
+    const steps = 14;
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const x = bx - h.rx * s + t * 2 * h.rx * s;
+      const peak = Math.sin(t * Math.PI);
+      const bump = .82 + .18 * Math.sin(t * 9 + h.seed) + .08 * rng();
+      ctx.lineTo(x, by - peak * h.rise * s * bump - h.ry * s * TILT * .3 * peak);
+    }
+    ctx.lineTo(bx + h.rx * s, by);
+    ctx.ellipse(bx, by, h.rx * s, h.ry * s * TILT, 0, 0, Math.PI);
+    ctx.closePath();
+    ctx.fillStyle = col("grassDeep", .92);
+    ctx.fill();
+
+    ctx.save();
+    ctx.globalAlpha = .5;
+    ctx.fillStyle = col("leafDeep");
+    for (let i = 0; i < 22; i++) {
+      const t = rng();
+      const x = bx - h.rx * s * .8 + t * 1.6 * h.rx * s;
+      const peak = Math.sin(t * Math.PI);
+      const y = by - peak * h.rise * s * .9 - 2;
+      ctx.beginPath();
+      ctx.arc(x, y + rng() * 8 * s, (1.5 + rng() * 2.5) * Math.max(s, .4), 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    /* waterline at hill base */
+    ctx.strokeStyle = col("mist", .35 * cur.mistStrong);
+    ctx.lineWidth = 6 * s;
+    ctx.beginPath();
+    ctx.ellipse(bx, by, h.rx * s, h.ry * s * TILT, 0, .1, Math.PI - .1);
+    ctx.stroke();
+  }
+
+  function drawLake(time) {
+    const p = lakePath();
+    const s = baseFit * cam.z;
+
+    ctx.save();
+    ctx.strokeStyle = col("shore");
+    ctx.lineWidth = 20 * s * TILT + 8;
+    ctx.stroke(p);
+
+    const [cxS, cyS] = project(LAKE.x, LAKE.y, 0);
+    const g = ctx.createLinearGradient(0, cyS - LAKE.ry * s * TILT, 0, cyS + LAKE.ry * s * TILT);
+    g.addColorStop(0, col("water0"));
+    g.addColorStop(1, col("water1"));
+    ctx.fillStyle = g;
+    ctx.fill(p);
+
+    ctx.clip(p);
+
+    /* ripples */
+    ctx.lineCap = "round";
+    for (const r of ripples) {
+      const [sx, sy] = project(r.x, r.y, 0);
+      const a = RM ? .12 : .07 + .09 * (0.5 + 0.5 * Math.sin(time * r.sp + r.ph));
+      ctx.strokeStyle = col("ripple", a);
+      ctx.lineWidth = Math.max(r.w * s, .6);
+      ctx.beginPath();
+      ctx.moveTo(sx - r.len * s / 2, sy);
+      ctx.quadraticCurveTo(sx, sy - 2 * s, sx + r.len * s / 2, sy);
+      ctx.stroke();
+    }
+
+    /* sun / moon reflection column */
+    function shimmerColumn(sx, sy0, width, color, alpha, rows) {
+      for (let i = 0; i < rows; i++) {
+        const yy = sy0 + i * 7 * s;
+        const w = width * (1 - i / rows) * (0.7 + 0.3 * Math.sin(time * 1.4 + i));
+        ctx.strokeStyle = col(color, alpha * (1 - i / rows));
+        ctx.lineWidth = Math.max(2 * s, .8);
+        ctx.beginPath();
+        ctx.moveTo(sx - w / 2, yy);
+        ctx.lineTo(sx + w / 2, yy);
+        ctx.stroke();
+      }
+    }
+    const [, topS] = project(LAKE.x, LAKE.y - LAKE.ry * .8, 0);
+    if (cur.reflSun > .03) shimmerColumn(cur.sunX * W, topS + 20 * s, 90 * s, "sun", .3 * cur.reflSun, 22);
+    if (cur.reflMoon > .03) shimmerColumn(cur.sunX * W, topS + 16 * s, 60 * s, "ripple", .4 * cur.reflMoon, 26);
+
+    ctx.restore();
+
+    /* inner shore shade at near edge */
+    ctx.save();
+    ctx.strokeStyle = col("ink", .10);
+    ctx.lineWidth = 3 * s;
+    ctx.stroke(p);
+    ctx.restore();
+  }
+
+  function strokeWorldPath(path, z, widthWorld, style, cap) {
+    const s = baseFit * cam.z;
+    ctx.strokeStyle = style;
+    ctx.lineWidth = Math.max(widthWorld * s, .8);
+    ctx.lineCap = cap || "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    path.forEach(([x, y], i) => {
+      const [sx, sy] = project(x, y, z);
+      i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+    });
+    ctx.stroke();
+  }
+
+  function drawCauseway(path, w) {
+    strokeWorldPath(path, 3, w + 10, col("sand"));
+    strokeWorldPath(path, 6, w, col("grass"));
+    strokeWorldPath(path, 7, w * .32, col("sand", .5));
+  }
+
+  function drawSuBridges() {
+    const total = pathLength(suPath);
+    const s = baseFit * cam.z;
+    for (const f of [.13, .27, .42, .56, .71, .85]) {
+      const p = pointAt(suPath, total * f);
+      const dx = Math.cos(p.ang), dy = Math.sin(p.ang);
+      const nx = -dy, ny = dx;
+      /* arched deck */
+      ctx.strokeStyle = col("stone");
+      ctx.lineWidth = Math.max(52 * s, 2);
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      for (let i = -3; i <= 3; i++) {
+        const t = i / 3;
+        const z = 6 + 13 * (1 - t * t);
+        const [sx, sy] = project(p.x + dx * t * 26, p.y + dy * t * 26, z);
+        i === -3 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+      /* arch opening on viewer-facing side */
+      const side = (nx * sinT + ny * cosT) > 0 ? 1 : -1;
+      const [ox, oy] = project(p.x + nx * side * 24, p.y + ny * side * 24, 4);
+      ctx.fillStyle = col("stoneDeep", .9);
+      ctx.beginPath();
+      ctx.ellipse(ox, oy, 13 * s, 9 * s, 0, Math.PI, TAU);
+      ctx.fill();
+      /* rail posts */
+      ctx.strokeStyle = col("stoneDeep");
+      ctx.lineWidth = Math.max(2 * s, .7);
+      for (const t of [-.8, -.4, 0, .4, .8]) {
+        const z = 6 + 13 * (1 - t * t);
+        for (const m of [-1, 1]) {
+          const [px, py] = project(p.x + dx * t * 26 + nx * m * 22, p.y + dy * t * 26 + ny * m * 22, z);
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          ctx.lineTo(px, py - 8 * s);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  function drawDuanqiao() {
+    const s = baseFit * cam.z;
+    const p0 = duanqiaoPath[0], p2 = duanqiaoPath[2];
+    const ang = Math.atan2(p2[1] - p0[1], p2[0] - p0[0]);
+    const dx = Math.cos(ang), dy = Math.sin(ang);
+    const nx = -dy, ny = dx;
+    const mid = duanqiaoPath[1];
+    const L = 170;
+
+    /* approach ramps */
+    ctx.strokeStyle = col("stone");
+    ctx.lineCap = "round";
+    ctx.lineWidth = Math.max(34 * s, 2);
+    ctx.beginPath();
+    for (let i = -5; i <= 5; i++) {
+      const t = i / 5;
+      const z = 4 + 26 * (1 - t * t);
+      const [sx, sy] = project(mid[0] + dx * t * L / 2, mid[1] + dy * t * L / 2, z);
+      i === -5 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+    }
+    ctx.stroke();
+
+    /* big arch opening */
+    const side = (nx * sinT + ny * cosT) > 0 ? 1 : -1;
+    const [ox, oy] = project(mid[0] + nx * side * 15, mid[1] + ny * side * 15, 5);
+    ctx.fillStyle = col("stoneDeep");
+    ctx.beginPath();
+    ctx.ellipse(ox, oy, 26 * s, 20 * s, 0, Math.PI, TAU);
+    ctx.fill();
+    ctx.fillStyle = col("water1", .9);
+    ctx.beginPath();
+    ctx.ellipse(ox, oy + 2 * s, 20 * s, 14 * s, 0, Math.PI, TAU);
+    ctx.fill();
+
+    /* balustrade */
+    for (const m of [-1, 1]) {
+      ctx.strokeStyle = col("stoneDeep");
+      ctx.lineWidth = Math.max(2.4 * s, .8);
+      ctx.beginPath();
+      for (let i = -5; i <= 5; i++) {
+        const t = i / 5;
+        const z = 4 + 26 * (1 - t * t) + 9;
+        const [sx, sy] = project(mid[0] + dx * t * L / 2 + nx * m * 15, mid[1] + dy * t * L / 2 + ny * m * 15, z);
+        i === -5 ? ctx.moveTo(sx, sy) : ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+      for (let i = -5; i <= 5; i++) {
+        const t = i / 5;
+        const z = 4 + 26 * (1 - t * t);
+        const [sx, sy] = project(mid[0] + dx * t * L / 2 + nx * m * 15, mid[1] + dy * t * L / 2 + ny * m * 15, z);
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx, sy - 9 * s);
+        ctx.stroke();
+        ctx.fillStyle = col("stone");
+        ctx.beginPath();
+        ctx.arc(sx, sy - 10 * s, Math.max(2 * s, .9), 0, TAU);
+        ctx.fill();
+      }
+    }
+  }
+
+  function drawWillow(t, time) {
+    const s = baseFit * cam.z * t.s;
+    const [px, py] = project(t.x, t.y, 0);
+    const sway = RM ? 0 : Math.sin(time * 1.1 + t.ph) * 3 * s;
+    ctx.strokeStyle = col("trunk");
+    ctx.lineWidth = Math.max(3 * s, .8);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.quadraticCurveTo(px + 3 * s, py - 16 * s, px + sway * .3, py - 30 * s);
+    ctx.stroke();
+
+    const topX = px + sway * .3, topY = py - 30 * s;
+    ctx.strokeStyle = col("leaf", .85);
+    ctx.lineWidth = Math.max(2 * s, .7);
+    for (let i = 0; i < 7; i++) {
+      const a = -Math.PI / 2 + (i - 3) * .38;
+      const len = (20 + (i % 3) * 6) * s;
+      const ex = topX + Math.cos(a) * len + sway;
+      const ey = topY + Math.abs(Math.sin(a)) * len * .9 + 14 * s;
+      ctx.beginPath();
+      ctx.moveTo(topX, topY);
+      ctx.quadraticCurveTo(topX + Math.cos(a) * len * .6, topY + 6 * s, ex, ey);
+      ctx.stroke();
+      ctx.fillStyle = col("leafDeep", .5);
+      ctx.beginPath();
+      ctx.arc(ex, ey, Math.max(2.4 * s, .8), 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  function drawPeach(t, time) {
+    const s = baseFit * cam.z * t.s;
+    const [px, py] = project(t.x, t.y, 0);
+    const sway = RM ? 0 : Math.sin(time * .9 + t.ph) * 1.6 * s;
+    ctx.strokeStyle = col("trunk");
+    ctx.lineWidth = Math.max(2.6 * s, .8);
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(px, py);
+    ctx.lineTo(px + sway, py - 20 * s);
+    ctx.stroke();
+    const rng = mulberry32(Math.round(t.x * 7 + t.y));
+    for (let i = 0; i < 5; i++) {
+      const a = i / 5 * TAU + t.ph;
+      const bx = px + sway + Math.cos(a) * 9 * s;
+      const by = py - 22 * s + Math.sin(a) * 6 * s;
+      ctx.fillStyle = col("peach", .75);
+      ctx.beginPath();
+      ctx.arc(bx, by, (4 + rng() * 3) * s, 0, TAU);
+      ctx.fill();
+    }
+    ctx.fillStyle = col("peach", .9);
+    ctx.beginPath();
+    ctx.arc(px + sway, py - 24 * s, 5.5 * s, 0, TAU);
+    ctx.fill();
+  }
+
+  function drawReeds(r, time) {
+    const s = baseFit * cam.z * r[2];
+    const [px, py] = project(r[0], r[1], 0);
+    const sway = RM ? 0 : Math.sin(time * 1.3 + r[0]) * 2 * s;
+    ctx.strokeStyle = col("leafDeep", .8);
+    ctx.lineWidth = Math.max(1.4 * s, .6);
+    ctx.lineCap = "round";
+    for (let i = -2; i <= 2; i++) {
+      const h = (16 + (i + 2) % 3 * 5) * s;
+      ctx.beginPath();
+      ctx.moveTo(px + i * 3 * s, py);
+      ctx.quadraticCurveTo(px + i * 3 * s + sway * .4, py - h * .6, px + i * 3.5 * s + sway, py - h);
+      ctx.stroke();
+    }
+  }
+
+  function drawLotus(cluster, time) {
+    const [cx, cy, cs, n] = cluster;
+    const s = baseFit * cam.z * cs;
+    const rng = mulberry32(Math.round(cx * 3 + cy));
+    for (let i = 0; i < n; i++) {
+      const a = rng() * TAU, rr = Math.sqrt(rng()) * 85;
+      const [px, py] = project(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr * .8, 1);
+      const pr = (7 + rng() * 8) * s;
+      ctx.fillStyle = col("lotusLeaf", .82);
+      ctx.beginPath();
+      ctx.ellipse(px, py, pr, pr * .45, 0, 0, TAU);
+      ctx.fill();
+      if (rng() > .72) {
+        const bob = RM ? 0 : Math.sin(time * 1.2 + i) * 1.5 * s;
+        ctx.fillStyle = col("lotusFlower", .92);
+        for (let p = 0; p < 5; p++) {
+          const pa = p / 5 * TAU - Math.PI / 2;
+          ctx.beginPath();
+          ctx.ellipse(px + Math.cos(pa) * 3 * s, py - 6 * s + bob + Math.sin(pa) * 2 * s, 2.6 * s, 4.5 * s, pa, 0, TAU);
+          ctx.fill();
+        }
+      }
+    }
+  }
+
+  function drawQuyuan() {
+    drawLotus(lotusClusters[6], drawTime);
+    drawLotus(lotusClusters[7], drawTime);
+    const s = baseFit * cam.z;
+    /* zigzag wooden walkway */
+    strokeWorldPath(quyuanWalk, 4, 9, col("boat"), "round");
+    ctx.strokeStyle = col("trunk");
+    ctx.lineWidth = Math.max(1.6 * s, .6);
+    for (const [x, y] of quyuanWalk) {
+      const [px, py] = project(x, y, 4);
+      ctx.beginPath();
+      ctx.moveTo(px, py);
+      ctx.lineTo(px, py + 8 * s);
+      ctx.stroke();
+    }
+  }
+
+  function drawIsland(time) {
+    const s = baseFit * cam.z;
+    const [px, py] = project(78, 75, 0);
+    ctx.fillStyle = col("stone");
+    ctx.beginPath();
+    ctx.ellipse(px, py, 96 * s, 60 * s * TILT, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = col("island");
+    ctx.beginPath();
+    ctx.ellipse(px, py - 3 * s, 86 * s, 52 * s * TILT, 0, 0, TAU);
+    ctx.fill();
+
+    /* taihu rocks */
+    const rng = mulberry32(31);
+    ctx.fillStyle = col("rock");
+    for (let i = 0; i < 4; i++) {
+      ctx.beginPath();
+      ctx.ellipse(px - 40 * s + i * 24 * s, py - 6 * s + rng() * 6 * s, (6 + rng() * 5) * s, (8 + rng() * 6) * s, 0, 0, TAU);
+      ctx.fill();
+    }
+
+    /* pavilion */
+    const z0 = 8, z1 = 36, z2 = 46;
+    const corners = [[-17, -13], [17, -13], [17, 13], [-17, 13]];
+    ctx.fillStyle = col("stone");
+    ctx.beginPath();
+    corners.forEach(([ox, oy], i) => {
+      const [vx, vy] = project(78 + ox, 75 + oy, z0);
+      i ? ctx.lineTo(vx, vy) : ctx.moveTo(vx, vy);
+    });
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.strokeStyle = col("trunk");
+    ctx.lineWidth = Math.max(2.6 * s, .8);
+    ctx.lineCap = "round";
+    for (const [ox, oy] of corners) {
+      const [vx, vy] = project(78 + ox, 75 + oy, z0);
+      const [tx2, ty2] = project(78 + ox, 75 + oy, z1);
+      ctx.beginPath();
+      ctx.moveTo(vx, vy);
+      ctx.lineTo(tx2, ty2);
+      ctx.stroke();
+    }
+
+    /* roof: eave corners lifted */
+    const roof = [];
+    for (let i = 0; i < 8; i++) {
+      const a = i / 8 * TAU + Math.PI / 8;
+      const corner = i % 2 === 0;
+      const rr = corner ? 30 : 22;
+      roof.push(project(78 + Math.cos(a) * rr, 75 + Math.sin(a) * rr, corner ? z2 : z1));
+    }
+    ctx.beginPath();
+    roof.forEach(([vx, vy], i) => i ? ctx.lineTo(vx, vy) : ctx.moveTo(vx, vy));
+    ctx.closePath();
+    ctx.fillStyle = col("roof");
+    ctx.fill();
+    const [tipX, tipY] = project(78, 75, z2 + 8);
+    ctx.fillStyle = col("roof");
+    ctx.beginPath();
+    ctx.arc(tipX, tipY, Math.max(3 * s, 1.2), 0, TAU);
+    ctx.fill();
+
+    /* night lantern inside pavilion */
+    if (cur.night > .05) {
+      const [lx, ly] = project(78, 75, 22);
+      const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, 26 * s);
+      g.addColorStop(0, col("lantern", .8 * cur.night));
+      g.addColorStop(1, col("lantern", 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 26 * s, 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  function drawSantan() {
+    const s = baseFit * cam.z;
+    for (const p of santanPts) {
+      const [bx, by] = project(p.x, p.y, 0);
+      ctx.fillStyle = col("stone", .9);
+      ctx.beginPath();
+      ctx.ellipse(bx, by, 12 * s, 6 * s, 0, 0, TAU);
+      ctx.fill();
+      const [m1x, m1y] = project(p.x, p.y, 9);
+      ctx.fillStyle = col("stone");
+      ctx.beginPath();
+      ctx.arc(m1x, m1y, 8 * s, 0, TAU);
+      ctx.fill();
+      const [m2x, m2y] = project(p.x, p.y, 19);
+      ctx.beginPath();
+      ctx.arc(m2x, m2y, 5.5 * s, 0, TAU);
+      ctx.fill();
+      const [tx, ty] = project(p.x, p.y, 26);
+      ctx.fillStyle = col("stoneDeep");
+      ctx.beginPath();
+      ctx.moveTo(m2x - 6 * s, m2y);
+      ctx.lineTo(m2x + 6 * s, m2y);
+      ctx.lineTo(tx, ty);
+      ctx.closePath();
+      ctx.fill();
+
+      if (cur.night > .05) {
+        const g = ctx.createRadialGradient(m1x, m1y, 0, m1x, m1y, 18 * s);
+        g.addColorStop(0, col("lantern", .85 * cur.night));
+        g.addColorStop(1, col("lantern", 0));
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(m1x, m1y, 18 * s, 0, TAU);
+        ctx.fill();
+        ctx.strokeStyle = col("lantern", .4 * cur.night);
+        ctx.lineWidth = Math.max(1.6 * s, .6);
+        ctx.beginPath();
+        ctx.moveTo(bx - 3 * s, by + 4 * s);
+        ctx.lineTo(bx + 3 * s, by + 4 * s);
+        ctx.stroke();
+      }
+    }
+  }
+
+  function drawLeifeng() {
+    const s = baseFit * cam.z;
+    const baseZ = 50;
+    const [px] = project(592, 570, 0);
+    const pyAt = z => project(592, 570, z)[1];
+
+    /* platform */
+    ctx.fillStyle = col("stoneDeep");
+    ctx.beginPath();
+    ctx.ellipse(px, pyAt(0), 58 * s, 24 * s * TILT, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = col("stone");
+    ctx.fillRect(px - 58 * s, pyAt(14), 116 * s, pyAt(0) - pyAt(14));
+    ctx.beginPath();
+    ctx.ellipse(px, pyAt(14), 58 * s, 24 * s * TILT, 0, 0, TAU);
+    ctx.fill();
+
+    const tiers = 5;
+    for (let i = 0; i < tiers; i++) {
+      const w = (88 - i * 11) * s;
+      const z0 = 14 + i * 34 + baseZ - 50 + 14; /* stack above platform */
+      const bodyH = 26 * s;
+      const top = pyAt(z0) - bodyH;
+      /* body */
+      ctx.fillStyle = col("body");
+      ctx.fillRect(px - w / 2, top, w, bodyH);
+      /* night windows */
+      if (cur.night > .05) {
+        ctx.fillStyle = col("lantern", .9 * cur.night);
+        const ww = Math.max(4 * s, 1.6), wh = Math.max(7 * s, 2.6);
+        ctx.fillRect(px - w * .22 - ww / 2, top + bodyH * .35, ww, wh);
+        ctx.fillRect(px + w * .22 - ww / 2, top + bodyH * .35, ww, wh);
+      }
+      /* roof with lifted eaves */
+      const eave = w / 2 + 16 * s;
+      const ry0 = top, ry1 = top - 9 * s;
+      ctx.beginPath();
+      ctx.moveTo(px - eave, ry0 - 5 * s);
+      ctx.quadraticCurveTo(px - w / 2, ry0 + 2 * s, px, ry0 + 2 * s);
+      ctx.quadraticCurveTo(px + w / 2, ry0 + 2 * s, px + eave, ry0 - 5 * s);
+      ctx.lineTo(px + w / 2 + 7 * s, ry1);
+      ctx.lineTo(px - w / 2 - 7 * s, ry1);
+      ctx.closePath();
+      ctx.fillStyle = col("roof");
+      ctx.fill();
+      if (cur.reflSun > .05) {
+        ctx.strokeStyle = col("sun", .35 * cur.reflSun);
+        ctx.lineWidth = Math.max(1.4 * s, .6);
+        ctx.beginPath();
+        ctx.moveTo(px + w / 2 + 7 * s, ry1);
+        ctx.lineTo(px + eave, ry0 - 5 * s);
+        ctx.stroke();
+      }
+    }
+    /* spire */
+    const topZ = 14 + tiers * 34 + 14;
+    const sy = pyAt(topZ);
+    ctx.strokeStyle = col("roof");
+    ctx.lineWidth = Math.max(3 * s, 1);
+    ctx.beginPath();
+    ctx.moveTo(px, sy);
+    ctx.lineTo(px, sy - 30 * s);
+    ctx.stroke();
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.ellipse(px, sy - (8 + i * 9) * s, (7 - i * 2) * s, 2.4 * s, 0, 0, TAU);
+      ctx.fillStyle = col("roof");
+      ctx.fill();
+    }
+    if (cur.night > .05) {
+      const g = ctx.createRadialGradient(px, sy - 30 * s, 0, px, sy - 30 * s, 20 * s);
+      g.addColorStop(0, col("lantern", .7 * cur.night));
+      g.addColorStop(1, col("lantern", 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(px, sy - 30 * s, 20 * s, 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  function drawBaochu() {
+    const s = baseFit * cam.z;
+    const baseZ = 58;
+    const [px] = project(449, -744, 0);
+    const pyAt = z => project(449, -744, z)[1];
+
+    ctx.fillStyle = col("stone");
+    ctx.beginPath();
+    ctx.ellipse(px, pyAt(baseZ), 30 * s, 12 * s * TILT, 0, 0, TAU);
+    ctx.fill();
+
+    for (let i = 0; i < 7; i++) {
+      const w = (30 - i * 2.6) * s;
+      const z0 = baseZ + 4 + i * 15;
+      const bodyH = 11 * s;
+      const top = pyAt(z0) - bodyH;
+      ctx.fillStyle = col("body");
+      ctx.fillRect(px - w / 2, top, w, bodyH);
+      const eave = w / 2 + 7 * s;
+      ctx.beginPath();
+      ctx.moveTo(px - eave, top - 3 * s);
+      ctx.lineTo(px + eave, top - 3 * s);
+      ctx.lineTo(px + w / 2 + 3 * s, top - 7 * s);
+      ctx.lineTo(px - w / 2 - 3 * s, top - 7 * s);
+      ctx.closePath();
+      ctx.fillStyle = col("roof");
+      ctx.fill();
+    }
+    const sy = pyAt(baseZ + 4 + 7 * 15);
+    ctx.strokeStyle = col("roof");
+    ctx.lineWidth = Math.max(2 * s, .8);
+    ctx.beginPath();
+    ctx.moveTo(px, sy);
+    ctx.lineTo(px, sy - 34 * s);
+    ctx.stroke();
+    ctx.fillStyle = col("roof");
+    ctx.beginPath();
+    ctx.arc(px, sy - 34 * s, Math.max(2.4 * s, 1), 0, TAU);
+    ctx.fill();
+    if (cur.night > .05) {
+      const g = ctx.createRadialGradient(px, sy - 20 * s, 0, px, sy - 20 * s, 16 * s);
+      g.addColorStop(0, col("lantern", .55 * cur.night));
+      g.addColorStop(1, col("lantern", 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(px, sy - 20 * s, 16 * s, 0, TAU);
+      ctx.fill();
+    }
+  }
+
+  function drawBoat(b, time) {
+    const s = baseFit * cam.z * b.s;
+    const d = ((time * b.speed * 1000 / b.len + b.ph) % 1 + 1) % 1 * b.len;
+    const p = pointAt(b.route, d);
+    const ahead = pointAt(b.route, (d + 12) % b.len);
+    const [px, py] = project(p.x, p.y, 2);
+    const [ax, ay] = project(ahead.x, ahead.y, 2);
+    const ang = Math.atan2(ay - py, ax - px);
+
+    ctx.save();
+    ctx.translate(px, py);
+    ctx.rotate(ang);
+
+    /* wake */
+    if (!RM) {
+      ctx.strokeStyle = col("ripple", .25);
+      ctx.lineWidth = Math.max(1.4 * s, .6);
+      for (let i = 1; i <= 3; i++) {
+        ctx.beginPath();
+        ctx.ellipse(-i * 14 * s - 20 * s, 0, (8 + i * 7) * s, (3 + i * 2.4) * s, 0, 0, TAU);
+        ctx.stroke();
+      }
+    }
+
+    /* reflection smear */
+    ctx.fillStyle = col("ink", .12);
+    ctx.beginPath();
+    ctx.ellipse(0, 8 * s, 26 * s, 5 * s, 0, 0, TAU);
+    ctx.fill();
+
+    /* hull */
+    const L = 46 * s, B = L * .3;
+    ctx.beginPath();
+    ctx.moveTo(-L / 2, -B * .1);
+    ctx.quadraticCurveTo(-L * .28, -B * .62, 0, -B * .55);
+    ctx.quadraticCurveTo(L * .28, -B * .62, L / 2, -B * .1);
+    ctx.quadraticCurveTo(L * .3, B * .5, 0, B * .5);
+    ctx.quadraticCurveTo(-L * .3, B * .5, -L / 2, -B * .1);
+    ctx.closePath();
+    ctx.fillStyle = col("boat");
+    ctx.fill();
+    ctx.strokeStyle = col("ink", .4);
+    ctx.lineWidth = Math.max(1.2 * s, .5);
+    ctx.stroke();
+
+    /* canopy */
+    ctx.beginPath();
+    ctx.ellipse(-L * .04, -B * .18, L * .17, B * .8, 0, Math.PI, TAU);
+    ctx.closePath();
+    ctx.fillStyle = col("canopy");
+    ctx.fill();
+    ctx.strokeStyle = col("ink", .3);
+    ctx.stroke();
+
+    /* bow lantern */
+    if (b.lantern && cur.night > .05) {
+      const lx = L * .34, ly = -B * .3;
+      const g = ctx.createRadialGradient(lx, ly, 0, lx, ly, 14 * s);
+      g.addColorStop(0, col("lantern", .9 * cur.night));
+      g.addColorStop(1, col("lantern", 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(lx, ly, 14 * s, 0, TAU);
+      ctx.fill();
+      ctx.fillStyle = col("lantern", cur.night);
+      ctx.beginPath();
+      ctx.arc(lx, ly, Math.max(2.4 * s, 1), 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  /* birds */
+  const flock = { active: false, x: 0, y: 0, vx: 0, next: 4000 };
+  function drawBirds(time, now) {
+    if (RM || cur.night > .5) { flock.active = false; return; }
+    if (!flock.active && now > flock.next) {
+      flock.active = true;
+      flock.x = -60;
+      flock.y = H * (.1 + Math.random() * .14);
+      flock.vx = .06 + Math.random() * .04;
+    }
+    if (!flock.active) return;
+    flock.x += flock.vx * 16;
+    if (flock.x > W + 120) {
+      flock.active = false;
+      flock.next = now + 8000 + Math.random() * 9000;
+      return;
+    }
+    ctx.strokeStyle = col("ink", .55);
+    ctx.lineWidth = 1.6;
+    ctx.lineCap = "round";
+    for (let i = 0; i < 6; i++) {
+      const bx = flock.x + i * 26 + (i % 2) * 14;
+      const by = flock.y + Math.sin(i * 1.3) * 14;
+      const flap = Math.sin(time * 7 + i) * 4;
+      ctx.beginPath();
+      ctx.moveTo(bx - 7, by + flap * .4);
+      ctx.quadraticCurveTo(bx - 2, by - 3 - flap, bx, by);
+      ctx.quadraticCurveTo(bx + 2, by - 3 - flap, bx + 7, by + flap * .4);
+      ctx.stroke();
+    }
+  }
+
+  /* ================= hover / selection ================= */
+  let hoverLm = null, selectedLm = null;
+  let mouseX = -1, mouseY = -1;
+
+  function hitTest(sx, sy) {
+    let best = null, bestD = 1e9;
+    const s = baseFit * cam.z;
+    for (const lm of landmarks) {
+      if (lm.path) {
+        let dMin = 1e9;
+        for (let i = 0; i < lm.path.length - 1; i++) {
+          const [ax, ay] = project(lm.path[i][0], lm.path[i][1], 6);
+          const [bx, by] = project(lm.path[i + 1][0], lm.path[i + 1][1], 6);
+          const vx = bx - ax, vy = by - ay;
+          const t = clamp(((sx - ax) * vx + (sy - ay) * vy) / (vx * vx + vy * vy), 0, 1);
+          const d = Math.hypot(sx - (ax + vx * t), sy - (ay + vy * t));
+          if (d < dMin) dMin = d;
+        }
+        if (dMin < 22 && dMin < bestD) { best = lm; bestD = dMin; }
+      } else {
+        const [px, py] = project(lm.x, lm.y, lm.z * .4);
+        const d = Math.hypot(sx - px, sy - py);
+        const th = clamp(lm.r * s * .9, 24, 110);
+        if (d < th && d < bestD) { best = lm; bestD = d; }
+      }
+    }
+    return best;
+  }
+
+  function drawMarker(lm, time, strong) {
+    const s = baseFit * cam.z;
+    const [px, py] = project(lm.x, lm.y, 2);
+    const rr = (lm.r * .55 + (strong ? 0 : (RM ? 0 : Math.sin(time * 3) * 3))) * s + 8;
+    ctx.strokeStyle = col("sun", strong ? .0 : .0); /* placeholder replaced below */
+    ctx.save();
+    ctx.strokeStyle = strong ? "rgba(158,98,60,.85)" : col("ink", .5);
+    if (document.body.dataset.mood === "night") ctx.strokeStyle = col("lantern", strong ? .9 : .6);
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([5, 5]);
+    ctx.beginPath();
+    ctx.ellipse(px, py, rr, rr * TILT, 0, 0, TAU);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    /* name pill */
+    const [tx, ty] = project(lm.x, lm.y, (lm.z || 10) + 26);
+    ctx.font = "600 13px " + '"FangSong","STFangsong","Songti SC",serif';
+    const tw = ctx.measureText(lm.name).width;
+    const pad = 9;
+    const bw = tw + pad * 2, bh = 24;
+    ctx.fillStyle = "rgba(" + getComputedStyle(document.body).getPropertyValue("--paper-rgb").trim() + ",.92)";
+    ctx.strokeStyle = col("ink", .3);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(tx - bw / 2, ty - bh / 2, bw, bh, 12) : ctx.rect(tx - bw / 2, ty - bh / 2, bw, bh);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = col("ink");
+    if (document.body.dataset.mood === "night") ctx.fillStyle = "#e7e0cd";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(lm.name, tx, ty + 1);
+    ctx.restore();
+  }
+
+  /* ================= frame ================= */
+  let drawTime = 0;
+
+  function draw(time) {
+    drawTime = time;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    drawSky(time);
+    drawRidge(H * .30, 42, 3, col("ridgeFar"), cam.x * .03);
+    drawRidge(H * .325, 32, 5, col("ridgeMid"), cam.x * .05);
+    drawMistBand(.26, .1, .5 * cur.mistStrong, RM ? 0 : Math.sin(time * .05) * 24);
+    drawRidge(H * .35, 24, 8, col("ridgeNear"), cam.x * .08);
+    drawMistBand(.33, .09, .4 * cur.mistStrong, RM ? 0 : Math.sin(time * .04 + 2) * 30);
+
+    drawGround();
+    for (const h of hills) drawHill(h);
+    drawLake(time);
+
+    /* depth-sorted world items */
+    const items = [];
+    items.push({ x: -420, y: 12, f: () => { drawCauseway(suPath, 44); drawSuBridges(); } });
+    items.push({ x: -40, y: -518, f: () => drawCauseway(baiPath, 38) });
+    items.push({ x: 330, y: -322, f: drawDuanqiao });
+    items.push({ x: -300, y: -390, f: drawQuyuan });
+    items.push({ x: 78, y: 75, f: () => drawIsland(time) });
+    items.push({ x: 150, y: 430, f: drawSantan });
+    items.push({ x: 592, y: 570, f: drawLeifeng });
+    items.push({ x: 449, y: -744, f: drawBaochu });
+    for (const t of trees) items.push({ x: t.x, y: t.y, f: () => t.type === "peach" ? drawPeach(t, time) : drawWillow(t, time) });
+    for (const r of reeds) items.push({ x: r[0], y: r[1], f: () => drawReeds(r, time) });
+    lotusClusters.forEach((c, i) => { if (i < 6) items.push({ x: c[0], y: c[1], f: () => drawLotus(c, time) }); });
+    for (const b of boats) items.push({ x: b.route[0][0], y: 400, f: () => drawBoat(b, time) });
+
+    for (const it of items) {
+      const dx = it.x - cam.x, dy = it.y - cam.y;
+      it.key = dx * sinT + dy * cosT;
+    }
+    items.sort((a, b) => a.key - b.key);
+    for (const it of items) it.f();
+
+    /* foreground haze */
+    const g = ctx.createLinearGradient(0, H * .82, 0, H);
+    g.addColorStop(0, col("mist", 0));
+    g.addColorStop(1, col("mist", .22 * cur.mistStrong + .06));
+    ctx.fillStyle = g;
+    ctx.fillRect(0, H * .82, W, H * .18);
+
+    drawBirds(time, performance.now());
+
+    if (selectedLm) drawMarker(selectedLm, time, true);
+    if (hoverLm && hoverLm !== selectedLm) drawMarker(hoverLm, time, false);
+  }
+
+  /* ================= main loop ================= */
+  function frame(ts) {
+    requestAnimationFrame(frame);
+    const time = RM ? 24 : ts / 1000;
+
+    const k = RM ? 1 : .14;
+    cam.x += (cam.tx - cam.x) * k;
+    cam.y += (cam.ty - cam.y) * k;
+    cam.z += (cam.tz - cam.z) * (RM ? 1 : .16);
+    cam.th += (cam.tth - cam.th) * (RM ? 1 : .14);
+    clampTargets();
+    cosT = Math.cos(cam.th);
+    sinT = Math.sin(cam.th);
+
+    for (const key of COLOR_KEYS) {
+      const c = cur[key], t = tgt[key];
+      c[0] += (t[0] - c[0]) * .05;
+      c[1] += (t[1] - c[1]) * .05;
+      c[2] += (t[2] - c[2]) * .05;
+    }
+    for (const key of NUM_KEYS) cur[key] += (tgt[key] - cur[key]) * .05;
+
+    draw(time);
+
+    if (mouseX >= 0) {
+      const lm = hitTest(mouseX, mouseY);
+      if (lm !== hoverLm) {
+        hoverLm = lm;
+        canvas.classList.toggle("is-pointing", !!lm);
+      }
+    }
+  }
+
+  /* ================= resize ================= */
+  function resize() {
+    dpr = Math.min(devicePixelRatio || 1, 2);
+    W = innerWidth;
+    H = innerHeight;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    baseFit = Math.min(W / 1950, H / 1350);
+  }
+  addEventListener("resize", resize);
+  resize();
+  makeSpeckle();
+
+  /* ================= UI ================= */
+  const card = document.getElementById("card");
+  const cardEn = document.getElementById("cardEn");
+  const cardName = document.getElementById("cardName");
+  const cardDesc = document.getElementById("cardDesc");
+
+  function openCard(lm) {
+    cardEn.textContent = lm.en;
+    cardName.textContent = lm.name;
+    cardDesc.textContent = lm.desc;
+    card.classList.add("is-open");
+    card.setAttribute("aria-hidden", "false");
+    document.querySelectorAll(".dock button").forEach(b =>
+      b.classList.toggle("is-on", b.dataset.place === lm.id));
+  }
+
+  function closeCard() {
+    card.classList.remove("is-open");
+    card.setAttribute("aria-hidden", "true");
+    selectedLm = null;
+    document.querySelectorAll(".dock button").forEach(b => b.classList.remove("is-on"));
+  }
+
+  function select(lm, fly) {
+    selectedLm = lm;
+    openCard(lm);
+    if (fly === false) return;
+    const s = baseFit * Math.max(cam.tz, 1.3);
+    cam.tz = Math.max(cam.tz, 1.3);
+    const ry = ((lm.z || 10) * s - H * .06) / (s * TILT);
+    cam.tx = lm.x - ry * sinT;
+    cam.ty = lm.y - ry * cosT;
+    clampTargets();
+  }
+
+  document.querySelectorAll(".dock button").forEach(b => {
+    b.addEventListener("click", () => {
+      const lm = landmarks.find(l => l.id === b.dataset.place);
+      if (lm) select(lm);
+    });
+  });
+
+  document.getElementById("cardClose").addEventListener("click", closeCard);
+
+  function setMood(name, snap) {
+    if (!PALETTES[name]) return;
+    assignPalette(tgt, PALETTES[name]);
+    if (snap) assignPalette(cur, PALETTES[name]);
+    document.body.dataset.mood = name;
+    document.querySelectorAll(".moods button").forEach(b =>
+      b.classList.toggle("is-on", b.dataset.mood === name));
+    const theme = { dawn: "#dfe7e0", dusk: "#ecd3ab", night: "#141e29" };
+    document.getElementById("themeColor").setAttribute("content", theme[name]);
+  }
+
+  document.querySelectorAll(".moods button").forEach(b =>
+    b.addEventListener("click", () => setMood(b.dataset.mood)));
+
+  document.getElementById("rotL").addEventListener("click", () => { cam.tth -= .16; clampTargets(); });
+  document.getElementById("rotR").addEventListener("click", () => { cam.tth += .16; clampTargets(); });
+  document.getElementById("zoomIn").addEventListener("click", () => zoomAt(W / 2, H / 2, 1.2));
+  document.getElementById("zoomOut").addEventListener("click", () => zoomAt(W / 2, H / 2, 1 / 1.2));
+  document.getElementById("home").addEventListener("click", () => {
+    cam.tx = -20; cam.ty = 80; cam.tz = 1; cam.tth = 0;
+    clampTargets();
+    closeCard();
+  });
+
+  /* ================= input ================= */
+  const pointers = new Map();
+  let downInfo = null, lastPinch = 0;
+
+  canvas.addEventListener("pointerdown", e => {
+    canvas.focus();
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size === 1) {
+      downInfo = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: 0 };
+    } else {
+      downInfo = null;
+      lastPinch = 0;
+    }
+    canvas.setPointerCapture(e.pointerId);
+    canvas.classList.add("is-dragging");
+  });
+
+  canvas.addEventListener("pointermove", e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    p.x = e.clientX;
+    p.y = e.clientY;
+
+    if (pointers.size === 1) {
+      const [wx, wy] = screenDeltaToWorld(dx, dy);
+      cam.tx -= wx;
+      cam.ty -= wy;
+      cam.x = cam.tx;
+      cam.y = cam.ty;
+      clampTargets();
+      if (downInfo) downInfo.moved += Math.abs(dx) + Math.abs(dy);
+    } else if (pointers.size === 2) {
+      const [a, b] = [...pointers.values()];
+      const d = Math.hypot(a.x - b.x, a.y - b.y);
+      if (lastPinch > 0) zoomAt((a.x + b.x) / 2, (a.y + b.y) / 2, d / lastPinch);
+      lastPinch = d;
+    }
+  });
+
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) lastPinch = 0;
+    if (pointers.size === 0) {
+      canvas.classList.remove("is-dragging");
+      if (downInfo && e.pointerId === downInfo.id) {
+        const dt = performance.now() - downInfo.t;
+        if (downInfo.moved < 9 && dt < 600) {
+          const lm = hitTest(e.clientX, e.clientY);
+          if (lm) select(lm);
+          else closeCard();
+        }
+      }
+      downInfo = null;
+    }
+  }
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("pointerleave", () => { mouseX = mouseY = -1; });
+
+  canvas.addEventListener("wheel", e => {
+    e.preventDefault();
+    zoomAt(e.clientX, e.clientY, Math.exp(-e.deltaY * .0012));
+  }, { passive: false });
+
+  addEventListener("keydown", e => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const step = 90;
+    switch (e.key) {
+      case "ArrowLeft": { const [wx] = screenDeltaToWorld(-step, 0); cam.tx += wx; cam.ty += screenDeltaToWorld(-step, 0)[1]; break; }
+      case "ArrowRight": { const [wx, wy] = screenDeltaToWorld(step, 0); cam.tx += wx; cam.ty += wy; break; }
+      case "ArrowUp": { const [wx, wy] = screenDeltaToWorld(0, -step); cam.tx += wx; cam.ty += wy; break; }
+      case "ArrowDown": { const [wx, wy] = screenDeltaToWorld(0, step); cam.tx += wx; cam.ty += wy; break; }
+      case "+": case "=": zoomAt(W / 2, H / 2, 1.18); break;
+      case "-": case "_": zoomAt(W / 2, H / 2, 1 / 1.18); break;
+      case "q": case "Q": cam.tth -= .16; break;
+      case "e": case "E": cam.tth += .16; break;
+      case "1": setMood("dawn"); break;
+      case "2": setMood("dusk"); break;
+      case "3": setMood("night"); break;
+      case "Escape": closeCard(); break;
+      case "Home": document.getElementById("home").click(); break;
+      default: return;
+    }
+    clampTargets();
+    e.preventDefault();
+  });
+
+  /* ================= init from hash ================= */
+  {
+    const hp = new URLSearchParams(location.hash.slice(1));
+    const m0 = hp.get("mood");
+    if (m0) setMood(m0, true);
+    const s0 = hp.get("spot");
+    const lm0 = landmarks.find(l => l.id === s0);
+    if (lm0) select(lm0, !RM);
+  }
+
+  requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
