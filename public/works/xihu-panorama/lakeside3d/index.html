@@ -1417,9 +1417,12 @@
     if (d.xihuView) setView(d.xihuView);
   });
 
-  /* 深链：?view=scroll|twod|top */
-  const vq = new URLSearchParams(location.search).get('view');
+  /* 深链：?view=scroll|twod|top  ?mood=dawn|dusk|night */
+  const qs = new URLSearchParams(location.search);
+  const vq = qs.get('view');
   if (vq && vq in VIEWS) setView(vq);
+  const mq = qs.get('mood');
+  if (mq && ['dawn', 'dusk', 'night'].includes(mq)) applyMood(mq);
 
   /* 被壳嵌入时视角由壳统一控制 */
   if (window.top !== window.self) {
