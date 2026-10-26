@@ -31,15 +31,18 @@ const uid = `demo-${Math.random().toString(36).slice(2, 9)}`;
       <div class="de-spinner"></div>
       <p>加载 Demo…</p>
     </div>
-    <iframe
-      class="de-iframe"
-      data-de-iframe={uid}
-      title={`${title || 'Demo'} · 内嵌预览`}
-      loading="lazy"
-      referrerpolicy="no-referrer"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-      allowfullscreen
-    ></iframe>
+    <!-- 桌面视口容器：iframe 按 1440×900 渲染后等比缩放，避免窄容器把网页挤成手机版 -->
+    <div class="de-frame" data-de-frame={uid}>
+      <iframe
+        class="de-iframe"
+        data-de-iframe={uid}
+        title={`${title || 'Demo'} · 内嵌预览`}
+        loading="lazy"
+        referrerpolicy="no-referrer"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen
+      ></iframe>
+    </div>
 
     <!-- Fallback：iframe 被拦截时显示 -->
     <div class="de-fallback" data-de-fallback={uid} hidden>
@@ -87,7 +90,8 @@ const uid = `demo-${Math.random().toString(36).slice(2, 9)}`;
 .de-stage {
   position: relative;
   width: 100%;
-  min-height: 62vh;
+  /* 舞台高度跟着宽度走（16:10），全宽时自然变大 */
+  aspect-ratio: 1440 / 900;
   background: var(--bg);
   border: 1px solid var(--rule);
   overflow: hidden;
@@ -99,11 +103,21 @@ const uid = `demo-${Math.random().toString(36).slice(2, 9)}`;
 }
 .de-stage[hidden] { display: none; }
 
+.de-frame {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg2);
+}
+
+/* 桌面视口：先按 1440 宽排版，再由脚本 scale 到容器宽度 */
 .de-iframe {
-  display: block;
-  width: 100%;
-  height: 62vh;
-  min-height: 420px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1440px;
+  height: 900px;
+  transform-origin: 0 0;
   border: 0;
   background: var(--bg);
   opacity: 0;
@@ -218,8 +232,14 @@ const uid = `demo-${Math.random().toString(36).slice(2, 9)}`;
 .de-close:hover, .de-open-ext:hover { background: rgba(26, 26, 24, 0.95); }
 
 @media (max-width: 768px) {
-  .de-stage { min-height: 52vh; }
-  .de-iframe { height: 52vh; min-height: 320px; }
+  /* 手机端不做桌面缩放：按容器宽度正常渲染响应式版，高度给足 */
+  .de-stage { aspect-ratio: auto; height: 70vh; min-height: 420px; }
+  .de-iframe {
+    position: static;
+    width: 100%;
+    height: 100%;
+    transform: none !important;
+  }
   .de-fallback-body { padding: 20px; }
   .de-bar { opacity: 1; }
 }
@@ -249,11 +269,28 @@ function mountDemoEmbed(root = document) {
     const isSameOrigin = url && new URL(url, location.href).origin === location.origin;
     const trigger = wrap.querySelector(`[data-de-trigger="${uid}"]`);
     const stage = wrap.querySelector(`[data-de-stage="${uid}"]`);
+    const frame = wrap.querySelector(`[data-de-frame="${uid}"]`);
     const iframe = wrap.querySelector(`[data-de-iframe="${uid}"]`);
     const fallback = wrap.querySelector(`[data-de-fallback="${uid}"]`);
     const closeBtn = wrap.querySelector(`[data-de-close="${uid}"]`);
 
     if (!trigger || !stage || !iframe) return;
+
+    // 桌面视口尺寸：iframe 按 1440×900 排版，再等比缩放填满容器
+    const VP_W = 1440;
+    function fit() {
+      if (!frame) return;
+      if (window.matchMedia('(max-width: 768px)').matches) {
+        iframe.style.transform = '';
+        return;
+      }
+      const k = frame.clientWidth / VP_W;
+      if (k > 0) iframe.style.transform = `scale(${k})`;
+    }
+    if (frame && 'ResizeObserver' in window) {
+      new ResizeObserver(fit).observe(frame);
+    }
+    window.addEventListener('resize', fit);
 
     let loadTimer = null;
     let postLoadTimer = null;
@@ -291,6 +328,7 @@ function mountDemoEmbed(root = document) {
         return;
       }
 
+      fit();
       iframe.src = url;
 
       // 主超时：6s 内连 load 事件都没触发 → 加载失败

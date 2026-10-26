@@ -1407,7 +1407,8 @@
     else if (k === '0') goHome();
   });
 
-  /* 壳联动：与 2.5D 同一套消息 */
+  /* 壳联动：与 2.5D 同一套消息 + pause 通道（出视口省 CPU） */
+  let paused = false;
   window.addEventListener('message', e => {
     const d = e.data || {};
     if (d.xihuSelect) {
@@ -1415,6 +1416,7 @@
       if (lm) select(lm);
     }
     if (d.xihuView) setView(d.xihuView);
+    if (d.xihuPause != null) paused = !!d.xihuPause;
   });
 
   /* 深链：?view=scroll|twod|top  ?mood=dawn|dusk|night */
@@ -1482,6 +1484,9 @@
     updateRipples(clock);
 
     renderer.render(scene, camera);
+    /* pause 通道：滚出视口时壳会发 xihuPause:true，这里只跳过 render 与更新，
+       rAF 持续跑着，恢复时不需要重新 requestAnimationFrame。 */
+    if (paused) { requestAnimationFrame(frame); return; }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
