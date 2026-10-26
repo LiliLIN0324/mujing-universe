@@ -167,6 +167,8 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
   .wd-page.wd-p1 .wd-wrap:has(.wd-links) { max-height: 360px; }
   .wd-page.wd-p1 .wd-wrap:has(.wd-links) .wd-facts,
   .wd-page.wd-p1 .wd-wrap:has(.wd-links) .wd-text > .wd-more { display: none; }
+  /* 介绍句与副题是同一句，首屏不占高度，把画面拉长。 */
+  .wd-page.wd-p1 .wd-intro { display: none; }
 }
 .wd-motion {
   position: absolute;
