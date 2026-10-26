@@ -209,6 +209,8 @@ const email = 'lily1326685527@gmail.com';
     transform: translateX(-50%) translateY(0);
   }
   .mimi-launch.is-below .mimi-hi { bottom: auto; top: calc(100% + 10px); }
+  /* 夜间：暗站上黑框会隐身（#1a1a1c on #131316），翻成浅底深字——tooltip 本是与页面反色的元素 */
+  html.dark .mimi-hi { background: #EDEBE7; color: #131316; }
   .mimi-dots {
     display: none;
     position: absolute;
