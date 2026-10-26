@@ -87,6 +87,10 @@
           "next": "map"
         },
         {
+          "label": "来首曲子",
+          "next": "concert_pick"
+        },
+        {
           "label": "找丽丽聊合作",
           "next": "coop"
         },
@@ -250,6 +254,67 @@
       ],
       "llm": true,
       "back": "hub"
+    },
+    "concert_pick": {
+      "lines": [
+        {
+          "text": "鸡都到位了，听哪首？"
+        }
+      ],
+      "choices": [
+        {
+          "label": "小星星",
+          "next": "c_twinkle"
+        },
+        {
+          "label": "欢乐颂",
+          "next": "c_ode"
+        },
+        {
+          "label": "生日快乐",
+          "next": "c_birthday"
+        },
+        {
+          "label": "绿袖子",
+          "next": "c_greensleeves"
+        },
+        {
+          "label": "先不听了",
+          "next": "hub"
+        }
+      ]
+    },
+    "c_twinkle": {
+      "lines": [
+        {
+          "text": "《小星星》，预备——[[FARM:concert:twinkle]]"
+        }
+      ],
+      "next": "hub"
+    },
+    "c_ode": {
+      "lines": [
+        {
+          "text": "《欢乐颂》，预备——[[FARM:concert:ode]]"
+        }
+      ],
+      "next": "hub"
+    },
+    "c_birthday": {
+      "lines": [
+        {
+          "text": "《生日快乐》，预备——[[FARM:concert:birthday]]"
+        }
+      ],
+      "next": "hub"
+    },
+    "c_greensleeves": {
+      "lines": [
+        {
+          "text": "《绿袖子》，预备——这首走 E 小调，黑键也上。[[FARM:concert:greensleeves]]"
+        }
+      ],
+      "next": "hub"
     }
   }
 }
