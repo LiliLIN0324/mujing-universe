@@ -10,7 +10,7 @@ export const ANSWERS = {
   works: '作品目录在[作品页](/works/)，按数字艺术、产品和游戏分开。',
   doing: '已经公开的在[作品页](/works/)，按数字艺术、产品和游戏分开。',
   find: '飞书名片点「看飞书名片」，邮件写到 lily1326685527@gmail.com。加好友后在群里 @Mimi。这里不会自动拉群。',
-  made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是开源的飞书群智能体模板，小团队可以在飞书群里用它答疑、查资料、记事情：[feishu-group-agent](https://github.com/endtree-FDE/feishu-group-agent)。',
+  made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是我的开源模板 mimi-agent，小团队可以在飞书群里用它答疑、查资料、记事情，写入操作要先本人确认：[mimi-agent](https://github.com/endtree-FDE/mimi-agent)。',
   coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
   secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
   skip: '这一件还在保密期，我不方便展开。已经公开的作品在[作品页](/works/)。想聊类似方向的合作，去[合作页](/contact/)跟我说。', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板

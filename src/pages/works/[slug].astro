@@ -45,6 +45,7 @@ const httpUrl = (value?: string) => {
   return /^https?:\/\//i.test(url) ? url : '';
 };
 const demoHref = httpUrl(w.demo);
+const repoHref = httpUrl(w.repo);
 const newsHref = httpUrl(w.link);
 /* 西湖清趣：官网只留一条进壳入口（进度5 收口），壳在 /works/xihu-panorama/shell/ */
 const XIHU_SHELL = w.slug === 'xihu-panorama';
@@ -73,8 +74,9 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
           {intro && <p class="wd-intro">{intro}</p>}
           {abstract && <p class="wd-more">{abstract}</p>}
           {w.note && <p class="wd-more">{w.note}</p>}
-          {(demoHref || newsHref) && <div class="wd-links">
+          {(demoHref || repoHref || newsHref) && <div class="wd-links">
             {demoHref && <p class="wd-more"><a href={demoHref} target="_blank" rel="noopener noreferrer">打开 Demo ↗</a></p>}
+            {repoHref && <p class="wd-more"><a href={repoHref} target="_blank" rel="noopener noreferrer">开源模板 ↗</a></p>}
             {newsHref && <p class="wd-more"><a href={newsHref} target="_blank" rel="noopener noreferrer">相关报道 ↗</a></p>}
           </div>}
         </div>
