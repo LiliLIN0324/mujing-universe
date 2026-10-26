@@ -3,12 +3,12 @@
  * 全站唯一 Mimi 对话框（合一后只有这一份实现）。
  * variant="panel"：浮层小窗，右下 400px，可拖拽、Rive 头像；Base.astro 挂载（合作页除外）。
  * variant="bench"：合作页大面板，in-flow 960px，结构同 panel，由 CooperateHarness.astro 挂载。
- * 两壳内容完全一致：header（Mimi+演示标）→ log → 快捷 chips（作品在做什么/怎么合作/怎么找到你们/
- *   进鸡场/唤管家）→ CTA 行（看飞书名片/写邮件）→ IM 列表（飞书可用，其余即将开放）→ 输入行 → 页脚。
+ * 两壳内容完全一致：header（Mimi+演示标）→ log → 快捷 chips（看看作品/看看小鸡/一起合作，最多三颗）
+ *   → CTA 行（看飞书名片/写邮件）→ IM 列表（飞书可用，其余即将开放）→ 输入行 → 页脚。
  * 会话贯通：turns 全量存 sessionStorage（'mimi-session-v1'），浮层聊到一半去合作页，内容还在。
- * 管家：剧本树（src/data/butler-script.json）引擎随迁至此，管家消息带橙色「管家 Mimi」名牌
- *   出现在同一个 log 里，选项渲染进 chips 行；[[FARM:*]]/[[COOP]] 照旧走 farm:cmd 总线/mimi-core 协议。
- * 入口：chips「唤管家」、鸡场 HUD「管家」按钮（farm:cmd butler）。
+ * 管家：剧本树（src/data/butler-script.json）只留短日常（送蛋、去作品页）。消息带橙色「Mimi」名牌
+ *   出现在同一个 log 里，一次最多两颗选项；[[FARM:gift:egg]]/[[FARM:goto:*]]/[[COOP]] 照旧走 farm:cmd 总线/mimi-core 协议。
+ *   音乐会、地图不从对话层发出。入口：鸡场 HUD「管家」按钮（farm:cmd butler），浮层不再放「唤管家」。
  * 密钥不在这里。/api/chat 不可达时走 mimi-core 的本地演示回答。
  */
 const variant = Astro.props.variant === 'bench' ? 'bench' : 'panel';
@@ -30,7 +30,7 @@ const email = 'lily1326685527@gmail.com';
         </picture>
         <span class="mimi-dots" aria-hidden="true"><i></i><i></i><i></i></span>
       </span>
-      <span class="mimi-hi" role="tooltip">嗨，我是 Mimi，带你随便看看。</span>
+      <span class="mimi-hi" role="tooltip">嗨，我是 Mimi。先看小鸡也行。</span>
     </button>
   )}
   <section class="mimi-panel" id={`${uid}-panel`} role="dialog" aria-modal="false" aria-labelledby={`${uid}-name`} hidden={isBench ? undefined : true}>
@@ -51,11 +51,9 @@ const email = 'lily1326685527@gmail.com';
     </header>
     <div class="mimi-log" role="log" aria-live="polite" aria-relevant="additions"></div>
     <div class="mimi-quick" role="group" aria-label="快捷问题">
-      <button type="button">作品在做什么</button>
-      <button type="button">怎么合作</button>
-      <button type="button">怎么找到你们</button>
-      <button class="mimi-farmbtn" type="button">进鸡场</button>
-      <button class="mimi-butlerbtn" type="button">唤管家</button>
+      <button type="button">看看作品</button>
+      <button class="mimi-farmbtn" type="button">看看小鸡</button>
+      <button type="button">一起合作</button>
     </div>
     <div class="mimi-cta">
       <button class="mimi-feishu" type="button">看飞书名片</button>
@@ -63,7 +61,7 @@ const email = 'lily1326685527@gmail.com';
     </div>
     <form class="mimi-form">
       <label class="mimi-sr" for={`${uid}-input`}>输入问题</label>
-      <input class="mimi-input" id={`${uid}-input`} name="q" maxlength="400" autocomplete="off" enterkeyhint="send" placeholder="想了解幕景，直接问我" />
+      <input class="mimi-input" id={`${uid}-input`} name="q" maxlength="400" autocomplete="off" enterkeyhint="send" placeholder="想说什么，说一声" />
       <button class="mimi-send" type="submit">发送</button>
     </form>
   </section>
@@ -843,9 +841,9 @@ const email = 'lily1326685527@gmail.com';
 
     let reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const EMAIL = 'lily1326685527@gmail.com';
-    const GREETING = '这卷西湖还在画。想听近况，或留下合作意向，都可以跟我说一句。';
-    const COOP_LINE = '可以说古画、民乐音画，或一个合作项目。说完我把飞书名片放出来，你自己加好友。官网不会自动拉群。我们接什么在[合作页](/contact/#start)。';
-    const DEFAULT_PLACEHOLDER = '想了解幕景，直接问我';
+    const GREETING = '嗨，我是 Mimi。想看作品，还是先看看旁边的小鸡？';
+    const COOP_LINE = '想一起做，跟我说一声：古画、民乐音画，或者一件具体的事。说完我把飞书名片放出来，你自己加，不会自动拉群。';
+    const DEFAULT_PLACEHOLDER = '想说什么，说一声';
     const SESSION_KEY = 'mimi-session-v1';
 
     /* ===== 会话（两壳贯通）：turns 全量存 sessionStorage，同一 key，浮层与合作页共用 ===== */
@@ -948,7 +946,7 @@ const email = 'lily1326685527@gmail.com';
       item.className = 'mimi-msg bot is-butler';
       const plate = document.createElement('b');
       plate.className = 'mimi-plate';
-      plate.textContent = '管家 Mimi';
+      plate.textContent = 'Mimi';
       const p = document.createElement('p');
       item.append(plate, p);
       log.append(item);
@@ -1173,11 +1171,16 @@ const email = 'lily1326685527@gmail.com';
       if (!FARM_Q.test(q)) return null;
       const s = snap();
       if (!s) return null;
+      const chickens = s.chickens | 0;
+      const eggs = s.eggs | 0;
+      if (!chickens && !eggs) return '还没有小鸡呢。点页面空白处，先下一颗蛋。';
       const where = Object.entries(s.pagesMap || {}).filter(([, n]) => n > 0)
         .map(([p, n]) => `${FARM_CN[p] || p} ${n} 只`);
-      const lines = [`东家清点：鸡 ${s.chickens} 只。`];
-      lines.push(where.length ? `${where.join('，')}；还有 ${Math.max(0, s.eggs - s.chickens)} 颗蛋没孵。` : '都在鸡篮里待着，还没放出本页。');
-      lines.push(s.dex_left > 0 ? `图鉴还差 ${s.dex_left} 个品种，点空白处多下几颗蛋就有了。` : '图鉴已经集齐，就等东家来领证书。');
+      const pending = Math.max(0, eggs - chickens);
+      const lines = [`现在有 ${chickens} 只小鸡。`];
+      if (where.length) lines.push(`它们在${where.join('，')}。`);
+      if (pending) lines.push(`还有 ${pending} 颗蛋，等一等就出来。`);
+      else if (!where.length) lines.push('点空白处，还能再下一颗蛋。');
       return lines.join('');
     }
 
@@ -1241,7 +1244,7 @@ const email = 'lily1326685527@gmail.com';
 
     /* 标记解释器：[[FARM:*]] / [[COOP]] 不进正文，转总线命令（与后端扣留同一协议） */
     const MARK = /\[\[\s*(FARM:[a-z:|]+|COOP)\s*\]\]/g;
-    const VALID = /^(gift:egg|goto:(home|works|about|news|contact)|map|concert:(twinkle|ode|birthday|greensleeves)|coop)$/
+    const VALID = /^(gift:egg|goto:(home|works|about|news|contact)|coop)$/
     function stripMarks(t) {
       const cmds = [];
       const shown = String(t).replace(MARK, (_, m) => {
@@ -1304,7 +1307,7 @@ const email = 'lily1326685527@gmail.com';
       if (butler) { openDialog(); return; }
       butler = { node: null, queue: [], llmNode: null };
       llmTurns = [];
-      if (input) input.placeholder = '想问管家什么，直接说';
+      if (input) input.placeholder = '想说什么，说一声';
       openDialog();
       gotoNode(butlerScript.meta.root);
     }
@@ -1354,19 +1357,12 @@ const email = 'lily1326685527@gmail.com';
       butlerTyping = false;
       quickBox.replaceChildren();
       for (const c of node.choices || []) {
-        const ok = !c.if || cond(c.if);
+        if (c.if && !cond(c.if)) continue; // 办过的不摆出来，避免一排灰钮
         const b = document.createElement('button');
         b.type = 'button';
         b.className = 'mimi-butlerchip';
         b.textContent = c.label;
-        b.disabled = !ok; // 条件不满足：置灰不可点（如今天的蛋已领过）
-        if (!ok) {
-          const note = document.createElement('i');
-          note.textContent = '已办过';
-          b.append(note);
-        } else {
-          b.addEventListener('click', () => gotoNode(c.next));
-        }
+        b.addEventListener('click', () => gotoNode(c.next));
         quickBox.append(b);
       }
     }
@@ -1379,35 +1375,30 @@ const email = 'lily1326685527@gmail.com';
         butlerType(shown, () => cmds.forEach(emitButlerCmd));
       }
     }
-    /* 管家自由聊：接现有 /api/chat，农场状态随 payload 上送（mimi-core 透传 farm） */
-    /* 管家模式的本地启发式（仅 API 不可达时的兜底；线上走 /api/chat 的管家人格） */
-    const BUTLER_CN = { home: '首页', works: '作品页', about: '关于页', news: '动态页', contact: '合作页' };
-    const BUTLER_SONGS = [
-      { key: 'greensleeves', re: /绿袖子|greensleeves/i, title: '绿袖子' },
-      { key: 'twinkle', re: /小星星|一闪一闪/, title: '小星星' },
-      { key: 'ode', re: /欢乐颂|贝多芬/, title: '欢乐颂' },
-      { key: 'birthday', re: /生日|祝.*(生日)/, title: '生日快乐' },
-    ];
+    /* 管家自由聊：接现有 /api/chat。本地兜底只在 API 不可达时用，不弹琴、不铺地图。 */
+    const PAGE_GOTO = { 作品: 'works', 关于: 'about', 动态: 'news' };
+    const PAGE_LABEL = { works: '作品页', about: '关于页', news: '动态页' };
     function butlerLocal(q) {
-      if (/随便|随你|你定|都行|看你/.test(q)) {
-        const pick = ['works', 'about', 'news'][Math.floor(Math.random() * 3)];
-        return { text: `那我说了算啦——去${BUTLER_CN[pick]}逛逛，替我向那边的鸡问好。`, cmd: `goto:${pick}` };
+      if (/蛋/.test(q) && /送|要|给我|来颗|来一|来个/.test(q)) {
+        if (vars.gift_used) return { text: '今天这颗已经送过啦。明天再来，或者去作品页逛逛。', cmd: null };
+        vars.gift_used = true;
+        try { sessionStorage.setItem(GIFT_KEY, '1'); } catch { /* 隐私模式 */ }
+        persistVars();
+        return { text: '给你一颗蛋。是什么样的鸡，孵出来才知道。', cmd: 'gift:egg' };
       }
-      const song = BUTLER_SONGS.find((s) => s.re.test(q));
-      if (song && /来首|来一|弹|唱|听|演奏|曲|音乐|concert/i.test(q + '曲')) {
-        return { text: `《${song.title}》，预备——琴键升起来，客串的鸡也都到位了。`, cmd: `concert:${song.key}` };
+      if (/琴|唱歌|唱一首|来首|曲子|歌曲|音乐|演奏|音乐会|地图|图鉴|绿袖子|小星星/.test(q)) {
+        return { text: '今天不弹琴，也不铺地图。看看旁边的小鸡，或者去作品页逛逛。', cmd: null };
       }
-      if (/曲|琴|弹|音乐|演奏|唱/.test(q)) {
-        return { text: '会的曲子有四首：《小星星》《欢乐颂》《生日快乐》《绿袖子》。说「来首绿袖子」就行～', cmd: null };
+      if (/合作|飞书|邮件|一起做/.test(q)) {
+        return { text: '想一起做，跟丽丽说就好。名片放这儿，你自己加。', cmd: 'coop' };
       }
-      const m = q.match(/作品|关于|动态|新闻|合作/);
-      if (m && /去|逛|放|到|飞/.test(q)) {
-        const map = { 作品: 'works', 关于: 'about', 动态: 'news', 新闻: 'news', 合作: 'contact' };
-        const page = map[m[0]];
-        return { text: `好嘞，这就派几只去${BUTLER_CN[page]}，你到那儿点收。`, cmd: `goto:${page}` };
+      const m = q.match(/作品|关于|动态/);
+      if (m && /去|逛|看|走/.test(q)) {
+        const page = PAGE_GOTO[m[0]];
+        return { text: `好呀，去${PAGE_LABEL[page]}逛逛。`, cmd: `goto:${page}` };
       }
-      const place = q.replace(/[去逛放到飞。？?！!，,\s]/g, '').slice(0, 8);
-      return { text: place ? `${place}？地图上没这一站。圈舍就这几处——作品页、关于页、动态页，要不你随便挑？` : '这句我先记下啦。能办的：报数、送蛋、放鸡去别的页面、要地图、来首曲子～' };
+      if (/鸡/.test(q)) return { text: '小鸡就在旁边。点空白处，会下一颗蛋。', cmd: null };
+      return { text: '我听见啦。要送颗蛋，还是去作品页逛逛？', cmd: null };
     }
 
     async function butlerAsk(q) {
@@ -1433,7 +1424,7 @@ const email = 'lily1326685527@gmail.com';
             item.className = 'mimi-msg bot is-butler';
             const plate = document.createElement('b');
             plate.className = 'mimi-plate';
-            plate.textContent = '管家 Mimi';
+            plate.textContent = 'Mimi';
             bubble = document.createElement('p');
             item.append(plate, bubble);
             log.append(item);
@@ -1585,6 +1576,7 @@ const email = 'lily1326685527@gmail.com';
     }
     function closeDialog() {
       if (bench) return;
+      if (butler) exitButler(); /* 合上就结束这一小段，不再把选项留在鸡场上面 */
       window.clearTimeout(closeTimer);
       motion.open = false;
       applyMotion();
@@ -1603,7 +1595,7 @@ const email = 'lily1326685527@gmail.com';
     function primeCoop() {
       if (coopPrimed) return;
       coopPrimed = true;
-      input.placeholder = '例如：想做一场民乐音画';
+      input.placeholder = '想做什么，说一句就行';
       append('bot', COOP_LINE, false);
       record({ r: 'bot', t: COOP_LINE });
     }
@@ -2083,10 +2075,19 @@ const email = 'lily1326685527@gmail.com';
     feishuBtn?.addEventListener('click', showCoopCard);
     imFeishu?.addEventListener('click', showCoopCard);
     mailBtn?.addEventListener('click', showMailCard);
-    /* 进鸡场：广播 farm:toggle（ChickenFarm 监听，开着=收起/关着=打开），浮层收起让位 */
+    /* 看看小鸡：关着才打开。开着时浮层只让开，不拿对话框当鸡场开关。 */
     farmChip?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('farm:toggle'));
-      if (!bench) closeDialog();
+      const wasOn = document.body.classList.contains('farm-on');
+      if (!wasOn) window.dispatchEvent(new CustomEvent('farm:toggle'));
+      if (!bench) {
+        closeDialog();
+        return;
+      }
+      if (wasOn && !butler) {
+        const line = '小鸡就在旁边玩呢。点空白处，还能再下一颗蛋。';
+        append('bot', line, true);
+        record({ r: 'bot', t: line });
+      }
     });
     butlerChip?.addEventListener('click', enterButler);
     closeBtn?.addEventListener('click', closeDialog);

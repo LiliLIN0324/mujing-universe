@@ -7,14 +7,14 @@ export const BANNED = /西湖|繁胜全景|xihu-panorama/i;
 
 export const ANSWERS = {
   what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做古画、民乐音画，也做展览和委托。目录在[作品页](/works/)，怎么合作写在[合作页](/contact/)。',
-  works: '作品目录在[作品页](/works/)，按数字艺术、产品和游戏分开。',
-  doing: '已经公开的在[作品页](/works/)，按数字艺术、产品和游戏分开。',
+  works: '想看作品的话，去[作品页](/works/)逛逛就好。',
+  doing: '已经公开的，在[作品页](/works/)逛逛就好。',
   find: '飞书名片点「看飞书名片」，邮件写到 lily1326685527@gmail.com。加好友后在群里 @Mimi。这里不会自动拉群。',
   made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是我的开源模板 mimi-agent，小团队可以在飞书群里用它答疑、查资料、记事情，写入操作要先本人确认：[mimi-agent](https://github.com/endtree-FDE/mimi-agent)。',
-  coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
+  coop: '想一起做，说古画、民乐音画，或者一件具体的事。下面是终树的飞书名片，你自己加，备注来意。不会自动拉群。接什么写在[合作页](/contact/#start)。\n[[COOP]]',
   secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
   skip: '这一件还在保密期，我不方便展开。已经公开的作品在[作品页](/works/)。想聊类似方向的合作，去[合作页](/contact/)跟我说。', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
-  other: '这个问题我答不准，也不能替团队承诺。想合作，点「怎么合作」，或去[合作页](/contact/)。',
+  other: '这句我接不太住。想一起做，点「一起合作」，或去[合作页](/contact/)。',
   en: 'I can’t answer that precisely. For a project, open the [collaborate page](/contact/).', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
   enCoop: 'Say what you want to make. Then add 终树 on Feishu with the card below and leave a note. This site will not create a group, and there is no 24-hour assistant.\n[[COOP]]',
 };
@@ -134,7 +134,7 @@ export async function readSse(res, onDelta) {
 
 const RATE = '提问有点多，我先歇一会儿，稍后再问哦。';
 const FAIL = '抱歉，这次没能生成回答，请稍后再试。';
-const COOP_LINE = '想合作的话，用下面的名片自己加飞书好友。官网不会自动拉群。';
+const COOP_LINE = '想一起做的话，用下面的名片自己加飞书。不会自动拉群。';
 
 /* 鸡场问题的演示态兜底：仅当 /api/chat 不可用（501/断网）走演示分支时使用；
    线上主路径由后端把农场账注入 SYSTEM（AI Native），不走这里。 */
@@ -142,11 +142,16 @@ const FARM_CN = { home: '首页', works: '作品页', about: '关于页', news: 
 const FARM_Q = /我的.{0,6}鸡|小鸡|鸡场|鸡都?在|鸡群|出鸡|孵化|图鉴|蛋.{0,8}(哪|多少|几颗|几只)/;
 function farmReply(q, farm) {
   if (!farm || !FARM_Q.test(q)) return null;
+  const chickens = farm.chickens | 0;
+  const eggs = farm.eggs | 0;
+  if (!chickens && !eggs) return '还没有小鸡呢。点页面空白处，先下一颗蛋。';
   const where = Object.entries(farm.pagesMap || farm.pages || {}).filter(([, n]) => n > 0)
     .map(([p, n]) => `${FARM_CN[p] || p} ${n} 只`);
-  const lines = [`东家清点：鸡 ${farm.chickens} 只。`];
-  lines.push(where.length ? `${where.join('，')}；还有 ${Math.max(0, farm.eggs - farm.chickens)} 颗蛋没孵。` : '都在鸡篮里待着，还没放出本页。');
-  lines.push(farm.dex_left > 0 ? `图鉴还差 ${farm.dex_left} 个品种，点空白处多下几颗蛋就有了。` : '图鉴已经集齐，就等东家来领证书。');
+  const pending = Math.max(0, eggs - chickens);
+  const lines = [`现在有 ${chickens} 只小鸡。`];
+  if (where.length) lines.push(`它们在${where.join('，')}。`);
+  if (pending) lines.push(`还有 ${pending} 颗蛋，等一等就出来。`);
+  else if (!where.length) lines.push('点空白处，还能再下一颗蛋。');
   return lines.join('');
 }
 
