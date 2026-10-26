@@ -406,19 +406,20 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     const v = videoOf(cv);
     if (!v) return;
     v.pause();
+    // 暂停保留当前帧；只有 release（滑出视口/切筛选）才丢 src、回到静帧。
     if (release) {
       v.dataset.dropping = '1';
       v.removeAttribute('src');
       v.load();
       v.dataset.dropping = '';
+      mark(cv, false);
     }
-    mark(cv, false);
   }
   function start(cv) {
     if (!alive(cv) || !videoOf(cv)) return;
     clips().forEach((other) => {
       if (other === cv) return;
-      halt(other, true);
+      halt(other);
     });
     const v = videoOf(cv);
     if (!v.getAttribute('src') && v.dataset.src) v.src = v.dataset.src;
@@ -436,7 +437,6 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     const v = videoOf(cv);
     if (!v) return;
     v.addEventListener('playing', () => mark(cv, true));
-    v.addEventListener('pause', () => mark(cv, false));
     v.addEventListener('error', () => {
       if (v.dataset.dropping === '1' || !v.getAttribute('src')) return;
       v.remove();
@@ -453,17 +453,14 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
     host.addEventListener('pointerleave', (e) => {
       clearTimeout(enterTimer);
       if (e.pointerType && e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
-      halt(cv, true);
+      halt(cv);
     });
   });
   const seen = new IntersectionObserver((entries) => {
     entries.forEach((en) => {
       const cv = en.target;
-      if (!en.isIntersecting || !alive(cv)) {
-        if (videoOf(cv) && !videoOf(cv).paused) halt(cv, true);
-        else mark(cv, false);
-        return;
-      }
+      // 滑出视口才释放回静帧（不可见，且控制内存）；暂停的帧在视口内始终保留。
+      if (!en.isIntersecting || !alive(cv)) halt(cv, true);
     });
   }, { threshold: 0.4 });
   clips().forEach((cv) => seen.observe(cv));

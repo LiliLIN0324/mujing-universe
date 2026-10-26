@@ -1,7 +1,8 @@
 ﻿/**
  * Homepage preview clips. Same rules as the works library:
  * only a verified mp4 (data-src) plays; hover is a muted loop;
- * leaving pauses in place so a re-hover resumes; a click pins it; touch uses the click.
+ * leaving pauses on the current frame so a re-hover resumes;
+ * a click pins it; touch uses the click.
  * One clip at a time. Nothing is fetched until that interaction.
  * 聆听图景 on 西湖 only unmutes this same picture — it does not pause it.
  */
@@ -46,20 +47,23 @@ export function mountHomeClips() {
     }
     if (on && !raf) raf = requestAnimationFrame(tick);
   }
-  function mark(host, on) {
-    host.classList.toggle('is-on', on);
+  function paintPin(host, on) {
     const pin = host.querySelector('.fs-pin');
     if (!pin) return;
     pin.setAttribute('aria-pressed', on ? 'true' : 'false');
     pin.textContent = on ? '暂停' : '预览';
     pin.setAttribute('aria-label', on ? '暂停预览' : '播放预览');
   }
+  function mark(host, on) {
+    host.classList.toggle('is-on', on);
+    paintPin(host, on);
+  }
   function halt(host) {
     const video = videoOf(host);
     if (!video) return;
-    // 只暂停、不卸 src：无论鼠标离开还是滚去别的章节，回来都从上次位置续播。
+    // 只暂停、不卸 src：回来都从上次位置续播；画面停在暂停帧，不再切回静图。
+    // pin 按钮由 pause 事件刷成「预览」。
     video.pause();
-    mark(host, false);
   }
   function start(host) {
     const video = videoOf(host);
@@ -145,7 +149,8 @@ export function mountHomeClips() {
     const pin = host.querySelector('.fs-pin');
     if (!video) return;
     video.addEventListener('playing', () => mark(host, true));
-    video.addEventListener('pause', () => mark(host, false));
+    // 暂停只刷新 pin 按钮；画面保留暂停帧（is-on 不动）。
+    video.addEventListener('pause', () => paintPin(host, false));
     video.addEventListener('error', () => {
       if (!video.getAttribute('src')) return;
       if (pinned === host) pinned = null;

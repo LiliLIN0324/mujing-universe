@@ -1,36 +1,20 @@
 ---
-/** 目录卡片：图、标题、类别。hover 色板浮出「分类 · 年份」与简介（绝对定位，不挤动邻卡）。 */
+/** 目录卡片：图、标题、类别。整卡可点（图和名字都进详情）。hover 色板浮出「分类 · 年份」与简介（绝对定位，不挤动邻卡）。 */
 import WorkCover from './WorkCover.astro';
-import { coverClip } from '../lib';
 
 const { w, eager = false } = Astro.props;
 const href = `/works/${w.slug}/`;
-const clip = coverClip(w.slug);
 const meta = [w.category, w.year].filter(Boolean).join(' · ');
 const desc = (w.description || '').replace(/（占位[^）]*）/g, '').trim();
 ---
-{clip ? (
-  <article class="card rise" data-slug={w.slug} data-line={w.line} data-by={w.by || 'lin'}>
-    <div class="im"><WorkCover w={w} eager={eager} /></div>
-    <div class="cap">
-      <h2><a href={href}><span class="ttl">{w.main}</span></a></h2>
-      <div class="m-top" aria-hidden="true">{meta && <p class="m-meta">{meta}</p>}</div>
-      <div class="more" aria-hidden="true">
-        {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
-        {desc && <p class="m-desc">{desc}</p>}
-      </div>
+<a class="card rise" href={href} data-slug={w.slug} data-line={w.line} data-by={w.by || 'lin'}>
+  <div class="im"><WorkCover w={w} eager={eager} /></div>
+  <div class="cap">
+    <h2><span class="ttl">{w.main}</span></h2>
+    <div class="m-top" aria-hidden="true">{meta && <p class="m-meta">{meta}</p>}</div>
+    <div class="more" aria-hidden="true">
+      {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
+      {desc && <p class="m-desc">{desc}</p>}
     </div>
-  </article>
-) : (
-  <a class="card rise" href={href} data-slug={w.slug} data-line={w.line} data-by={w.by || 'lin'}>
-    <div class="im"><WorkCover w={w} eager={eager} /></div>
-    <div class="cap">
-      <h2><span class="ttl">{w.main}</span></h2>
-      <div class="m-top" aria-hidden="true">{meta && <p class="m-meta">{meta}</p>}</div>
-      <div class="more" aria-hidden="true">
-        {w.credit ? <p class="m-by">{w.credit}</p> : <p class="m-by">林丽丽 <span lang="en">Lili Lin</span></p>}
-        {desc && <p class="m-desc">{desc}</p>}
-      </div>
-    </div>
-  </a>
-)}
+  </div>
+</a>
