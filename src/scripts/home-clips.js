@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Homepage preview clips. Same rules as the works library:
  * only a verified mp4 (data-src) plays; hover is a muted loop;
  * leaving pauses in place so a re-hover resumes; a click pins it; touch uses the click.
@@ -54,17 +54,11 @@ export function mountHomeClips() {
     pin.textContent = on ? '暂停' : '预览';
     pin.setAttribute('aria-label', on ? '暂停预览' : '播放预览');
   }
-  function halt(host, release) {
+  function halt(host) {
     const video = videoOf(host);
     if (!video) return;
-    const drop = release && pinned !== host && video.dataset.hearing !== '1';
+    // 只暂停、不卸 src：无论鼠标离开还是滚去别的章节，回来都从上次位置续播。
     video.pause();
-    if (drop) {
-      video.dataset.dropping = '1';
-      video.removeAttribute('src');
-      try { video.load(); } catch (_) {}
-      video.dataset.dropping = '';
-    }
     mark(host, false);
   }
   function start(host) {
@@ -74,7 +68,7 @@ export function mountHomeClips() {
     hosts().forEach((other) => {
       if (other === host) return;
       if (pinned === other) pinned = null;
-      halt(other, true);
+      halt(other);
     });
     if (!video.getAttribute('src') && video.dataset.src) video.src = video.dataset.src;
     video.playsInline = true;
@@ -102,7 +96,7 @@ export function mountHomeClips() {
       const video = videoOf(host);
       if (!video) return;
       if (!mine) {
-        if (!video.paused || host.classList.contains('is-on')) halt(host, pinned !== host && video.dataset.hearing !== '1');
+        if (!video.paused || host.classList.contains('is-on')) halt(host);
         return;
       }
       if (wanted(host)) start(host);
@@ -116,7 +110,7 @@ export function mountHomeClips() {
       pinned = null;
       held = host;
       if (video.dataset.hearing === '1') return;
-      halt(host, true);
+      halt(host);
       return;
     }
     held = null;
@@ -143,7 +137,7 @@ export function mountHomeClips() {
     setHearingButtons(video, false);
     if (!host) return;
     if (pinned === host || (over === host && fine.matches && !reduce.matches)) return;
-    halt(host, true);
+    halt(host);
   }
 
   hosts().forEach((host) => {
@@ -153,7 +147,7 @@ export function mountHomeClips() {
     video.addEventListener('playing', () => mark(host, true));
     video.addEventListener('pause', () => mark(host, false));
     video.addEventListener('error', () => {
-      if (video.dataset.dropping === '1' || !video.getAttribute('src')) return;
+      if (!video.getAttribute('src')) return;
       if (pinned === host) pinned = null;
       if (video.dataset.hearing === '1') {
         video.dataset.hearing = '';
@@ -198,8 +192,7 @@ export function mountHomeClips() {
         && stage && e.relatedTarget instanceof Node && stage.contains(e.relatedTarget);
       if (stillOnChapter) return;
       if (pinned === host || video.dataset.hearing === '1') return;
-      // 离开只暂停、不卸 src：回到卡片上从上次位置接着播，而不是从头再播。
-      halt(host, false);
+      halt(host);
     });
   });
 
@@ -223,7 +216,7 @@ export function mountHomeClips() {
         if (!video) return;
         const front = host.getAttribute('aria-hidden') !== 'true';
         if (!front) {
-          if (!video.paused || host.classList.contains('is-on')) halt(host, pinned !== host);
+          if (!video.paused || host.classList.contains('is-on')) halt(host);
           if (over === host) over = null;
           return;
         }
@@ -239,7 +232,7 @@ export function mountHomeClips() {
       hosts().forEach((host) => {
         if (!host.classList.contains('fs-slide')) return;
         const video = videoOf(host);
-        if (video && !video.paused) halt(host, pinned !== host && video.dataset.hearing !== '1');
+        if (video && !video.paused) halt(host);
       });
     }, { threshold: 0.25 }).observe(stage);
   }
@@ -253,7 +246,7 @@ export function mountHomeClips() {
         return;
       }
       const video = videoOf(host);
-      if (video && !video.paused) halt(host, pinned !== host && video.dataset.hearing !== '1');
+      if (video && !video.paused) halt(host);
     }, { threshold: 0.35 }).observe(hero);
   }
 

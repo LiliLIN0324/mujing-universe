@@ -11,7 +11,13 @@ export async function allWorks() {
     if (pa !== -1 || pb !== -1) return (pa === -1 ? Infinity : pa) - (pb === -1 ? Infinity : pb);
     return b.yearNum - a.yearNum || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
   });
-  return ws.map((w,i) => ({ ...w, no: String(i+1).padStart(2,'0') }));
+  // 图床简写：JSON 里写文件名即可，统一在这里展开成 fig/<slug>/<文件>；写全 URL 的照旧
+  return ws.map((w,i) => ({
+    ...w,
+    images: (w.images ?? []).map((src) => (/^https?:\/\//.test(src) ? src : `${R2_FIG}/${w.slug}/${src}`)),
+    icon: w.icon && !/^https?:\/\//.test(w.icon) ? `${R2_FIG}/${w.slug}/${w.icon}` : w.icon,
+    no: String(i+1).padStart(2,'0'),
+  }));
 }
 const PLACEHOLDER_COVER = 'scroll-placeholder.svg';
 
@@ -149,9 +155,9 @@ export function workSubtitle(w: { slug: string }): string {
 export function workStrip(w: { slug: string }): string | null {
   return w.slug === 'xihu-panorama' ? `${R2_FIG}/xihu-panorama/still.jpg` : null;
 }
-/** 可聆听的声音：只有西湖有（首页同一个 R2 音画文件，含 AAC 音轨）。 */
+/** 可聆听的声音：有封面视频就默认能聆听——有音轨的出声（小鸡 cover.mp4 已核实 h264+AAC），没音轨的点了也只是静音。 */
 export function workAudio(w: { slug: string }): string | null {
-  return w.slug === 'xihu-panorama' ? `${R2_FIG}/xihu-panorama/scroll-placeholder.mp4` : null;
+  return coverClip(w.slug);
 }
 /**
  * 封面预览：只有 R2 上核对过的 mp4。没有片的作品不在这里，封面保持静图。

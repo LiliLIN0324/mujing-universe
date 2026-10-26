@@ -9,24 +9,24 @@
  *   external   {boolean?} 强制外部打开（对已知不可嵌入的站，如 apps.apple.com）
  *
  * 行为：
- *   1. 初始态：一个「打开 Demo」按钮
- *   2. 点击 → 展开为大 iframe 区域，带加载 spinner
- *   3. iframe 5s 内没 load 事件 → 判定为被 X-Frame-Options 拦截 → 自动 fallback
- *   4. fallback 态：封面大图 + 「在新标签打开 ↗」按钮 + 关闭按钮
- *   5. 用户可随时关闭（收起回按钮态）
+ *   1. 进场即展开加载（2026-10 起：用户明确要求不再要点「打开 Demo」的黑按钮）
+ *      —— iframe 带 loading="lazy"，滚近了才真正拉取
+ *   2. iframe 6s 内没 load 事件 → 判定为被 X-Frame-Options 拦截 → 自动 fallback
+ *   3. fallback 态：封面大图 + 「在新标签打开 ↗」按钮 + 关闭按钮
+ *   4. 用户可关闭（收起成按钮态，想再看再点开）
  */
 const { url, title = '', cover = '', external = false } = Astro.props;
 const isExternal = external || /apps\.apple\.com|endtree26-yixun/.test(url || '');
 const uid = `demo-${Math.random().toString(36).slice(2, 9)}`;
 ---
 <div class="de" data-de={uid} data-url={url} data-title={title} data-cover={cover} data-embed={isExternal ? '0' : '1'}>
-  <!-- 收起态：按钮 -->
-  <button class="de-trigger" type="button" data-de-trigger={uid} aria-expanded="false">
+  <!-- 收起态按钮：只在用户主动关闭后才出现；初始就是展开态 -->
+  <button class="de-trigger" type="button" data-de-trigger={uid} aria-expanded="true">
     <span class="de-trigger-lb">{isExternal ? '打开 Demo ↗' : '打开 Demo'}</span>
   </button>
 
   <!-- 展开态：iframe 舞台 + fallback overlay -->
-  <div class="de-stage" data-de-stage={uid} hidden>
+  <div class="de-stage" data-de-stage={uid}>
     <div class="de-loading" aria-hidden="true">
       <div class="de-spinner"></div>
       <p>加载 Demo…</p>
@@ -349,6 +349,9 @@ function mountDemoEmbed(root = document) {
 
     trigger.addEventListener('click', open);
     closeBtn?.addEventListener('click', close);
+
+    // 进场即加载，不等点击；iframe 的 loading="lazy" 保证滚近了才真正拉取
+    open();
 
     iframe.addEventListener('load', () => {
       if (done) return;

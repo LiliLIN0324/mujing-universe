@@ -17,11 +17,16 @@
   "localStorage"
  ],
  "images": [
-  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-universe/01.jpg",
-  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-universe/02.jpg",
-  "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-universe/03.jpg"
+  "01.jpg",
+  "02.jpg",
+  "03.jpg",
+  "04.jpg",
+  "05.jpg",
+  "06.jpg",
+  "07.jpg",
+  "08.jpg"
  ],
- "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-universe/logo.jpg",
+ "icon": "logo.jpg",
  "hasDemo": true,
  "flags": [],
  "source": "manual",

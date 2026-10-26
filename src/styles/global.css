@@ -312,8 +312,10 @@ footer.bot .social a {
 }
 footer.bot .social a:hover { color: var(--ink); }
 footer.bot .social svg { width: 18px; height: 18px; display: block; flex: none; }
-/* 页脚鸡场入口：一枚小蛋 +「幕景鸡场」，放在社交链接栏里（farm-dev 临时接线，随鸡场一起回滚）。 */
-footer.bot .farm-egg { color: var(--muted); }
+/* 页脚鸡场入口：一枚小蛋 +「幕景鸡场」，放在社交链接栏里（farm-dev 临时接线，随鸡场一起回滚）。
+   注意：ChickenFarm.astro 的全局样式里也有 .farm-egg（鸡场下的蛋实体，position:absolute、宽 34px），
+   这里必须用更高优先级（footer.bot .social .farm-egg）把定位压回去，否则页脚这颗蛋会被顶到左上角竖排。 */
+footer.bot .social .farm-egg { position: static; width: auto; height: auto; margin: 0; color: var(--muted); }
 footer.bot .farm-egg:hover { color: var(--ink); }
 footer.bot .social .farm-egg svg { width: 13px; height: 16px; }
 footer.bot .copy {

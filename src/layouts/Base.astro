@@ -12,11 +12,10 @@ const {
   fullscreen = false,
   navClass = '',
 } = Astro.props;
-const links = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
+const links = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '合作']];
 // Every page uses the homepage 'Scendance Space' bar (header.top.top--home). `home` pages (homepage, work detail)
 // keep the auto-hide/overlay behaviour; all other pages add 'top--page': always visible, in flow, on the paper colour.
 const pageNav = navClass.split(' ').filter((c) => c && c !== 'top--unified').join(' ');
-const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
 const canonical = Astro.site ? new URL(Astro.url.pathname + Astro.url.search, Astro.site).href : '';
 const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 // 鸡场接线（farm-dev 临时，一键回滚 = 删掉这几行 + 模板里 farm-egg / 两个组件标签 + global.css 的 .farm-egg 段）：
@@ -101,6 +100,12 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
 <ChickenFarm page={page} />
 <footer class="bot">
   <nav class="social" aria-label="社交">
+    {!isContact && (
+      <a class="farm-egg" href={farmHref} aria-label="打开鸡场" title="小鸡">
+        <svg viewBox="0 0 60 72" aria-hidden="true"><path fill="currentColor" d="M30 4C44 4 54 24 54 42C54 58 43.5 68 30 68C16.5 68 6 58 6 42C6 24 16 4 30 4Z"/></svg>
+        <span>小鸡</span>
+      </a>
+    )}
     <a href="/contact/#feishu">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.6a8 8 0 0 0-8 8c0 1.5.4 2.9 1.1 4.1L4.2 20.2l4.4-1.2A8 8 0 1 0 12 3.6zm-2.6 7.1h5.2a.9.9 0 0 1 0 1.8H9.4a.9.9 0 0 1 0-1.8zm0 3.1h3.4a.9.9 0 0 1 0 1.8H9.4a.9.9 0 0 1 0-1.8z"/></svg>
       <span>飞书</span>
@@ -121,12 +126,6 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2.16c3.2 0 3.58.01 4.85.07 3.25.15 4.77 1.69 4.92 4.92.06 1.27.07 1.65.07 4.85 0 3.2-.01 3.58-.07 4.85-.15 3.23-1.66 4.77-4.92 4.92-1.27.06-1.64.07-4.85.07-3.2 0-3.58-.01-4.85-.07-3.26-.15-4.77-1.7-4.92-4.92-.06-1.27-.07-1.64-.07-4.85 0-3.2.01-3.58.07-4.85.15-3.23 1.66-4.77 4.92-4.92 1.27-.06 1.65-.07 4.85-.07zM12 0C8.74 0 8.33.01 7.05.07 2.7.27.27 2.69.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.2 4.36 2.62 6.78 6.98 6.98 1.28.06 1.69.07 4.95.07s3.67-.01 4.95-.07c4.35-.2 6.78-2.62 6.98-6.98.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95C23.78 2.7 21.36.27 17 .07 15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 1 0 0 12.32 6.16 6.16 0 0 0 0-12.32zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.41-11.85a1.44 1.44 0 1 0 0 2.88 1.44 1.44 0 0 0 0-2.88z"/></svg>
       <span>Instagram</span>
     </a>
-    {!isContact && (
-      <a class="farm-egg" href={farmHref} aria-label="打开鸡场" title="幕景鸡场">
-        <svg viewBox="0 0 60 72" aria-hidden="true"><path fill="currentColor" d="M30 4C44 4 54 24 54 42C54 58 43.5 68 30 68C16.5 68 6 58 6 42C6 24 16 4 30 4Z"/></svg>
-        <span>幕景鸡场</span>
-      </a>
-    )}
   </nav>
   <p class="copy">© 2026 幕景宇宙</p>
 </footer>

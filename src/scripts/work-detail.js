@@ -23,7 +23,8 @@ export function mountWorkDetail() {
     const label = (on) => {
       if (!playBtn) return;
       playBtn.setAttribute('aria-pressed', String(on));
-      playBtn.textContent = on ? '暂停' : '播放';
+      playBtn.setAttribute('aria-label', on ? '暂停' : '播放');
+      playBtn.title = on ? '暂停' : '播放';
     };
     const kick = () => {
       if (motion.dataset.wanted !== '1') return;
@@ -36,12 +37,14 @@ export function mountWorkDetail() {
     motion.addEventListener('pause', () => { hero.classList.remove('is-on'); label(false); });
     motion.addEventListener('error', () => {
       if (!motion.getAttribute('src')) return;
+      if (mini) { mini.remove(); mini = null; }
       motion.remove();
       playBtn?.remove();
       hero.classList.remove('is-on', 'has-motion');
     });
     if (playBtn) {
       playBtn.addEventListener('click', () => {
+        if (mini) miniBack(); // 浮窗开着时点首屏「播放」= 把视频搬回画面再播
         if (!motion.paused) {
           motion.dataset.wanted = '';
           motion.pause();
@@ -51,12 +54,67 @@ export function mountWorkDetail() {
         kick();
       });
     }
+    // ---- 迷你浮窗：画面整个滚出视野后，右下角小窗接着播。视频元素直接搬家，进度/声音无缝。
+    //      只进不撤：滚回首屏浮窗也不自动消失（用户明确要求），只有 × 才收。----
+    const frame = hero.querySelector('.wd-frame');
+    let mini = null;
+    const miniBack = () => {
+      if (!mini) return;
+      if (frame) frame.appendChild(motion);
+      mini.remove();
+      mini = null;
+    };
+    const miniOpen = () => {
+      if (mini || motion.paused || !motion.getAttribute('src') || !frame) return;
+      const box = document.createElement('div');
+      box.className = 'wd-mini';
+      const snd = document.createElement('button');
+      snd.className = 'wd-mini-snd';
+      snd.type = 'button';
+      const sndLabel = () => { snd.textContent = motion.muted ? '出声' : '静音'; };
+      sndLabel();
+      snd.addEventListener('click', () => {
+        // 与「聆听图景」同一套状态：hearing=1 才允许出声，kick 时不会被按回静音
+        if (motion.muted) {
+          motion.dataset.hearing = '1';
+          motion.dataset.wanted = '1';
+          motion.muted = false;
+          if (motion.paused) { const p = motion.play(); if (p) p.catch(() => {}); }
+        } else {
+          motion.dataset.hearing = '';
+          motion.muted = true;
+        }
+        sndLabel();
+        // 同步回首屏聆听按钮的按下态与无障碍文案
+        const heroBtn = document.getElementById('wd-listen');
+        if (heroBtn) {
+          heroBtn.setAttribute('aria-pressed', String(!motion.muted));
+          heroBtn.setAttribute('aria-label', motion.muted ? '聆听图景' : '静音');
+          heroBtn.title = motion.muted ? '聆听图景' : '静音';
+        }
+      });
+      const x = document.createElement('button');
+      x.className = 'wd-mini-x';
+      x.type = 'button';
+      x.setAttribute('aria-label', '关闭小窗');
+      x.textContent = '×';
+      x.addEventListener('click', () => {
+        motion.dataset.wanted = '';
+        motion.pause();
+        miniBack();
+      });
+      box.appendChild(motion);
+      box.appendChild(snd);
+      box.appendChild(x);
+      document.body.appendChild(box);
+      mini = box;
+    };
     const io = new IntersectionObserver((entries) => {
       entries.forEach((en) => {
         if (en.isIntersecting) kick();
-        else if (!motion.paused) motion.pause();
+        else miniOpen();
       });
-    }, { threshold: 0.35 });
+    }, { threshold: 0 });
     io.observe(hero);
   }
 
@@ -64,8 +122,11 @@ export function mountWorkDetail() {
   const btn = document.getElementById('wd-listen');
   const media = document.getElementById('wd-audio');
   if (btn && media) {
-    const label = btn.querySelector('.lb');
-    const set = (on) => { btn.setAttribute('aria-pressed', String(on)); if (label) label.textContent = on ? '暂停' : '聆听图景'; };
+    const set = (on) => {
+      btn.setAttribute('aria-pressed', String(on));
+      btn.setAttribute('aria-label', on ? '静音' : '聆听图景');
+      btn.title = on ? '静音' : '聆听图景';
+    };
     const visual = media.dataset.audio === '1';
     btn.addEventListener('click', () => {
       if (visual) {
