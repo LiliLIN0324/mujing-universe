@@ -389,27 +389,6 @@ const { page = 'home' } = Astro.props;
   #coop-reopen:hover { background: #ff690a; border-color: #ff690a; color: #fff; }
   #coop-reopen[hidden] { display: none !important; } /* display:inline-flex 会压过 hidden 属性，必须显式压制（否则药丸与 HUD 同屏） */
 
-  /* ===== 夜间模式（对齐 global.css html.dark 制式）：夜幕在暗站上不需要再压暗，只微降透明度 ===== */
-  html.dark .farm { --ink: #EDEBE7; --paper: #1D1D21; --card: #242429; }
-  html.dark .farm-hud { background: rgba(29, 29, 33, 0.92); border-color: #EDEBE733; color: #EDEBE7; }
-  html.dark .farm-hint { color: #A8A49D; }
-  html.dark .farm-card { background: #242429; color: #EDEBE7; border-color: #EDEBE733; }
-  html.dark .farm-cardhead { border-bottom-color: #EDEBE71F; }
-  html.dark .farm-btn { color: #EDEBE7; border-color: #EDEBE71A; background: transparent; }
-  html.dark .farm-btn:hover { background: #EDEBE7; color: #131316; border-color: #EDEBE7; }
-  html.dark .farm-tip { color: #9C978F; }
-  html.dark .farm-maprow { color: #EDEBE7; border-color: #EDEBE71F; }
-  html.dark .farm-maprow.is-here { color: #ff690a; }
-  html.dark #coop-reopen { background: #242429; color: #EDEBE7; border-color: #EDEBE733; }
-  html.dark #coop-reopen:hover { background: #ff690a; border-color: #ff690a; color: #fff; }
-  html.dark .farm-piano { background: #242429; border-color: #EDEBE733; }
-  html.dark .farm-key { background: #EDEBE7; border-right-color: #1D1D21; }
-  html.dark .farm-key em { color: #9C978F; }
-  html.dark .farm-key.is-black { background: #131316; }
-  html.dark .farm-key.is-black em { color: #EDEBE7; }
-  html.dark .farm-rename { background: #242429; color: #EDEBE7; border-color: #EDEBE733; }
-  html.dark .farm-night { opacity: 0.12; }
-
   .farm [hidden] { display: none !important; }
 
   .farm-stage {

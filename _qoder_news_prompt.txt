@@ -1,0 +1,1 @@
+﻿认真执行 QODER_NEWS_UNIQUE_COVERS.md。目标：新闻封面全部互不重复，对照丽丽作品集 https://lililin0324.github.io/#/work。有图才配，禁止占位，禁止合 main。改完提交并推 feat/news-unique-covers。全部同意直接做。
