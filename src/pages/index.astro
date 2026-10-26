@@ -51,7 +51,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
 <section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图" data-clip={coverClip('xihu-panorama') ? '1' : undefined}>
   <div class="hero-pan">
-    <img class="hero-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+    <img class="hero-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="1080" referrerpolicy="no-referrer" fetchpriority="high"/>
   </div>
   {coverClip('xihu-panorama') && (
     <video class="fs-clip" id="scroll-video-m" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={coverClip('xihu-panorama')}></video>
@@ -108,7 +108,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   <div class="fs-stage" id="fs-stage" aria-label="精选作品">
     <div class="fs-slide is-active" data-i="0" data-clip={leadPick.clip ? '1' : undefined} aria-hidden="false">
       <div class="fs-pan">
-        <img class="fs-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+        <img class="fs-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="1080" referrerpolicy="no-referrer" fetchpriority="high"/>
         {leadPick.clip && (
           <video
             id="scroll-video"

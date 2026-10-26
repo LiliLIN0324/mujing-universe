@@ -1,21 +1,21 @@
 ---
 import '../styles/global.css';
 import MimiChat from '../components/MimiChat.astro';
-import wordMarkSvg from '/public/brand/wordmark.svg?raw';
 import ChickenFarm from '../components/ChickenFarm.astro';
+import wordmarkSvg from '/public/brand/wordmark.svg?raw';
 const {
   title = '幕景宇宙 · 林丽丽艺术工作室',
   description = '幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。',
-  image = '/ring/0.jpg',
+  image = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/01.jpg?v=20261026',
   active = '',
   home = false,
+  fullscreen = false,
   navClass = '',
 } = Astro.props;
-const links = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
+const links = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '合作']];
 // Every page uses the homepage 'Scendance Space' bar (header.top.top--home). `home` pages (homepage, work detail)
 // keep the auto-hide/overlay behaviour; all other pages add 'top--page': always visible, in flow, on the paper colour.
 const pageNav = navClass.split(' ').filter((c) => c && c !== 'top--unified').join(' ');
-const foot = [['/works/', '作品'], ['/artist/', '艺术家'], ['/studio/', '工作室'], ['/contact/', '合作']];
 const canonical = Astro.site ? new URL(Astro.url.pathname + Astro.url.search, Astro.site).href : '';
 const ogImage = Astro.site ? new URL(image, Astro.site).href : image;
 // 鸡场接线（farm-dev 临时，一键回滚 = 删掉这几行 + 模板里 farm-egg / 两个组件标签 + global.css 的 .farm-egg 段）：
@@ -48,8 +48,8 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
   <meta name="referrer" content="no-referrer"/>
   <meta name="format-detection" content="telephone=no"/>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
-  <link rel="preload" href="/fonts/AlibabaPuHuiTi-3-55-Regular.woff2" as="font" type="font/woff2" crossorigin/>
-  <link rel="preload" href="/fonts/CormorantSC-600-wordmark.woff2" as="font" type="font/woff2" crossorigin/>
+  <link rel="preload" href="/fonts/AlibabaPuHuiTi-3-55-Regular.woff2?v=20261024" as="font" type="font/woff2" crossorigin/>
+  <link rel="preload" href="/fonts/CormorantSC-600-wordmark.woff2?v=20261024" as="font" type="font/woff2" crossorigin/>
   {canonical && <link rel="canonical" href={canonical}/>}
   <meta property="og:type" content="website"/>
   <meta property="og:locale" content="zh_CN"/>
@@ -63,23 +63,35 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
   <meta property="og:image:alt" content="幕景宇宙"/>
   <meta name="twitter:card" content="summary_large_image"/>
 </head>
-<body>
+<body class:list={[{ home, fullscreen }]} data-page={page}>
 <a class="skip" href="#content">跳到主要内容</a>
 {home ? (
 <header class:list={["top top--home", navClass]} id="home-nav" data-autohide>
-  <a class="wordmark" href="/" aria-label="幕景宇宙"><Fragment set:html={wordMarkSvg} /></a>
-  <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
-  <nav id="home-menu">
-    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
-  </nav>
+  <a class="wordmark" href="/" aria-label="幕景宇宙"><Fragment set:html={wordmarkSvg} /></a>
+  <div class="top-right">
+    <nav id="home-menu">
+      {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="切换日间或夜间模式" aria-pressed="false">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.6a8.5 8.5 0 1 0 10.6 10.6Z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+    </button>
+    <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+  </div>
 </header>
 ) : (
 <header class:list={["top top--home top--page", pageNav]} id="home-nav">
-  <a class="wordmark" href="/" aria-label="幕景宇宙"><Fragment set:html={wordMarkSvg} /></a>
-  <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
-  <nav id="home-menu">
-    {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
-  </nav>
+  <a class="wordmark" href="/" aria-label="幕景宇宙"><Fragment set:html={wordmarkSvg} /></a>
+  <div class="top-right">
+    <nav id="home-menu">
+      {links.map(([h, t]) => <a href={h} class={active === h ? 'on' : undefined}>{t}</a>)}
+    </nav>
+    <button class="theme-btn" id="theme-btn" type="button" aria-label="切换日间或夜间模式" aria-pressed="false">
+      <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M20.4 14.2A8.5 8.5 0 0 1 9.8 3.6a8.5 8.5 0 1 0 10.6 10.6Z"/></svg>
+      <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M18.5 5.5l-1.6 1.6M7.1 16.9l-1.6 1.6"/></svg>
+    </button>
+    <button class="menu-btn" id="home-menu-btn" type="button" aria-label="菜单" aria-expanded="false" aria-controls="home-menu"><i aria-hidden="true"></i><i aria-hidden="true"></i></button>
+  </div>
 </header>
 )}
 <div id="content">
@@ -144,6 +156,22 @@ if (menuBtn && homeNav) {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setOpen(false); });
   matchMedia('(max-width: 768px)').addEventListener?.('change', (e) => { if (!e.matches) setOpen(false); });
 }
+// Day/night switch. The initial state was set pre-paint in <head>; here we
+// keep the button state, the browser chrome colour and localStorage in sync.
+const rootEl = document.documentElement;
+const themeBtn = document.getElementById('theme-btn');
+const themeMeta = document.querySelector('meta[name="theme-color"]');
+const applyTheme = (dark) => {
+  rootEl.classList.toggle('dark', dark);
+  themeBtn?.setAttribute('aria-pressed', String(dark));
+  themeMeta?.setAttribute('content', dark ? '#131316' : '#FFFFFF');
+};
+if (themeBtn) applyTheme(rootEl.classList.contains('dark'));
+themeBtn?.addEventListener('click', () => {
+  const dark = !rootEl.classList.contains('dark');
+  applyTheme(dark);
+  try { localStorage.setItem('mj-theme', dark ? 'dark' : 'light'); } catch (e) {}
+});
 document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
   img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
 }));
