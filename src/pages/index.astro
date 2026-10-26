@@ -133,6 +133,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
         <div class="fs-actions">
           {leadPick.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览" title="播放预览"><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h3v14h-3zM13.5 5h3v14h-3z" fill="currentColor"/></svg></button>}
           <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video" aria-label="聆听图景" title="聆听图景"><svg class="i-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 9.7l4.6 4.6m0-4.6l-4.6 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg><svg class="i-snd" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.6a8 8 0 0 1 0 10.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg></button>
+          <span class="fs-prog" id="fs-prog" aria-hidden="true"><i><b id="fs-prog-fill"></b></i><span id="fs-prog-time">00:00 / 00:00</span></span>
           <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
         </div>
       </div>
@@ -142,7 +143,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
         {work.clip ? (
           <div class="fs-visual">
             <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={work.stills[0]} data-fallback={work.fallback} loading="lazy"/>
-            <video class="fs-clip" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
+            <video class="fs-clip" id={`fs-video-${i + 1}`} muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
           </div>
         ) : (
           <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={work.stills[0]} data-fallback={work.fallback} loading="lazy"/>
@@ -153,6 +154,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
           {work.summary && <p class="fs-summary">{work.summary}</p>}
           <div class="fs-actions">
             {work.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览" title="播放预览"><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h3v14h-3zM13.5 5h3v14h-3z" fill="currentColor"/></svg></button>}
+            {work.clip && <button class="listen" type="button" aria-pressed="false" aria-controls={`fs-video-${i + 1}`} aria-label="静音" title="静音"><svg class="i-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 9.7l4.6 4.6m0-4.6l-4.6 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg><svg class="i-snd" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.6a8 8 0 0 1 0 10.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg></button>}
             <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
           </div>
         </div>
@@ -288,7 +290,10 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   padding: 18px 20px 16px;
   background: color-mix(in srgb, var(--bg) 94%, transparent);
   color: var(--ink);
+  transition: opacity 0.25s ease, visibility 0s;
 }
+/* 淡出由 home-clips.js 逐帧驱动 inline opacity；此规则只在淡出结束时接管隐藏 */
+.fs-plate.is-closed { visibility: hidden; pointer-events: none; }
 .fs-plate::after {
   content: "";
   position: absolute;
@@ -354,6 +359,18 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 .fs-plate .listen[aria-pressed="true"] { background: var(--cta-bg); color: var(--cta-fg); border-color: transparent; }
 .fs-plate .listen[aria-pressed="true"] .i-mute { display: none; }
 .fs-plate .listen[aria-pressed="true"] .i-snd { display: block; }
+/* 聆听进度内嵌在按钮行（播放/声音键与「查看作品」之间）：空间常驻，出声时淡入，绝不推动布局 */
+.fs-prog {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 10px;
+  opacity: 0; transition: opacity 0.3s ease;
+  color: var(--muted); font-size: 11px; letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums; pointer-events: none;
+}
+.fs-plate:has(.listen[aria-pressed="true"]) .fs-prog { opacity: 1; }
+.fs-prog i { display: block; flex: 1; height: 1px; background: color-mix(in srgb, var(--ink) 18%, transparent); position: relative; }
+.fs-prog b { position: absolute; left: 0; top: 0; height: 1px; width: 100%; background: var(--ink); transform-origin: 0 50%; transform: scaleX(var(--prog, 0)); }
+.fs-prog > span { width: 88px; text-align: right; white-space: nowrap; }
 .fs-view {
   display: inline-block; color: var(--ink);
   font-family: var(--sans);

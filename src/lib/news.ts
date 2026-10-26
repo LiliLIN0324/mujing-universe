@@ -13,8 +13,8 @@ export type NewsItem = {
   end?: string;
   /** 开始之后仍未收束，归在「现在」（开始日晚于今天则归「即将」）。 */
   open?: boolean;
-  /** year：界面只显示年份。start/end 仍用该年的 1 月 1 日和 12 月 31 日，方便归进往期。 */
-  precision?: 'year' | 'day';
+  /** year：界面只显示年份。month：只显示月份。start/end 仍用于时间归档。 */
+  precision?: 'year' | 'month' | 'day';
   place?: string;
   event?: string;
   format?: string;
@@ -41,18 +41,6 @@ export function galleryOf(item: Pick<NewsItem, 'image' | 'images'>): string[] {
   if (many.length) return many;
   return item.image ? [item.image] : [];
 }
-
-export const SECTIONS: { id: SectionId; label: string }[] = [
-  { id: 'tech', label: '技术动态' },
-  { id: 'activity', label: '活动参与' },
-  { id: 'tutorial', label: '技术分享' },
-];
-
-export const SECTION_LABEL: Record<SectionId, string> = {
-  tech: '技术动态',
-  activity: '活动参与',
-  tutorial: '技术分享',
-};
 
 export const WHENS: { id: WhenId | 'all'; label: string }[] = [
   { id: 'all', label: '全部' },
@@ -98,8 +86,25 @@ export function dateLabel(item: Pick<NewsItem, 'start' | 'end' | 'open' | 'preci
   return `${start}–${fmt(item.end)}`;
 }
 
-export function metaLine(item: Pick<NewsItem, 'event' | 'place' | 'format'>): string {
-  return [item.event, item.place, item.format].filter(Boolean).join(' · ');
+/** 年内短日期：04.15–19、04.15–05.03、04.15 起、2022、6月。跨年写全。 */
+export function dateLabelShort(item: Pick<NewsItem, 'start' | 'end' | 'open' | 'precision'>): string {
+  if (!item.start) return '待定';
+  if (item.precision === 'year') return item.start.slice(0, 4);
+  if (item.precision === 'month') return `${Number(item.start.slice(5, 7))}月`;
+  const md = (iso: string) => {
+    const [, m, d] = iso.split('-');
+    return `${m}.${d}`;
+  };
+  if (item.open && !item.end) return `${md(item.start)} 起`;
+  if (!item.end || item.end === item.start) return md(item.start);
+  const [ys] = item.start.split('-');
+  const [ye] = item.end.split('-');
+  if (ys === ye) {
+    const [, ms] = item.start.split('-');
+    const [, me] = item.end.split('-');
+    return ms === me ? `${md(item.start)}–${item.end.slice(8)}` : `${md(item.start)}–${md(item.end)}`;
+  }
+  return `${fmt(item.start)}–${fmt(item.end)}`;
 }
 
 export function sortNews<T extends { start?: string }>(items: readonly T[]): T[] {

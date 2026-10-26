@@ -26,8 +26,10 @@ export function mountHomeClips() {
     return Array.from(document.querySelectorAll(`[aria-controls="${video.id}"]`));
   }
   function paint(video) {
-    const fill = document.getElementById('m-prog-fill');
-    const time = document.getElementById('m-prog-time');
+    // 桌面章节白卡与移动端首屏各有一套进度条，按视频归属分流。
+    const desktop = video.id === 'scroll-video';
+    const fill = document.getElementById(desktop ? 'fs-prog-fill' : 'm-prog-fill');
+    const time = document.getElementById(desktop ? 'fs-prog-time' : 'm-prog-time');
     const dur = Number.isFinite(video.duration) ? video.duration : 0;
     const p = dur > 0 ? Math.min(1, video.currentTime / dur) : 0;
     if (fill) fill.style.setProperty('--prog', p.toFixed(4));
@@ -55,9 +57,53 @@ export function mountHomeClips() {
     pin.setAttribute('aria-label', on ? '暂停预览' : '播放预览');
     pin.setAttribute('title', on ? '暂停预览' : '播放预览');
   }
+  // 介绍卡淡出改为 JS 逐帧驱动：不依赖 CSS transition，透明度 2.5s 内匀速 100%→0，
+  // 每帧直接写 inline opacity，任何浏览器行为一致（此前 CSS 过渡在部分环境静默失效）。
+  const FADE_MS = 2500;
+  const fades = new WeakMap();
+  function hidePlate(host) {
+    const plate = host.querySelector('.fs-plate');
+    if (!plate) return;
+    if (fades.has(host)) cancelAnimationFrame(fades.get(host));
+    const cur = parseFloat(getComputedStyle(plate).opacity || '1');
+    const t0 = performance.now();
+    plate.style.transition = 'none';
+    plate.style.visibility = '';
+    plate.style.pointerEvents = '';
+    plate.classList.remove('is-closed');
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / FADE_MS);
+      plate.style.opacity = (cur * (1 - k)).toFixed(3);
+      if (k < 1) fades.set(host, requestAnimationFrame(step));
+      else { fades.delete(host); plate.classList.add('is-closed'); }
+    };
+    fades.set(host, requestAnimationFrame(step));
+  }
+  function showPlate(host) {
+    const plate = host.querySelector('.fs-plate');
+    if (!plate) return;
+    if (fades.has(host)) { cancelAnimationFrame(fades.get(host)); fades.delete(host); }
+    plate.classList.remove('is-closed');
+    plate.style.visibility = '';
+    plate.style.pointerEvents = '';
+    const cur = parseFloat(plate.style.opacity || '1');
+    if (cur >= 1) { plate.style.opacity = ''; return; }
+    // 从当前透明度快速淡回 1（0.25s），结束后清掉内联样式回归 CSS 管理。
+    plate.style.transition = 'opacity 0.25s ease';
+    requestAnimationFrame(() => { plate.style.opacity = '1'; });
+    setTimeout(() => {
+      if (fades.has(host)) return;
+      plate.style.transition = '';
+      plate.style.opacity = '';
+    }, 300);
+  }
   function mark(host, on) {
     host.classList.toggle('is-on', on);
     paintPin(host, on);
+    // 只要在播（含悬停自动播放）介绍卡就匀速淡出，暂停即弹回。
+    if (host.classList.contains('fs-slide')) {
+      if (on) hidePlate(host); else showPlate(host);
+    }
   }
   function halt(host) {
     const video = videoOf(host);
@@ -78,12 +124,34 @@ export function mountHomeClips() {
     if (!video.getAttribute('src') && video.dataset.src) video.src = video.dataset.src;
     video.playsInline = true;
     video.loop = true;
+    // 默认出声播放（用户明确要求所有项目默认有声）：
+    // 点击/点按有手势，出声必然成功；悬停会被自动播放策略拦下，退回静音重试保证预览不中断。
     if (video.dataset.hearing !== '1') {
-      video.muted = true;
-      video.defaultMuted = true;
+      video.muted = false;
+      video.defaultMuted = false;
+      video.removeAttribute('muted');
     }
     const attempt = video.play();
-    if (attempt) attempt.catch((err) => { if (!err || err.name !== 'AbortError') mark(host, false); });
+    if (attempt) attempt.then(() => {
+      if (!video.muted && video.dataset.hearing !== '1') {
+        video.dataset.hearing = '1';
+        setHearingButtons(video, true);
+        if (!raf) raf = requestAnimationFrame(tick);
+      }
+    }).catch((err) => {
+      if (err && err.name === 'AbortError') return;
+      if (!video.muted) {
+        video.dataset.hearing = '';
+        video.muted = true;
+        video.defaultMuted = true;
+        video.setAttribute('muted', '');
+        setHearingButtons(video, false);
+        const retry = video.play();
+        if (retry) retry.catch(() => mark(host, false));
+        return;
+      }
+      mark(host, false);
+    });
   }
   function wanted(host) {
     const video = videoOf(host);
@@ -114,7 +182,9 @@ export function mountHomeClips() {
     if (pinned === host) {
       pinned = null;
       held = host;
-      if (video.dataset.hearing === '1') return;
+      // 取消固定 = 停止预览。默认出声后每条预览都会带上 hearing 状态，
+      // 这里必须先静音再暂停，否则播放按钮就再也停不下来了。
+      if (video.dataset.hearing === '1') hear(video, false);
       halt(host);
       return;
     }
@@ -150,11 +220,15 @@ export function mountHomeClips() {
     const pin = host.querySelector('.fs-pin');
     if (!video) return;
     video.addEventListener('playing', () => mark(host, true));
-    // 暂停只刷新 pin 按钮；画面保留暂停帧（is-on 不动）。
-    video.addEventListener('pause', () => paintPin(host, false));
+    // 暂停只刷新 pin 按钮；画面保留暂停帧（is-on 不动），但介绍卡要弹回来。
+    video.addEventListener('pause', () => {
+      paintPin(host, false);
+      showPlate(host);
+    });
     video.addEventListener('error', () => {
       if (!video.getAttribute('src')) return;
       if (pinned === host) pinned = null;
+      showPlate(host);
       if (video.dataset.hearing === '1') {
         video.dataset.hearing = '';
         setHearingButtons(video, false);

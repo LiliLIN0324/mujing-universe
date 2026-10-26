@@ -29,9 +29,40 @@ export function mountWorkDetail() {
     const kick = () => {
       if (motion.dataset.wanted !== '1') return;
       if (!motion.getAttribute('src') && motion.dataset.src) motion.src = motion.dataset.src;
-      if (motion.dataset.hearing !== '1') motion.muted = true;
+      // 默认出声播放（用户明确要求所有项目默认有声）：
+      // 显式点击有手势必然成功；进画自动播被策略拦下时退回静音重试。
+      if (motion.dataset.hearing !== '1') {
+        motion.muted = false;
+        motion.defaultMuted = false;
+        motion.removeAttribute('muted');
+      }
       const attempt = motion.play();
-      if (attempt) attempt.catch((err) => { if (!err || err.name !== 'AbortError') label(false); });
+      if (attempt) attempt.then(() => {
+        if (!motion.muted && motion.dataset.hearing !== '1') {
+          motion.dataset.hearing = '1';
+          // 主视觉即声源（clipIsAudio）时，同步首屏聆听按钮的按下态。
+          if (motion.dataset.audio === '1') {
+            const heroBtn = document.getElementById('wd-listen');
+            if (heroBtn) {
+              heroBtn.setAttribute('aria-pressed', 'true');
+              heroBtn.setAttribute('aria-label', '静音');
+              heroBtn.title = '静音';
+            }
+          }
+        }
+      }).catch((err) => {
+        if (err && err.name === 'AbortError') return;
+        if (!motion.muted) {
+          motion.dataset.hearing = '';
+          motion.muted = true;
+          motion.defaultMuted = true;
+          motion.setAttribute('muted', '');
+          const retry = motion.play();
+          if (retry) retry.catch(() => label(false));
+          return;
+        }
+        label(false);
+      });
     };
     motion.addEventListener('playing', () => { hero.classList.add('is-on'); label(true); });
     motion.addEventListener('pause', () => { hero.classList.remove('is-on'); label(false); });

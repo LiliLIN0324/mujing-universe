@@ -66,12 +66,12 @@
   {
    "id": "activity-icua-2025-heat",
    "section": "activity",
-   "title": "林丽丽在加拿大温哥华参加了城市事务国际会议（ICUA）",
+   "title": "林丽丽在加拿大温哥华参加了第53届城市事务国际会议（ICUA）",
    "summary": "发表了《局地气候区与城市热韧性：纽约的一项实证》研究",
-   "original": "Local Climate Zone and Urban Heat Resilience: An Empirical Study in New York",
+   "original": "Local Climate Zone and Urban Heat Resilience: An Empirical Study in New York City",
    "start": "2025-04-15",
    "end": "2025-04-19",
-   "event": "城市事务国际会议（ICUA）",
+   "event": "第53届城市事务国际会议（ICUA）",
    "place": "加拿大温哥华",
    "format": "口头报告",
    "people": [
@@ -180,15 +180,18 @@
   {
    "id": "activity-digital-futures-2023",
    "section": "activity",
-   "title": "林丽丽在上海同济大学参加了Digital Futures 工作坊",
-   "start": "2023-01-01",
-   "end": "2023-12-31",
-   "precision": "year",
-   "event": "Digital Futures 工作坊",
+   "title": "林丽丽在上海同济大学参加了DigitalFUTURES 夏令营",
+   "summary": "在狩猎相机组完成「校园公共空间活力建模」研究，以图像感知与时序数据探究风热环境对行人活动的影响。",
+   "original": "Modeling the Vitality of Public Spaces on Campus",
+   "start": "2023-06-01",
+   "precision": "month",
+   "event": "Architectural DigitalFUTURES 2023 同济夏令营",
    "format": "工作坊",
    "people": [
     "林丽丽"
    ],
+   "href": "https://mp.weixin.qq.com/s?__biz=Mzg3NjQ2Mjc5NA==&mid=2247525414&idx=1&sn=fe70b061b93cbc6d38d8d38a6b32bfc1&chksm=cf33f383f8447a9586418622ca0e2f7a76c6e7c5257d49098f0c0e51e0381fd7ed643dda5ea3&scene=178&cur_album_id=2912679801638027265#rd",
+   "hrefLabel": "微信文章",
    "source": "archive",
    "place": "上海同济大学",
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-digital-futures-2023/01.jpg"
@@ -221,6 +224,110 @@
    "href": "https://mp.weixin.qq.com/s/Pxhsw_sAMysgqZKE1zeXxQ",
    "hrefLabel": "微信文章",
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-intercity-hack-2026/01.jpg"
+  },
+  {
+   "id": "activity-outstanding-2024",
+   "section": "activity",
+   "title": "林丽丽获评华中科技大学优秀毕业生",
+   "summary": "本科毕业于华中科技大学建筑与城市规划学院，同年进入首尔国立大学攻读城市规划硕士。",
+   "start": "2024-06-01",
+   "precision": "month",
+   "people": [
+    "林丽丽"
+   ],
+   "source": "archive"
+  },
+  {
+   "id": "activity-oasis-hust-2023",
+   "section": "activity",
+   "title": "林丽丽作为核心主创参与了腾讯《和平精英》绿洲世界×华中科技大学数字校园共建",
+   "summary": "用腾讯绿洲引擎在游戏里复刻华科数字校园，完成南一楼等场景建模并上线。",
+   "start": "2022-09-01",
+   "end": "2023-06-30",
+   "event": "腾讯绿洲世界 × 华中科技大学",
+   "people": [
+    "林丽丽"
+   ],
+   "href": "/works/peace-elite-hust-campus/",
+   "hrefLabel": "查看作品",
+   "source": "work"
+  },
+  {
+   "id": "activity-scientist-award-2023",
+   "section": "activity",
+   "title": "林丽丽在华中科技大学获得了第六届感恩近现代科学家助学金",
+   "summary": "四年成绩均为优秀，以科创成果入围现场答辩。",
+   "start": "2023-09-12",
+   "event": "第六届感恩近现代科学家奖助学金答辩会",
+   "place": "华中科技大学",
+   "format": "答辩",
+   "people": [
+    "林丽丽"
+   ],
+   "href": "https://www.sohu.com/a/722425315_121124721",
+   "hrefLabel": "答辩纪实",
+   "source": "archive"
+  },
+  {
+   "id": "activity-dachuang-2023",
+   "section": "activity",
+   "title": "林丽丽参与了国家级大创《红旗渠类山地灌渠工程遗产价值判定与数字化平台构建》",
+   "summary": "本科期间共参与一项国家级大创和两项跨院校级大创。",
+   "start": "2023-01-01",
+   "end": "2023-12-31",
+   "precision": "year",
+   "event": "国家级大学生创新创业训练计划",
+   "format": "大创项目",
+   "people": [
+    "林丽丽"
+   ],
+   "source": "archive"
+  },
+  {
+   "id": "activity-evolo-2022",
+   "section": "activity",
+   "title": "林丽丽的eVolo摩天大楼竞赛作品获编辑部推荐并刊登官网",
+   "original": "The Piled Ark: Water Purification Skyscraper",
+   "summary": "大三时与同学组队完成的未来摩天楼设计。",
+   "start": "2022-10-20",
+   "event": "eVolo 摩天大楼建筑设计竞赛",
+   "format": "编辑部推荐",
+   "people": [
+    "林丽丽"
+   ],
+   "href": "https://www.evolo.us/the-piled-ark-water-purification-skyscraper/",
+   "hrefLabel": "eVolo 官网",
+   "source": "archive"
+  },
+  {
+   "id": "activity-bmw-tongji-2022",
+   "section": "activity",
+   "title": "林丽丽担任BMW×同济大学联合创新挑战营项目负责人",
+   "summary": "带领同济大学、米兰理工大学等多校多专业团队，围绕元宇宙与汽车出行打造线上体验方案。",
+   "start": "2022-10-10",
+   "end": "2022-12-10",
+   "event": "BMW × 同济大学联合创新挑战营",
+   "format": "项目负责人",
+   "people": [
+    "林丽丽"
+   ],
+   "href": "/works/bmw-meta-island/",
+   "hrefLabel": "查看作品",
+   "source": "work"
+  },
+  {
+   "id": "activity-internetplus-2022",
+   "section": "activity",
+   "title": "林丽丽获“互联网+”大学生创新创业大赛武汉市银奖、湖北省铜奖",
+   "summary": "与团队的创新创业项目从校赛一路走到省赛。",
+   "start": "2022-01-01",
+   "end": "2022-12-31",
+   "precision": "year",
+   "event": "“互联网+”大学生创新创业大赛",
+   "people": [
+    "林丽丽"
+   ],
+   "source": "archive"
   }
  ]
 }
