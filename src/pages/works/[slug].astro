@@ -76,7 +76,7 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
           {w.note && <p class="wd-more">{w.note}</p>}
           {(demoHref || repoHref || newsHref) && <div class="wd-links">
             {demoHref && <p class="wd-more"><a href={demoHref} target="_blank" rel="noopener noreferrer">打开 Demo ↗</a></p>}
-            {repoHref && <p class="wd-more"><a href={repoHref} target="_blank" rel="noopener noreferrer">开源模板 ↗</a></p>}
+            {repoHref && <p class="wd-more">模板已经开源，代码和使用说明放在 <a href={repoHref} target="_blank" rel="noopener noreferrer">GitHub ↗</a>。</p>}
             {newsHref && <p class="wd-more"><a href={newsHref} target="_blank" rel="noopener noreferrer">相关报道 ↗</a></p>}
           </div>}
         </div>
