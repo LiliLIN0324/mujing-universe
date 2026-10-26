@@ -11,6 +11,7 @@ const works = defineCollection({
     tech: z.array(z.string()), images: z.array(z.string()), icon: z.string(), hasDemo: z.boolean(),
     flags: z.array(z.string()), source: z.string(), sourceFile: z.string(),
     note: z.string().optional(), link: z.string().optional(),
+    repo: z.string().optional(), // 开源模板等真实仓库地址。
     demo: z.string().optional(), // 真实可打开的体验地址。个人站 source 不是 Demo。
   }),
 });
