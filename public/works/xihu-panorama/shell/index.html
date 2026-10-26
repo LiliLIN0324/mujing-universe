@@ -27,8 +27,11 @@ h1{margin:2px 0 0;font-size:19px;letter-spacing:.04em;font-weight:600}
 .notice{min-height:22px;font-size:12.5px;color:var(--faint);letter-spacing:.03em;padding:2px 2px 0}
 /* 主画区 */
 .stage{position:relative;flex:1 1 auto;margin:6px 22px 0;border:1px solid var(--rule);background:#fff;overflow:hidden}
-.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
-.stage iframe.on{display:block}
+/* 形制切换用 opacity crossfade（350ms），不是 display 硬切——2.5D/立体两套 iframe 都常驻，
+   只是非活跃态 opacity:0 + visibility:hidden，避免白闪。 */
+.stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);
+  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease}
+.stage iframe.on{opacity:1;visibility:visible;pointer-events:auto}
 /* 层内次级入口（圆相）与章节串（看完一程）：不抢主按钮 */
 .sub{position:absolute;right:14px;bottom:56px;font-size:12.5px;color:var(--faint);background:rgba(255,255,255,.9);padding:4px 10px;border:1px solid var(--rule)}
 .sub button{border:0;background:none;font:inherit;font-size:12.5px;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
