@@ -75,14 +75,21 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
           {abstract && <p class="wd-more">{abstract}</p>}
           {w.note && <p class="wd-more">{w.note}</p>}
           {(demoHref || newsHref) && <div class="wd-links">
-            {demoHref && <DemoEmbed url={demoHref} title={w.title} cover={hero} />}
-            {newsHref && <p class="wd-more" style={demoHref ? 'margin-top:14px' : ''}><a href={newsHref} target="_blank" rel="noopener noreferrer">相关报道 ↗</a></p>}
+            {newsHref && <p class="wd-more"><a href={newsHref} target="_blank" rel="noopener noreferrer">相关报道 ↗</a></p>}
           </div>}
         </div>
         {facts.length > 0 && <dl class="wd-facts">{facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
       </div>
     </div>
   </section>
+
+  {demoHref && <section class="wd-page wd-demo" id="demo" aria-labelledby="demo-h" data-dwell={PAGE_DWELL.scroll}>
+    <div class="wd-wrap">
+      <div class="wd-sec"><b>体验</b><span class="d">网页端实时运行</span><span class="m">在页内试用</span></div>
+      <h2 class="wd-demo-h" id="demo-h">直接打开看看</h2>
+    </div>
+    <div class="wd-demo-stage"><DemoEmbed url={demoHref} title={w.title} cover={hero} /></div>
+  </section>}
 
   {XIHU_SHELL && <section class="wd-page wd-layers" id="layers" aria-labelledby="layers-h" data-dwell={PAGE_DWELL.scroll}>
     <div class="wd-wrap">
@@ -258,6 +265,12 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
 .wd-next .ar, .wd-back-m { display: none; }
 .wd-next:hover .t { opacity: 0.7; }
 
+/* 内嵌 Demo：全宽区块，比首屏文字列大得多 */
+.wd-demo { padding: 96px 0 0; }
+.wd-demo-h { margin: 18px 0 26px; font-size: clamp(24px, 2.6vw, 32px); font-weight: 600; line-height: 1.25; letter-spacing: -0.02em; color: var(--ink); }
+.wd-demo-stage { padding: 0 var(--page-pad); }
+.wd-demo-stage :global(.de) { margin-top: 0; }
+
 /* 西湖清趣 · 四层体验（同壳四段切换） */
 .wd-layers { padding: 104px 0 0; }
 .wl-brand { margin: 0 0 10px; font-size: 12px; letter-spacing: 0.18em; color: var(--faint); text-transform: uppercase; }
@@ -348,6 +361,9 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
   .wd-back-m { display: flex; justify-content: space-between; margin-top: 28px; padding: 16px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); font-size: 14px; line-height: normal; letter-spacing: 0.1em; color: var(--ink); text-decoration: none; }
   .wd-back-m span { color: var(--faint); font-size: 12px; }
   .wd-layers { padding: 28px 0 0; }
+  .wd-demo { padding: 40px 0 0; }
+  .wd-demo-h { margin: 10px 0 18px; font-size: 22px; }
+  .wd-demo-stage { padding: 0 var(--page-gutter); }
   .wl-brand { font-size: 11px; letter-spacing: 0.14em; }
   .wl-title { font-size: 24px; line-height: 1.3; letter-spacing: 0.01em; }
   .wl-lead { margin-top: 10px !important; font-size: 14px; line-height: 1.8; letter-spacing: 0; }
