@@ -7,3 +7,8 @@ dist/
 public/_preview-portraits/
 .import-tmp/
 .patch-*.cjs
+
+# 本地工作日志草稿，不上线
+QODER_*.md
+_qoder_*.txt
+_qoder_*.log
