@@ -30,7 +30,7 @@ h1{margin:2px 0 0;font-size:19px;letter-spacing:.04em;font-weight:600}
 .stage iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
 .stage iframe.on{display:block}
 /* 层内次级入口（圆相）与章节串（看完一程）：不抢主按钮 */
-.sub{position:absolute;right:14px;bottom:12px;font-size:12.5px;color:var(--faint);background:rgba(255,255,255,.88);padding:4px 10px;border:1px solid var(--rule)}
+.sub{position:absolute;right:14px;bottom:56px;font-size:12.5px;color:var(--faint);background:rgba(255,255,255,.9);padding:4px 10px;border:1px solid var(--rule)}
 .sub button{border:0;background:none;font:inherit;font-size:12.5px;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
 .sub button:hover{color:var(--ink)}
 /* 载入垫底（XQ-08：iframe 未就绪前不露白） */
@@ -70,7 +70,7 @@ footer .names button.on{color:var(--accent)}
   <p class="notice" id="notice"></p>
 </header>
 <div class="stage" id="stage">
-  <iframe data-layer="huajuan" class="on" title="画卷层" src="../scroll/" referrerpolicy="no-referrer"></iframe>
+  <iframe data-layer="huajuan" class="on" title="画卷层 · 地名校验台" src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/index.html" referrerpolicy="no-referrer"></iframe>
   <iframe data-layer="fuyuan" title="南宋复原层" data-src="../lakeside/" referrerpolicy="no-referrer"></iframe>
   <iframe data-layer="jintu" title="今图对照层" data-src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024" referrerpolicy="no-referrer"></iframe>
   <iframe data-layer="yuanxiang" title="圆相观感（壳内）" data-src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024" referrerpolicy="no-referrer"></iframe>
@@ -127,7 +127,7 @@ function layerAnchor(layer,id){
   return layer==='huajuan'?m.gx:layer==='fuyuan'?m.fuyuan:m.geo;
 }
 const NAMES={duanqiao:'duanqiao',baoshuta:'baoshuta',leifengta:'leifeng'}; // 细选地名 → 统一 id
-const state={layer:'huajuan',scene:'all',yx:false,name:null}; // yx=圆相观感态（壳内，不升第四层）
+const state={layer:'huajuan',scene:'all',yx:false,name:null,view:'twod'}; // yx=圆相观感态（壳内，不升第四层）
 
 const seg=document.getElementById('seg'),chips=document.getElementById('chips'),
       notice=document.getElementById('notice'),sub=document.getElementById('sub'),
@@ -173,13 +173,19 @@ function pushHuajuan(){
   const gx=m?m.gx:null;
   if(typeof gx==='number'){ try{ f.contentWindow.postMessage({xihuGx:gx},'*'); }catch(_){} }
 }
+/* ===== 视角：同一个场景只改倾角（手卷 / 二点五维 / 俯瞰）===== */
+function pushView(v){
+  state.view=v;
+  const f=frames.find(x=>x.dataset.layer==='fuyuan');
+  if(f&&f.src&&f.contentWindow){ try{ f.contentWindow.postMessage({xihuView:v},'*'); }catch(_){} }
+  render();
+}
 /* ===== 载入垫底（XQ-08 防白闪外露） ===== */
 const loading=document.getElementById('loading');
 const LOADTXT={huajuan:'长卷载入中…',fuyuan:'湖山载入中…',jintu:'底图载入中…',yuanxiang:'圆相载入中…'};
 frames.forEach(f=>f.addEventListener('load',()=>{
   f.dataset.loaded='1';updateLoading();
-  if(f.dataset.layer==='fuyuan')pushFuyuan();   // 载好后补一次选中（防消息丢失）
-  if(f.dataset.layer==='huajuan')pushHuajuan();
+  if(f.dataset.layer==='fuyuan'){pushFuyuan();pushView(state.view);}   // 载好后补发（防消息丢失）
 }));
 function updateLoading(){
   const cur=state.yx?'yuanxiang':state.layer;
@@ -230,9 +236,7 @@ function render(){
     notice.textContent=aligned
       ? (state.scene==='all'?'':state.layer==='fuyuan'
         ? '已收束到「'+label+'」——复原层已联动定位。'
-        : state.layer==='huajuan'
-        ? '已收束到「'+label+'」——画卷已卷到该处。'
-        : '已收束到「'+label+'」——本层有对照锚（层内手动定位，自动跟随待接线）。')
+        : '已收束到「'+label+'」——本层有对照锚（层内手动定位）。')
       : '此层暂无对齐 · 换层或换名再试';
   }
   // 圆相次级入口（仅复原/今图层露出；壳内切换，不跳站）
@@ -240,7 +244,12 @@ function render(){
     sub.innerHTML='<button id="yx-off">← 返回本层</button>';
     document.getElementById('yx-off').onclick=()=>toggleYx(false);
   }else if(state.layer==='fuyuan'||state.layer==='jintu'){
-    sub.innerHTML='次级入口：<button id="yx-on">圆相</button>';
+    sub.innerHTML=(state.layer==='fuyuan'
+        ? '视角：<button data-view="scroll">手卷</button><button data-view="twod">二点五维</button><button data-view="top">俯瞰</button>　'
+        : '')+'次级入口：<button id="yx-on">圆相</button>';
+    sub.querySelectorAll('button[data-view]').forEach(b=>{
+      b.onclick=()=>{ pushView(b.dataset.view); };
+    });
     document.getElementById('yx-on').onclick=()=>toggleYx(true);
   }else sub.innerHTML='';
   // URL 深链：壳 + 层 + 十景 + 圆相态（禁深链到独立站）

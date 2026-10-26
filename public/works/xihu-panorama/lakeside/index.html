@@ -176,6 +176,9 @@
       color: var(--paper);
     }
 
+    /* 视角三档：同一场景只改倾角，2.5D 与俯瞰是同一件事的不同观感 */
+    .moods.views { margin-left: 8px; }
+
     body[data-mood="night"] .moods button.is-on {
       background: #e7e0cd;
       color: #1b2530;
@@ -370,6 +373,11 @@
           <button type="button" data-mood="dusk">暮色</button>
           <button type="button" data-mood="night">夜泊</button>
         </div>
+        <div class="moods views" role="group" aria-label="切换视角">
+          <button type="button" data-view="scroll">手卷</button>
+          <button type="button" data-view="twod" class="is-on">二点五维</button>
+          <button type="button" data-view="top">俯瞰</button>
+        </div>
       </div>
     </header>
 
@@ -407,7 +415,9 @@
 
   /* ================= utils ================= */
   const TAU = Math.PI * 2;
-  const TILT = 0.52;
+  /* 倾角即视角：0.18≈平摊手卷，0.52≈二点五维，1.0≈俯瞰（俯视时湖面成圆） */
+  const VIEWS = { scroll: .18, twod: .52, top: 1.0 };
+  let TILT = VIEWS.twod, TILT_T = VIEWS.twod;
   const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
   const mulberry32 = seed => {
     let a = seed >>> 0;
@@ -1634,6 +1644,7 @@
     cam.y += (cam.ty - cam.y) * k;
     cam.z += (cam.tz - cam.z) * (RM ? 1 : .16);
     cam.th += (cam.tth - cam.th) * (RM ? 1 : .14);
+    TILT += (TILT_T - TILT) * (RM ? 1 : .12);
     clampTargets();
     cosT = Math.cos(cam.th);
     sinT = Math.sin(cam.th);
@@ -1735,6 +1746,31 @@
 
   document.querySelectorAll(".moods button").forEach(b =>
     b.addEventListener("click", () => setMood(b.dataset.mood)));
+
+  /* 视角：只改倾角，场景数据一件不动 */
+  function setView(name) {
+    if (!(name in VIEWS)) return;
+    TILT_T = VIEWS[name];
+    document.querySelectorAll(".views button").forEach(b =>
+      b.classList.toggle("is-on", b.dataset.view === name));
+  }
+  document.querySelectorAll(".views button").forEach(b =>
+    b.addEventListener("click", () => setView(b.dataset.view)));
+  /* 深链：?view=scroll|twod|top */
+  const vq = new URLSearchParams(location.search).get("view");
+  if (vq && vq in VIEWS) { TILT = TILT_T = VIEWS[vq]; setView(vq); }
+  /* 被壳嵌入时，视角由壳统一控制，隐藏本地视角组避重复 */
+  if (window.top !== window.self) {
+    const vg = document.querySelector(".moods.views");
+    if (vg) vg.style.display = "none";
+  }
+
+  /* 壳联动：{xihuView:'scroll|twod|top'} → 切视角；{xihuTilt:number} → 直接给倾角 */
+  window.addEventListener("message", e => {
+    const d = e.data || {};
+    if (d.xihuView) setView(d.xihuView);
+    if (typeof d.xihuTilt === "number") { TILT_T = clamp(d.xihuTilt, .15, 1); }
+  });
 
   document.getElementById("rotL").addEventListener("click", () => { cam.tth -= .16; clampTargets(); });
   document.getElementById("rotR").addEventListener("click", () => { cam.tth += .16; clampTargets(); });
