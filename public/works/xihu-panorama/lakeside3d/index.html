@@ -317,6 +317,20 @@
       color: var(--ui-ink);
     }
 
+    .footnote {
+      position: absolute;
+      bottom: max(54px, calc(env(safe-area-inset-bottom) + 54px));
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: .12em;
+      color: var(--ui-soft);
+      opacity: .7;
+      pointer-events: none;
+      padding: 0 24px;
+    }
+
     .veil {
       position: fixed;
       inset: 0;
@@ -406,6 +420,8 @@
       <h2 id="cardName"></h2>
       <p class="card-desc" id="cardDesc"></p>
     </aside>
+
+    <footer class="footnote" aria-label="说明">非测绘级写意复原 · 断桥宋桥形制试点中</footer>
   </div>
 
   <div class="veil" id="veil">湖山立体载入中…</div>
@@ -593,7 +609,12 @@
   );
 
   /* ================= 相机与手势 ================= */
-  const HOME = { x: LAKE.x, y: 26, z: LAKE.y + 20, dist: 1760, pol: Math.acos(clamp(VIEWS.twod, .05, 1)), az: 0 };
+  /* HOME: 贴白堤断桥的定镜。关键是把 HOME.y（相机高度）压到 15——
+     山体最高 rise 约 140，镜头在水面上 15 时，远处山的上半会被画面顶边裁掉，
+     自然得到"山体厚度被藏住一半"的效果。
+     pol=0.68rad（俯角 39°）让视平线在画面上 1/3 处，不会把天压成一条缝。
+     dist=920 拉近到能看清近景白堤/桥拱，az=-0.42 让苏堤斜入画面。 */
+  const HOME = { x: LAKE.x + 80, y: 15, z: LAKE.y + 120, dist: 920, pol: 0.68, az: -0.42 };
   const now = { x: HOME.x, y: HOME.y, z: HOME.z, dist: HOME.dist, pol: HOME.pol, az: HOME.az };
   const want = { x: HOME.x, y: HOME.y, z: HOME.z, dist: HOME.dist, pol: HOME.pol, az: HOME.az };
 
@@ -659,8 +680,13 @@
   function setView(name) {
     if (!(name in VIEWS)) return;
     viewName = name;
-    want.pol = Math.acos(clamp(VIEWS[name], .05, 1));
-    want.dist = name === 'scroll' ? 1900 : name === 'top' ? 2150 : 1760;
+    /* pol 越小镜头越贴地平（pol=0 正上、pol=π 地平线）。
+       三档差异拉得开——手卷最贴地平（pol 0.58，俯角 33°，山体几乎全被裁）、
+       二点五维 HOME 同值（pol 0.68）、俯瞰（pol 0.92，俯角 53°，山体几乎全露）。 */
+    const POL = { scroll: 0.58, twod: 0.68, top: 0.92 };
+    const DIST = { scroll: 1180, twod: 920, top: 1120 };
+    want.pol = POL[name] || POL.twod;
+    want.dist = DIST[name] || DIST.twod;
     document.querySelectorAll('.views button').forEach(b => b.classList.toggle('is-on', b.dataset.view === name));
   }
 
@@ -700,8 +726,10 @@
     sunSprite.material.color.copy(tcol('sun'));
     sunSprite.material.opacity = (.22 + .5 * cur.sunA) * (1 - .6 * cur.night);
     sunSprite.scale.setScalar(340 + 320 * (cur.sunR / 60));
-    scene.fog.near = 1100 + 700 * (1 - cur.mistStrong);
-    scene.fog.far = 3400 + 1200 * (1 - cur.mistStrong);
+    /* 暮色/夜泊要跟晨秀拉开：雾距随天色收得紧，让下沿雾带显出来。 */
+    const moodFogMul = viewName === 'dusk' ? .72 : viewName === 'night' ? .52 : 1;
+    scene.fog.near = (1100 + 700 * (1 - cur.mistStrong)) * moodFogMul;
+    scene.fog.far = (3400 + 1200 * (1 - cur.mistStrong)) * moodFogMul;
   }
 
   /* ================= 地面 / 湖岸 / 水面 ================= */
@@ -1302,7 +1330,28 @@
     want.z = lm.y;
     want.y = lm.id === 'leifeng' ? 112 : lm.id === 'baochu' ? hillHeightAt(lm.x, lm.y) + 62 : 22;
     want.dist = lm.id === 'leifeng' ? 760 : lm.id === 'baochu' ? 700 : lm.id === 'santan' ? 560 : lm.id === 'su' || lm.id === 'bai' ? 860 : 480;
-    want.pol = clamp(want.pol, .48, isTower ? 1.16 : 1.25);
+    /* pol 压低一些，让塔/屋在画面里的分量更重，不贴天花板。 */
+    want.pol = clamp(want.pol, .42, isTower ? .96 : 1.08);
+    /* 点名反馈：给目标位置补一个短暂亮弧，500ms 淡出。让访客知道联动了。 */
+    const y = lm.id === 'leifeng' ? 118 : lm.id === 'baochu' ? hillHeightAt(lm.x, lm.y) + 72 : 28;
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(6, 14, 36),
+      new THREE.MeshBasicMaterial({ color: 0xffe5b4, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(lm.x, y + 1, lm.y);
+    ring.userData.pulse = 0;
+    scene.add(ring);
+    const start = performance.now();
+    function step() {
+      const dt = (performance.now() - start) / 500;
+      if (dt >= 1) { scene.remove(ring); ring.geometry.dispose(); ring.material.dispose(); return; }
+      const o = Math.sin(dt * Math.PI) * .85;
+      ring.material.opacity = o;
+      ring.scale.setScalar(1 + dt * 2.2);
+      requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
   }
 
   /* ================= UI ================= */
