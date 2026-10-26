@@ -1244,9 +1244,8 @@ if (root && stage && !stage.dataset.farmInit) {
   /* 不下蛋的元素：页面自身的一切交互件 + 鸡场自有 UI + 鸡/蛋（它们有自己的交互）+ 对话框/浮层面板 */
   const EGG_SKIP = 'a,button,input,textarea,select,label,[role="button"],[contenteditable],.coopchat,.mimi-launch,.mimi-panel,.butter-box,.farm-ui,.farm-card,[role="dialog"],[role="button"]'; /* .coopchat：Mimi 挂件根（launch+面板）；点她聊天不该下蛋 */
   /* 下蛋处理器纯旁观：永不 preventDefault / stopPropagation，原生点击行为一律不受影响。
-     双击空白（320ms 内两击）= 撒谷子，单击仍是下蛋——判定合并在此处：
-     早期版本把双击监听挂 stage，但 stage 是 pointer-events:none 根本收不到事件（原生死功能）。 */
-  let lastTap = 0, lastTapXY = [0, 0];
+     连点即连蛋——下蛋是核心乐趣，双击撒谷子会打断连点（0.2 检修：撒谷子先撤下，
+     入口留到以后再想更不打扰的触发方式）。 */
   document.addEventListener('pointerdown', (e) => {
     if (!opened) return; // 鸡场收起中：整层退场，不添蛋
     ensureAudio();
@@ -1259,15 +1258,7 @@ if (root && stage && !stage.dataset.farmInit) {
     const y = clamp(e.clientY, 16, Math.max(18, window.innerHeight - 16));
     cur.tx = x; cur.ty = y;
     lastPoint = { x, y };
-    const now = performance.now();
-    const d = Math.hypot(e.clientX - lastTapXY[0], e.clientY - lastTapXY[1]);
-    if (now - lastTap < 320 && d < 46) {
-      scatterGrain(e.clientX, e.clientY); // 双击落点即谷堆中心（stage 全屏铺满，无需再减偏移）
-      lastTap = 0;
-    } else {
-      lastTap = now; lastTapXY = [e.clientX, e.clientY];
-      layEgg(Math.round(x), Math.round(y));
-    }
+    layEgg(Math.round(x), Math.round(y));
   }, true);
 
   /* 光标小鸡让位：悬停对话框/面板上、或输入框聚焦期间淡出（opacity 0, 0.2s），离开/失焦恢复 */
