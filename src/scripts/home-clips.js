@@ -51,8 +51,9 @@ export function mountHomeClips() {
     const pin = host.querySelector('.fs-pin');
     if (!pin) return;
     pin.setAttribute('aria-pressed', on ? 'true' : 'false');
-    pin.textContent = on ? '暂停' : '预览';
+    // 图标按钮：播放/暂停两个 SVG 由 CSS 按 aria-pressed 切换，只刷语义属性。
     pin.setAttribute('aria-label', on ? '暂停预览' : '播放预览');
+    pin.setAttribute('title', on ? '暂停预览' : '播放预览');
   }
   function mark(host, on) {
     host.classList.toggle('is-on', on);

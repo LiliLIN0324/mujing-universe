@@ -81,7 +81,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
         <div class="m-card" data-i={i} data-clip={w.clip ? '1' : undefined} aria-hidden={i === 0 ? 'false' : 'true'}>
           <img src={w.cover} data-fallback={w.fallback} alt={w.title} width="1200" height="675" draggable="false" decoding="async" referrerpolicy="no-referrer" loading={i < 4 ? 'eager' : 'lazy'}/>
           {w.clip && <video class="fs-clip" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={w.clip}></video>}
-          {w.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览">预览</button>}
+          {w.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览" title="播放预览"><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h3v14h-3zM13.5 5h3v14h-3z" fill="currentColor"/></svg></button>}
         </div>
       ))}
     </div>
@@ -126,17 +126,16 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
           ></video>
         )}
       </div>
-      {leadPick.slug !== 'xihu-panorama' && (
       <div class="fs-plate">
           <p class="fs-kicker"><b>01</b> / {String(ringWorks.length).padStart(2, '0')}</p>
         <h1 class="fs-title">{leadPick.title}</h1>
         {leadPick.summary && <p class="fs-summary">{leadPick.summary}</p>}
         <div class="fs-actions">
-          <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video"><span class="ic" aria-hidden="true"></span><span class="lb">聆听图景</span></button>
+          {leadPick.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览" title="播放预览"><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h3v14h-3zM13.5 5h3v14h-3z" fill="currentColor"/></svg></button>}
+          <button id="snd" class="listen" type="button" aria-pressed="false" aria-controls="scroll-video" aria-label="聆听图景" title="聆听图景"><svg class="i-mute" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor"/><path d="M15.5 9.7l4.6 4.6m0-4.6l-4.6 4.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg><svg class="i-snd" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z" fill="currentColor"/><path d="M15 9.2a4 4 0 0 1 0 5.6M17.6 6.6a8 8 0 0 1 0 10.8" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" fill="none"/></svg></button>
           <a class="fs-view" href={leadPick.href}>查看作品 <span aria-hidden="true">→</span></a>
         </div>
       </div>
-      )}
     </div>
     {ringWorks.slice(1).map((work, i) => (
       <div class="fs-slide" data-i={i + 1} data-clip={work.clip ? '1' : undefined} aria-hidden="true" inert>
@@ -153,6 +152,7 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
           <h2 class="fs-title"><a href={work.href}>{work.title}</a></h2>
           {work.summary && <p class="fs-summary">{work.summary}</p>}
           <div class="fs-actions">
+            {work.clip && <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览" title="播放预览"><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h3v14h-3zM13.5 5h3v14h-3z" fill="currentColor"/></svg></button>}
             <a class="fs-view" href={work.href}>查看作品 <span aria-hidden="true">→</span></a>
           </div>
         </div>
@@ -251,17 +251,19 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 [data-clip].is-on .fs-clip,
 [data-clip].is-on .fs-video { opacity: 1; }
 .fs-pin {
-  border: 0;
-  background: transparent;
-  padding: 0 0 2px;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; padding: 0;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
   color: var(--ink);
-  font-family: var(--sans);
-  font-size: 14px;
-  letter-spacing: 0.06em;
-  border-bottom: 1px solid color-mix(in srgb, var(--ink) 45%, transparent);
   cursor: pointer;
 }
-.fs-pin[aria-pressed="true"] { border-bottom-color: var(--ink); }
+.fs-pin:hover { border-color: var(--ink); }
+.fs-pin svg { width: 16px; height: 16px; display: block; }
+.fs-pin .i-pause { display: none; }
+.fs-pin[aria-pressed="true"] .i-play { display: none; }
+.fs-pin[aria-pressed="true"] .i-pause { display: block; }
 .hero .fs-clip { z-index: 1; }
 .hero-info { z-index: 2; }
 .fs-bg {
@@ -338,6 +340,20 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 .listen .ic { width: 0; height: 0; border-left: 7px solid var(--cta-fg); border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
 .listen[aria-pressed="true"] .ic { width: 8px; height: 10px; border: 0; border-left: 2px solid var(--cta-fg); border-right: 2px solid var(--cta-fg); }
 .listen:disabled { opacity: 0.35; cursor: not-allowed; }
+/* 桌面章节白卡内的聆听：喇叭图标按钮，与播放键同规格 */
+.fs-plate .listen {
+  width: 36px; height: 36px; padding: 0;
+  justify-content: center;
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
+  color: var(--ink);
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent);
+}
+.fs-plate .listen:hover { border-color: var(--ink); opacity: 1; }
+.fs-plate .listen svg { width: 16px; height: 16px; display: block; }
+.fs-plate .listen .i-snd { display: none; }
+.fs-plate .listen[aria-pressed="true"] { background: var(--cta-bg); color: var(--cta-fg); border-color: transparent; }
+.fs-plate .listen[aria-pressed="true"] .i-mute { display: none; }
+.fs-plate .listen[aria-pressed="true"] .i-snd { display: block; }
 .fs-view {
   display: inline-block; color: var(--ink);
   font-family: var(--sans);
