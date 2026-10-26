@@ -33,6 +33,7 @@ h1{margin:2px 0 0;font-size:19px;letter-spacing:.04em;font-weight:600}
 .sub{position:absolute;right:14px;bottom:56px;font-size:12.5px;color:var(--faint);background:rgba(255,255,255,.9);padding:4px 10px;border:1px solid var(--rule)}
 .sub button{border:0;background:none;font:inherit;font-size:12.5px;color:var(--soft);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
 .sub button:hover{color:var(--ink)}
+.sub button.on{color:var(--accent);border-bottom:1px solid var(--accent)}
 /* 载入垫底（XQ-08：iframe 未就绪前不露白） */
 .loading{position:absolute;inset:0;display:none;align-items:center;justify-content:center;color:var(--faint);font-size:13px;letter-spacing:.2em;background:var(--bg);z-index:5;pointer-events:none}
 .loading.on{display:flex}
@@ -53,6 +54,8 @@ footer .names button.on{color:var(--accent)}
   h1{font-size:16px}
   .seg{display:flex}.seg button{flex:1;padding:8px 0;font-size:14px}
   .stage{margin:4px 12px 0}
+  .sub{right:8px;bottom:52px;max-width:calc(100% - 16px);text-align:right;line-height:2;font-size:11.5px}
+  .sub button{font-size:11.5px}
   footer{padding:8px 14px 10px}
 }
 </style>
@@ -72,6 +75,7 @@ footer .names button.on{color:var(--accent)}
 <div class="stage" id="stage">
   <iframe data-layer="huajuan" class="on" title="画卷层 · 地名校验台" src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/index.html" referrerpolicy="no-referrer"></iframe>
   <iframe data-layer="fuyuan" title="南宋复原层" data-src="../lakeside/" referrerpolicy="no-referrer"></iframe>
+  <iframe data-layer="fuyuan3d" title="南宋复原层 · 立体" data-src="../lakeside3d/" referrerpolicy="no-referrer"></iframe>
   <iframe data-layer="jintu" title="今图对照层" data-src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024" referrerpolicy="no-referrer"></iframe>
   <iframe data-layer="yuanxiang" title="圆相观感（壳内）" data-src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024" referrerpolicy="no-referrer"></iframe>
   <div class="sub" id="sub"></div>
@@ -127,7 +131,9 @@ function layerAnchor(layer,id){
   return layer==='huajuan'?m.gx:layer==='fuyuan'?m.fuyuan:m.geo;
 }
 const NAMES={duanqiao:'duanqiao',baoshuta:'baoshuta',leifengta:'leifeng'}; // 细选地名 → 统一 id
-const state={layer:'huajuan',scene:'all',yx:false,name:null,view:'twod'}; // yx=圆相观感态（壳内，不升第四层）
+const state={layer:'huajuan',scene:'all',yx:false,name:null,view:'twod',dim:'2d'}; // dim: 复原层的形制（2d=2.5D / 3d=立体），不升第四层
+/* 复原层有两套渲染，同一份 data/lakeside.json；dim 决定当前露出哪一套 */
+function activeLayer(){ return state.layer==='fuyuan'&&state.dim==='3d'?'fuyuan3d':state.layer; }
 
 const seg=document.getElementById('seg'),chips=document.getElementById('chips'),
       notice=document.getElementById('notice'),sub=document.getElementById('sub'),
@@ -157,13 +163,13 @@ document.getElementById('names').addEventListener('click',e=>{
   pushFuyuan();
 });
 
-/* ===== 层内真跟随：复原层（2.5D 同源）postMessage 选中 ===== */
+/* ===== 层内真跟随：复原层（2.5D / 立体同一源）postMessage 选中 ===== */
 function pushFuyuan(){
-  const f=frames.find(x=>x.dataset.layer==='fuyuan');
-  if(!f||!f.src||!f.contentWindow)return;
   const m=ID_MAP[state.name||state.scene];
   const anchor=m?m.fuyuan:null;
-  if(anchor){ try{ f.contentWindow.postMessage({xihuSelect:anchor},'*'); }catch(_){} }
+  if(!anchor)return;
+  frames.filter(f=>f.dataset.layer.indexOf('fuyuan')===0&&f.src&&f.contentWindow)
+    .forEach(f=>{ try{ f.contentWindow.postMessage({xihuSelect:anchor},'*'); }catch(_){} });
 }
 /* ===== 层内真跟随：画卷层（读画版同源）postMessage gx 定位 ===== */
 function pushHuajuan(){
@@ -176,19 +182,29 @@ function pushHuajuan(){
 /* ===== 视角：同一个场景只改倾角（手卷 / 二点五维 / 俯瞰）===== */
 function pushView(v){
   state.view=v;
-  const f=frames.find(x=>x.dataset.layer==='fuyuan');
-  if(f&&f.src&&f.contentWindow){ try{ f.contentWindow.postMessage({xihuView:v},'*'); }catch(_){} }
+  frames.filter(f=>f.dataset.layer.indexOf('fuyuan')===0&&f.src&&f.contentWindow)
+    .forEach(f=>{ try{ f.contentWindow.postMessage({xihuView:v},'*'); }catch(_){} });
+  render();
+}
+/* ===== 形制：2.5D / 立体，同一份数据换一种看法 ===== */
+function setDim(d){
+  state.dim=(d==='3d'?'3d':'2d');
+  const f=frames.find(x=>x.dataset.layer==='fuyuan3d');
+  if(f&&!f.src&&f.dataset.src&&state.layer==='fuyuan')f.src=f.dataset.src; // 首次才载
+  frames.forEach(x=>x.classList.toggle('on',x.dataset.layer===activeLayer()));
+  updateLoading();
+  if(state.layer==='fuyuan'){pushFuyuan();pushView(state.view);}
   render();
 }
 /* ===== 载入垫底（XQ-08 防白闪外露） ===== */
 const loading=document.getElementById('loading');
-const LOADTXT={huajuan:'长卷载入中…',fuyuan:'湖山载入中…',jintu:'底图载入中…',yuanxiang:'圆相载入中…'};
+const LOADTXT={huajuan:'长卷载入中…',fuyuan:'湖山载入中…',fuyuan3d:'湖山立体载入中…',jintu:'底图载入中…',yuanxiang:'圆相载入中…'};
 frames.forEach(f=>f.addEventListener('load',()=>{
   f.dataset.loaded='1';updateLoading();
-  if(f.dataset.layer==='fuyuan'){pushFuyuan();pushView(state.view);}   // 载好后补发（防消息丢失）
+  if(f.dataset.layer.indexOf('fuyuan')===0){pushFuyuan();pushView(state.view);}   // 载好后补发（防消息丢失）
 }));
 function updateLoading(){
-  const cur=state.yx?'yuanxiang':state.layer;
+  const cur=state.yx?'yuanxiang':activeLayer();
   const f=frames.find(x=>x.dataset.layer===cur);
   const show=f&&f.src&&!f.dataset.loaded;
   loading.classList.toggle('on',!!show);
@@ -199,7 +215,7 @@ function selectLayer(l){
   state.layer=l;state.yx=false;
   [...seg.children].forEach(b=>b.classList.toggle('on',b.dataset.layer===l));
   frames.forEach(f=>{
-    const on=f.dataset.layer===l;
+    const on=f.dataset.layer===activeLayer();
     if(on&&!f.src&&f.dataset.src)f.src=f.dataset.src; // 懒加载
     f.classList.toggle('on',on);
   });
@@ -212,7 +228,7 @@ function toggleYx(on){
   state.yx=on;
   const f=frames.find(x=>x.dataset.layer==='yuanxiang');
   if(on&&!f.src)f.src=f.dataset.src; // 首次进入才载；之后常驻不卸（XQ-08 防白闪）
-  frames.forEach(x=>x.classList.toggle('on',x.dataset.layer===(on?'yuanxiang':state.layer)));
+  frames.forEach(x=>x.classList.toggle('on',x.dataset.layer===(on?'yuanxiang':activeLayer())));
   updateLoading();
   render();
 }
@@ -245,15 +261,22 @@ function render(){
     document.getElementById('yx-off').onclick=()=>toggleYx(false);
   }else if(state.layer==='fuyuan'||state.layer==='jintu'){
     sub.innerHTML=(state.layer==='fuyuan'
-        ? '视角：<button data-view="scroll">手卷</button><button data-view="twod">二点五维</button><button data-view="top">俯瞰</button>　'
+        ? '形制：<button data-dim="2d">2.5D</button><button data-dim="3d">立体</button>　'
+          +'视角：<button data-view="scroll">手卷</button><button data-view="twod">二点五维</button><button data-view="top">俯瞰</button>　'
         : '')+'次级入口：<button id="yx-on">圆相</button>';
     sub.querySelectorAll('button[data-view]').forEach(b=>{
       b.onclick=()=>{ pushView(b.dataset.view); };
+      b.classList.toggle('on',b.dataset.view===state.view);
+    });
+    sub.querySelectorAll('button[data-dim]').forEach(b=>{
+      b.onclick=()=>{ setDim(b.dataset.dim); };
+      b.classList.toggle('on',b.dataset.dim===state.dim);
     });
     document.getElementById('yx-on').onclick=()=>toggleYx(true);
   }else sub.innerHTML='';
-  // URL 深链：壳 + 层 + 十景 + 圆相态（禁深链到独立站）
-  history.replaceState(null,'','#layer='+state.layer+'&scene='+state.scene+(state.yx?'&yx=1':''));
+  // URL 深链：壳 + 层 + 十景 + 形制 + 圆相态（禁深链到独立站）
+  history.replaceState(null,'','#layer='+state.layer+'&scene='+state.scene
+    +(state.layer==='fuyuan'&&state.dim==='3d'?'&dim=3d':'')+(state.yx?'&yx=1':''));
 }
 /* ===== 看完一程：跋序 6 站，壳内串层（脚本见 西湖_看完一程_脚本.md）===== */
 const JOURNEY=[
@@ -292,7 +315,9 @@ document.getElementById('j-next').onclick=()=>{
 document.getElementById('j-exit').onclick=journeyExit;
 
 /* 深链还原 */
-const h=location.hash.match(/layer=(\w+)/),hs=location.hash.match(/scene=(\w+)/),hyx=/yx=1/.test(location.hash);
+const h=location.hash.match(/layer=(\w+)/),hs=location.hash.match(/scene=(\w+)/),
+      hd=location.hash.match(/dim=(2d|3d)/),hyx=/yx=1/.test(location.hash);
+if(hd)state.dim=hd[1];
 if(hs&&SCENES.some(s=>s.id===hs[1]))selectScene(hs[1]);
 if(h&&['huajuan','fuyuan','jintu'].includes(h[1]))selectLayer(h[1]);else render();
 if(hyx&&(state.layer==='fuyuan'||state.layer==='jintu'))toggleYx(true);
