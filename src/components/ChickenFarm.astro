@@ -7,6 +7,7 @@
  *   fsm（蛋与鸡的状态机）/ draw（渲染原语，从原型平移）/ audio（WebAudio 事件音）/ tick（主循环）。
  * 开合：所有页面默认开（localStorage 'mujing-farm-on'，只有显式收起记 '0'）；?farm=1 强制开；
  *   window 事件 'farm:toggle'=切换、'farm:open'=强制开；开着时 body 挂 .farm-on（全站 cursor:none）。
+ * HUD：开着时只留蛋、鸡、更多、收起。管家 / 手册 / 地图收在「更多」里，不跟下蛋抢同一眼。
  * 音符：无背景音乐。只有事件音——出壳一声品种音（金·元宝保留 C 大三琶音）、点鸡一声，
  *   发声处浮起品种色 ♪；色音映射见 assets/palette.md。
  * 页签隐藏暂停并落盘；reduced-motion 静止降级；不引外部依赖，声音全部现场合成。
@@ -24,17 +25,21 @@ const { page = 'home' } = Astro.props;
         <span class="farm-stat farm-brand">幕景鸡场</span>
         <span class="farm-stat">蛋 <b id="farm-n-eggs">0</b></span>
         <span class="farm-stat">鸡 <b id="farm-n-chicks">0</b></span>
-        <span class="farm-stat">图鉴 <b id="farm-n-dex">0/7</b></span>
       </div>
       <div class="farm-btns">
-        <button type="button" class="farm-btn" id="farm-btn-butler">管家</button>
-        <button type="button" class="farm-btn" id="farm-btn-book">手册</button>
-        <button type="button" class="farm-btn" id="farm-btn-map">地图</button>
-        <button type="button" class="farm-btn" id="farm-btn-close">收起×</button>
+        <div class="farm-more">
+          <button type="button" class="farm-btn" id="farm-btn-more" aria-expanded="false" aria-controls="farm-more-menu">更多</button>
+          <div class="farm-more-menu" id="farm-more-menu" hidden>
+            <button type="button" class="farm-btn" id="farm-btn-butler">管家</button>
+            <button type="button" class="farm-btn" id="farm-btn-book">手册</button>
+            <button type="button" class="farm-btn" id="farm-btn-map">地图</button>
+          </div>
+        </div>
+        <button type="button" class="farm-btn" id="farm-btn-close" aria-label="收起鸡场">收起</button>
       </div>
     </div>
 
-    <p class="farm-hint" id="farm-hint">点空白处下蛋 · 点小鸡听它说话</p>
+    <p class="farm-hint" id="farm-hint">点空白的地方，下一颗蛋。</p>
 
     <div class="farm-wrap farm-ui" id="farm-book" hidden>
       <div class="farm-scrim" id="farm-book-scrim"></div>
@@ -403,8 +408,8 @@ const { page = 'home' } = Astro.props;
   /* 光标即小鸡：开着时全站藏系统光标（reduced-motion 例外，见文末） */
   body.farm-on, body.farm-on * { cursor: none !important; }
   /* 对话框、面板、表单内恢复真光标：那里没有小鸡，不能让指针失明 */
-  body.farm-on :is(.mimi-panel, .farm-card, input, textarea, select),
-  body.farm-on :is(.mimi-panel, .farm-card, input, textarea, select) * { cursor: auto !important; }
+  body.farm-on :is(.mimi-panel, .farm-card, .farm-more-menu, input, textarea, select),
+  body.farm-on :is(.mimi-panel, .farm-card, .farm-more-menu, input, textarea, select) * { cursor: auto !important; }
   /* 触发点微光：精确落点的橙色光点（小鸡是身体，光点是喙）+ 可点元素橙色描边 */
   .farm-dot {
     position: fixed; left: 0; top: 0; width: 7px; height: 7px;
@@ -418,16 +423,16 @@ const { page = 'home' } = Astro.props;
   .farm-glow { outline: 2px solid #ff690a; outline-offset: 1px; }
   @media (hover: none), (pointer: coarse) { .farm-dot { display: none; } }
 
-  /* HUD：左下角小药丸 */
+  /* HUD：左下角软药丸。玩的时候只看见蛋、鸡和收起；其余入口在「更多」里向上展开，没有遮罩。 */
   .farm-hud {
     position: fixed; left: 14px; bottom: 14px;
     display: flex; align-items: center; gap: 2px; flex-wrap: nowrap;
     pointer-events: auto; z-index: 1100;
     background: var(--card); border: 1px solid var(--ink);
-    padding: 3px 4px 3px 6px;
-    max-width: calc(100vw - 28px); overflow-x: auto; scrollbar-width: none;
+    border-radius: 999px;
+    padding: 4px 6px 4px 4px;
+    max-width: calc(100vw - 28px);
   }
-  .farm-hud::-webkit-scrollbar { display: none; }
   .farm-stats { display: flex; align-items: center; gap: 2px; flex-wrap: nowrap; }
   .farm-stat {
     display: inline-flex; align-items: center; gap: 3px;
@@ -435,24 +440,35 @@ const { page = 'home' } = Astro.props;
     padding: 2px 4px; font-size: 12px; font-weight: 600; white-space: nowrap;
   }
   .farm-stat b { font-size: 12px; font-variant-numeric: tabular-nums; }
-  .farm-brand { background: var(--ink); color: var(--paper); padding: 3px 7px; }
+  .farm-brand { background: var(--ink); color: var(--paper); padding: 3px 10px; border-radius: 999px; }
   .farm-btns { display: flex; gap: 2px; flex-wrap: nowrap; pointer-events: auto; }
+  .farm-more { position: relative; }
+  .farm-more-menu {
+    position: absolute; right: 0; bottom: calc(100% + 8px);
+    display: flex; flex-direction: column; gap: 2px;
+    min-width: 96px; padding: 6px;
+    background: var(--card); border: 1px solid var(--ink); border-radius: 16px;
+  }
   .farm-btn {
     font: inherit; font-size: 12px; font-weight: 600;
     background: transparent; border: 1px solid transparent;
     padding: 3px 7px; cursor: pointer; color: var(--ink); white-space: nowrap;
   }
+  .farm-hud .farm-btn { border-radius: 999px; padding: 3px 10px; }
+  .farm-more-menu .farm-btn { border-radius: 10px; text-align: left; padding: 6px 10px; }
   .farm-btn:hover { background: var(--orange); color: #fff; }
   .farm-btn:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
-  .farm-btn[aria-pressed="true"] { background: var(--orange); color: #fff; }
+  .farm-btn[aria-pressed="true"],
+  .farm-hud .farm-btn[aria-expanded="true"] { background: var(--orange); color: #fff; }
 
   .farm-hint {
-    position: fixed; left: 14px; bottom: 52px;
-    background: var(--card); border: 1px solid var(--ink);
-    padding: 3px 8px; font-size: 12px; font-weight: 600; white-space: nowrap;
+    position: fixed; left: 14px; bottom: 56px;
+    background: var(--card); border: 1px solid var(--ink); border-radius: 999px;
+    padding: 4px 12px; font-size: 12px; font-weight: 500; white-space: nowrap;
     z-index: 1050; pointer-events: none; transition: opacity 0.4s ease;
   }
-  .farm-hint.is-off { opacity: 0; }
+  .farm-hint.is-off,
+  .farm.is-more .farm-hint { opacity: 0; }
 
   /* 跟随光标的小鸡：悬停 UI 面板/输入聚焦时淡出（updateCursorVisibility 控制 opacity） */
   .farm-cursor { position: absolute; left: 0; top: 0; width: 56px; height: 67px; z-index: 1000; pointer-events: none; will-change: transform; transition: opacity 0.2s ease; }
@@ -551,7 +567,7 @@ const { page = 'home' } = Astro.props;
 
   @media (max-width: 768px) {
     .farm-hud { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-width: calc(100vw - 20px); }
-    .farm-hint { left: 10px; bottom: calc(50px + env(safe-area-inset-bottom, 0px)); }
+    .farm-hint { left: 10px; bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
     .farm-chick, .farm-cursor { width: 36px; height: 43px; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -1172,15 +1188,11 @@ if (root && stage && !stage.dataset.farmInit) {
   /* ===== 模块五：交互（指针、HUD、手册、音符开关） ===== */
   const elEggs = $('farm-n-eggs');
   const elChicks = $('farm-n-chicks');
-  const elDex = $('farm-n-dex');
   const hint = $('farm-hint');
 
   function refreshHUD() {
     elEggs.textContent = String(state.eggs);
     elChicks.textContent = String(state.hatched);
-    let found = 0;
-    for (const b of BREEDS) if ((state.dex[b.id] | 0) > 0) found += 1;
-    elDex.textContent = `${found}/${BREEDS.length}`;
     renderBook();
     if (state.eggs >= 2) hint.classList.add('is-off');
   }
@@ -1264,7 +1276,7 @@ if (root && stage && !stage.dataset.farmInit) {
   }, true);
 
   /* 光标小鸡让位：悬停对话框/面板上、或输入框聚焦期间淡出（opacity 0, 0.2s），离开/失焦恢复 */
-  const CURSOR_HIDE = '.coopchat,.mimi-panel,.butter-box,.farm-card,[role="dialog"]'; /* .coopchat：Mimi 挂件新版类名（launch 钮+面板都在 root 内）；旧名保留兼容自定义剧本 */
+  const CURSOR_HIDE = '.coopchat,.mimi-panel,.butter-box,.farm-card,.farm-more-menu,[role="dialog"]'; /* .coopchat：Mimi 挂件新版类名（launch 钮+面板都在 root 内）；旧名保留兼容自定义剧本 */
   let cursorOnUI = false;
   function updateCursorVisibility() {
     const a = document.activeElement;
@@ -1276,7 +1288,27 @@ if (root && stage && !stage.dataset.farmInit) {
   /* focusout 时 activeElement 尚未切换，推一拍再判定，失焦后光标小鸡才回得来 */
   document.addEventListener('focusout', () => window.setTimeout(updateCursorVisibility, 0));
 
-  /* 手册开合与两步确认重开 */
+  /* 手册开合与两步确认重开。「更多」只是就地展开，不盖遮罩，点外面或 Esc 就收回。 */
+  const moreBtn = $('farm-btn-more');
+  const moreMenu = $('farm-more-menu');
+  function setMore(open) {
+    if (!moreBtn || !moreMenu) return;
+    const wasOpen = !moreMenu.hidden;
+    moreMenu.hidden = !open;
+    moreBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    root.classList.toggle('is-more', open);
+    if (!open && wasOpen && moreMenu.contains(document.activeElement)) moreBtn.focus();
+  }
+  moreBtn.addEventListener('click', () => setMore(moreMenu.hidden));
+  moreMenu.addEventListener('click', (e) => {
+    if (e.target && e.target.closest && e.target.closest('button')) setMore(false);
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (moreMenu.hidden) return;
+    const t = e.target;
+    if (t && t.closest && t.closest('.farm-more')) return;
+    setMore(false);
+  }, true);
   $('farm-btn-book').addEventListener('click', () => { ensureAudio(); $('farm-book').hidden = !$('farm-book').hidden; });
   $('farm-book-x').addEventListener('click', () => { $('farm-book').hidden = true; });
   $('farm-book-scrim').addEventListener('click', () => { $('farm-book').hidden = true; });
@@ -1285,6 +1317,7 @@ if (root && stage && !stage.dataset.farmInit) {
   $('farm-map-scrim').addEventListener('click', () => { $('farm-map').hidden = true; });
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    setMore(false);
     $('farm-book').hidden = true;
     $('farm-map').hidden = true;
   });
@@ -1812,6 +1845,7 @@ if (root && stage && !stage.dataset.farmInit) {
     if (pill) pill.hidden = false;
     isOpen = false;
     document.body.classList.remove('farm-on');
+    setMore(false);
     $('farm-book').hidden = true;
     $('farm-map').hidden = true;
     if (persist) { try { localStorage.setItem(ON_KEY, '0'); } catch { /* 隐私模式 */ } }
