@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>西湖清趣图 · 读画</title>
+<style>
+  :root{--paper:#efe9dd;--faint:#8a8378}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;overflow:hidden;background:var(--paper);
+    font-family:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;
+    -webkit-user-select:none;user-select:none;overscroll-behavior:none}
+  /* 唯画面：无工具条、无标注 */
+  #stage{position:fixed;inset:0;background:var(--paper) no-repeat center center;
+    background-size:auto calc(100% - 64px);cursor:grab;opacity:0;transition:opacity .45s ease}
+  #stage.ready{opacity:1}
+  #stage.drag{cursor:grabbing}
+  /* 极细进度线 */
+  #bar{position:fixed;left:0;bottom:0;height:2px;background:#b9ae99;opacity:.55;transition:width .12s linear}
+  #hint{position:fixed;left:24px;bottom:16px;font-size:11.5px;letter-spacing:.16em;color:var(--faint);
+    opacity:0;transition:opacity .6s ease;pointer-events:none}
+  #hint.on{opacity:.9}
+  @media (max-width:640px){
+    #stage{background-size:auto calc(100% - 40px)}
+    #hint{font-size:11px;left:16px;bottom:12px}
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="bar"></div>
+<div id="hint">拖动 · 滚轮 · ← → 看全卷</div>
+<script>
+const IMG='./huajuan-viewer.jpg';
+const GX_MAX=32768;
+
+const stage=document.getElementById('stage'),bar=document.getElementById('bar'),hint=document.getElementById('hint');
+let ratio=1,totalW=0,offset=0,ready=false,dragging=false,lastX=0,moved=0;
+
+function stageH(){return Math.max(1,stage.clientHeight-64);}
+function measure(){
+  totalW=Math.round(stageH()*ratio);
+  clamp();apply();
+}
+function clamp(){
+  const max=Math.max(0,totalW-stage.clientWidth);
+  offset=Math.min(max,Math.max(0,offset));
+}
+function apply(){
+  stage.style.backgroundPositionX=(-offset)+'px';
+  bar.style.width=(stage.clientWidth?Math.min(1,offset/(Math.max(1,totalW-stage.clientWidth)))*100:0)+'%';
+}
+/* gx（0..32768）→ 居中偏移 */
+function jumpTo(gx,instant){
+  const pxPerGx=totalW/GX_MAX;
+  const target=Math.round(gx*pxPerGx-stage.clientWidth/2);
+  const max=Math.max(0,totalW-stage.clientWidth);
+  offset=Math.min(max,Math.max(0,target));
+  stage.style.transition=instant?'none':'background-position .5s cubic-bezier(.22,.6,.24,1)';
+  apply();
+  setTimeout(()=>{stage.style.transition='';},600);
+}
+
+/* 载入（XQ-08：图未就绪不亮相，垫纸色） */
+const probe=new Image();
+probe.onload=()=>{
+  ratio=probe.naturalWidth/probe.naturalHeight;
+  stage.style.backgroundImage='url("'+IMG+'")';
+  measure();ready=true;stage.classList.add('ready');
+  hint.classList.add('on');
+  setTimeout(()=>hint.classList.remove('on'),4200);
+  const gx=new URLSearchParams(location.search).get('gx');
+  if(gx!=null)jumpTo(parseFloat(gx),true);
+};
+probe.onerror=()=>{hint.textContent='长卷载入失败';hint.classList.add('on');};
+probe.src=IMG;
+
+addEventListener('resize',()=>{if(ready)measure();});
+
+/* 滚轮：横看 */
+stage.addEventListener('wheel',e=>{
+  if(!ready)return;
+  e.preventDefault();
+  offset+=(e.deltaY+e.deltaX);
+  clamp();apply();
+},{passive:false});
+
+/* 拖动 */
+stage.addEventListener('pointerdown',e=>{
+  if(!ready)return;
+  dragging=true;moved=0;lastX=e.clientX;
+  stage.classList.add('drag');stage.setPointerCapture(e.pointerId);
+});
+stage.addEventListener('pointermove',e=>{
+  if(!dragging)return;
+  const dx=e.clientX-lastX;lastX=e.clientX;moved+=Math.abs(dx);
+  offset-=dx;clamp();apply();
+});
+const endDrag=()=>{dragging=false;stage.classList.remove('drag');};
+stage.addEventListener('pointerup',endDrag);
+stage.addEventListener('pointercancel',endDrag);
+
+/* 键盘 */
+addEventListener('keydown',e=>{
+  if(!ready)return;
+  if(e.key==='ArrowRight'){offset+=Math.round(stage.clientWidth*0.45);clamp();apply();}
+  if(e.key==='ArrowLeft'){offset-=Math.round(stage.clientWidth*0.45);clamp();apply();}
+});
+
+/* 壳联动：{xihuGx:number} → 画卷定位到该 gx（与读画同一偏移路径） */
+addEventListener('message',e=>{
+  const gx=e.data&&e.data.xihuGx;
+  if(typeof gx!=='number'||!ready)return;
+  jumpTo(gx,false);
+});
+</script>
+</body>
+</html>
