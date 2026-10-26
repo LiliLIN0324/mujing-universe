@@ -263,7 +263,8 @@ function hasDetail(item: NewsItem) {
 .hit { align-items: center; width: 100%; }
 .detail-grid { align-items: start; }
 .copy { min-width: 0; }
-.line:has(.cover) .copy { padding-right: 140px; }
+/* 封面实际占位 120px + right 28px = 148px，预留 164px 留出呼吸间隙，标题不得压图 */
+.line:has(.cover) .copy { padding-right: 164px; }
 .cover {
   position: absolute;
   z-index: 1;
@@ -333,7 +334,7 @@ button.hit { cursor: pointer; }
 li:has(.hit[aria-expanded="true"]) .line { border-bottom-color: transparent; }
 li:has(.hit[aria-expanded="true"]) .hit { padding-bottom: 10px; }
 li:has(.hit[aria-expanded="true"]) .cover { top: 26px; transform: none; }
-li:has(.hit[aria-expanded="true"]) .detail-body { padding-right: 148px; }
+li:has(.hit[aria-expanded="true"]) .detail-body { padding-right: 164px; }
 .detail[hidden] { display: none; }
 .detail-grid { padding-bottom: 22px; border-bottom: 1px solid var(--paper-rule); }
 .light {
