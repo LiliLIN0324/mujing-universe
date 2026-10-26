@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Cooperate from '../../components/Cooperate.astro';
+import DemoEmbed from '../../components/DemoEmbed.astro';
 import { allWorks, coverClip, pickBody, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
@@ -74,8 +75,8 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
           {abstract && <p class="wd-more">{abstract}</p>}
           {w.note && <p class="wd-more">{w.note}</p>}
           {(demoHref || newsHref) && <div class="wd-links">
-            {demoHref && <p class="wd-more"><a href={demoHref} target="_blank" rel="noopener noreferrer">打开 Demo ↗</a></p>}
-            {newsHref && <p class="wd-more"><a href={newsHref} target="_blank" rel="noopener noreferrer">相关报道 ↗</a></p>}
+            {demoHref && <DemoEmbed url={demoHref} title={w.title} cover={hero} />}
+            {newsHref && <p class="wd-more" style={demoHref ? 'margin-top:14px' : ''}><a href={newsHref} target="_blank" rel="noopener noreferrer">相关报道 ↗</a></p>}
           </div>}
         </div>
         {facts.length > 0 && <dl class="wd-facts">{facts.map(([k, v]) => <div><dt>{k}</dt><dd>{v}</dd></div>)}</dl>}
@@ -89,7 +90,7 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
       <h2 class="wl-title" id="layers-h">同一卷西湖，三种看法</h2>
       <p class="wl-lead">画清趣长卷，游南宋复原，对今日湖山——同一片西湖，一个壳里切换。</p>
       <div class="wl-actions" style="margin-top:28px">
-        <a class="wl-btn" href="/works/xihu-panorama/shell/" style="text-decoration:none">进入西湖清趣壳 →</a>
+        <DemoEmbed url="/works/xihu-panorama/shell/" title="西湖清趣壳" cover={hero} />
       </div>
       <p class="wl-foot">古今对照为示意，非测绘级。</p>
     </div>
