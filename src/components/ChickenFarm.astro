@@ -560,6 +560,19 @@ const { page = 'home' } = Astro.props;
     body.farm-on, body.farm-on * { cursor: auto !important; }
     .farm-cursor { display: none; }
   }
+
+  /* ===== 夜间适配：跟随全站 dark 变量，翻成暗底浅字（本样式块 is:global，直接写 html.dark） ===== */
+  html.dark .farm { --ink: #EDEBE7; --paper: #1D1D21; --card: #242429; }
+  html.dark .farm-piano { background: #242429; }
+  html.dark .farm-key { background: #242429; }
+  html.dark .farm-key.is-down { background: #4a2f0e; }
+  html.dark .farm-key.is-black { background: #131316; border-color: #131316; box-shadow: inset 0 -3px 0 rgba(237, 235, 231, 0.14); }
+  html.dark .farm-key.is-black.is-down { background: #6b4310; }
+  html.dark .farm-scrim { background: rgba(0, 0, 0, 0.55); }
+  html.dark .farm-tip { color: rgba(237, 235, 231, 0.6); }
+  html.dark .farm-maprow { border-top-color: rgba(237, 235, 231, 0.1); }
+  html.dark .farm-note { text-shadow: 0 1px 0 rgba(19, 19, 22, 0.85); }
+  html.dark #coop-reopen { border-color: #EDEBE7; background: #1D1D21; color: #EDEBE7; }
 </style>
 <script>
   /* ===== 官网内嵌适配层（coop.js 0.2.0 引擎移植）===== */
@@ -703,7 +716,9 @@ if (root && stage && !stage.dataset.farmInit) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   /* 物理 + 乐器：CDN 懒加载，失败全降级（物理→运动学、乐器→鸡叫合成），鸡场不残废 */
   let phy = null, voices = null, voicesFactory = null;
-  const dynImport = (path) => import(/* @vite-ignore */ path); // 运行时路径：绕开 Astro/Rollup 静态分析（public/ 下的文件不该被打包器解析）
+  /* 绝对 URL 运行时拼接：Vite 6 对非字面量动态 import 一律注入 __vite__injectQuery（@vite-ignore 只压警告不挡改写），
+     相对路径会被加 ?import 变成源码模块请求而在 dev 报错；绝对 URL 会被放行，dev/构建两侧都走浏览器原生静态加载 */
+  const dynImport = (path) => import(/* @vite-ignore */ new URL(path, document.baseURI).href);
   (async () => {
     try {
       const [p, v] = await Promise.all([

@@ -12,3 +12,8 @@ public/_preview-portraits/
 QODER_*.md
 _qoder_*.txt
 _qoder_*.log
+
+# 西湖叙事页大媒体走 R2 图床（lili-assets/fig/xihu-panorama/），本地副本不入库
+public/works/xihu-panorama/frame-*.jpg
+public/works/xihu-panorama/v_*.mp4
+public/works/xihu-panorama/scroll-reading.mp4

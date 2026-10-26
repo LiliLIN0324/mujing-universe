@@ -102,17 +102,80 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
     <div class="wd-demo-stage"><DemoEmbed url={demoHref} title={w.title} cover={hero} /></div>
   </section>}
 
-  {XIHU_SHELL && <section class="wd-page wd-layers" id="layers" aria-labelledby="layers-h" data-dwell={PAGE_DWELL.scroll}>
-    <div class="wd-wrap">
-      <p class="wl-brand">当代西湖 · 画卷 / 复原 / 今图</p>
-      <h2 class="wl-title" id="layers-h">同一卷西湖，三种看法</h2>
-      <p class="wl-lead">画清趣长卷，游南宋复原，对今日湖山——同一片西湖，一个壳里切换。</p>
-      <div class="wl-actions" style="margin-top:28px">
-        <DemoEmbed url="/works/xihu-panorama/shell/" title="西湖清趣壳" cover={hero} />
+  {XIHU_SHELL && <>
+    <section class="wd-page wd-narr">
+      <div class="wd-wrap">
+        <div class="wd-sec"><b>缘起</b></div>
+        <p class="wn-lead">一幅三百年前的西湖长卷，如果活过来，会是什么样子？</p>
+        <p class="wn-text">《西湖清趣图》自钱塘门起，环湖一周，回钱塘门止——舟船、桥亭、园囿、寺观，一一在卷。我们想做的，是让这卷画重新呼吸：柳丝因风而动，船桨因水而鸣，雪落无声，钟声悠远。画仍是那幅画，只是时间重新开始流动。</p>
       </div>
-      <p class="wl-foot">古今对照为示意，非测绘级。</p>
-    </div>
-  </section>}
+    </section>
+
+    <section class="wd-page wd-narr">
+      <div class="wd-wrap">
+        <div class="wd-sec"><b>音画</b><span class="d">声画相和</span></div>
+        <p class="wn-text">原画一笔不动，只在画中「雕刻」动态——柳丝轻摆、船行水上、雨雪飘落，每一处的动，都与乐声相和。画即乐谱：画卷经过之处，就是音符响起之时。</p>
+        <div class="wn-stage"><iframe src="/works/xihu-panorama/lakeside/index.html" loading="lazy" title="南宋复原 · 2.5D 湖山清远"></iframe></div>
+        <p class="wn-note">2.5D 复原 · 可拖拽、缩放、点地名</p>
+
+        <p class="wn-text" style="margin-top:32px">以下为二百九十秒成片的四个片段——风、雨、暖、雪，各取一息。</p>
+
+        <div class="wn-clips">
+          <div class="wn-clip">
+            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-trigger.jpg">
+              <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_trigger.mp4" type="video/mp4"/>
+            </video>
+            <p class="wn-clip-label">风柳 · 柳丝因风而动，船只经过触发线，声随画起</p>
+          </div>
+          <div class="wn-clip">
+            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-rain.jpg">
+              <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_rain.mp4" type="video/mp4"/>
+            </video>
+            <p class="wn-clip-label">雨 · 雨丝渐起，湖山压暗，雨声藏在乐声之下</p>
+          </div>
+          <div class="wn-clip">
+            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-climax.jpg">
+              <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_climax.mp4" type="video/mp4"/>
+            </video>
+            <p class="wn-clip-label">暖 · 城楼暖光大盛，全卷至此处最为明亮</p>
+          </div>
+          <div class="wn-clip">
+            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-snow.jpg">
+              <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_snow.mp4" type="video/mp4"/>
+            </video>
+            <p class="wn-clip-label">雪 · 远雪密、近雪疏，卷末题跋在雪中静至结束</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wd-page wd-narr">
+      <div class="wd-wrap">
+        <div class="wd-sec"><b>圆相</b><span class="d">古人配的地图</span></div>
+        <p class="wn-text">画卷开头另有一幅简笔平面导示图——不画山水，只以墨线勾出湖岸、堤桥、塔峰的方位，跋文里叫「圆相」，相当于古人给这卷画配的地图。我们把它做成可进入的空间，和今天的西湖叠在一起，八百年前的湖山格局，一眼对照。</p>
+        <div class="wn-stage"><iframe src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/yuanxiang-3d/index.html?v=showcase-20261024" loading="lazy" title="圆相 3D 叠合"></iframe></div>
+      </div>
+    </section>
+
+    <section class="wd-page wd-narr">
+      <div class="wd-wrap">
+        <div class="wd-sec"><b>题跋</b><span class="d">厉鹗 · 1727</span></div>
+        <p class="wn-text">卷末是厉鹗在雍正五年写的一段图跋。收藏者王承武请他把画中名胜一一标出，他翻遍《武林旧事》《梦粱录》，把从钱塘门出发、环湖一周的近百处园子、寺观、桥梁全部点了出来——等于给这卷画写了一份说明书。</p>
+        <blockquote class="wn-quote">
+          <p class="wn-quote-orig">前作圆相，后引而长之，自钱塘门起，至钱塘门止。</p>
+          <p class="wn-quote-trans">画卷开头是那幅平面地图，后面展开为长卷——从钱塘门出发，环湖一周，回到钱塘门。</p>
+        </blockquote>
+        <div class="wn-stage"><iframe src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/qingqu-scroll-labels/index.html" loading="lazy" title="画卷 · 地名校验台"></iframe></div>
+      </div>
+    </section>
+
+    <section class="wd-page wd-narr">
+      <div class="wd-wrap">
+        <div class="wd-sec"><b>藏品</b></div>
+        <p class="wn-text">《西湖清趣图》，旧传南宋画院李嵩所作，今多认为元明时期。纸本设色，高一尺有余，长逾五丈。现藏美国弗利尔美术馆（Freer Gallery of Art，史密森尼学会）。</p>
+      </div>
+    </section>
+  </>}
 
   {(strip || stills.length > 0) && <section class="wd-page wd-p2" data-dwell={PAGE_DWELL.scroll}>
     {strip && <>
@@ -127,6 +190,22 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
         </figure>
       ))}
     </div>}
+  </section>}
+
+  {XIHU_SHELL && audio && <section class="wd-page wd-narr wd-explore">
+    <div class="wd-wrap">
+      <div class="wd-sec"><b>探索</b></div>
+      <div class="we-row">
+        <button class="we-listen" id="wd-listen-explore" type="button">聆听图景</button>
+        <a class="we-link" href="/works/xihu-panorama/shell/index.html">三层壳 · 复原 / 今图 / 画卷 ↗</a>
+      </div>
+      <div class="we-video">
+        <p class="we-video-label">题跋朗读 · 六分三十六秒 · 云希</p>
+        <video controls preload="none" playsinline style="width:100%;display:block;background:#000">
+          <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/scroll-reading.mp4" type="video/mp4"/>
+        </video>
+      </div>
+    </div>
   </section>}
 
   <section class="wd-page wd-p3" data-dwell={PAGE_DWELL.next}>
@@ -413,6 +492,45 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
   .wl-stage.is-empty { min-height: 200px; }
   .wl-foot { margin-top: 14px !important; font-size: 11px; }
 }
+/* 西湖叙事章节 */
+.wd-narr { padding-top: 96px; }
+.wd-narr .wd-sec { margin-top: 0; }
+.wn-lead { margin: 18px 0 0 !important; font-size: clamp(20px, 2.2vw, 26px); font-weight: 600; line-height: 1.35; letter-spacing: -0.01em; color: var(--ink); max-width: 28em; }
+.wn-text { margin-top: 16px !important; font-size: 15px; line-height: 1.85; letter-spacing: 0.02em; color: var(--ink-soft); max-width: 36em; }
+.wn-note { margin-top: 10px !important; font-size: 12px; letter-spacing: 0.08em; color: var(--faint); }
+.wn-stage { margin-top: 28px; border: 1px solid var(--rule); overflow: hidden; }
+.wn-stage iframe { display: block; width: 100%; height: 62vh; min-height: 420px; border: 0; background: var(--bg); }
+.wn-quote { margin: 24px 0 0; padding: 20px 24px; border-left: 2px solid var(--ink); background: rgba(0,0,0,.02); }
+.wn-quote-orig { margin: 0 !important; font-size: 17px; line-height: 1.7; letter-spacing: 0.04em; color: var(--ink); font-family: "Noto Serif SC", serif; }
+.wn-quote-trans { margin: 10px 0 0 !important; font-size: 13px; line-height: 1.7; letter-spacing: 0.02em; color: var(--faint); }
+.wd-explore { padding-top: 64px; }
+.we-row { display: flex; align-items: center; gap: 24px; margin-top: 20px; flex-wrap: wrap; }
+.we-listen { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: var(--cta-bg); color: var(--cta-fg); font: inherit; font-size: 13px; letter-spacing: 0.08em; border: 0; cursor: pointer; }
+.we-listen:hover { opacity: 0.86; }
+.we-link { font-size: 13px; letter-spacing: 0.08em; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--ink); padding-bottom: 2px; }
+.we-link:hover { opacity: 0.7; }
+.we-video { margin-top: 28px; }
+.we-video-label { margin: 0 0 10px !important; font-size: 12px; letter-spacing: 0.14em; color: var(--faint); }
+.we-video video { width: 100%; display: block; background: #000; }
+/* 音画片段与帧 */
+.wn-clips { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+.wn-clip video { width: 100%; display: block; background: #000; }
+.wn-clip-label { margin: 8px 0 0 !important; font-size: 12px; letter-spacing: 0.06em; color: var(--faint); }
+.wn-frames { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
+.wn-frame { margin: 0; }
+.wn-frame img { width: 100%; display: block; aspect-ratio: 16/9; object-fit: cover; }
+.wn-frame figcaption { margin-top: 6px; font-size: 11px; line-height: 1.5; letter-spacing: 0.04em; color: var(--faint); }
+@media (max-width: 768px) {
+  .wd-narr { padding-top: 56px; }
+  .wn-lead { font-size: 20px; }
+  .wn-text { font-size: 14px; line-height: 1.8; }
+  .wn-stage iframe { height: 52vh; min-height: 320px; }
+  .wn-quote { padding: 16px 18px; }
+  .wn-quote-orig { font-size: 15px; }
+  .we-row { gap: 16px; }
+  .wn-clips { grid-template-columns: 1fr; }
+  .wn-frames { grid-template-columns: repeat(2, 1fr); }
+}
 </style>
 <script>
 import { mountAutohideNav } from '../../scripts/autohide-nav.js';
@@ -424,5 +542,7 @@ if (heroImg) heroImg.addEventListener('error', () => {
   const next = heroImg.dataset.fallback;
   if (next && heroImg.getAttribute('src') !== next) heroImg.src = next;
 }, { once: true });
+/* 探索区聆听按钮 → 触发 hero 音频 */
+document.getElementById('wd-listen-explore')?.addEventListener('click', () => document.getElementById('wd-listen')?.click());
 </script>
 </Base>
