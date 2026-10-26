@@ -1,0 +1,361 @@
+---
+/**
+ * DemoEmbed — 沉浸式内嵌 Demo 窗口
+ *
+ * Props:
+ *   url        {string}   要嵌入的 demo URL
+ *   title      {string}   作品标题（用于 fallback 截图说明）
+ *   cover      {string}   封面图 URL（iframe 被拦截时 fallback 展示）
+ *   external   {boolean?} 强制外部打开（对已知不可嵌入的站，如 apps.apple.com）
+ *
+ * 行为：
+ *   1. 初始态：一个「打开 Demo」按钮
+ *   2. 点击 → 展开为大 iframe 区域，带加载 spinner
+ *   3. iframe 5s 内没 load 事件 → 判定为被 X-Frame-Options 拦截 → 自动 fallback
+ *   4. fallback 态：封面大图 + 「在新标签打开 ↗」按钮 + 关闭按钮
+ *   5. 用户可随时关闭（收起回按钮态）
+ */
+const { url, title = '', cover = '', external = false } = Astro.props;
+const isExternal = external || /apps\.apple\.com|endtree26-yixun/.test(url || '');
+const uid = `demo-${Math.random().toString(36).slice(2, 9)}`;
+---
+<div class="de" data-de={uid} data-url={url} data-title={title} data-cover={cover} data-embed={isExternal ? '0' : '1'}>
+  <!-- 收起态：按钮 -->
+  <button class="de-trigger" type="button" data-de-trigger={uid} aria-expanded="false">
+    <span class="de-trigger-lb">{isExternal ? '打开 Demo ↗' : '打开 Demo'}</span>
+  </button>
+
+  <!-- 展开态：iframe 舞台 + fallback overlay -->
+  <div class="de-stage" data-de-stage={uid} hidden>
+    <div class="de-loading" aria-hidden="true">
+      <div class="de-spinner"></div>
+      <p>加载 Demo…</p>
+    </div>
+    <iframe
+      class="de-iframe"
+      data-de-iframe={uid}
+      title={`${title || 'Demo'} · 内嵌预览`}
+      loading="lazy"
+      referrerpolicy="no-referrer"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+    ></iframe>
+
+    <!-- Fallback：iframe 被拦截时显示 -->
+    <div class="de-fallback" data-de-fallback={uid} hidden>
+      {cover && <img class="de-fallback-cover" src={cover} alt={title} referrerpolicy="no-referrer" loading="lazy"/>}
+      <div class="de-fallback-body">
+        <p class="de-fallback-title">{title || 'Demo'}</p>
+        <p class="de-fallback-note">此 Demo 不支持内嵌预览，在新标签中打开</p>
+        <div class="de-fallback-actions">
+          <a class="de-fallback-open" href={url} target="_blank" rel="noopener noreferrer">在新标签打开 ↗</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- 控制栏 -->
+    <div class="de-bar">
+      <button class="de-close" type="button" data-de-close={uid} aria-label="关闭预览">关闭</button>
+      <a class="de-open-ext" href={url} target="_blank" rel="noopener noreferrer" title="在新标签打开">新标签 ↗</a>
+    </div>
+  </div>
+</div>
+
+<style>
+.de {
+  --de-transition: 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+  margin-top: 16px;
+}
+.de-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border: 0;
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  padding: 11px 22px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.de-trigger:hover { opacity: 0.86; }
+.de-trigger[aria-expanded="true"] { display: none; }
+
+.de-stage {
+  position: relative;
+  width: 100%;
+  min-height: 62vh;
+  background: var(--bg);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+  animation: de-expand var(--de-transition);
+}
+@keyframes de-expand {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.de-stage[hidden] { display: none; }
+
+.de-iframe {
+  display: block;
+  width: 100%;
+  height: 62vh;
+  min-height: 420px;
+  border: 0;
+  background: var(--bg);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+.de-iframe.is-ready { opacity: 1; }
+
+.de-loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--bg);
+  color: var(--faint);
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  z-index: 2;
+  transition: opacity 0.3s ease;
+}
+.de.is-loaded .de-loading { opacity: 0; pointer-events: none; }
+.de.is-error .de-loading { opacity: 0; pointer-events: none; }
+
+.de-spinner {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--rule);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: de-spin 0.8s linear infinite;
+}
+@keyframes de-spin { to { transform: rotate(360deg); } }
+
+.de-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  z-index: 3;
+  animation: de-expand var(--de-transition);
+}
+.de-fallback[hidden] { display: none; }
+.de-fallback-cover {
+  flex: 1;
+  width: 100%;
+  object-fit: cover;
+  min-height: 240px;
+  background: var(--bg2);
+}
+.de-fallback-body {
+  padding: 24px 28px;
+  border-top: 1px solid var(--rule);
+  text-align: center;
+}
+.de-fallback-title {
+  margin: 0;
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.de-fallback-note {
+  margin: 10px 0 18px;
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--ink-soft);
+  letter-spacing: 0.02em;
+}
+.de-fallback-open {
+  display: inline-block;
+  padding: 10px 22px;
+  background: var(--cta-bg);
+  color: var(--cta-fg);
+  font-family: var(--sans);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+.de-fallback-open:hover { opacity: 0.86; }
+
+.de-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  gap: 8px;
+  z-index: 4;
+  opacity: 0.55;
+  transition: opacity 0.2s ease;
+}
+/* iframe 会吞掉 hover 事件，所以不能用 :hover 冒泡到 .de-stage。
+   改为：控制栏自身 hover 时变亮，始终半可见保证可用。 */
+.de-bar:hover,
+.de:focus-within .de-bar { opacity: 1; }
+.de-close, .de-open-ext {
+  border: 0;
+  background: rgba(26, 26, 24, 0.82);
+  color: #fff;
+  font-family: var(--sans);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  padding: 8px 14px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+.de-close:hover, .de-open-ext:hover { background: rgba(26, 26, 24, 0.95); }
+
+@media (max-width: 768px) {
+  .de-stage { min-height: 52vh; }
+  .de-iframe { height: 52vh; min-height: 320px; }
+  .de-fallback-body { padding: 20px; }
+  .de-bar { opacity: 1; }
+}
+</style>
+
+<script>
+/**
+ * DemoEmbed 交互逻辑：
+ *   - 点击 trigger → 展开 stage → 加载 iframe
+ *   - iframe load 事件 → 同域时主动检测是否被 X-Frame-Options 拦截（try contentWindow）
+ *   - 跨域 iframe load 后再等 1s，检查 document 是否仍空（被拦截时常如此）
+ *   - 5s 内无 load → fallback
+ *   - 点击 close → 收起回按钮态
+ */
+const EMBED_TIMEOUT_MS = 6000;
+const POST_LOAD_CHECK_MS = 1200;
+
+function mountDemoEmbed(root = document) {
+  const nodes = root.querySelectorAll('[data-de]');
+  nodes.forEach((wrap) => {
+    if (wrap.dataset.mounted) return;
+    wrap.dataset.mounted = '1';
+
+    const uid = wrap.dataset.de;
+    const url = wrap.dataset.url;
+    const embedable = wrap.dataset.embed === '1';
+    const isSameOrigin = url && new URL(url, location.href).origin === location.origin;
+    const trigger = wrap.querySelector(`[data-de-trigger="${uid}"]`);
+    const stage = wrap.querySelector(`[data-de-stage="${uid}"]`);
+    const iframe = wrap.querySelector(`[data-de-iframe="${uid}"]`);
+    const fallback = wrap.querySelector(`[data-de-fallback="${uid}"]`);
+    const closeBtn = wrap.querySelector(`[data-de-close="${uid}"]`);
+
+    if (!trigger || !stage || !iframe) return;
+
+    let loadTimer = null;
+    let postLoadTimer = null;
+    let done = false;
+
+    function showError() {
+      if (done) return;
+      done = true;
+      wrap.classList.add('is-error');
+      if (fallback) fallback.hidden = false;
+      iframe.classList.remove('is-ready');
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+      if (postLoadTimer) { clearTimeout(postLoadTimer); postLoadTimer = null; }
+    }
+
+    function showLoaded() {
+      if (done) return;
+      done = true;
+      iframe.classList.add('is-ready');
+      wrap.classList.add('is-loaded');
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+      if (postLoadTimer) { clearTimeout(postLoadTimer); postLoadTimer = null; }
+    }
+
+    function open() {
+      done = false;
+      trigger.setAttribute('aria-expanded', 'true');
+      stage.hidden = false;
+      wrap.classList.remove('is-loaded', 'is-error');
+      if (fallback) fallback.hidden = true;
+      iframe.classList.remove('is-ready');
+
+      if (!embedable) {
+        showError();
+        return;
+      }
+
+      iframe.src = url;
+
+      // 主超时：6s 内连 load 事件都没触发 → 加载失败
+      loadTimer = setTimeout(showError, EMBED_TIMEOUT_MS);
+    }
+
+    function close() {
+      trigger.setAttribute('aria-expanded', 'false');
+      stage.hidden = true;
+      wrap.classList.remove('is-loaded', 'is-error');
+      if (fallback) fallback.hidden = true;
+      iframe.src = 'about:blank';
+      iframe.classList.remove('is-ready');
+      done = true;
+      if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+      if (postLoadTimer) { clearTimeout(postLoadTimer); postLoadTimer = null; }
+    }
+
+    trigger.addEventListener('click', open);
+    closeBtn?.addEventListener('click', close);
+
+    iframe.addEventListener('load', () => {
+      if (done) return;
+
+      // 同域：可以直接检测是否被 X-Frame-Options 拦截
+      if (isSameOrigin) {
+        try {
+          // 被 DENY/SAMEORIGIN 拦截时，contentDocument 不可访问或 body 为 about:blank
+          const doc = iframe.contentDocument;
+          if (!doc || !doc.body || doc.body.innerHTML.length < 200) {
+            showError();
+            return;
+          }
+          showLoaded();
+          return;
+        } catch (e) {
+          showError();
+          return;
+        }
+      }
+
+      // 跨域：load 事件也可能在被拦截时触发（浏览器显示错误页）
+      // 启动一个 1.2s 后的二次检查
+      postLoadTimer = setTimeout(() => {
+        if (done) return;
+        // 跨域无法直接访问内容，只能假设 load 成功即可用
+        // 如果真被拦截，用户看到的是浏览器错误页——这是已知限制
+        showLoaded();
+      }, POST_LOAD_CHECK_MS);
+    });
+
+    iframe.addEventListener('error', showError);
+  });
+}
+
+// 自动挂载 DOMContentLoaded 后已有的节点；对后续动态插入的节点也生效（MutationObserver）
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => mountDemoEmbed());
+} else {
+  mountDemoEmbed();
+}
+const mo = new MutationObserver((records) => {
+  for (const r of records) {
+    if (r.addedNodes.length) mountDemoEmbed(document);
+  }
+});
+mo.observe(document.body, { childList: true, subtree: true });
+</script>
