@@ -87,20 +87,7 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
 </div>
 <ChickenFarm page={page} />
 <footer class="bot">
-  <div>
-    <strong>幕景宇宙 Mujing Universe</strong>
-    <p>以艺术家林丽丽为核心的 AIGC 文化艺术工作室 · 浙江杭州</p>
-    <p class="cap">© 2026 幕景宇宙</p>
-  </div>
-  <div>
-    <span class="cap">站点</span>
-    {foot.map(([h, t]) => <a href={h}>{t}</a>)}
-  </div>
-  <div>
-    <span class="cap">说明</span>
-    <p>作品图像用于工作室公开展示。商业使用与展览授权，请经合作页联系经纪人。</p>
-  </div>
-    <nav class="social" aria-label="社交">
+  <nav class="social" aria-label="社交">
     <a href="/contact/#feishu">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3.6a8 8 0 0 0-8 8c0 1.5.4 2.9 1.1 4.1L4.2 20.2l4.4-1.2A8 8 0 1 0 12 3.6zm-2.6 7.1h5.2a.9.9 0 0 1 0 1.8H9.4a.9.9 0 0 1 0-1.8zm0 3.1h3.4a.9.9 0 0 1 0 1.8H9.4a.9.9 0 0 1 0-1.8z"/></svg>
       <span>飞书</span>
@@ -128,11 +115,6 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
     </a>
   )}
   <p class="copy">© 2026 幕景宇宙</p>
-  {!isContact && (
-    <a class="farm-egg" href={farmHref} aria-label="打开鸡场" title="幕景鸡场">
-      <svg viewBox="0 0 60 72" aria-hidden="true"><path fill="currentColor" d="M30 4C44 4 54 24 54 42C54 58 43.5 68 30 68C16.5 68 6 58 6 42C6 24 16 4 30 4Z"/></svg>
-    </a>
-  )}
 </footer>
 <noscript><style>.reveal{opacity:1!important;transform:none!important}</style></noscript>
 <script>
