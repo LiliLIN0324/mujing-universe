@@ -367,8 +367,9 @@ const { page = 'home' } = Astro.props;
   .farm-key.is-black em { color: #cfcfcf; bottom: 4px; }
   @media (prefers-reduced-motion: reduce) { .farm-piano { transition: none; } }
 
-  /* 昼夜：夜幕罩层（按时段自动调） */
+  /* 昼夜夜幕先取消：开着鸡场时不罩深蓝，页面保持原来的白底。恢复时去掉 display:none，并把下面 NIGHT_VEIL 改回 true。 */
   .farm-night {
+    display: none;
     position: absolute; inset: 0; pointer-events: none; z-index: 5;
     background: #0b1030; opacity: 0; transition: opacity 1.2s ease;
   }
@@ -1699,9 +1700,11 @@ if (root && stage && !stage.dataset.farmInit) {
   refreshHUD();
   emitState();
 
-  /* ===== 昼夜（按时钟自动）：夜幕透明度 + 星星；撒谷子：双击空白处（320ms 内两击）===== */
+  /* ===== 昼夜（按时钟自动）：夜幕透明度 + 星星。NIGHT_VEIL 默认关，先不罩暮色/夜色。===== */
+  const NIGHT_VEIL = false;
   const nightEl = $('farm-night');
   (function initNight() {
+    if (!NIGHT_VEIL || !nightEl) return;
     const h = new Date().getHours();
     const night = h >= 21 || h < 6;
     const dusk = (h >= 18 && h < 21) || (h >= 6 && h < 8);
