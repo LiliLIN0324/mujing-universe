@@ -1,7 +1,7 @@
 /**
  * Homepage preview clips. Same rules as the works library:
  * only a verified mp4 (data-src) plays; hover is a muted loop;
- * leaving stops and drops the file; a click pins it; touch uses the click.
+ * leaving pauses in place so a re-hover resumes; a click pins it; touch uses the click.
  * One clip at a time. Nothing is fetched until that interaction.
  * 聆听图景 on 西湖 only unmutes this same picture — it does not pause it.
  */
@@ -198,7 +198,8 @@ export function mountHomeClips() {
         && stage && e.relatedTarget instanceof Node && stage.contains(e.relatedTarget);
       if (stillOnChapter) return;
       if (pinned === host || video.dataset.hearing === '1') return;
-      halt(host, true);
+      // 离开只暂停、不卸 src：回到卡片上从上次位置接着播，而不是从头再播。
+      halt(host, false);
     });
   });
 
