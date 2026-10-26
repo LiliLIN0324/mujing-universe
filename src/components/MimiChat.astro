@@ -796,6 +796,39 @@ const email = 'lily1326685527@gmail.com';
     from { opacity: 0.82; transform: scale(1); }
     to { opacity: 0; transform: scale(0.3); }
   }
+  
+  /* ===== 夜间模式适配（对齐 global.css html.dark 制式：--bg/#131316、--paper/#242429、--ink/#EDEBE7）===== */
+  html.dark .mimi-launch { box-shadow: none; }
+  html.dark .mimi-launch .mimi-face { background: #242429; box-shadow: inset 0 0 0 1px #EDEBE7; }
+  html.dark .mimi-halo { border-top-color: #EDEBE7; border-right-color: #EDEBE7; }
+  html.dark .mimi-hi { background: #EDEBE7; color: #131316; }
+  html.dark .mimi-panel { background: #1D1D21; color: #EDEBE7; border-color: #EDEBE733; }
+  html.dark .mimi-hd { border-bottom-color: #EDEBE71F; }
+  html.dark .mimi-hd .mimi-face { background: #242429; box-shadow: inset 0 0 0 1px #EDEBE733; }
+  html.dark .mimi-demo { color: #A8A49D; }
+  html.dark .mimi-x { color: #EDEBE7; }
+  html.dark .mimi-x:hover { background: #EDEBE71A; }
+  html.dark .mimi-msg.bot p { background: #242429; color: #EDEBE7; }
+  html.dark .mimi-msg.bot p a { color: #EDEBE7; text-decoration: underline; }
+  html.dark .mimi-msg.user p { background: #EDEBE7; color: #131316; }
+  html.dark .mimi-plate { background: #ff690a; color: #fff; }
+  html.dark .mimi-quick button { color: #EDEBE7; border-color: #EDEBE71A; }
+  html.dark .mimi-quick button:hover { background: #EDEBE7; color: #131316; }
+  html.dark .mimi-quick .mimi-farmbtn:hover { background: #ff690a; border-color: #ff690a; color: #fff; }
+  html.dark .mimi-feishu { background: #EDEBE7; color: #131316; }
+  html.dark .mimi-mail { color: #EDEBE7; border-color: #EDEBE71A; }
+  html.dark .mimi-mail:hover { background: #EDEBE7; color: #131316; }
+  html.dark .mimi-form input { background: #242429; color: #EDEBE7; border-color: #EDEBE71A; }
+  html.dark .mimi-form input::placeholder { color: #9C978F; }
+  html.dark .mimi-form .mimi-send { background: #EDEBE7; color: #131316; }
+  html.dark .mimi-form .mimi-send:hover { background: #ff690a; color: #fff; }
+  html.dark .mimi-foot { color: #9C978F; }
+  html.dark .mimi-note { background: #242429; color: #EDEBE7; border-color: #EDEBE733; }
+  html.dark .mimi-coop { background: #242429; border-color: #EDEBE733; }
+  html.dark .mimi-coop p { color: #C9C5BE; }
+  html.dark .mimi-coop a { color: #EDEBE7; }
+  html.dark .mimi-dots i { background: #9C978F; }
+
   @media (prefers-reduced-motion: reduce) {
     .mimi[data-state="error"] .mimi-face,
     .mimi-dots i,
@@ -1239,7 +1272,7 @@ const email = 'lily1326685527@gmail.com';
 
     /* 标记解释器：[[FARM:*]] / [[COOP]] 不进正文，转总线命令（与后端扣留同一协议） */
     const MARK = /\[\[\s*(FARM:[a-z:|]+|COOP)\s*\]\]/g;
-    const VALID = /^(gift:egg|goto:(works|about|news)|map|coop)$/;
+    const VALID = /^(gift:egg|goto:(home|works|about|news|contact)|map|concert:(twinkle|ode|birthday|greensleeves)|coop)$/
     function stripMarks(t) {
       const cmds = [];
       const shown = String(t).replace(MARK, (_, m) => {
@@ -1379,20 +1412,33 @@ const email = 'lily1326685527@gmail.com';
     }
     /* 管家自由聊：接现有 /api/chat，农场状态随 payload 上送（mimi-core 透传 farm） */
     /* 管家模式的本地启发式（仅 API 不可达时的兜底；线上走 /api/chat 的管家人格） */
-    const BUTLER_CN = { works: '作品页', about: '关于页', news: '动态页' };
+    const BUTLER_CN = { home: '首页', works: '作品页', about: '关于页', news: '动态页', contact: '合作页' };
+    const BUTLER_SONGS = [
+      { key: 'greensleeves', re: /绿袖子|greensleeves/i, title: '绿袖子' },
+      { key: 'twinkle', re: /小星星|一闪一闪/, title: '小星星' },
+      { key: 'ode', re: /欢乐颂|贝多芬/, title: '欢乐颂' },
+      { key: 'birthday', re: /生日|祝.*(生日)/, title: '生日快乐' },
+    ];
     function butlerLocal(q) {
       if (/随便|随你|你定|都行|看你/.test(q)) {
         const pick = ['works', 'about', 'news'][Math.floor(Math.random() * 3)];
         return { text: `那我说了算啦——去${BUTLER_CN[pick]}逛逛，替我向那边的鸡问好。`, cmd: `goto:${pick}` };
       }
-      const m = q.match(/作品|关于|动态|新闻/);
+      const song = BUTLER_SONGS.find((s) => s.re.test(q));
+      if (song && /来首|来一|弹|唱|听|演奏|曲|音乐|concert/i.test(q + '曲')) {
+        return { text: `《${song.title}》，预备——琴键升起来，客串的鸡也都到位了。`, cmd: `concert:${song.key}` };
+      }
+      if (/曲|琴|弹|音乐|演奏|唱/.test(q)) {
+        return { text: '会的曲子有四首：《小星星》《欢乐颂》《生日快乐》《绿袖子》。说「来首绿袖子」就行～', cmd: null };
+      }
+      const m = q.match(/作品|关于|动态|新闻|合作/);
       if (m && /去|逛|放|到|飞/.test(q)) {
-        const map = { 作品: 'works', 关于: 'about', 动态: 'news', 新闻: 'news' };
+        const map = { 作品: 'works', 关于: 'about', 动态: 'news', 新闻: 'news', 合作: 'contact' };
         const page = map[m[0]];
         return { text: `好嘞，这就派几只去${BUTLER_CN[page]}，你到那儿点收。`, cmd: `goto:${page}` };
       }
       const place = q.replace(/[去逛放到飞。？?！!，,\s]/g, '').slice(0, 8);
-      return { text: place ? `${place}？地图上没这一站。圈舍就这几处——作品页、关于页、动态页，要不你随便挑？` : '这句我先记下啦。能办的：报数、送蛋、放鸡去别的页面、要地图～' };
+      return { text: place ? `${place}？地图上没这一站。圈舍就这几处——作品页、关于页、动态页，要不你随便挑？` : '这句我先记下啦。能办的：报数、送蛋、放鸡去别的页面、要地图、来首曲子～' };
     }
 
     async function butlerAsk(q) {
