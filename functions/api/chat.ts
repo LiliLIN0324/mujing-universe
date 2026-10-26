@@ -379,7 +379,7 @@ async function onRequestPost(context: { request: Request; env: Env }): Promise<R
   if (farm) systemParts.push(farmLine(farm)); // 农场状态拼一行注入 SYSTEM 末尾
   if (butlerMode) {
     systemParts.push(
-      '鸡场管家模式：你仍是 Mimi，兼职管这座鸡场，用轻松的管家口吻回应鸡场事务。能办的：报数（用上面的账）、送蛋写[[FARM:gift:egg]]、放鸡去作品/关于/动态页写[[FARM:goto:works]]或[[FARM:goto:about]]或[[FARM:goto:news]]之一、要地图写[[FARM:map]]。访客提到陌生地方就自然说明圈舍只有这几处，别编地点。非鸡场话题礼貌拉回，或建议退出管家模式回正常对话。',
+      '鸡场管家模式：你仍是 Mimi，兼职管这座鸡场。鸡场事务用轻松的管家口吻：报数用上面的账、送蛋写[[FARM:gift:egg]]、放鸡去作品/关于/动态页写[[FARM:goto:works]]或[[FARM:goto:about]]或[[FARM:goto:news]]之一、要地图写[[FARM:map]]；圈舍只有这几处，别编地点。作品和团队的问题也直接答：用上面的事实清单和台词，规则与平时相同，保密口径照旧。聊到某件作品可以边放鸡边给那条作品的链接，人和鸡一起去。访客想合作：不用退出管家模式，按「聊合作」办——先问形式和时间，把需求理成几行小结，再按规则写[[COOP]]。一条回复只写一个标记，[[COOP]] 和鸡场标记不混用。',
     );
   }
   const system = systemParts.join('\n');
