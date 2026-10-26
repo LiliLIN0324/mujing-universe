@@ -1162,9 +1162,10 @@ if (root && stage && !stage.dataset.farmInit) {
   }
 
   /* 地图点击 = 普通跳转；先记「开」偏好，落地页 prefOn() 命中自动开鸡场 */
+  const ON_KEY = 'coop-farm-on';
   $('farm-maprows').addEventListener('click', (e) => {
     if (!e.target || !e.target.closest || !e.target.closest('a.farm-maprow')) return;
-    try { localStorage.setItem('mujing-farm-on', '1'); } catch { /* 隐私模式 */ }
+    try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ }
   });
 
   /* ===== 模块五：交互（指针、HUD、手册、音符开关） ===== */
@@ -1777,11 +1778,15 @@ if (root && stage && !stage.dataset.farmInit) {
   /* ===== 开合与默认：所有页面默认开（含手机），只有显式收起才记 '0'；?farm=1 强制开。
      'farm:toggle'=切换（Mimi 面板「进鸡场」与合作页「鸡场」chip 派发），'farm:open'=强制开。
      开着时 body 挂 .farm-on（全站 cursor:none、光标小鸡接管）；收起移除，页面零痕迹。 */
-  const ON_KEY = 'coop-farm-on';
   function prefOn() {
     try {
-      if (new URLSearchParams(location.search).get('coop') === '1') return true;
-      return localStorage.getItem(ON_KEY) !== '0';
+      const q = new URLSearchParams(location.search);
+      // 页脚蛋的无 JS 地址是 ?farm=1；引擎里也曾用 ?coop=1。两个都算强制开。
+      if (q.get('farm') === '1' || q.get('coop') === '1') return true;
+      const cur = localStorage.getItem(ON_KEY);
+      if (cur !== null) return cur !== '0';
+      // 0.1.9 记在 mujing-farm-on。新键还没写过时沿用旧选择。
+      return localStorage.getItem('mujing-farm-on') !== '0';
     } catch { return true; }
   }
   let opened = false; // restore 只在首次打开时跑一次
