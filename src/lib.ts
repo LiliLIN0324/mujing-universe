@@ -27,7 +27,7 @@ const BROKEN_COVERS = new Set<string>([]);
 /** 精选环带用的静帧。音画只有一卷时，用同一件作品的 01 / 02。缺图用本地占位，不留破图。 */
 export function workCovers(w: { slug: string; images?: string[]; icon?: string }): string[] {
   if (w.slug === 'xihu-panorama') {
-    return [`${R2_FIG}/xihu-panorama/01.jpg`, `${R2_FIG}/xihu-panorama/02.jpg`];
+    return [`${R2_FIG}/xihu-panorama/01.jpg?v=20261026`, `${R2_FIG}/xihu-panorama/02.jpg`];
   }
   if (BROKEN_COVERS.has(w.slug)) return [LOCAL_COVER];
   const photos = (w.images ?? []).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
@@ -209,7 +209,7 @@ export function titleWidth(t: string): number {
 }
 /** 作品页封面：这里只放人工调过裁切/缩放的条目；未登记的作品由 WorkCover 自动用第一张静帧，无图才走排版封面。 */
 export const WORKS_COVER: Record<string, { src: string; pos?: string; scale?: number }> = {
-  'xihu-panorama': { src: `${R2_FIG}/xihu-panorama/01.jpg`, scale: 1.08 },
+  'xihu-panorama': { src: `${R2_FIG}/xihu-panorama/01.jpg?v=20261026`, scale: 1.08 },
   'riffle-ai-game-generation-tool': { src: `${R2_FIG}/riffle/01.jpg` },
   'bazi-fengshui-analysis': { src: `${R2_FIG}/bazi/01.jpg` },
 };
