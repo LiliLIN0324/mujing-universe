@@ -156,6 +156,7 @@ export function mountHomeClips() {
   function wanted(host) {
     const video = videoOf(host);
     if (!host || !video) return false;
+    if (held === host) return false;
     return pinned === host || video.dataset.hearing === '1' || (over === host && fine.matches && !reduce.matches);
   }
   function syncFront(front) {
