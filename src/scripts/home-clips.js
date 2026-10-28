@@ -176,6 +176,55 @@ export function mountHomeClips() {
       if (wanted(host)) start(host);
     });
   }
+  // Exit from iOS native video fullscreen pauses the element. Remember that we
+  // entered while playing (or just started it) and resume once, so the card
+  // keeps the same clip instead of snapping back to a still.
+  const resumeAfterFs = new WeakSet();
+  function iosFullscreen(video) {
+    if (typeof video.webkitEnterFullscreen !== 'function') return false;
+    try { video.webkitEnterFullscreen(); return true; } catch (_) { return false; }
+  }
+  function enterFullscreen(video) {
+    const req = video.requestFullscreen || video.webkitRequestFullscreen;
+    const arm = () => resumeAfterFs.add(video);
+    if (req) {
+      try {
+        const pending = req.call(video);
+        if (pending && typeof pending.then === 'function') {
+          pending.then(arm).catch(() => { if (iosFullscreen(video)) arm(); });
+          return;
+        }
+        arm();
+        return;
+      } catch (_) {}
+    }
+    if (iosFullscreen(video)) arm();
+  }
+  function openCoverFullscreen(host) {
+    const video = videoOf(host);
+    if (!video) return;
+    if (host.classList.contains('m-card') && host.getAttribute('aria-hidden') === 'true') return;
+    if (!video.getAttribute('src') && video.dataset.src) video.src = video.dataset.src;
+    if (video.paused) {
+      held = null;
+      pinned = host;
+      start(host);
+    }
+    enterFullscreen(video);
+    if (video.readyState < 1) {
+      video.addEventListener('loadedmetadata', () => {
+        const active = document.fullscreenElement || document.webkitFullscreenElement || video.webkitDisplayingFullscreen;
+        if (!active) enterFullscreen(video);
+      }, { once: true });
+    }
+  }
+  function resumeAfterFullscreen(video) {
+    if (!video || !resumeAfterFs.has(video)) return;
+    resumeAfterFs.delete(video);
+    if (!video.paused) return;
+    const attempt = video.play();
+    if (attempt) attempt.catch(() => {});
+  }
   function togglePin(host) {
     const video = videoOf(host);
     if (!video) return;
@@ -245,7 +294,9 @@ export function mountHomeClips() {
         buttons(video).forEach((button) => { button.disabled = true; });
       }
       video.remove();
-      pin?.remove();
+      const ctrls = host.querySelector('.m-ctrls');
+      if (ctrls) ctrls.remove();
+      else pin?.remove();
       host.classList.remove('is-on');
       host.removeAttribute('data-clip');
     });
@@ -255,6 +306,16 @@ export function mountHomeClips() {
       e.stopPropagation();
       togglePin(host);
     });
+    const full = host.querySelector('.m-full');
+    if (full) {
+      full.addEventListener('pointerdown', (e) => e.stopPropagation());
+      full.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openCoverFullscreen(host);
+      });
+      video.addEventListener('webkitendfullscreen', () => resumeAfterFullscreen(video));
+    }
     host.addEventListener('pointerdown', () => {
       if (!host.classList.contains('m-card')) return;
       host.dataset.wasFront = host.getAttribute('aria-hidden') === 'true' ? '0' : '1';
@@ -296,6 +357,10 @@ export function mountHomeClips() {
   });
 
   document.addEventListener('home-front', (e) => syncFront(e.detail));
+  document.addEventListener('fullscreenchange', () => {
+    if (document.fullscreenElement) return;
+    hosts().forEach((host) => resumeAfterFullscreen(videoOf(host)));
+  });
 
   const cardStage = document.getElementById('m-stage');
   if (cardStage) {
