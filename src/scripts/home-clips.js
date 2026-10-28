@@ -180,6 +180,15 @@ export function mountHomeClips() {
     const video = videoOf(host);
     if (!video) return;
     if (host.classList.contains('m-card') && host.getAttribute('aria-hidden') === 'true') return;
+    // Portrait auto-starts the front card without pinning. A tap on that playing
+    // card pauses, same as tapping a pinned clip. Desktop slides keep click-to-pin.
+    if (host.classList.contains('m-card') && !video.paused) {
+      pinned = null;
+      held = host;
+      if (video.dataset.hearing === '1') hear(video, false);
+      halt(host);
+      return;
+    }
     if (pinned === host) {
       pinned = null;
       held = host;
@@ -290,6 +299,10 @@ export function mountHomeClips() {
 
   const cardStage = document.getElementById('m-stage');
   if (cardStage) {
+    // Ignore the first layout pass (no user gesture). After that, becoming the
+    // front card plays the cover the way a hovered desktop chapter does on switch:
+    // start(), then .is-on fades the video over the still. Touch has no hover.
+    let arm = false;
     new MutationObserver(() => {
       hosts().forEach((host) => {
         if (!host.classList.contains('m-card')) return;
@@ -297,13 +310,20 @@ export function mountHomeClips() {
         if (!video) return;
         const front = host.getAttribute('aria-hidden') !== 'true';
         if (!front) {
+          if (pinned === host) pinned = null;
           if (!video.paused || host.classList.contains('is-on')) halt(host);
+          // Peek cards show the still. The clip fades back in when this card is front again.
+          host.classList.remove('is-on');
           if (over === host) over = null;
           return;
         }
-        if (wanted(host)) start(host);
+        if (!arm || reduce.matches) return;
+        if (!video.paused) return;
+        held = null;
+        start(host);
       });
     }).observe(cardStage, { subtree: true, attributes: true, attributeFilter: ['aria-hidden'] });
+    requestAnimationFrame(() => { arm = true; });
   }
 
   const stage = document.getElementById('fs-stage');
