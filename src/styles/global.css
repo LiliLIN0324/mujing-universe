@@ -97,6 +97,8 @@
   --serif: var(--sans);
   --latin: var(--en);
   --max: 1120px;
+  /* Strong ease-out for UI motion; the built-in `ease-out` is too weak. */
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
 }
 
 /* Night: the same hierarchy on a clean near-black — no pure black, no glow. */
@@ -333,10 +335,13 @@ footer.bot .copy {
   }
 }
 
-.reveal { opacity: 0; transform: translateY(8px); animation: rise 0.7s ease forwards; }
-@keyframes rise { to { opacity: 1; transform: none; } }
+/* Scroll reveal. Base.astro adds html.js and the .in class from an
+   IntersectionObserver, with an 80ms stagger between sibling rows. */
+html.js .reveal { opacity: 0; transform: translateY(14px); }
+html.js .reveal.in { opacity: 1; transform: none; transition: opacity .6s ease, transform .6s var(--ease-out); }
 @media (prefers-reduced-motion: reduce) {
-  .reveal { animation: none; opacity: 1; transform: none; }
+  html.js .reveal { transform: none; }
+  html.js .reveal.in { transition: opacity .3s ease; }
 }
 
 @media (max-width: 768px) {

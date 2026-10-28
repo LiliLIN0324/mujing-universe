@@ -35,7 +35,7 @@ const studioIntro = '幕景宇宙是一家位于杭州的AI Native工作室，�
       <img class="pimg on" src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/team/ding.jpg" alt="丁科智 肖像" width="900" height="1200" decoding="async" loading="lazy"/>
     </div>
     <div class="member-info">
-      <p class="kicker cap">AI Native经纪人</p>
+      <p class="kicker cap">AI Native 经纪人</p>
       <h2>丁科智 <small>endTree</small></h2>
       <p>25岁，笔名终树，浙江音乐学院艺术与文化管理高等研究院在读研究生，高中起担任文学社社长，18岁后致力于戏剧艺术的制作与管理，24岁决心研究AI Agent在艺术与文化领域的应用，曾以单人团队入围GOAI世界人工智能开源大赛新智基座赛道复赛（全球前4%），参与黑客松主题包括FDE、空间智能、具身智能等赛道。</p>
     </div>
@@ -52,6 +52,17 @@ const studioIntro = '幕景宇宙是一家位于杭州的AI Native工作室，�
     </div>
   </div>
 
+  <div class="member reveal">
+    <div class="member-photo portrait has-photo">
+      <img class="pimg on" src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/team/han.jpg" alt="韩志州 肖像" width="900" height="1200" decoding="async" loading="lazy"/>
+    </div>
+    <div class="member-info">
+      <p class="kicker cap">顾问 · 商业与资源</p>
+      <h2>韩志州 <small>Han Zhizhou</small></h2>
+      <p>浙江大学英语专业，连续创业者。职业路径覆盖出版、投融资、消费创业与企业服务；现围绕就业服务、人力资源科技与精品财务顾问开展业务。加入幕景宇宙，协助客户拓展、人才引进与早期商业路径梳理。</p>
+    </div>
+  </div>
+
 </div>
 
 <section class="endcap reveal">
@@ -63,61 +74,81 @@ const studioIntro = '幕景宇宙是一家位于杭州的AI Native工作室，�
 <style>
 .about-page { padding-top: 80px; }
 
-.studio-intro { margin-bottom: 80px; }
-.studio-intro .lead { max-width: 36em; }
+.studio-intro { margin-bottom: 64px; }
 .studio-intro h1 { font-size: clamp(40px, 5vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.15; margin: 0 0 20px; }
-.lead { font-size: 1.05rem; color: var(--ink2); line-height: 1.8; }
+.lead { font-size: 1.05rem; color: var(--ink2); line-height: 1.8; max-width: 40em; }
 
-.members { display: flex; flex-direction: column; gap: 72px; }
+.members { display: flex; flex-direction: column; }
 
-.member { display: grid; grid-template-columns: 360px 1fr; gap: 56px; align-items: start; padding-top: 48px; border-top: 1px solid var(--rule); }
+.member {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  column-gap: 48px;
+  align-items: start;
+  padding: 52px 0;
+  border-top: 1px solid var(--rule);
+}
+.member:first-child { border-top: 0; padding-top: 0; }
+.member:last-child { padding-bottom: 0; }
 
 .portrait {
   aspect-ratio: 3 / 4;
-  background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: 0;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 28px 24px;
-  position: relative;
-  overflow: hidden;
+  padding: 26px 22px;
 }
-.pimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s ease; }
+.pimg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0;
+        transition: opacity 0.4s ease, transform 0.8s var(--ease-out); }
 .pimg.on { opacity: 1; }
+/* The photo settles from a slight over-crop as its row enters, inside the clipped frame. */
+html.js .member .pimg { transform: scale(1.06); }
+html.js .member.in .pimg { transform: none; }
 .portrait.has-photo .serif { display: none; }
 .portrait .serif { position: relative; z-index: 2; font-size: clamp(2.4rem, 3.5vw, 3.2rem); line-height: 1.15; letter-spacing: 0.18em; color: var(--ink2); }
 
-.member-info { padding-top: 4px; }
-.member-info h2 { font-size: clamp(1.6rem, 2.5vw, 2rem); font-weight: 600; letter-spacing: -0.02em; margin: 8px 0 16px; }
+.member-info { max-width: 54em; }
+.member-info .kicker { margin: 0 0 14px; }
+.member-info h2 { font-size: clamp(30px, 3vw, 38px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.15; margin: 0 0 22px; }
 .member-info h2 small {
   display: inline-block;
   margin-left: 10px;
   font-family: var(--en), var(--sans);
   font-weight: 400;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   letter-spacing: 0;
   color: var(--ink2);
 }
-.member-info p { font-size: 1rem; color: var(--ink2); line-height: 1.65; max-width: 44em; }
-.member-info a {
-  color: inherit;
-  text-decoration: none;
-  border-bottom: 1px solid currentColor;
-  padding-bottom: 1px;
-}
+.member-info p { font-size: 1rem; color: var(--ink2); line-height: 1.78; margin: 0 0 14px; }
+.member-info p:last-child { margin-bottom: 0; }
+.member-info a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
 .member-info a:hover { opacity: 0.7; }
 .member-info .nb { white-space: nowrap; }
 
-.endcap { text-align: left; margin-top: 88px; }
+.endcap { text-align: left; margin-top: 64px; }
 .endcap .btn { margin: 6px 6px 6px 0; }
 
-@media (max-width: 760px) {
-  .studio-intro { margin-bottom: 48px; }
-  .member { grid-template-columns: 1fr; gap: 24px; }
-  .portrait { max-width: 220px; }
-  .members { gap: 48px; }
+@media (prefers-reduced-motion: reduce) {
+  .pimg { transition: opacity 0.4s ease; }
+  html.js .member .pimg { transform: none; }
+}
+
+@media (max-width: 1100px) {
+  .member { grid-template-columns: 220px minmax(0, 1fr); column-gap: 32px; }
+}
+
+@media (max-width: 1000px) {
+  .member { grid-template-columns: 190px minmax(0, 1fr); column-gap: 26px; }
+}
+
+@media (max-width: 860px) {
+  .studio-intro { margin-bottom: 40px; }
+  .member { grid-template-columns: 1fr; gap: 22px; padding: 38px 0; }
+  .member:first-child { padding-top: 0; }
+  .portrait { width: 210px; }
+  .member-info h2 { font-size: 26px; margin-bottom: 16px; }
 }
 </style>
 </Base>

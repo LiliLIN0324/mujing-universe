@@ -68,6 +68,7 @@ npx wrangler pages dev dist --compatibility-date=2025-01-01
 | `team/` | 成员肖像：`team/lili-01…07.jpg`、`team/ding.jpg`、`team/wu.jpg` |
 | `fig/<slug>/` | 林丽丽的作品图，目录名等于作品 slug（存量，不再新增） |
 | `endtree/<slug>/` | 丁科智的作品图（存量，不再新增） |
+| `yaohao/<slug>/` | 吴耀好的作品图 |
 | `news/<id>/` | 新闻配图，按 01、02 编号 |
 | `artist/` | 早期肖像，已由 `team/` 取代，留作备份 |
 
