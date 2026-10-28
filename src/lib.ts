@@ -3,13 +3,17 @@ export const LINES = ['数字艺术', '智能体', '产品', '游戏', '空间']
 export const LINE_EN: Record<string,string> = { '数字艺术':'Digital Art', '智能体':'Agents', '产品':'Products', '游戏':'Games', '空间':'Space' };
 // 作品页固定前三：幕景 Scendance → 西湖 → 小鸡宇宙；其余按年份倒序。
 const WORKS_PINNED = ['scendance', 'xihu-panorama', 'chicken-universe'];
+// 同年作品按 slug 排，个别要往后放的在这里给序号（大的靠后）。
+const WORKS_RANK: Record<string, number> = { 'riffle-ai-game-generation-tool': 1 };
 export async function allWorks() {
   const ws = (await getCollection('works')).map(w => w.data);
   // slug breaks ties so the order (and the /ring/<slot>.jpg covers) is the same on every build
   ws.sort((a,b) => {
     const pa = WORKS_PINNED.indexOf(a.slug), pb = WORKS_PINNED.indexOf(b.slug);
     if (pa !== -1 || pb !== -1) return (pa === -1 ? Infinity : pa) - (pb === -1 ? Infinity : pb);
-    return b.yearNum - a.yearNum || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
+    return b.yearNum - a.yearNum
+      || (WORKS_RANK[a.slug] ?? 0) - (WORKS_RANK[b.slug] ?? 0)
+      || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
   });
   // 图床简写：JSON 里写文件名即可，统一在这里展开成 fig/<slug>/<文件>；写全 URL 的照旧
   return ws.map((w,i) => ({
