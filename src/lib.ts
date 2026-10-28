@@ -171,6 +171,7 @@ const COVER_CLIP: Record<string, string> = {
   'peace-elite-hust-campus': `${R2_FIG}/peace-elite-hust/cover.mp4`,
   '72-hour-game-jam': `${R2_FIG}/game-jam/cover.mp4`,
   'chicken-universe': `${R2_FIG}/chicken-universe/cover.mp4`,
+  'zhuantang-yixun': `https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/cover.mp4`,
 };
 /** 首页章节、作品库封面和详情主视觉的真实预览。没有就返回 null，保持静图。 */
 export function coverClip(slug: string): string | null {
