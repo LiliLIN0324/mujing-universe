@@ -78,7 +78,7 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
   display: flex;
   flex: 1 1 auto;
   align-items: center;
-  justify-content: center;
+  justify-content: safe center;
   gap: 2px 26px;
   min-width: 0;
   overflow-x: auto;
@@ -182,7 +182,8 @@ const tabs = [['全部', ws.length], ...LINES.map((line) => [line, ws.filter((w)
     -webkit-line-clamp: 3;
     overflow: hidden;
   }
-  /* 彩色色板：按分类取色——数字艺术橙 / 产品雾蓝 / 游戏紫 / 空间灰绿。文字固定白色。 */
+  /* 彩色色板：按分类取色——数字艺术橙 / 智能体青 / 产品褐蓝 / 游戏紫 / 空间灰绿。文字固定白色。 */
+  .wf .card[data-line="智能体"]::before { background: #2f6b78; }
   .wf .card[data-line="产品"]::before { background: #8a5a3b; }
   .wf .card[data-line="游戏"]::before { background: #7a5ba6; }
   .wf .card[data-line="空间"]::before { background: #4e7a68; }
@@ -314,6 +315,7 @@ html.js .wf .rise.in { opacity: 1; transform: none; transition: opacity .6s ease
 @media (max-width: 700px) {
   .wf { width: auto; margin: 0; padding: 4px var(--page-gutter) 24px; }
   .wf-bar { align-items: stretch; flex-wrap: wrap; gap: 0; justify-content: flex-start; }
+  .wf-filters { gap: 2px 12px; }
   .wf-cards { grid-template-columns: 1fr; row-gap: 28px; }
   .wf .cv { border-radius: 0; }
   .wf .idx .row { grid-template-columns: 36px minmax(0, 1fr) auto; column-gap: 10px; min-height: 52px; }

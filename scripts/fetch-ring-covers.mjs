@@ -15,7 +15,7 @@ const worksDir = path.join(root, 'src', 'content', 'works');
 const outDir = path.join(root, 'public', 'ring');
 
 function isImg(src) {
-  return typeof src === 'string' && /\.(jpe?g|png|webp)(?:$|\?)/i.test(src) && !src.includes('scroll-placeholder');
+  return typeof src === 'string' && /\.(jpe?g|png|webp)(?:$|\?)/i.test(src);
 }
 
 function coverCandidates(work) {

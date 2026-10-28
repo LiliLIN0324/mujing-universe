@@ -20,3 +20,12 @@ public/works/xihu-panorama/scroll-reading.mp4
 public/works/xihu-panorama/scroll/huajuan-viewer.jpg
 # 砖塘艺讯旧资产：内容已全走 R2 endtree/ 路径，本地孤本存档不入库
 public/works/zhuantang-yixun/
+
+# 本机工具缓存与一次性 OCR 排查产物
+.trae/
+.wrangler/
+ocr_images.py
+ocr_images.ps1
+ocr_easy*.py
+ocr_results*.txt
+feishu-auth-qrcode.png

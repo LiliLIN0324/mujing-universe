@@ -1,6 +1,6 @@
 import { getCollection } from 'astro:content';
-export const LINES = ['数字艺术', '产品', '游戏', '空间'] as const;
-export const LINE_EN: Record<string,string> = { '数字艺术':'Digital Art', '产品':'Products', '游戏':'Games', '空间':'Space' };
+export const LINES = ['数字艺术', '智能体', '产品', '游戏', '空间'] as const;
+export const LINE_EN: Record<string,string> = { '数字艺术':'Digital Art', '智能体':'Agents', '产品':'Products', '游戏':'Games', '空间':'Space' };
 // 作品页固定前三：幕景 Scendance → 西湖 → 小鸡宇宙；其余按年份倒序。
 const WORKS_PINNED = ['scendance', 'xihu-panorama', 'chicken-universe'];
 export async function allWorks() {
@@ -19,41 +19,31 @@ export async function allWorks() {
     no: String(i+1).padStart(2,'0'),
   }));
 }
-const PLACEHOLDER_COVER = 'scroll-placeholder.svg';
+const R2_FIG = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
 
-/** Homepage 精选：数字艺术 / 展览线。产品、游戏、研究留在 /works/。有实拍封面的排在矢量底图前面。 */
+/** Homepage 精选：数字艺术 / 展览线。产品、游戏、研究留在 /works/。有实拍封面的排前面。 */
 export function featuredWorks<T extends { line: string; images: string[]; icon: string }>(ws: T[]): T[] {
   const art = ws.filter((w) => w.line === '数字艺术');
-  const hasCover = (w: T) => {
-    const src = w.images[0] || w.icon || '';
-    return src.length > 0 && !src.includes(PLACEHOLDER_COVER);
-  };
+  const hasCover = (w: T) => Boolean(w.images[0] || w.icon);
   return [...art.filter(hasCover), ...art.filter((w) => !hasCover(w))];
 }
 
-const R2_FIG = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig';
-const LOCAL_COVER = '/scroll-placeholder.svg';
-/** R2 has no usable still for these slugs (01/logo 404). */
-const BROKEN_COVERS = new Set<string>([]);
-
-/** 精选环带用的静帧。音画只有一卷时，用同一件作品的 01 / 02。缺图用本地占位，不留破图。 */
+/** 精选环带用的静帧。音画只有一卷时，用同一件作品的 01 / 02。 */
 export function workCovers(w: { slug: string; images?: string[]; icon?: string }): string[] {
   if (w.slug === 'xihu-panorama') {
     return [`${R2_FIG}/xihu-panorama/01.jpg?v=20261026`, `${R2_FIG}/xihu-panorama/02.jpg`];
   }
-  if (BROKEN_COVERS.has(w.slug)) return [LOCAL_COVER];
   const photos = (w.images ?? []).filter((src) => /\.(jpe?g|png|webp)(?:$|\?)/i.test(src));
   if (photos.length) return photos.slice(0, 2);
   const icon = w.icon ?? '';
-  if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon) && !icon.includes('scroll-placeholder')) return [icon];
+  if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon)) return [icon];
   return [`${R2_FIG}/${w.slug}/01.jpg`];
 }
 
 export function workFallback(w: { slug: string; icon?: string }) {
-  if (BROKEN_COVERS.has(w.slug)) return LOCAL_COVER;
   const icon = w.icon ?? '';
-  if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon) && !icon.includes('scroll-placeholder')) return icon;
-  return LOCAL_COVER;
+  if (/\.(jpe?g|png|webp)(?:$|\?)/i.test(icon)) return icon;
+  return `${R2_FIG}/${w.slug}/01.jpg`;
 }
 
 const XIHU_INTRO = '当代西湖繁胜全景图，是幕景宇宙正在进行的音画长卷。以宋画的观看方式重绘今日西湖，舟船、岸线与人烟由声音转译生成。这一卷仍在创作中。';
@@ -189,7 +179,7 @@ export function workStills(w: { slug: string; images?: string[]; icon?: string }
 /** 详情页主图：西湖与幕景用精选环同一张静帧，其它用第一张图或 icon。 */
 export function workHero(w: { slug: string; images?: string[]; icon?: string }): string {
   if (w.slug === 'xihu-panorama' || w.slug === 'scendance') return workCovers(w)[0];
-  return (w.images ?? [])[0] || w.icon || LOCAL_COVER;
+  return (w.images ?? [])[0] || w.icon || `${R2_FIG}/${w.slug}/01.jpg`;
 }
 /** 主图两侧的纸色：西湖取自 01.jpg 左右边缘像素均值（≈rgb(174,166,149)），其它作品用默认底色。 */
 export function workPaper(w: { slug: string }): string | null {

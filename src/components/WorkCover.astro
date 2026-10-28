@@ -4,7 +4,7 @@ import { WORKS_COVER, coverClip, splitTitle, titleWidth } from '../lib';
 const { w, eager = false } = Astro.props;
 // 手工调过裁切的封面优先；其余作品自动用设计好的第一张静帧（images[0]），再退 icon，最后才走排版封面。
 const curated = WORKS_COVER[w.slug];
-const isImg = (u) => typeof u === 'string' && /\.(jpe?g|png|webp)(?:$|\?)/i.test(u) && !u.includes('scroll-placeholder');
+const isImg = (u) => typeof u === 'string' && /\.(jpe?g|png|webp)(?:$|\?)/i.test(u);
 const firstStill = (w.images || []).find(isImg);
 const auto = firstStill ? { src: firstStill } : (isImg(w.icon) ? { src: w.icon } : undefined);
 const c = curated ?? auto;

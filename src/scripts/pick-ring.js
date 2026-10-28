@@ -263,13 +263,12 @@ export function mountPickRing(root, pickData) {
   images.forEach((img) => {
     const fail = () => {
       const next = img.dataset.fallback;
-      const svg = '/scroll-placeholder.svg';
       if (next && img.getAttribute('src') !== next) {
-        img.dataset.fallback = svg;
+        img.dataset.fallback = '';
         img.src = next;
         return;
       }
-      if (img.getAttribute('src') !== svg) img.src = svg;
+      img.style.visibility = 'hidden';
     };
     img.addEventListener('error', fail);
     if (img.complete && img.getAttribute('src') && img.naturalWidth === 0) fail();

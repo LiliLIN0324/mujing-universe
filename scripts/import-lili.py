@@ -105,7 +105,7 @@ for i in items:
 # 数字艺术线：手工条目（幕景自有，个人站没有；内容改动只在这里做）
 items.append(dict(slug='xihu-panorama', title='当代西湖繁胜全景图', category='AIGC 音画 · 长卷', year='2026 · 进行中', yearNum=2026,
   line='数字艺术', status='进行中', description='以宋画长卷的形式重绘当代西湖，画面元素由声音转译生成。（占位简介，待艺术家确认）',
-  abstract='', challenge='', solution='', tech=['AIGC', '声音转译（占位）'], images=[], icon='/scroll-placeholder.svg',
+  abstract='', challenge='', solution='', tech=['AIGC', '声音转译（占位）'], images=[], icon='',
   hasDemo=False, flags=['占位：素材与文字待提供'], source='', sourceFile='manual', credit='画面：林丽丽 / 声音：丁科智'))
 # 校验 R2 图片（GET + Range，带重试——本机到 R2 偶发抽风，别把好图误杀）；无图则用占位并标注
 import urllib.request, concurrent.futures as cf
@@ -121,8 +121,8 @@ urls = {u for i in items for u in i['images'] + ([i['icon']] if i['icon'].starts
 with cf.ThreadPoolExecutor(16) as ex: alive = {u for u, r in zip(urls, ex.map(ok, urls)) if r}
 for i in items:
     i['images'] = [u for u in i['images'] if u in alive]
-    if i['icon'].startswith('http') and i['icon'] not in alive: i['icon'] = '/scroll-placeholder.svg'
-    if not i['images'] and i['icon'] == '/scroll-placeholder.svg' and i['line'] != '数字艺术': i['flags'].append('个人站图床无可用图片（R2 校验不过），暂用占位图')
+    if i['icon'].startswith('http') and i['icon'] not in alive: i['icon'] = ''
+    if not i['images'] and not i['icon'] and i['line'] != '数字艺术': i['flags'].append('个人站图床无可用图片（R2 校验不过）')
 os.makedirs(OUT, exist_ok=True)
 for old in glob.glob(os.path.join(OUT, '*.json')): os.remove(old)
 for i in items:

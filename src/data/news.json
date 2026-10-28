@@ -253,6 +253,21 @@
    "source": "work"
   },
   {
+   "id": "activity-sohu-interview-2023",
+   "section": "activity",
+   "title": "林丽丽接受「科创专访」，讲述绿洲校园建模与元宇宙项目",
+   "summary": "谈《和平精英》绿洲校园建模、eVolo 摩天大楼与 BMW × 同济元宇宙平台，鼓励同学走出科创舒适圈。",
+   "start": "2023-04-19",
+   "event": "搜狐号「科创专访」",
+   "format": "访谈",
+   "people": [
+    "林丽丽"
+   ],
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-sohu-interview-2023/01.jpg",
+   "href": "https://www.sohu.com/a/668365611_121124721",
+   "hrefLabel": "阅读原文"
+  },
+  {
    "id": "activity-scientist-award-2023",
    "section": "activity",
    "title": "林丽丽在华中科技大学获得了第六届感恩近现代科学家助学金",

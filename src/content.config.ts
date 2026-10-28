@@ -4,7 +4,7 @@ const works = defineCollection({
   loader: glob({ pattern: '*.json', base: './src/content/works' }),
   schema: z.object({
     slug: z.string(), title: z.string(), category: z.string(), year: z.string(), yearNum: z.number(),
-    line: z.enum(['数字艺术', '产品', '游戏', '空间']), status: z.string(),
+    line: z.enum(['数字艺术', '智能体', '产品', '游戏', '空间']), status: z.string(),
     credit: z.string().optional(),
     by: z.string().optional(), // lin=林丽丽(默认) ding=丁科智 collab=合作项目
     description: z.string(), abstract: z.string(), challenge: z.string(), solution: z.string(),
