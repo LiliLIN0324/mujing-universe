@@ -1,0 +1,122 @@
+{
+  "meta": {
+    "name": "mujing",
+    "title": "幕景默认包",
+    "artist": "林丽丽",
+    "avatar": "packs/mujing/mimi.png",
+    "license": "TBD — 授权条款（CC BY 4.0 / CC BY-NC）确认前请勿公开分发本包美术",
+    "note": "色音映射为斯克里亚宾调性-色彩圈：黄=D4 橙=G3 绿=A3 蓝白=E4 粉=Bb3 灰=Eb3 金=C 大三琶音。sprite 同目录 sprite.svg（symbol id：youji/shiji/douji/wuji/taoji/guizu/yuanbao/egg/egg-cracked/shell-half/shelltop/feather）。",
+    "rive": "packs/mujing/mimi.riv"
+  },
+  "breeds": [
+    {
+      "id": "butter",
+      "name": "黄·油鸡",
+      "svg": "youji",
+      "color": "#f3cd4a",
+      "rarity": "common",
+      "f": 293.66
+    },
+    {
+      "id": "mist",
+      "name": "蓝·雾鸡",
+      "svg": "wuji",
+      "color": "#8296af",
+      "rarity": "common",
+      "f": 329.63
+    },
+    {
+      "id": "persimmon",
+      "name": "橙·柿鸡",
+      "svg": "shiji",
+      "color": "#fb9032",
+      "rarity": "common",
+      "f": 196.0
+    },
+    {
+      "id": "bean",
+      "name": "绿·豆鸡",
+      "svg": "douji",
+      "color": "#5db25f",
+      "rarity": "common",
+      "f": 220.0
+    },
+    {
+      "id": "peach",
+      "name": "粉·桃鸡",
+      "svg": "taoji",
+      "color": "#eaa98d",
+      "rarity": "common",
+      "f": 233.08
+    },
+    {
+      "id": "noble",
+      "name": "灰·贵族",
+      "svg": "guizu",
+      "color": "#9c9c93",
+      "rarity": "rare",
+      "f": 155.56
+    },
+    {
+      "id": "ingot",
+      "name": "金·元宝",
+      "svg": "yuanbao",
+      "color": "#d9ac55",
+      "rarity": "legendary",
+      "f": 261.63
+    },
+    {
+      "id": "fu",
+      "name": "新年红·福鸡",
+      "svg": "shiji",
+      "color": "#e33b2e",
+      "rarity": "legendary",
+      "f": 392.0,
+      "season": {
+        "from": "01-01",
+        "to": "01-15"
+      },
+      "note": "节日限定：1月1日-1月15日出现在蛋池"
+    }
+  ],
+  "weights": {
+    "common": 16,
+    "rare": 18,
+    "legendary": 2
+  },
+  "lines": [
+    "咯咯～",
+    "是我孵的哦。",
+    "别摸头，会掉毛的。",
+    "咦，那边有颗蛋。",
+    "今天适合下蛋。",
+    "嗨，你来啦。",
+    "今日蛋 {E} 枚。"
+  ],
+  "rareLines": {
+    "noble": "咳，贵族气质。",
+    "ingot": "金光护体，大吉大利。"
+  },
+  "songs": {
+    "twinkle": {
+      "title": "小星星",
+      "bpm": 104,
+      "abc": "C C G G A A G2 F F E E D D C2 G G F F E E D2 G G F F E E D2 C C G G A A G2 F F E E D D C2"
+    },
+    "ode": {
+      "title": "欢乐颂",
+      "bpm": 116,
+      "abc": "E E F G G F E D C C D E E2 D2 E E F G G F E D C C D E D2 C2"
+    },
+    "birthday": {
+      "title": "生日快乐",
+      "bpm": 108,
+      "abc": "G4 G A G C2 B4 G G A G D2 C4 G G G E C C B A4 F F E C D2 C4"
+    },
+    "greensleeves": {
+      "title": "绿袖子",
+      "bpm": 92,
+      "abc": "E | G2 A B2 C2 B A F#2 E2 D#2 E F# G E2 E | D#2 E F# B2 B A G2 F# E2"
+    }
+  }
+}
