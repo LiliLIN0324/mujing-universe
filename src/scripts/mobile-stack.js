@@ -4,9 +4,14 @@
  *
  * pos is a continuous card index (cyclic over N). For card i, p = i - pos
  * (wrapped into [-N/2, N/2)): p = 0 is the current card, p in (0, 3] are the
- * peeking cards to the right, p in (-1, 0) is the card leaving to the left.
+ * peeking cards to the right, p in (-1, 0) is the card leaving.
+ *
+ * The leave uses the desktop chapter dissolve (home-chapters.js): image opacity
+ * is 1 - smootherstep, a slight scale-up, and the outgoing card stays stacked
+ * on the incoming one. It does not fling off at full opacity. Cards at p ≤ 1
+ * stay on a flat transform so the cover video can paint; deeper peeks keep the tilt.
  */
-const GAP = 14;           // px between the current card and the one leaving
+const GAP = 14;           // extra swipe travel per card; reduced-motion still slides by cardW + GAP
 const PEEK = 20;          // px each stacked card sits further right
 const SHRINK = 0.08;      // scale step per stacked card
 const TILT = 8;           // deg rotateY per stacked card (0 with reduced motion)
@@ -20,6 +25,12 @@ import { bloomCard, paintWave } from './ink-layer.js';
 const mod = (n, m) => ((n % m) + m) % m;
 const pad = (n) => String(n).padStart(2, '0');
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
+// Same curve as home-chapters.js (Perlin smootherstep).
+const smootherstep = (v) => {
+  const t = clamp01(v);
+  return t * t * t * (t * (t * 6 - 15) + 10);
+};
 
 export function mountMobileStack(root) {
   const mq = matchMedia('(max-width: 768px)');
@@ -70,22 +81,42 @@ export function mountMobileStack(root) {
   function layout() {
     const tilt = motion.matches ? 0 : TILT;
     for (let i = 0; i < N; i++) {
-      let p = mod(i - pos + N / 2, N) - N / 2;
+      const p = mod(i - pos + N / 2, N) - N / 2;
       const card = cards[i];
       let x, s, ry, op;
       if (p <= 0) {
-        x = leftInset + p * (cardW + GAP);
-        s = 1; ry = 0; op = p <= -1 ? 0 : 1;
+        if (motion.matches) {
+          x = leftInset + p * (cardW + GAP);
+          s = 1; ry = 0; op = p <= -1 ? 0 : 1;
+        } else {
+          const blend = smootherstep(-p);
+          x = leftInset + p * PEEK;
+          s = 1 + 0.03 * blend;
+          ry = 0;
+          op = 1 - blend;
+        }
       } else {
         x = leftInset + p * PEEK;
         s = 1 - p * SHRINK;
         ry = -tilt * p;
         op = p <= 1 ? 1 : p <= 3 ? 1 - (p - 1) * 0.35 : Math.max(0, 0.3 * (4 - p));
       }
-      card.style.transform = `translateX(${x.toFixed(2)}px) scale(${s.toFixed(4)}) rotateY(${ry.toFixed(2)}deg)`;
-      card.style.opacity = op.toFixed(3);
-      card.style.zIndex = String(100 - Math.round(p * 10));
-      card.style.visibility = op <= 0 ? 'hidden' : 'visible';
+      // Front card and the one sliding under it must not be a 3D layer.
+      // rotateY / backface-visibility:hidden hides the <video> on portrait WebKit.
+      const flat = p <= 1 || Math.abs(ry) < 0.01;
+      if (flat) ry = 0;
+      card.style.transform = flat
+        ? `translateX(${x.toFixed(2)}px) scale(${s.toFixed(4)})`
+        : `translateX(${x.toFixed(2)}px) scale(${s.toFixed(4)}) rotateY(${ry.toFixed(2)}deg)`;
+      card.style.opacity = Math.max(0, op).toFixed(3);
+      // Fully gone cards must not sit above the front card — a transformed
+      // sibling with a higher z-index keeps the cover video from painting.
+      const z = op <= 0.01 ? 0 : 100 - Math.round(p * 10);
+      card.style.zIndex = String(z);
+      card.style.visibility = op <= 0.01 ? 'hidden' : 'visible';
+      card.style.pointerEvents = op <= 0.01 ? 'none' : 'auto';
+      card.style.backfaceVisibility = flat ? 'visible' : 'hidden';
+      card.style.willChange = flat ? 'auto' : 'transform, opacity';
     }
     const idx = mod(Math.round(pos), N);
     if (idx !== current) setCurrent(idx);
