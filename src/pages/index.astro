@@ -1,10 +1,26 @@
 ---
 import Base from '../layouts/Base.astro';
 import { allWorks, coverClip, pickBody, pickDeskBody, pickIntro, pickSummary, pickTypeYear, workCovers, workFallback } from '../lib';
+import homeCovers from '../data/home-covers.json';
 const ws = await allWorks();
 const R2 = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama';
+const OPT_HOME = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/opt/home';
 const SCROLL_STILL = `${R2}/01.jpg?v=20261026`;
 const SCROLL_FALLBACK = `${R2}/02.jpg`;
+type CoverOpt = { lqip: string; widths: number[] };
+const coverOpt = (slug: string) => (homeCovers as Record<string, CoverOpt>)[slug];
+/** 首屏封面：R2 上 opt/home/ 的压缩版；没登记的作品原样用原图。 */
+const coverSrc = (slug: string, fallback: string) => {
+  const opt = coverOpt(slug);
+  if (!opt) return fallback;
+  const w = Math.min(1920, Math.max(...opt.widths));
+  return `${OPT_HOME}/${slug}-${w}.webp`;
+};
+const coverSrcset = (slug: string) => {
+  const opt = coverOpt(slug);
+  return opt ? opt.widths.map((w) => `${OPT_HOME}/${slug}-${w}.webp ${w}w`).join(', ') : undefined;
+};
+const coverLqip = (slug: string) => coverOpt(slug)?.lqip;
 const picks = ws.map((w) => ({
   slug: w.slug,
   title: w.title,
@@ -22,18 +38,20 @@ const picks = ws.map((w) => ({
 const HOME_PICKS = [
   'xihu-panorama',
   'scendance',
+  'zhuantang-yixun',
   'chicken-universe',
-  'anyreal',
-  'genshot-AI-video-generation-tool',
   'mimi-agent',
   'tuijian',
   'peace-elite-hust-campus',
+  'anyreal',
+  'riffle-ai-game-generation-tool',
 ];
 const homeWs = HOME_PICKS.map((slug) => ws.find((w) => w.slug === slug)).filter(Boolean);
 const homePicks = homeWs.map((w) => picks.find((p) => p.slug === w.slug));
 const leadPick = homePicks[0];
 const ringWorks = homePicks;
 const mobilePicks = homeWs.map((w, i) => ({
+  slug: w.slug,
   no: String(i + 1).padStart(2, '0'),
   title: w.title,
   year: w.yearNum || w.year,
@@ -52,8 +70,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 {/* ---- Mobile: hero + card stack (≤768px only) ---- */}
 <div class="first-screen" id="first-screen" data-dwell={PAGE_DWELL.hero}>
 <section class="hero" id="scroll-hero-m" aria-label="当代西湖繁胜全景图" data-clip={coverClip('xihu-panorama') ? '1' : undefined}>
-  <div class="hero-pan">
-    <img class="hero-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+  <div class="hero-pan" style={coverLqip('xihu-panorama') ? `background-image:url(${coverLqip('xihu-panorama')});background-size:cover;background-position:center;` : undefined}>
+    <img class="hero-still" src={SCROLL_STILL} srcset={coverSrcset('xihu-panorama')} sizes="(max-width: 768px) 180vh, 100vw" data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" loading="lazy" fetchpriority="high"/>
   </div>
   {coverClip('xihu-panorama') && (
     <video class="fs-clip" id="scroll-video-m" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={coverClip('xihu-panorama')}></video>
@@ -78,16 +96,21 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   {mLead && <div class="m-feat" id="m-feat">
     <div class="m-hd"><b>精选作品</b><span id="m-count">01 / {String(mobilePicks.length).padStart(2, '0')}</span></div>
     <div class="m-stage" id="m-stage" role="group" aria-roledescription="carousel" aria-label="精选作品">
-      {mobilePicks.map((w, i) => (
+      {mobilePicks.map((w, i) => {
+        const lqip = coverLqip(w.slug);
+        const real = coverSrc(w.slug, w.cover);
+        const srcset = coverSrcset(w.slug);
+        return (
         <div class="m-card" data-i={i} data-clip={w.clip ? '1' : undefined} aria-hidden={i === 0 ? 'false' : 'true'}>
-          <img src={w.cover} data-fallback={w.fallback} alt={w.title} width="1200" height="675" draggable="false" decoding="async" referrerpolicy="no-referrer" loading={i < 4 ? 'eager' : 'lazy'}/>
+          <img class:list={[{ 'is-lqip': Boolean(lqip) }]} src={lqip || real} srcset={lqip ? undefined : srcset} sizes={srcset ? 'calc(100vw - 100px)' : undefined} data-src={lqip ? real : undefined} data-srcset={lqip ? srcset : undefined} data-fallback={w.fallback} alt={w.title} width="1200" height="675" draggable="false" decoding="async" referrerpolicy="no-referrer" loading={lqip ? undefined : 'lazy'}/>
           {w.clip && <video class="fs-clip" muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={w.clip}></video>}
           {w.clip && <div class="m-ctrls">
             <button class="fs-pin" type="button" aria-pressed="false" aria-label="播放预览" title="播放预览"><svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg><svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5h3v14h-3zM13.5 5h3v14h-3z" fill="currentColor"/></svg></button>
             <button class="m-full" type="button" aria-label="全屏" title="全屏"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v2H6v4H4V4zm10 0h6v6h-2V6h-4V4zM4 14h2v4h4v2H4v-6zm14 4v-4h2v6h-6v-2h4z" fill="currentColor"/></svg></button>
           </div>}
         </div>
-      ))}
+        );
+      })}
     </div>
     <div class="m-bar" id="m-bar" aria-hidden="true">{mobilePicks.map((_, i) => <i class={i === 0 ? 'on' : undefined}></i>)}</div>
     <div class="m-info" aria-live="polite">
@@ -112,8 +135,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
 {leadPick && <div class="fs-runway" id="fs-runway" data-hold="0.85" style={`--chapters:${ringWorks.length};--hold:0.85`}>
   <div class="fs-stage" id="fs-stage" aria-label="精选作品">
     <div class="fs-slide is-active" data-i="0" data-clip={leadPick.clip ? '1' : undefined} aria-hidden="false">
-      <div class="fs-pan">
-        <img class="fs-still" src={SCROLL_STILL} data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" fetchpriority="high"/>
+      <div class="fs-pan" style={coverLqip('xihu-panorama') ? `background-image:url(${coverLqip('xihu-panorama')});background-size:cover;background-position:center;` : undefined}>
+        <img class="fs-still" src={SCROLL_STILL} srcset={coverSrcset('xihu-panorama')} sizes="(max-width: 768px) 180vh, 100vw" data-fallback={SCROLL_FALLBACK} alt="当代西湖繁胜全景图" width="1920" height="760" referrerpolicy="no-referrer" loading="lazy" fetchpriority="high"/>
         {leadPick.clip && (
           <video
             id="scroll-video"
@@ -142,15 +165,19 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
         </div>
       </div>
     </div>
-    {ringWorks.slice(1).map((work, i) => (
+    {ringWorks.slice(1).map((work, i) => {
+      const lqip = coverLqip(work.slug);
+      const real = coverSrc(work.slug, work.stills[0]);
+      const srcset = coverSrcset(work.slug);
+      return (
       <div class="fs-slide" data-i={i + 1} data-clip={work.clip ? '1' : undefined} aria-hidden="true" inert>
         {work.clip ? (
           <div class="fs-visual">
-            <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={work.stills[0]} data-fallback={work.fallback} loading="lazy"/>
+            <img class:list={['fs-bg', { 'is-lqip': Boolean(lqip) }]} alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={lqip || real} srcset={lqip ? undefined : srcset} data-src={lqip ? real : undefined} data-srcset={lqip ? srcset : undefined} sizes={srcset ? '(max-width: 768px) 180vh, 100vw' : undefined} data-fallback={work.fallback} loading={lqip ? undefined : 'lazy'}/>
             <video class="fs-clip" id={`fs-video-${i + 1}`} muted loop playsinline webkit-playsinline preload="metadata" disablepictureinpicture aria-hidden="true" data-src={work.clip}></video>
           </div>
         ) : (
-          <img class="fs-bg" alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={work.stills[0]} data-fallback={work.fallback} loading="lazy"/>
+          <img class:list={['fs-bg', { 'is-lqip': Boolean(lqip) }]} alt="" width="1920" height="1080" draggable="false" referrerpolicy="no-referrer" decoding="async" src={lqip || real} srcset={lqip ? undefined : srcset} data-src={lqip ? real : undefined} data-srcset={lqip ? srcset : undefined} sizes={srcset ? '(max-width: 768px) 180vh, 100vw' : undefined} data-fallback={work.fallback} loading={lqip ? undefined : 'lazy'}/>
         )}
         <div class="fs-plate">
           <p class="fs-kicker"><b>{String(i + 2).padStart(2, '0')}</b> / {String(ringWorks.length).padStart(2, '0')}</p>
@@ -163,7 +190,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
           </div>
         </div>
       </div>
-    ))}
+      );
+    })}
     <div class="fs-rail">
       {ringWorks.map((work, i) => (
         <button class:list={['fs-dot', { on: i === 0 }]} type="button" data-i={i} aria-label={`第 ${i + 1} 件，${work.title}`} aria-current={i === 0 ? 'true' : undefined}></button>
@@ -189,17 +217,8 @@ const PAGE_DWELL: Record<'hero' | 'picks', 'on' | 'off'> = { hero: 'off', picks:
   .picks { display: none; }
 }
 @media (max-width: 768px) {
-  /* Kept in the tree so 聆听图景 can play the same file; not shown. */
-  .fs-runway {
-    display: block;
-    position: fixed;
-    left: 0; top: 0;
-    width: 2px; height: 2px;
-    overflow: hidden;
-    opacity: 0;
-    pointer-events: none;
-    z-index: -1;
-  }
+  /* 桌面章节在手机上不参与布局：display:none 让里面的封面图（loading=lazy）不会被下载。 */
+  .fs-runway { display: none; }
   .fs-still, .fs-bg { animation: none; }
 }
 .fs-slide {

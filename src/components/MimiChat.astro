@@ -1610,6 +1610,7 @@ const email = 'lily1326685527@gmail.com';
     /* ===== 开合：bench 常开（in-flow），panel 浮层开合 ===== */
     let motion = { hover: false, open: false, attention: false };
     let rig = null;
+    let startRive = () => {};
     function applyMotion() {
       root.dataset.motion = mimiMotion(motion);
       if (!rig) return;
@@ -1621,6 +1622,7 @@ const email = 'lily1326685527@gmail.com';
         log.scrollTop = log.scrollHeight;
         return;
       }
+      startRive();
       window.clearTimeout(closeTimer);
       motion.open = true;
       applyMotion();
@@ -1888,18 +1890,33 @@ const email = 'lily1326685527@gmail.com';
         watchWorks(document.getElementById('fs-stage'));
         watchWorks(document.querySelector('.wf-top'));
       }
-      mountMimiRive(canvas, reduce).then((next) => {
-        if (!next || reduce) {
-          next?.cleanup();
-          return;
-        }
-        rig = next;
-        applyMotion();
-        if (glanceQueued || motion.attention) {
-          rig.attention();
-          glanceQueued = false;
-        }
-      });
+      // Rive 的 wasm + mimi.riv（约 1MB）不在首屏下载：离开首屏、悬停、聚焦或点开对话才启动。
+      let riveStarted = false;
+      startRive = () => {
+        if (riveStarted || reduce) return;
+        riveStarted = true;
+        mountMimiRive(canvas, reduce).then((next) => {
+          if (!next || reduce) {
+            next?.cleanup();
+            return;
+          }
+          rig = next;
+          applyMotion();
+          if (glanceQueued || motion.attention) {
+            rig.attention();
+            glanceQueued = false;
+          }
+        });
+      };
+      const startOnScroll = () => {
+        if (window.scrollY < window.innerHeight * 0.4) return;
+        window.removeEventListener('scroll', startOnScroll);
+        startRive();
+      };
+      window.addEventListener('scroll', startOnScroll, { passive: true });
+      launch.addEventListener('pointerenter', () => startRive(), { once: true });
+      launch.addEventListener('pointerdown', () => startRive(), { once: true });
+      launch.addEventListener('focus', () => startRive(), { once: true });
       if (window.ResizeObserver) {
         const ro = new ResizeObserver(() => rig?.resize());
         ro.observe(face);

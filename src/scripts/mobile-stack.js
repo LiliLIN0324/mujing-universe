@@ -21,6 +21,7 @@ const SETTLE_MS = 450;
 const AXIS_SLOP = 8;
 
 import { bloomCard, paintWave } from './ink-layer.js';
+import { loadCover } from './cover-load.js';
 
 const mod = (n, m) => ((n % m) + m) % m;
 const pad = (n) => String(n).padStart(2, '0');
@@ -124,6 +125,8 @@ export function mountMobileStack(root) {
 
   function setCurrent(idx) {
     current = idx;
+    // 当前卡 + 后两张（叠在右侧的可见卡）；再远的等滑近再换真图。
+    for (let k = 0; k < 3; k++) loadCover(cards[mod(idx + k, N)]?.querySelector('img'));
     const w = data[idx];
     if (el.count) el.count.textContent = `${pad(idx + 1)} / ${pad(N)}`;
     segs.forEach((seg, i) => seg.classList.toggle('on', i === idx));

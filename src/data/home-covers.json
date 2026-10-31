@@ -1,0 +1,178 @@
+{
+  "xihu-panorama": {
+    "lqip": "data:image/webp;base64,UklGRoIAAABXRUJQVlA4IHYAAABQBQCdASowABsAPulkqE4pJaOiKrgN+SAdCWcAxNgLNrX7w9NLFRWN345w3+SzBm0L8AAA/t5Z+eytmiPV7uMVdyD9fkxbd5s82KSrTKXozCuAf98xwctWB58qR+X7ovla9eAHX+rfiS9tQVtMTzDzqw1AAAAA",
+    "widths": [
+      960,
+      1920,
+      2560
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/01.jpg",
+    "srcBytes": 666588,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 25676
+      },
+      {
+        "w": 1920,
+        "bytes": 79924
+      },
+      {
+        "w": 2560,
+        "bytes": 114104
+      }
+    ]
+  },
+  "scendance": {
+    "lqip": "data:image/webp;base64,UklGRuwBAABXRUJQVlA4IOABAAAwCgCdASowABsAPuFapE0opSOiMAqpEBwJZgCdM2tO3bYGmASgHSvWL9hDZ5b+lraFFkCPwbbFsDWjcqT8YexxmcnD8EVdIpqWwjQ1tHdxG2TwvlomkVg6+AAA/s5obRP0DPi1n1tdM8GkYbUe0oBbRLkLghYuFxTLSlE0S236QWBp9m55ZJyKNiIMdu9Zddw9ygNTsIatkCDJSHQoihVhaOK/yUoP+bP6k/DJlnhA6lAaJa+LdKUMuDa2vRn6hSvxZdYKncNE02FqjObpfdho3rIuOeZ8z6VL0azR/kaAAVNReiOa+LxyvD6X0qmAVglp4107G7BdTduhmhFr1z+jztxA8kECrXmr06MndfmcQXNBB7PytixzDWazaT4PZQiXxAY+kp/9RxwPKbZx1IJ2KJJZ4Hx4Rb+rvqFXDTqtQzN0eJ6LsUJ2JFdeEvDueeUMwuiik28jy3uP3YAnpD3gF7vyGeXChkPwSjWmQI34Nshakcs9eZDuhwQt9+vCFdjhvD75f3SkamvoQyHR84lZ3zFiK6fQaqcnv0i1SDJUMEwZ2hBbLryJ/plvM9LxeM0qUtGQoe6VCqj4qUte0R0txCx4wJTfKe5Ed24204VopML5rs4QGBwTvSG5Vi2IgAA=",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/scendance/01.jpg",
+    "srcBytes": 3359898,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 78638
+      },
+      {
+        "w": 1920,
+        "bytes": 207522
+      }
+    ]
+  },
+  "zhuantang-yixun": {
+    "lqip": "data:image/webp;base64,UklGRqIAAABXRUJQVlA4IJYAAACQBQCdASowABsAPtVQpE0oJCOiNVv8AQAaiWdXuteuDlJfGUh2Sb4x7VXx5jHQaHmlGvP9gAD+8Ivb64Y0GZy3Gt+wiU9Fz8pS9kKUmyRqD4Sk7+LLH8nXXu2siE8hoN0PvPz7bYIwPvNpKVZpT/1t7n8I17xvB0arW8l4Hcu1EEIP3OlX0p+fJWdLzymSh6fyrdwgAAA=",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/01.jpg",
+    "srcBytes": 991367,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 26592
+      },
+      {
+        "w": 1920,
+        "bytes": 102456
+      }
+    ]
+  },
+  "chicken-universe": {
+    "lqip": "data:image/webp;base64,UklGRl4AAABXRUJQVlA4IFIAAAAQBACdASowABsAPulmrlGpJSQiqrgIASAdCWcAxkAO6jAbvx9szn3MAAD+7Ol4z/WkQcvktQcCI/R1BE/nSPWS1+N4UovlxhovD86G0w9HYAAA",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/chicken-universe/01.jpg",
+    "srcBytes": 975015,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 8490
+      },
+      {
+        "w": 1920,
+        "bytes": 49916
+      }
+    ]
+  },
+  "mimi-agent": {
+    "lqip": "data:image/webp;base64,UklGRvwAAABXRUJQVlA4IPAAAAAwBgCdASowABsAPulep04pJKOiNVQIASAdCWwAzq1AyAHqABHtriT7Ofm/Igsnd/7zP5OJ5ojjiAoAAP7+LscSG2GCsBQJJO5tV63cElKtrvky9qcYP/7sq+D+0C5ocvBL9Nigu2MyuPOMp75CAykhH9chebEW1IfyBlKLMdz0S2ZdCP5A1jEeDkO7BE167cYTERkNCF4WIUK1RagEIl6YV/vVxJgqtEmZFfq9CGqYjCTr0rpT4TaJa2lDf+mwgcPn5yiMzN2OmyR5yO1GOnu41W6y9dgoePbpoDZT1QjIknmDXCFX/Pcg7hmqXDqBAAA=",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/mimi-agent/01.jpg",
+    "srcBytes": 77395,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 18644
+      },
+      {
+        "w": 1920,
+        "bytes": 29862
+      }
+    ]
+  },
+  "tuijian": {
+    "lqip": "data:image/webp;base64,UklGRq4AAABXRUJQVlA4IKIAAAAwBQCdASowABsAPuVeo00pJSMiNVQMASAciWcAAJ3rP3MY3gmTdZnuQ6JTbrbdHyBCgAD+9+MTYhd0tc+sKuFlAzWhNqKdQiZU528Y3UgivZkDInWmm7lcDIIU53pXYadkzuNTdswldvI/6IHGIRfPTEDhJAJm0lD4SWAnaRA02AgsLheVmQBwkUvliHC0/wdK+hUT/wNQ53erlhGnUS4AAAA=",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/yaohao/tuijian/01.jpg",
+    "srcBytes": 523827,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 17740
+      },
+      {
+        "w": 1920,
+        "bytes": 52946
+      }
+    ]
+  },
+  "peace-elite-hust-campus": {
+    "lqip": "data:image/webp;base64,UklGRooBAABXRUJQVlA4IH4BAACQCACdASowABsAPulkpk6pJaMiKqwBIB0JaACnRyStqnVZp4JitsnUiSF4qrrRQ1IvDdK++1ZIYgXslUSYF0trxcPkPYtmQaXx1pevgAD+g9/1jO4QqeKNya2rsQKksjoWkf2ZWHWOZnL8R2rQmYmLlc1lTxW2SrNp8QjmvOdlcnIc4Pu/UmsRhhEvA+S+biy+FFhU6TF/j756k1QQS+w5K0i8Y4hXZO4GGa2pO4khDvm1Vm5gBcN+U+0m8tEZpwcb/pGL9KM/Aclc8upFzJXemBYIfCvhZXz91/vz2jyuqAnNTM1AOrRzWz4N4dOuW67mlyPWw83WAXm0p2W4U67jPFmZQrxjlguPoqSeReZyQ1BNFxePsoLdqikFmUkWipXeGhM7GU+f1BR/m9CsexHOXqnmaP3bagIXXbK568kR0oKNkcwEKI+lnuSA+saAIO2ozi/1TAi8gw/O1oGl8t3WZatRt/IqSHn8p/gw6QUD9u4BU5GpsnMAOuahgAAA",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/peace-elite-hust/01.jpg",
+    "srcBytes": 6242696,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 73546
+      },
+      {
+        "w": 1920,
+        "bytes": 186136
+      }
+    ]
+  },
+  "anyreal": {
+    "lqip": "data:image/webp;base64,UklGRsYAAABXRUJQVlA4ILoAAAAwBgCdASowABsAPuVgo00pJaMiMBqtUSAciUAYP4MAEkjR4auwqT5PBbqYS4COdSddBFMStlpwLZAAAPtsMWVKMNWbem68z86JfFsWmyIra/xXxGp2qeQPR/+CC8QejnH2Xx8eunww6oyhKPz1bKoVJrTBsglgRN76zPw0d+uBCO7246hfEUVjOJFj30LvmBbzFVrSpxbPXLArM0hVhUdDKgD10zt3hhhPBecuWz3mGrqQt1AbZKo6AAA=",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/anyreal/01.jpg",
+    "srcBytes": 5321768,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 18960
+      },
+      {
+        "w": 1920,
+        "bytes": 52632
+      }
+    ]
+  },
+  "riffle-ai-game-generation-tool": {
+    "lqip": "data:image/webp;base64,UklGRkQBAABXRUJQVlA4IDgBAADwBgCdASowABsAPulgqk6pJSOiMBVaqSAdCWQAtvuieIhJN7ww7luGWaQRWronolkWn0F/YmeUpudfxrfCoM9wAP7mcGoPhDDABxfM1vY39iYvzC/UA441y7a8b8qmeylQHwZ1tksNpSp8rtcEYuSZRRWsNSio2smiAomV6QR4dt4t5R2ruHCu4oeSzCNc5D+uUyO1T3kfRy6IddE25yaZ7QGWH+fEZNLP6RDw9k8AKO0LbbDXZHAiDSvPfHsKweTt999Unsl44goOCvj9TfqwBK45Qh0hkMZ9BQuOs1elUzTMJNoRFJMfbEa0+GpG47qO8Rw8ZCKXdAxtFY9MMJd6KI+WTqbbs98zblxBZtYWIEor6BWUpE1CiNM4HUV4ak4ST/Ir0PFE0y2AjD3+YI0+9VszhPGeAAA=",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/riffle/01.jpg",
+    "srcBytes": 5413852,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 42022
+      },
+      {
+        "w": 1920,
+        "bytes": 139700
+      }
+    ]
+  }
+}

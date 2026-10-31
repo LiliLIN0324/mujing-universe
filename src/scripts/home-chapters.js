@@ -13,6 +13,8 @@
 const INTRO_MS = 760;
 const FADE = 0.22;
 
+import { loadCover } from './cover-load.js';
+
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 const smootherstep = (x) => {
   const t = clamp01(x);
@@ -43,6 +45,7 @@ export function mountHomeChapters() {
 function startChapters(runway, stage) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const slides = Array.from(stage.querySelectorAll('.fs-slide'));
+  const covers = slides.map((slide) => slide.querySelector('img'));
   const dots = Array.from(stage.querySelectorAll('.fs-dot'));
   const n = slides.length;
   if (!n) return;
@@ -95,6 +98,9 @@ function startChapters(runway, stage) {
   function apply(now) {
     const p = progress();
     let { i, blend } = chapterAt(p);
+    // 只备当前和下一章；其余等到快滑到再换真图。
+    loadCover(covers[i]);
+    loadCover(covers[i + 1]);
     if (reduce) {
       const x = Math.min(p * ((n - 1) + hold), n - 1);
       i = Math.min(n - 1, Math.round(x));
@@ -146,6 +152,7 @@ function startChapters(runway, stage) {
     requestAnimationFrame(step);
   }
   function scrollToIndex(index) {
+    loadCover(covers[index]);
     const view = window.innerHeight || 1;
     const span = (n - 1) + hold;
     const p = Math.min(Math.max(index, 0), n - 1) / span;

@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
+    "prebuild": "node scripts/check-fonts.mjs",
     "build": "astro build",
+    "fonts": "python scripts/subset-fonts.py",
     "fetch-covers": "node scripts/fetch-ring-covers.mjs",
     "preview": "astro preview --port 4471 --host 127.0.0.1"
   },

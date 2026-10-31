@@ -57,7 +57,7 @@ npx wrangler pages dev dist --compatibility-date=2025-01-01
 
 成员卡片直接写在 `src/pages/about.astro`，没有照片时显示竖排姓名的占位框。
 
-封面图可用 `scripts/fetch-ring-covers.mjs` 批量抓取；字体自托管在 `public/fonts/`，不依赖外部 CDN。
+封面图可用 `scripts/fetch-ring-covers.mjs` 批量抓取；字体自托管在 `public/fonts/`，不依赖外部 CDN。字体子集只收站内实际用字（约 1.4 千字，单字重约 170KB）：新增文案后直接构建即可，`prebuild` 会发现漏字并自动运行 `npm run fonts` 补齐、更新缓存版本号（需要本机 Python + fonttools）。
 
 ## 图片与 R2
 
