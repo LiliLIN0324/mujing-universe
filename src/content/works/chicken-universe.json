@@ -29,11 +29,10 @@
   "91.jpg", "92.jpg", "93.jpg", "94.jpg", "95.jpg", "96.jpg", "97.jpg", "98.jpg", "99.jpg", "100.jpg"
  ],
  "icon": "logo.jpg",
- "hasDemo": true,
+ "hasDemo": false,
  "flags": [],
  "source": "manual",
  "sourceFile": "manual",
- "demo": "https://lililin0324.github.io/chicken-universe/%E5%B0%8F%E9%B8%A1%E5%90%8D%E5%86%8C/index.html",
  "by": "collab",
  "credit": "林丽丽 Lili Lin × 丁科智 endTree"
 }

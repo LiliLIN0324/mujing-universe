@@ -5,21 +5,21 @@
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url("/fonts/AlibabaPuHuiTi-3-55-Regular.woff2?v=91f80f3abd3ce") format("woff2");
+  src: url("/fonts/AlibabaPuHuiTi-3-55-Regular.woff2?v=1f670e78f80f3abd3ce") format("woff2");
 }
 @font-face {
   font-family: "Alibaba PuHuiTi 3.0";
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url("/fonts/AlibabaPuHuiTi-3-65-Medium.woff2?v=91f80f3abd3ce") format("woff2");
+  src: url("/fonts/AlibabaPuHuiTi-3-65-Medium.woff2?v=1f670e78f80f3abd3ce") format("woff2");
 }
 @font-face {
   font-family: "Alibaba PuHuiTi 3.0";
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url("/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2?v=91f80f3abd3ce") format("woff2");
+  src: url("/fonts/AlibabaPuHuiTi-3-75-SemiBold.woff2?v=1f670e78f80f3abd3ce") format("woff2");
 }
 /* Wordmark only: latin subset, so the name does not wait on fonts.googleapis.com. */
 @font-face {

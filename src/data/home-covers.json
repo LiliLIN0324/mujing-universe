@@ -99,6 +99,25 @@
       }
     ]
   },
+  "venue-ahead": {
+    "lqip": "data:image/webp;base64,UklGRuQAAABXRUJQVlA4INgAAADQBQCdASowABsAPs1YoU0npaMiOrmYAPAZiWUAz6BdbVb0L7hVNxxvB/yC/ZoGfHWyG6Up82oAAP72DynDYystG2F/QeaMRETS77V5Fu3jVjiwe0V4bt6P0J4+xnG7HrNu8PghmMmTxRmPzGiydJEJPwOSOCyrjlDGPcZxlY8TDrxFTkItmWhRHcxcNWXXjMuCACopJHUVW4hun8z+yljOTUXZcR8U+fJX9upiWyYvs4zhsZOdn1MIOfF+AYKJH/w9w+PdVj1OvEUmmH/XrtBZxwv/FYAoAAA=",
+    "widths": [
+      960,
+      1920
+    ],
+    "source": "pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/venue-ahead/01.jpg",
+    "srcBytes": 914260,
+    "sizes": [
+      {
+        "w": 960,
+        "bytes": 17966
+      },
+      {
+        "w": 1920,
+        "bytes": 51084
+      }
+    ]
+  },
   "tuijian": {
     "lqip": "data:image/webp;base64,UklGRq4AAABXRUJQVlA4IKIAAAAwBQCdASowABsAPuVeo00pJSMiNVQMASAciWcAAJ3rP3MY3gmTdZnuQ6JTbrbdHyBCgAD+9+MTYhd0tc+sKuFlAzWhNqKdQiZU528Y3UgivZkDInWmm7lcDIIU53pXYadkzuNTdswldvI/6IHGIRfPTEDhJAJm0lD4SWAnaRA02AgsLheVmQBwkUvliHC0/wdK+hUT/wNQ53erlhGnUS4AAAA=",
     "widths": [

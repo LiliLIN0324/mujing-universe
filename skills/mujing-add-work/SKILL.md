@@ -48,6 +48,9 @@ description: "往幕景宇宙官网（mujing-universe，Astro 站点）新增或
 - **目录约定（死规则）**：自研作品放 `fig/<slug>/`；**新出现的外部合作者，必须在 R2 建一个与其他合作者同级的作者目录**存放其作品资源（现状：`endtree/`、`yaohao/`），JSON 里写全 URL，如 `endtree/mimi-agent/01.jpg`、`yaohao/tuijian/01.jpg`。
 - **丁科智不是新合作者**：丁科智 = 丁 = 终树 = 科智 = `endTree`，同一个人。他的作品一律用既有 `endtree/` 目录、`by: "ding"`、署名固定「丁科智 endTree」；不得为他另开目录，不得出现第二种署名写法。只有真正新出现的合作者才按上一条开新目录。
 - **文件命名**：静帧统一 `01.jpg`、`02.jpg`……两位补零的 jpg；logo 用 `logo.jpg`/`logo.png`；带其他前缀的文件会被忽略（页面只渲染 images/icon 里登记的文件名）。
+- **images 只登记真实存在的文件（2026-11-01 实测）**：存量条目的 images 普遍按 01–100 写满占位，但 R2 上往往只有前几张——`fig/game-jam/99.jpg`、`endtree/mimi-agent/100.jpg` 都返回 404，详情页靠「加载失败即移除」兜底。**新增或补充图集时按实际存在的张数登记，写之前逐张发头请求核实；不要照抄 100 条。**
+- **补图流程**（给已有作品加图集）：算出新图 → 传到 `fig/<slug>/` 或该作者目录 → 逐张 curl 核实 200 且字节数一致 → 再把 URL 补进该作品 JSON 的 `images`（外部作者目录写全 URL）→ `npm run build` 复查详情页。
+- **icon 也要真实存在**：`icon` 指向的图 404 时列表卡会退成纯文字封面；没有专用 logo 的作品，指向图集第一张即可。
 - **缺失容错**：列表卡 `WorkCover.astro` 在无图时退为排版封面（纯文字卡）；详情页静帧加载失败会被移除，不留破图。素材未到位时 JSON 先按约定文件名预留槽位，构建不会因远程 404 失败。
 - **封面视频（悬停/预览 mp4）**：在 `src/lib.ts` 的 `COVER_CLIP` 按 slug 显式登记 URL。**登记前必须发 Range 请求核实（返回 206、Content-Type video/mp4），不按 slug 猜路径**；没核实就不登记，封面保持静图。所有悬停/预览视频默认 `muted`，不预先判断音轨。
 - **首页优化封面（进精选必做）**：作品一旦加入 `HOME_PICKS`，必须跑 `node scripts/optimize-home-covers.mjs`——脚本读 `index.astro` 的 HOME_PICKS 名单，出 960/1920（西湖 2560）WebP + 48px 模糊底图，传 R2 `opt/home/`，回写 `src/data/home-covers.json`；`--dry` 只出图看体积不上传。未跑的作品首页自动退回原图，功能正常但首屏会加载多 MB 大图。不进首页的作品不需要跑。该脚本不在 package.json scripts 里，手动执行，需 wrangler 与 R2 凭证。
