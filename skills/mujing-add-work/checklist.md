@@ -12,18 +12,19 @@
 
 ## B. 署名
 
-- [ ] 单人项目：`by` 为作者标识，`credit` 只写作者本人（参照 mimi-agent、tuijian）
-- [ ] 合作项目：`by: "collab"`，`credit: "林丽丽 Lili Lin × 丁科智 endTree"`
-- [ ] 合作项目已在 `abstract` 末尾写明双方分工（小鸡宇宙范式）
+- [ ] `by` 取值在取值表内（缺省=lin 林丽丽 / `ding` 丁科智 / `collab` 林丽丽×丁科智合作 / `yaohao` 吴耀好 / 新作者小写标识），`credit` 与取值表写法逐字一致
+- [ ] 丁科智（= 丁 = 终树 = 科智 = endTree）作品：`by: "ding"` + `credit: "丁科智 endTree"`，复用既有 `endtree/` 目录，未另开目录、未出现第二种署名写法
+- [ ] 合作项目：`by: "collab"` + `credit: "林丽丽 Lili Lin × 丁科智 endTree"`
+- [ ] `abstract` 分工句：已有条目保持原样不动；新增条目默认不写，除非用户当次明确要求
 - [ ] 外部作者署名不含「幕景宇宙」及无关人员名字
 
 ## C. 资源（R2）
 
 - [ ] 静帧按 `01.jpg…NN.jpg` 两位补零命名，logo 用 `logo.jpg/png`
-- [ ] 自研作品走 `fig/<slug>/` 简写；合作者作品写作者目录全 URL
+- [ ] 自研作品走 `fig/<slug>/` 简写；**新合作者已在 R2 建同级作者目录**（与 endtree/、yaohao/ 同级），JSON 写全 URL
 - [ ] 素材未到位时槽位已按约定文件名预留，构建不因 404 失败
 - [ ] 有封面视频时已用 Range 请求核实（206 + video/mp4），再登记进 `lib.ts` 的 `COVER_CLIP`
-- [ ] 需要进首页精选时：已登记 `HOME_PICKS`（用户明确要求）、`COVER_CLIP`、`home-covers.json` 优化封面
+- [ ] 进 `HOME_PICKS` 的作品已跑 `node scripts/optimize-home-covers.mjs` 并回写 `src/data/home-covers.json`；不进首页的作品不跑
 
 ## D. Demo 回退
 

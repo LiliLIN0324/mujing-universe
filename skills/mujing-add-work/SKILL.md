@@ -45,18 +45,27 @@ description: "往幕景宇宙官网（mujing-universe，Astro 站点）新增或
 公开基址：`https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/`
 
 - **路径简写**：JSON 里 images/icon 写裸文件名（如 `01.jpg`），构建时在 `src/lib.ts` 的 `allWorks()` 统一展开为 `fig/<slug>/<文件>`；写全 URL 的照旧不展开。
-- **目录约定**：自研作品放 `fig/<slug>/`；合作者作品在 R2 上建与 `endtree/`、`yaohao/` 同级的作者文件夹（如 `endtree/mimi-agent/`、`yaohao/tuijian/`），此时 JSON 里写全 URL。
+- **目录约定（死规则）**：自研作品放 `fig/<slug>/`；**新出现的外部合作者，必须在 R2 建一个与其他合作者同级的作者目录**存放其作品资源（现状：`endtree/`、`yaohao/`），JSON 里写全 URL，如 `endtree/mimi-agent/01.jpg`、`yaohao/tuijian/01.jpg`。
+- **丁科智不是新合作者**：丁科智 = 丁 = 终树 = 科智 = `endTree`，同一个人。他的作品一律用既有 `endtree/` 目录、`by: "ding"`、署名固定「丁科智 endTree」；不得为他另开目录，不得出现第二种署名写法。只有真正新出现的合作者才按上一条开新目录。
 - **文件命名**：静帧统一 `01.jpg`、`02.jpg`……两位补零的 jpg；logo 用 `logo.jpg`/`logo.png`；带其他前缀的文件会被忽略（页面只渲染 images/icon 里登记的文件名）。
 - **缺失容错**：列表卡 `WorkCover.astro` 在无图时退为排版封面（纯文字卡）；详情页静帧加载失败会被移除，不留破图。素材未到位时 JSON 先按约定文件名预留槽位，构建不会因远程 404 失败。
 - **封面视频（悬停/预览 mp4）**：在 `src/lib.ts` 的 `COVER_CLIP` 按 slug 显式登记 URL。**登记前必须发 Range 请求核实（返回 206、Content-Type video/mp4），不按 slug 猜路径**；没核实就不登记，封面保持静图。所有悬停/预览视频默认 `muted`，不预先判断音轨。
-- **首页优化封面**：`src/data/home-covers.json`（由 `scripts/optimize-home-covers.mjs` 生成，产物在 R2 `opt/home/`）只服务首页精选；未登记的作品自动退回原图，不影响功能。
+- **首页优化封面（进精选必做）**：作品一旦加入 `HOME_PICKS`，必须跑 `node scripts/optimize-home-covers.mjs`——脚本读 `index.astro` 的 HOME_PICKS 名单，出 960/1920（西湖 2560）WebP + 48px 模糊底图，传 R2 `opt/home/`，回写 `src/data/home-covers.json`；`--dry` 只出图看体积不上传。未跑的作品首页自动退回原图，功能正常但首屏会加载多 MB 大图。不进首页的作品不需要跑。该脚本不在 package.json scripts 里，手动执行，需 wrangler 与 R2 凭证。
 - 上传管道与凭证：由 Agent 向用户索要 R2 API Token 并在会话内执行上传，不让用户手动设环境变量（详见 product-cards 技能的「上传」节，管道在 `C:\Users\13266\Documents\assets-pipeline\scripts\`）。
 
 ## 三、署名机制（by / credit）
 
 - **展示只看 `credit`**：作品列表卡 hover 层（`WorkCard.astro`）有 credit 显示 credit，没有则默认「林丽丽 Lili Lin」。详情页目前不渲染 credit/by。
-- **`by` 是标识符**：写在卡片 `data-by` 属性上（当前无样式/脚本消费）。schema 注释里只列了 lin/ding/collab，**注释已过时**，实际在用的值：`lin`（默认，林丽丽）、`ding`（丁科智）、`collab`（合作项目）、`yaohao`（吴耀好）。新作者沿用「作者标识」写法即可。
-- **合作项目**：`by: "collab"` + `credit: "林丽丽 Lili Lin × 丁科智 endTree"`，双方分工写进 `abstract` 末尾（小鸡宇宙范式：「……由林丽丽完成，……由丁科智完成。」）。
+- **`by` 是标识符**：写在卡片 `data-by` 属性上（当前无样式/脚本消费）。完整取值表（与 `src/content.config.ts` 注释一致）：
+
+| by | 对应的人 | credit 写法 | 在用条目 |
+|---|---|---|---|
+| 缺省 | 林丽丽 | 缺省，显示「林丽丽 Lili Lin」 | 其余全部作品 |
+| `ding` | 丁科智（= 丁 = 终树 = 科智 = endTree） | `丁科智 endTree` | zhuantang-yixun、mimi-agent、venue-ahead |
+| `collab` | 林丽丽 × 丁科智合作项目 | `林丽丽 Lili Lin × 丁科智 endTree` | scendance、xihu-panorama、chicken-universe、bmw-meta-island、peace-elite-hust-campus、72-hour-game-jam |
+| `yaohao` | 吴耀好 | `吴耀好 Wu Yaohao` | tuijian |
+| 新作者 | 新外部合作者 | 只写作者本人，不带幕景宇宙或无关人名 | 新增时取小写标识 |
+- **合作项目**：`by: "collab"` + `credit: "林丽丽 Lili Lin × 丁科智 endTree"`。`abstract` 末尾的分工句（小鸡宇宙范式）：**已有条目里存在的保持不动，不回头删；新增条目默认不写**，是否添加以用户当次指示为准（scendance 曾按要求补写后又按要求删除）。
 - **丁科智单人项目**：`by: "ding"` + `credit: "丁科智 endTree"`（参照 zhuantang-yixun、mimi-agent）。
 - **外部作者项目**：`by: "<作者标识>"` + credit 只写作者本人（如 `吴耀好 Wu Yaohao`），不带幕景宇宙或其他人名字。
 
@@ -88,10 +97,9 @@ description: "往幕景宇宙官网（mujing-universe，Astro 站点）新增或
 
 ## 待确认（代码里读不到、只有口头约定的）
 
-- 新合作者是否在 R2 开同级作者文件夹，还是统一进 `fig/`：现状两种并存，新作者开目录前问用户。
-- `by` 的完整取值集合与命名规则：schema 注释与现状不一致，当前仅作 data 属性，以 `credit` 展示为准。
-- 首页新作品是否必须跑 `optimize-home-covers.mjs`：未登记也能退回原图工作，是否强制待确认。
 - R2 上传管道的具体脚本与凭证流程：以 product-cards 技能记载为准，执行时向用户索要 Token。
+
+（2026-11-01 已定稿为死规则、不再待确认：新合作者必须开 R2 同级目录；丁科智=endTree 复用 endtree/ 目录与 ding 标识；by 完整取值表见「三」；进 HOME_PICKS 必跑封面优化脚本。）
 
 ## 参照
 
