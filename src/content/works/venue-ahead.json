@@ -1,0 +1,25 @@
+{
+ "slug": "venue-ahead",
+ "title": "熟门熟路",
+ "category": "",
+ "year": "2026",
+ "yearNum": 2026,
+ "line": "智能体",
+ "status": "已上线",
+ "description": "",
+ "abstract": "",
+ "challenge": "",
+ "solution": "",
+ "tech": [],
+ "images": [
+  "01.jpg"
+ ],
+ "icon": "logo.jpg",
+ "hasDemo": true,
+ "flags": [],
+ "source": "manual",
+ "sourceFile": "manual",
+ "demo": "https://www.modelscope.cn/studios/endTree26/venue-ahead",
+ "by": "ding",
+ "credit": "丁科智 endTree"
+}

@@ -16,7 +16,7 @@
  *   4. 用户可关闭（收起成按钮态，想再看再点开）
  */
 const { url, title = '', cover = '', external = false } = Astro.props;
-const isExternal = external || /apps\.apple\.com|endtree26-yixun/.test(url || '');
+const isExternal = external || /apps\.apple\.com|endtree26-yixun|modelscope\.cn/.test(url || '');
 const uid = `demo-${Math.random().toString(36).slice(2, 9)}`;
 ---
 <div class="de" data-de={uid} data-url={url} data-title={title} data-cover={cover} data-embed={isExternal ? '0' : '1'}>
