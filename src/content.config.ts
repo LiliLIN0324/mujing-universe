@@ -12,6 +12,7 @@ const works = defineCollection({
     flags: z.array(z.string()), source: z.string(), sourceFile: z.string(),
     note: z.string().optional(), link: z.string().optional(),
     repo: z.string().optional(), // 开源模板等真实仓库地址。
+    feedback: z.string().optional(), // 改进提案的去处（GitHub 仓库地址）；缺省回落到本站仓。
     demo: z.string().optional(), // 真实可打开的体验地址。个人站 source 不是 Demo。
   }),
 });
