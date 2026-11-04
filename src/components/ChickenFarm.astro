@@ -1,15 +1,21 @@
 ---
 /**
  * 幕景鸡场：官网适配层。
- * 引擎权威源 = GitHub endtree-FDE/coop.js @ 9b12c91（PR#2 squash → main）。
- * 本文件不再内嵌旧 fork 引擎；只负责把 tip init() 挂进站点，并保留站侧 hooks。
+ * 引擎权威源 = GitHub endtree-FDE/coop.js（src/coop.js）。
+ * 本文件不内嵌引擎；只负责把 init() 挂进站点，并保留站侧 hooks。
  * Vite 6：模块从 src/lib/coop/* 加载（禁止 import public/coop）。
+ *
+ * 边界（2026-11-03 起）：
+ *   玩法、界面、配色、器物外观全在引擎里；站侧只做「接线」。
+ *   站侧不画任何装饰——纯装饰不算功能，要做也要能说明它承载了什么信息。
+ *   站侧引擎副本 src/lib/coop/coop.js 由 scripts/sync-site.mjs 单向覆盖，禁手改。
  */
 const { page = 'home' } = Astro.props;
 ---
 <!-- tip coop.js 在 #farm 不存在时注入 MARKUP（含货架/地琴 DOM）。此处不重复 markup。 -->
 <!-- 给适配脚本可读的当前页 id（tip 也读 body[data-page] / cfg.page） -->
 <div id="coop-page-bridge" data-page={page} hidden></div>
+
 <script>
   /* ===== 官网适配层：tip init + 站侧页面表 / 不挂库内 chat（MimiChat.astro）===== */
   import init from '../lib/coop/coop.js';
@@ -37,7 +43,7 @@ const { page = 'home' } = Astro.props;
     document.head.appendChild(st);
   }
 
-  window.__coopVer = window.__coopVer || 'site-9b12c91';
+  window.__coopVer = window.__coopVer || 'site-universe01-r7';
   const bridge = document.getElementById('coop-page-bridge');
   const page = (bridge && bridge.dataset.page)
     || document.body?.dataset?.page
@@ -51,4 +57,27 @@ const { page = 'home' } = Astro.props;
     pages,
     /* 不传 chat：管家由 MimiChat.astro 承担，避免 tip 再挂 src/chat.js */
   });
+
+  /* ===== A 逛站联动：站侧把「你看了什么」告诉鸡场 =====
+     引擎监听 window 上的 farm:visit：看作品给米、看动态给蛋，
+     看够 3 次作品解锁水缸。鸡场关着时奖励先存着，下次开场兑现。 */
+  const VISIT_TARGETS = [
+    ['a[href^="/works/"], .wf-cards .card, .wf .idx .row, .m-card, .fs-slide', 'work'],
+    ['.news-list li .hit', 'news'],
+  ];
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    /* 鸡场自己的界面不算逛站 */
+    if (t.closest('#farm, .mimi-panel, .mimi-launch, .butter-box, .mimi-hi')) return;
+    for (const [sel, kind] of VISIT_TARGETS) {
+      const hit = t.closest(sel);
+      if (!hit) continue;
+      const name = (hit.querySelector('h1, h2, .title, .ttl') || hit).textContent || '';
+      window.dispatchEvent(new CustomEvent('farm:visit', {
+        detail: { kind, title: name.trim().slice(0, 40) },
+      }));
+      return;
+    }
+  }, true);
 </script>

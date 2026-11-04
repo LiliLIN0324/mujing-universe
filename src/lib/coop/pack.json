@@ -10,12 +10,211 @@
   },
   "breeds": [
     {
+      "id": "universe01",
+      "name": "宇宙·一式",
+      "svg": "youji",
+      "color": "#fcd333",
+      "rarity": "common",
+      "f": 311.13,
+      "note": "表情九宫格：9 表情精灵表（丽丽 部件库/02-表情九宫格），引擎用 background-position 切帧。rig 段是同一只鸡的分层版（造型九式-01），保留登记；引擎优先用表情表。idleRotate=-8 保持 lean",
+      "expr": {
+        "sheet": "/packs/mujing/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      },
+      "rig": {
+        "base": "/packs/mujing/universe01/",
+        "w": 244,
+        "h": 366,
+        "footY": 340,
+        "layers": [
+          {
+            "file": "body.png",
+            "role": "body",
+            "left": 47,
+            "top": 45,
+            "w": 171,
+            "h": 249
+          },
+          {
+            "file": "comb.png",
+            "role": "comb",
+            "left": 98,
+            "top": 26,
+            "w": 44,
+            "h": 49
+          },
+          {
+            "file": "eye.png",
+            "role": "eye",
+            "left": 170,
+            "top": 68,
+            "w": 8,
+            "h": 9
+          },
+          {
+            "file": "wing.png",
+            "role": "wing",
+            "left": 77,
+            "top": 160,
+            "w": 57,
+            "h": 72
+          },
+          {
+            "file": "tail.png",
+            "role": "tail",
+            "left": 26,
+            "top": 231,
+            "w": 36,
+            "h": 40
+          },
+          {
+            "file": "leg-1.png",
+            "role": "leg",
+            "left": 150,
+            "top": 286,
+            "w": 29,
+            "h": 50
+          },
+          {
+            "file": "leg-2.png",
+            "role": "leg",
+            "left": 107,
+            "top": 293,
+            "w": 29,
+            "h": 47
+          }
+        ]
+      },
+      "idleRotate": -8
+    },
+    {
       "id": "butter",
       "name": "黄·油鸡",
       "svg": "youji",
       "color": "#f3cd4a",
       "rarity": "common",
-      "f": 293.66
+      "f": 293.66,
+      "rig": {
+        "base": "/packs/mujing/breeds/butter/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #fbd648 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "expr": {
+        "sheet": "/packs/mujing/breeds/butter/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     },
     {
       "id": "mist",
@@ -23,7 +222,78 @@
       "svg": "wuji",
       "color": "#8296af",
       "rarity": "common",
-      "f": 329.63
+      "f": 329.63,
+      "rig": {
+        "base": "/packs/mujing/breeds/mist/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #66ace4 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "expr": {
+        "sheet": "/packs/mujing/breeds/mist/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     },
     {
       "id": "persimmon",
@@ -31,7 +301,78 @@
       "svg": "shiji",
       "color": "#fb9032",
       "rarity": "common",
-      "f": 196.0
+      "f": 196,
+      "rig": {
+        "base": "/packs/mujing/breeds/persimmon/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #fb8b2b 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "expr": {
+        "sheet": "/packs/mujing/breeds/persimmon/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     },
     {
       "id": "bean",
@@ -39,7 +380,78 @@
       "svg": "douji",
       "color": "#5db25f",
       "rarity": "common",
-      "f": 220.0
+      "f": 220,
+      "rig": {
+        "base": "/packs/mujing/breeds/bean/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #5ab25b 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "expr": {
+        "sheet": "/packs/mujing/breeds/bean/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     },
     {
       "id": "peach",
@@ -47,7 +459,78 @@
       "svg": "taoji",
       "color": "#eaa98d",
       "rarity": "common",
-      "f": 233.08
+      "f": 233.08,
+      "rig": {
+        "base": "/packs/mujing/breeds/peach/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #f9e4b9 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "expr": {
+        "sheet": "/packs/mujing/breeds/peach/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     },
     {
       "id": "noble",
@@ -55,7 +538,78 @@
       "svg": "guizu",
       "color": "#9c9c93",
       "rarity": "rare",
-      "f": 155.56
+      "f": 155.56,
+      "rig": {
+        "base": "/packs/mujing/breeds/noble/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #9c9c93 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "expr": {
+        "sheet": "/packs/mujing/breeds/noble/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     },
     {
       "id": "ingot",
@@ -63,7 +617,78 @@
       "svg": "yuanbao",
       "color": "#d9ac55",
       "rarity": "legendary",
-      "f": 261.63
+      "f": 261.63,
+      "rig": {
+        "base": "/packs/mujing/breeds/ingot/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #d9ac55 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "expr": {
+        "sheet": "/packs/mujing/breeds/ingot/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     },
     {
       "id": "fu",
@@ -71,18 +696,114 @@
       "svg": "shiji",
       "color": "#e33b2e",
       "rarity": "legendary",
-      "f": 392.0,
+      "f": 392,
       "season": {
         "from": "01-01",
         "to": "01-15"
       },
-      "note": "节日限定：1月1日-1月15日出现在蛋池"
+      "note": "正脸：丽丽「表情九宫格」九帧按体色 #cd563a 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "rig": {
+        "base": "/packs/mujing/breeds/fu/",
+        "w": 102,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 102,
+            "h": 140
+          }
+        ]
+      },
+      "expr": {
+        "sheet": "/packs/mujing/breeds/fu/expr-sheet.png",
+        "cols": 3,
+        "rows": 3,
+        "cellW": 239,
+        "cellH": 248,
+        "frames": [
+          {
+            "id": "calm",
+            "name": "平静",
+            "cell": 0
+          },
+          {
+            "id": "blink",
+            "name": "眨眼",
+            "cell": 1
+          },
+          {
+            "id": "happy",
+            "name": "开心",
+            "cell": 2
+          },
+          {
+            "id": "excited",
+            "name": "兴奋",
+            "cell": 3
+          },
+          {
+            "id": "hungry",
+            "name": "饿",
+            "cell": 4
+          },
+          {
+            "id": "shock",
+            "name": "惊喜",
+            "cell": 5
+          },
+          {
+            "id": "doubt",
+            "name": "疑惑",
+            "cell": 6
+          },
+          {
+            "id": "glum",
+            "name": "蔫",
+            "cell": 7
+          },
+          {
+            "id": "sleepy",
+            "name": "困",
+            "cell": 8
+          }
+        ]
+      }
     }
   ],
   "weights": {
     "common": 16,
     "rare": 18,
     "legendary": 2
+  },
+  "decos": {
+    "plate": {
+      "img": "/packs/mujing/deco-plate.png",
+      "well": {
+        "cx": 75,
+        "cy": 21,
+        "rx": 37.2,
+        "ry": 7.1
+      }
+    },
+    "basket": {
+      "img": "/packs/mujing/deco-basket.png"
+    },
+    "water": {
+      "img": "/packs/mujing/deco-water.png"
+    },
+    "incubator": {
+      "img": "/packs/mujing/deco-incubator.png",
+      "well": {
+        "cx": 60,
+        "cy": 44,
+        "rx": 9,
+        "ry": 7
+      }
+    }
   },
   "lines": [
     "咯咯～",
