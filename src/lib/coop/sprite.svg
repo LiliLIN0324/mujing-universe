@@ -192,7 +192,7 @@
     </g>
   </symbol>
     <symbol id="farm-sym-egg" viewBox="0 0 100 120">
-    <path fill="#E9BA4A" d="M50 16 C67 16 79 40 79 62 C79 84 66 101 50 101 C34 101 21 84 21 62 C21 40 33 16 50 16 Z"/>
+    <path fill="currentColor" d="M50 16 C67 16 79 40 79 62 C79 84 66 101 50 101 C34 101 21 84 21 62 C21 40 33 16 50 16 Z"/>
     <g fill="#7A5A21">
       <circle cx="38" cy="40" r="1.7"/>
       <circle cx="53" cy="32" r="1.4"/>
@@ -207,19 +207,19 @@
     </g>
   </symbol>
     <symbol id="farm-sym-egg-cracked" viewBox="0 0 100 120">
-    <path fill="#E9BA4A" d="M27 46 L33 54 L39 46 L45 54 L51 46 L57 54 L63 46 L69 54 L73 46 C76 54 79 58 79 64 C79 85 66 101 50 101 C34 101 21 85 21 64 C21 58 24 52 27 46 Z"/>
-    <path fill="#E9BA4A" transform="translate(-4 -7) rotate(-8 50 40)" d="M27 44 C30 28 38 16 50 16 C62 16 70 28 73 44 L67 50 L61 44 L55 50 L49 44 L43 50 L37 44 L31 50 Z"/>
+    <path fill="currentColor" d="M27 46 L33 54 L39 46 L45 54 L51 46 L57 54 L63 46 L69 54 L73 46 C76 54 79 58 79 64 C79 85 66 101 50 101 C34 101 21 85 21 64 C21 58 24 52 27 46 Z"/>
+    <path fill="currentColor" transform="translate(-4 -7) rotate(-8 50 40)" d="M27 44 C30 28 38 16 50 16 C62 16 70 28 73 44 L67 50 L61 44 L55 50 L49 44 L43 50 L37 44 L31 50 Z"/>
     <g fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
       <path d="M27 46 L33 54 L39 46 L45 54 L51 46 L57 54 L63 46 L69 54 L73 46"/>
       <path transform="translate(-4 -7) rotate(-8 50 40)" d="M27 44 C30 28 38 16 50 16 C62 16 70 28 73 44 L67 50 L61 44 L55 50 L49 44 L43 50 L37 44 L31 50 Z"/>
     </g>
   </symbol>
     <symbol id="farm-sym-shell-half" viewBox="0 0 100 120">
-    <path fill="#E9BA4A" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
+    <path fill="currentColor" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
     <path fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
   </symbol>
     <symbol id="farm-sym-shelltop" viewBox="0 0 100 120"><g transform="rotate(180 50 60)">
-    <path fill="#E9BA4A" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
+    <path fill="currentColor" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
     <path fill="none" stroke="#221E19" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" d="M26 44 L32 53 L38 44 L44 53 L50 44 L56 53 L62 44 L68 53 L74 44 C77 51 78 58 78 64 C78 84 66 99 50 99 C34 99 22 84 22 64 C22 58 23 51 26 44 Z"/>
   </g></symbol>
     <symbol id="farm-sym-feather" viewBox="0 0 100 120">

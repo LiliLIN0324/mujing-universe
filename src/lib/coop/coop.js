@@ -392,6 +392,18 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
 
   /* 游走的小鸡 */
   .farm-chick { position: absolute; left: 0; top: 0; width: 40px; height: 48px; pointer-events: auto; will-change: transform; }
+  /* 这只鸡在干嘛：跨页差事的可见标记（Codex Pets 那一课 —— 宠物是状态指示器，不是装饰）
+     办事中 = 头顶一颗跳动的橙点。
+     这不是装饰：它承载的是「这只鸡被派去办事了」这个信息。
+     （礼物不标：redeemGifts 当场结算，礼物是瞬时事件不是状态。） */
+  .farm-chick.is-busy::after {
+    content: ''; position: absolute; left: 50%; top: -7px;
+    width: 8px; height: 8px; margin-left: -4px;
+    border: 2px solid var(--ink); border-radius: 50%; background: var(--orange);
+    animation: farm-mark-pulse 0.9s ease-in-out infinite;
+  }
+  @keyframes farm-mark-pulse { 0%, 100% { transform: translateY(0); opacity: 1; } 50% { transform: translateY(-3px); opacity: .55; } }
+  @media (prefers-reduced-motion: reduce) { .farm-chick.is-busy::after { animation: none; } }
   .farm-chick-wob, .farm-chick-in { width: 100%; height: 100%; transform-origin: 50% 90%; }
   /* 闲置呼吸：叠在 wob 层，避免与 .farm-chick-in 的 hop/peck 抢同一 transform；曲线借自小鸡宇宙动画样片 scale(.978,1.032) @ 1.9s */
   /* 呼吸改由 draw() 写进 wob.transform（JS 每帧会覆盖 CSS animation） */
@@ -440,6 +452,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-egg.is-wob svg { animation: farm-wob 1.15s ease-in-out both; }
   @keyframes farm-wob { 0% { transform: rotate(0); } 15% { transform: rotate(-9deg); } 35% { transform: rotate(8deg); } 55% { transform: rotate(-7deg); } 75% { transform: rotate(5deg); } 90% { transform: rotate(-3deg); } 100% { transform: rotate(0); } }
   .farm-egg.is-crack { --cfcrack: 1; }
+  /* 蛋壳默认黄（JS 会按品种改成 shellColor 的派生色）——别让 color 漏了变成墨色 */
+  .farm-egg, .farm-shells { color: var(--yellow); }
   .farm-shells { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
   .farm-shl { position: absolute; display: block; }
   .farm-shl-b { width: 30px; height: 20px; left: -15px; top: -19px; animation: farm-shlb 0.75s ease both; }
@@ -781,6 +795,36 @@ const root = document.getElementById('farm');
       peach: 'var(--orange)', noble: 'var(--ink)', fu: 'var(--red)',
     };
     const toneOf = (b) => (b && BREED_TONE[b.id]) || 'var(--orange)';
+    /* 蛋壳色 = 品种色派生（2026-11-04）
+       蛋一落地就定了品种，所以蛋壳可以带这个品种的颜色 ——
+       「蛋 = 还没孵出来的那个品种」，图鉴的闭环从下蛋那一刻就开始了。
+       品种真色的唯一出处是 pack.json 的 breed.color（丽丽的 manifest 色值）；
+       这里只把它推平成「蛋壳色」：一块纯色（不叠色、不渐变），拿掉大部分饱和度，
+       亮度收到 70% 上下 —— 蛋壳不该是饱和的红或绿的。
+       推平规则写在 research/art-style.md，别在别处再推一遍。 */
+    function hexToHsl(hex) {
+      const m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
+      if (!m) return [45, 90, 60];
+      const n = parseInt(m[1], 16);
+      const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+      const mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn;
+      let h = 0;
+      if (d) {
+        if (mx === r) h = 60 * (((g - b) / d) % 6);
+        else if (mx === g) h = 60 * ((b - r) / d + 2);
+        else h = 60 * ((r - g) / d + 4);
+        if (h < 0) h += 360;
+      }
+      const l = (mx + mn) / 2;
+      const s = d ? d / (1 - Math.abs(2 * l - 1)) : 0;
+      return [h, s * 100, l * 100];
+    }
+    function shellColor(breed) {
+      const [h, s, l] = hexToHsl(breed && breed.color);
+      const ss = Math.round(s * 0.55);
+      const ll = Math.round((78 - (78 - l) * 0.45) * 10) / 10;
+      return `hsl(${Math.round(h)}, ${ss}%, ${ll}%)`;
+    }
     const WEIGHTS = pack.weights || { common: 16, rare: 18, legendary: 2 };
     const PAGES = pages.map((p) => p.id); // 地图即索引：一页一圈舍，圈舍行是普通链接
     const PAGE_NAMES = Object.fromEntries(pages.map((p) => [p.id, p.label]));
@@ -1304,6 +1348,8 @@ const root = document.getElementById('farm');
       egg.style.left = `${x}px`;
       egg.style.top = `${y}px`;
       egg.style.zIndex = String(Math.round(y));
+      /* 蛋壳带这个品种的颜色（见 shellColor）：蛋一落地就知道会孵出什么 */
+      egg.style.color = shellColor(breed);
       egg.innerHTML = '<svg viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-egg"/><g style="opacity:var(--cfcrack,0)"><use href="#farm-sym-egg-cracked"/></g></svg>';
       layer.appendChild(egg);
 
@@ -1343,7 +1389,7 @@ const root = document.getElementById('farm');
       }
       save(); refreshHUD();
 
-      if (!reduce) shells(x, y);
+      if (!reduce) shells(x, y, breed);
       const born = addChick(x, y, breed, true);
       if (born && breed.rarity === 'legendary') born.shockUntil = Date.now() + 2400; // 传说出壳：惊一下
       trimFlock();
@@ -1357,12 +1403,13 @@ const root = document.getElementById('farm');
       }
     }
 
-    function shells(x, y) {
+    function shells(x, y, breed) {
       const s = document.createElement('div');
       s.className = 'farm-shells';
       s.style.left = `${x}px`;
       s.style.top = `${y}px`;
       s.style.zIndex = String(Math.round(y) + 1);
+      s.style.color = shellColor(breed); // 碎壳跟蛋同色
       s.innerHTML = '<svg class="farm-shl farm-shl-b" viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-shell-half"/></svg>' +
         '<svg class="farm-shl farm-shl-t" viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-shelltop"/></svg>';
       layer.appendChild(s);
@@ -1522,6 +1569,10 @@ const root = document.getElementById('farm');
       const sy = 1 + (1.032 - 1) * br;
       c.wob.style.transform = `rotate(${wobA.toFixed(2)}deg) scale(${sx.toFixed(4)}, ${sy.toFixed(4)}) scaleX(${c.flip})`;
       c.el.style.zIndex = String(Math.round(c.y) + 2);
+      /* 这只鸡在干嘛：正在办跨页差事 → 头顶一个跳动的小点（Codex Pets 那一课：
+         宠物是状态指示器，不是装饰。以前「被派去办事了」只写在账本里，画面上看不见。
+         注：礼物不是状态 —— redeemGifts 会当场结算掉，所以只标「办事中」。） */
+      c.el.classList.toggle('is-busy', !!(c.rec && c.rec.task));
     }
 
     function peck(c) {
@@ -2069,6 +2120,10 @@ const root = document.getElementById('farm');
       const sh = stage.clientHeight || 1;
       el.style.left = clamp(d.x * sw - w / 2, 0, Math.max(0, sw - w)) + 'px';
       el.style.top = clamp(d.y * sh - h / 2, 0, Math.max(0, sh - h)) + 'px';
+      /* 夹心层级（VPet FoodAnimation 那一课）：器物按**底边**参与前后排序，
+         鸡是脚的位置 +2。于是鸡走到器物后面时会被器物挡住，踩上去时压住它。
+         （以前器物的 z-index 写死 0，鸡永远在最前，夹心做不出来。） */
+      el.style.zIndex = String(Math.round(d.y * sh + h / 2));
     }
     function placeDeco(id, clientX, clientY) {
       const sr = stage.getBoundingClientRect();
@@ -3009,6 +3064,39 @@ const root = document.getElementById('farm');
       redeemPending(); // 鸡场关着时逛站攒下的奖励，在这里兑现
     }
 
+    /* ===== 见面礼：第一次来的人，不该对着一个空舞台 =====
+       2026-11-04 实测：新访客打开鸡场是「0 只鸡、0 件器物」——
+       他不知道要点空白处下蛋、也不知道器物能摆，首屏零反馈，像坏了。
+       这里给第一次来的人两样东西：
+         1) 自动落一颗蛋 —— 走完整的落地 → 破壳 → 出壳演出（2 秒后出第一只鸡），
+            顺手把「蛋会变成鸡」演给他看。这比任何说明文字都直接。
+         2) 一个空瓷盘 —— 让人看见「场上有东西、可以摆」，也让人有地方喂食。
+       只给一次（state.eggs > 0 就不是新访客了）；
+       「重开鸡场」清完账后，下次打开会再给一次 —— 重来一遍也该有个开始。
+       蛋的品种照常随机：见面礼不暗改概率，图鉴该缺还是缺。 */
+    function firstVisit() {
+      /* 真的是「第一次来」：没下过蛋、没孵过鸡、没摆过器物、没逛过站。
+         只看 eggs 会误判 —— 摆过东西的人（器物在场上）不是新访客，
+         逛过站的人（拿过奖励）也不是。 */
+      const fresh = state.eggs === 0 && state.hatched === 0
+        && !state.chickens.length && !state.decos.length
+        && !(state.visits && state.visits.total > 0);
+      if (!fresh) return;
+      /* 一个空瓷盘：先让人看见「场上有东西」 */
+      if (!Array.isArray(state.decos)) state.decos = [];
+      if (!state.decos.length) {
+        state.decos.push({ id: 'plate', x: 0.24, y: 0.66, at: Date.now() });
+        renderDecos();
+      }
+      /* 一颗蛋：让它自己掉下来。晚一点落，好让人先看清这是个空场 */
+      window.setTimeout(() => {
+        const x = Math.round((stage.clientWidth || 1) * 0.46);
+        const y = Math.round((stage.clientHeight || 1) * 0.62);
+        layEgg(x, y);
+        bubble(x, y, '第一颗蛋。等会儿就出壳。');
+      }, 1100);
+    }
+
     refreshHUD();
     paintArm();   // 货架图标用真图（和摆出来的道具同一张），锁没锁也画
     emitState();
@@ -3320,7 +3408,7 @@ const root = document.getElementById('farm');
       isOpen = true;
       document.body.classList.add('farm-on');
       if (persist) { try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ } }
-      if (!opened) { opened = true; restore(); } // 布局尺寸就绪后再把本页的鸡放回来
+      if (!opened) { opened = true; restore(); firstVisit(); } // 布局尺寸就绪后再把本页的鸡放回来；第一次来的人给个见面礼
       startLoop();
     }
     function closeFarm(persist) {
