@@ -1443,6 +1443,7 @@ const root = document.getElementById('farm');
         timers: [],
         expr: '',        // 当前表情 id（表情表品种才有）
         exprBase: 'calm', // 底表情；眨眼之后回到这里
+        act: '',         // 当前行为（idle/peck/walk…，从行为表抽的）
         noFoodSince: 0,  // 附近没吃的开始时间（久了 → 疑惑）
       };
       let pressT = 0, pressMoved = false; // 长按起名：按下时刻与是否挪动（up 时判 >550ms 且未拖拽才起名）
@@ -1480,12 +1481,98 @@ const root = document.getElementById('farm');
       c.ty = rand(36, Math.max(38, stage.clientHeight - 56));
     }
 
+    /* ===== 行为表（学 Shimeji 的 actions/behaviors 两层分离，2026-11-04）=====
+       「能做什么」= 这张表（在 pack.json 里）；「什么时候做」= 加权 + 触发条件。
+       频率、时长、开关、品种覆盖全在 pack.json —— **改行为不用改引擎代码**。
+       frequency 是相对频率（不要求和为 1），frequency:0 或 enabled:false = 关掉这个行为
+       （Shimeji 的 frequency=0 等价物）。
+       表里没有的行为一律不做；表整个缺失 → 退回「只走路」，
+       **不退回硬编码的默认频率** —— 那会让 pack.json 不再是唯一出处。 */
+    const BEHAVIOR_ACTIONS = ['idle', 'peck', 'walk', 'seekFood', 'eatPlate', 'stand'];
+    const BEHAVIOR_COUNTS = { idle: 0, peck: 0, walk: 0 }; // 累计次数（验收看分布用）
+    const BEHAVIOR_BY_BREED = {}; // 品种 → { idle, peck, walk }：哪只鸡最爱啄
+    function normalizeBehaviors(raw) {
+      const out = {};
+      if (!raw || typeof raw !== 'object') return out;
+      for (const id of Object.keys(raw)) {
+        if (id.charAt(0) === '_') continue;                    // _doc 之类的说明键
+        const b = raw[id];
+        if (!b || typeof b !== 'object') continue;
+        const action = typeof b.action === 'string' ? b.action : id;
+        if (BEHAVIOR_ACTIONS.indexOf(action) < 0) continue;     // 引擎不认的动作不做
+        const trigger = typeof b.trigger === 'string' ? b.trigger : null;
+        const freq = (typeof b.frequency === 'number' && isFinite(b.frequency)) ? b.frequency : 0;
+        /* 条件触发看 enabled；加权行为看 frequency（0 = 关） */
+        const enabled = b.enabled !== false && (trigger ? true : freq > 0);
+        if (!enabled) continue;                                // 关掉的根本不进表
+        let dur = null;
+        if (Array.isArray(b.duration) && b.duration.length === 2) {
+          const a = Number(b.duration[0]), z = Number(b.duration[1]);
+          if (isFinite(a) && isFinite(z)) dur = [Math.min(a, z), Math.max(a, z)];
+        }
+        out[id] = { id, action, frequency: trigger ? 0 : freq, duration: dur, trigger };
+      }
+      return out;
+    }
+    const BASE_BEHAVIORS = normalizeBehaviors(pack.behaviors);
+    /* 品种覆盖（Shimeji 的 per-image-set conf）：breeds[].behaviors 只写要改的键 */
+    const BEHAVIOR_CACHE = new Map();
+    function behaviorsFor(c) {
+      const id = (c && c.breed && c.breed.id) || '';
+      if (BEHAVIOR_CACHE.has(id)) return BEHAVIOR_CACHE.get(id);
+      let t = BASE_BEHAVIORS;
+      const ov = c && c.breed && c.breed.behaviors;
+      if (ov && typeof ov === 'object') {
+        const merged = {};
+        for (const k of Object.keys(pack.behaviors || {})) merged[k] = pack.behaviors[k];
+        for (const k of Object.keys(ov)) {
+          if (!ov[k] || typeof ov[k] !== 'object') continue;
+          merged[k] = Object.assign({}, merged[k] || {}, ov[k]);
+        }
+        t = normalizeBehaviors(merged);
+      }
+      BEHAVIOR_CACHE.set(id, t);
+      return t;
+    }
+    /* 加权抽一个行为（频率是相对权重，不要求和为 1） */
+    function pickBehavior(B) {
+      let total = 0;
+      for (const id of Object.keys(B)) {
+        const b = B[id];
+        if (b.trigger) continue;                    // 条件触发的行为不走加权
+        total += b.frequency;
+      }
+      if (total <= 0) return null;
+      let r = Math.random() * total;
+      for (const id of Object.keys(B)) {
+        const b = B[id];
+        if (b.trigger) continue;
+        r -= b.frequency;
+        if (r <= 0) return b;
+      }
+      return null;
+    }
     function decide(c) {
-      if (c.concert) { c.mode = 'wait'; c.wait = 0.3; return; } // 音乐会受控鸡：站桩等指令
-      const r = Math.random();
-      if (r < 0.32) { c.mode = 'wait'; c.wait = rand(0.7, 1.8); }
-      else if (r < 0.6) { peck(c); c.mode = 'wait'; c.wait = 1.0; }
-      else { c.mode = 'walk'; newTarget(c); }
+      const B = behaviorsFor(c);
+      /* 音乐会受控鸡：站桩等指令（行为表里关掉 stand → 音乐会散场，鸡自由活动） */
+      if (c.concert && B.stand) { c.mode = 'wait'; c.wait = 0.3; return; }
+      const b = pickBehavior(B);
+      /* 表里没有能做的（表缺失，或加权行为全被关掉）→ 至少走走。
+         别让鸡僵在原地 —— 那比「退化」更难看。 */
+      const act = b ? b.action : 'walk';
+      const d = b && b.duration;
+      const w = d ? rand(d[0], d[1]) : 1.0;
+      c.act = act;
+      c.el.dataset.act = act;                 // 此刻在干嘛（看得见，将来 HUD 也要用）
+      BEHAVIOR_COUNTS[act] = (BEHAVIOR_COUNTS[act] || 0) + 1;
+      const bk = (c.breed && c.breed.id) || '';
+      if (bk) {
+        const per = (BEHAVIOR_BY_BREED[bk] = BEHAVIOR_BY_BREED[bk] || {});
+        per[act] = (per[act] || 0) + 1;
+      }
+      if (act === 'peck') { peck(c); c.mode = 'wait'; c.wait = w; }
+      else if (act === 'walk') { c.mode = 'walk'; newTarget(c); }
+      else { c.mode = 'wait'; c.wait = w; }   // idle：发呆
     }
 
     function stepChick(c, dt, t) {
@@ -1517,11 +1604,14 @@ const root = document.getElementById('farm');
       /* 心情低 → 蔫（看得见）；蔫的鸡吃不下东西，得先哄 */
       c.el.classList.toggle('is-glum', chickMood(c) < MOOD_LOW);
       c.eatCool = (c.eatCool || 0) - dt; // 吃一口歇一会儿，别把盘吃穿
-      /* 找吃的：地上的谷子优先；没有就去看盘子里有没有米 */
+      /* 找吃的：地上的谷子优先；没有就去看盘子里有没有米
+         （seekFood / eatPlate 也能在行为表里关掉 —— 「摆出来的东西必须有用」反过来：
+          不想要这个行为就别开） */
       if (c.mode === 'wait') {
-        const g = nearestGrain(c);
+        const B = behaviorsFor(c);
+        const g = B.seekFood ? nearestGrain(c) : null;
         if (g) { c.mode = 'walk'; c.tx = g.x; c.ty = g.y + 6; c.grainTarget = g; }
-        else if (chickMood(c) >= MOOD_LOW && !(c.eatCool > 0)) {
+        else if (B.eatPlate && chickMood(c) >= MOOD_LOW && !(c.eatCool > 0)) {
           const pf = nearestPlateFood(c);
           if (pf) { c.mode = 'walk'; c.tx = pf.p.x; c.ty = pf.p.y + 8; c.plateTarget = pf.d; }
         }
@@ -2927,6 +3017,7 @@ const root = document.getElementById('farm');
         const kr = seat.key.getBoundingClientRect();
         const kx = kr.x + kr.width / 2;
         const ky = kr.y + kr.height * 0.35;
+        if (!behaviorsFor(c).stand) continue;   // 行为表关掉了 stand → 音乐会散场，鸡自由活动
         if (Math.hypot(kx - c.x, ky - c.y) > 8) { c.mode = 'walk'; c.tx = kx; c.ty = ky; }
         else { c.mode = 'wait'; c.wait = 9; }
       }
@@ -3432,6 +3523,12 @@ const root = document.getElementById('farm');
     $('farm-btn-close').addEventListener('click', () => { closeFarm(true); });
     if (prefOn()) openFarm(false);
     window.__coopSnapshot = snapshot; // 引擎块内落存根：挂件晚挂时补首读快照
+    window.__coopBehaviors = () => ({
+      table: BASE_BEHAVIORS, // 当前生效的行为表（品种覆盖后的）
+      counts: Object.assign({}, BEHAVIOR_COUNTS), // 累计次数：idle/peck/walk
+      byBreed: JSON.parse(JSON.stringify(BEHAVIOR_BY_BREED)), // 品种 → 次数（品种覆盖看得见）
+      acts: flock.filter((c) => c && !c.dead).map((c) => ({ breed: (c.breed && c.breed.id) || '', act: c.act || '' })),
+    }); // 行为表 + 分布：验收脚本靠它看「行为有没有变」
   }
   window.__coop = {
     open: () => window.dispatchEvent(new Event('farm:open')),
@@ -3439,6 +3536,7 @@ const root = document.getElementById('farm');
     pages,   // 站点页面表（管家 goto 选项与 system 注入用）
     pack,    // 资产包（dialogue 可在包里覆盖默认剧本树）
     snapshot: () => (window.__coopSnapshot ? window.__coopSnapshot() : null), // 实时账本快照
+    behaviors: () => (window.__coopBehaviors ? window.__coopBehaviors() : null), // 行为表 + 分布（验收/调试用）
   };
   /* 管家挂件：cfg.chat 传入即挂（离线剧本树全功能；api 配置后为真智能体） */
   if (cfg.chat) {

@@ -779,6 +779,44 @@
     "rare": 18,
     "legendary": 2
   },
+  "behaviors": {
+    "_doc": "行为表：鸡做什么、什么频率、能不能关。唯一出处，引擎不存第二份。frequency 是相对频率（不要求和为 1），0 = 关掉这个行为；enabled:false 同样能关。duration=[最短,最长] 秒。动作名：idle 发呆 / peck 啄地 / walk 走走 / seekFood 找地上的谷子 / eatPlate 去盘边吃米 / stand 音乐会站桩。",
+    "idle": {
+      "frequency": 32,
+      "duration": [
+        0.7,
+        1.8
+      ],
+      "note": "发呆（原地等）"
+    },
+    "peck": {
+      "frequency": 28,
+      "duration": [
+        1,
+        1
+      ],
+      "note": "啄地"
+    },
+    "walk": {
+      "frequency": 40,
+      "note": "随便走走"
+    },
+    "seekFood": {
+      "trigger": "grainNear",
+      "enabled": true,
+      "note": "地上有谷子就过去吃"
+    },
+    "eatPlate": {
+      "trigger": "plateHasRice",
+      "enabled": true,
+      "note": "盘里有米就去盘边站着"
+    },
+    "stand": {
+      "trigger": "concert",
+      "enabled": true,
+      "note": "音乐会站桩等指令"
+    }
+  },
   "decos": {
     "plate": {
       "img": "/packs/mujing/deco-plate.png",
