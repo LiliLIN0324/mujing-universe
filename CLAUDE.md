@@ -58,6 +58,21 @@
   `npm run sync:site` 只同步 `src/lib/coop/coop.js`（代码），
   `npm run sync:packs` 同步素材。两个都进 `npm run verify`（在引擎仓跑）。
 - `src/lib/coop/coop.js` 是引擎 `src/coop.js` 的逐字副本，**禁手改**。
+- **素材不齐现在会拦住构建**（2026-11-04 加）：`prebuild` 跑 `scripts/check-packs.mjs`，
+  从 `pack.json` 里读真相，逐个核对表情表精灵图 / 帧表 / 整只图 / rig 分层 / 器物图在不在，
+  还核对 `src/lib/coop/pack.json` 与 `public/packs/mujing/pack.json` 是不是同一份。
+  缺了就**直接报错让构建失败**，不让坏站悄悄发出去。
+  `npm run dev` 用的是 `--warn` 模式（只警告不挡，dev 本来就该能跑）。
+  逃逸：`SKIP_PACKS_CHECK=1 npm run build`。
+
+## 行尾约定（别擅自改）
+- **本仓的约定是 CRLF**（上游丽丽一直这么写，全仓 89 个文本文件都是）。
+  本机 `core.autocrlf=true`，所以 git 比较时会自动归一，diff 显示的是真实改动量。
+- **引擎仓 `C:\coop-js` 相反**：2026-11-04 加了 `.gitattributes`（`* text=auto eol=lf`），
+  统一 LF。那里只有 4 个 CRLF 文件，一次性归一化代价小；本仓 89 个，代价大，**先别动**。
+- 改本仓文件时**按 HEAD 里的行尾写**（脚本重写 JSON 尤其注意：
+  `JSON.stringify(x, null, 2)` 出来是 LF，会让 git diff 变成整文件重写）。
+  跨仓拷素材时更要按目标仓的行尾写、比对时归一化再比。
 
 ## 已完成
 - 精选环 src/scripts/pick-ring.js（WebGL，手机版未改）：旋转环 + 间距/深浅层次/连续拖动惯性吸附/轻悬停；标题是画布下方固定条里的 DOM 文字，淡入淡出；印章移除，声音默认关。已合并 main（#49）。曾试过虚拟弧形方案，被否（压字、丑）。
