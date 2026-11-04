@@ -48,6 +48,10 @@ const httpUrl = (value?: string) => {
 const demoHref = httpUrl(w.demo);
 const repoHref = httpUrl(w.repo);
 const newsHref = httpUrl(w.link);
+/* 改进提案：作品有专属仓库就提到那里，否则提到本站仓；预填标题与当前页面地址。 */
+const feedbackRepo = httpUrl(w.feedback) || httpUrl(w.repo) || 'https://github.com/LiliLIN0324/mujing-universe';
+const feedbackBody = `作品：${w.title}\n页面：https://mujing-universe.pages.dev/works/${w.slug}/\n\n我看到的：\n\n我希望变成：\n`;
+const feedbackHref = `${feedbackRepo.replace(/\.git$/, '')}/issues/new?title=${encodeURIComponent(`[${w.title}] 改进提案`)}&body=${encodeURIComponent(feedbackBody)}`;
 /* 西湖清趣：官网只留一条进壳入口（进度5 收口），壳在 /works/xihu-panorama/shell/ */
 const XIHU_SHELL = w.slug === 'xihu-panorama';
 ---
@@ -217,7 +221,10 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
       </a>
       <a class="wd-back-m" href={backHref}>{backText}<span>{backNote}</span></a>
     </nav>
-    <div class="wd-end"><Cooperate /></div>
+    <div class="wd-end">
+      <Cooperate />
+      <p class="wd-feedback"><a href={feedbackHref} target="_blank" rel="noopener noreferrer">这一页哪里不对？提一条改进 ↗</a></p>
+    </div>
   </section>
 </div>
 {audio && !clipIsAudio && <video id="wd-audio" class="wd-sound" data-src={audio} preload="none" playsinline webkit-playsinline x5-playsinline x5-video-player-type="h5" aria-hidden="true"></video>}
@@ -369,6 +376,9 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
 .wd-fig img { width: 100%; display: block; }
 .wd-pn { margin: 128px var(--page-pad) 0; border-top: 1px solid var(--rule); display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 40px 0 30px; }
 .wd-end { margin: 8px var(--page-pad) 48px; }
+.wd-feedback { margin-top: 20px !important; font-size: 13px; line-height: 1.7; letter-spacing: 0.08em; color: var(--faint); }
+.wd-feedback a { color: inherit; text-underline-offset: 3px; }
+.wd-feedback a:hover { color: var(--ink); }
 .wd-pn .k { font-size: 12px; line-height: normal; letter-spacing: 0.22em; color: var(--faint); margin-bottom: 10px !important; }
 .wd-back { display: inline-block; font-size: 14px; line-height: normal; letter-spacing: 0.12em; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--ink); padding-bottom: 3px; }
 .wd-next { text-align: right; color: inherit; text-decoration: none; }
