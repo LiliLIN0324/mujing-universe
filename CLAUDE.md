@@ -15,6 +15,35 @@
 - 文案用大家一听就懂的朴素说法，不要生造词。
 - 上线、买域名、对外发布前先问用户。
 
+## 图床：作品图在 R2（踩过坑，别再踩）
+- 图在 `https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig`，**只有真实存在的文件才画得出来**。
+  R2 对不存在的对象返回 **404 + `text/html`** → Chrome 的 ORB 直接拦掉，
+  **`<img>` 连 error 事件都不触发** → `Base.astro` 里那个 `img[data-r2]` 全局兜底**接不住**，
+  结果就是作品页画廊留一格一格空白。
+- 所以规矩是：**`src/content/works/*.json` 的 `images` 只列 R2 上真实存在的文件**。
+  加图先上传 R2，再把文件名写进 JSON；反过来（先写 JSON 后传）就会留空白格子。
+  2026-11-03 已按 R2 实际内容把 15 件作品的 images 从各 100 张裁到 5–44 张。
+- 展开规则在 `src/lib.ts` 的 `allWorks()`：写全 URL 照旧；**以 `/` 开头的站内相对路径照旧**
+  （`public/` 下的东西，别再拼 R2 前缀——`mimi-agent` 的封面就踩过这个）；
+  其它（只写文件名）展开成 `fig/<slug>/<文件>`。
+- 体检脚本：`workspace/audit-r2-images.cjs` 全站查 R2 真实存在的文件并输出 `r2-image-audit.json`，
+  `workspace/trim-work-images.mjs` 按体检结果裁 JSON（`--apply` 才落盘）。
+
+## 鸡场美术素材：本地有，库里没有（2026-11-04）
+- `public/packs/mujing/`（器物图、9 个品种的表情表、universe01 分层图）和
+  `src/lib/coop/packs/mujing/` **都不在 git 里**，已在 `.gitignore` 里排除。
+  原因：官网仓是**公开仓**，而 `pack.json` 里明写「授权条款（CC BY 4.0 / CC BY-NC）
+  确认前请勿公开分发本包美术」——批量新增的美术不能进公开仓。
+  （这跟 `public/_preview-portraits/` 立绘不入库是同一个理由。）
+- **所以构建/部署前必须在引擎仓跑 `npm run sync:packs`**（`C:\coop-js`），
+  它把 `packs/mujing/` 的运行时集合同步到本站 `public/packs/mujing/`，
+  并把 `pack.json` 同步到 `src/lib/coop/pack.json`。
+  漏了这一步 → 构建出来的站上器物/品种图全 404。
+- 代码同步和素材同步是**两条线**：
+  `npm run sync:site` 只同步 `src/lib/coop/coop.js`（代码），
+  `npm run sync:packs` 同步素材。两个都进 `npm run verify`（在引擎仓跑）。
+- `src/lib/coop/coop.js` 是引擎 `src/coop.js` 的逐字副本，**禁手改**。
+
 ## 已完成
 - 精选环 src/scripts/pick-ring.js（WebGL，手机版未改）：旋转环 + 间距/深浅层次/连续拖动惯性吸附/轻悬停；标题是画布下方固定条里的 DOM 文字，淡入淡出；印章移除，声音默认关。已合并 main（#49）。曾试过虚拟弧形方案，被否（压字、丑）。
 

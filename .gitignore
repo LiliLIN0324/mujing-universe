@@ -5,6 +5,11 @@ dist/
 *.log
 # local-only preview copies of artist portraits (served when R2 object is missing in dev)
 public/_preview-portraits/
+
+# 鸡场美术素材：不入库（本仓是公开仓，pack.json 明写「授权条款确认前请勿公开分发本包美术」）
+# 器物图 / 9 个品种的表情表 / universe01 分层图 —— 构建或部署前在引擎仓跑 npm run sync:packs 生成
+public/packs/
+src/lib/coop/packs/
 .import-tmp/
 .patch-*.cjs
 
