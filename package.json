@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "node scripts/check-fonts.mjs",
+    "predev": "node scripts/check-packs.mjs --warn",
+    "prebuild": "node scripts/check-fonts.mjs && node scripts/check-packs.mjs",
     "build": "astro build",
+    "check:packs": "node scripts/check-packs.mjs",
     "fonts": "python scripts/subset-fonts.py",
     "fetch-covers": "node scripts/fetch-ring-covers.mjs",
     "preview": "astro preview --port 4471 --host 127.0.0.1"
