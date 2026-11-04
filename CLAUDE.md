@@ -29,6 +29,21 @@
 - 体检脚本：`workspace/audit-r2-images.cjs` 全站查 R2 真实存在的文件并输出 `r2-image-audit.json`，
   `workspace/trim-work-images.mjs` 按体检结果裁 JSON（`--apply` 才落盘）。
 
+## 字体子集：src 里出现新用字，构建会直接失败（2026-11-04）
+- `npm run build` 前有 prebuild 检查（`scripts/check-fonts.mjs`）：`src/` 里出现的每个字
+  都必须已经在字体子集里；缺字就自动重跑 `scripts/subset-fonts.py` 重新生成 woff2，
+  **本机没有 Python + fonttools 就直接构建失败**（不是警告，是 exit 1）。
+- 任何新增中文内容之后，第一次构建大概率撞这个坑。2026-11-04 合上游后
+  鸡场的器物名一次引进 63 个新字（瓷 竹 露 篓 缸 脸 蔫 盹 攒 胶 肤 磁 钉 镜 锁 陶 …）。
+- 补字步骤：
+  1. `npm install` —— 装 devDependency `@fontpkg/alibaba-pu-hui-ti-3-0`，
+     **TTF 源在 `node_modules/@fontpkg/alibaba-pu-hui-ti-3-0/`，之前常没装**，没装就补不了字。
+  2. `npm run fonts` —— 需要 Python + `fonttools` + `brotli`；脚本会重生成三个字重的
+     woff2，并自动更新 `global.css` 与 `Base.astro` 里的 `?v=` 版本号。
+  3. 把 woff2 + `scripts/font-charset.json` + 两处版本号一起提交。
+- 字体子集只含 `src/` 里出现过的字；**运行时才生成的文案（聊天回复等）不在源文件里，
+  遇到生僻字会回退系统字体**。
+
 ## 鸡场美术素材：本地有，库里没有（2026-11-04）
 - `public/packs/mujing/`（器物图、9 个品种的表情表、universe01 分层图）和
   `src/lib/coop/packs/mujing/` **都不在 git 里**，已在 `.gitignore` 里排除。
