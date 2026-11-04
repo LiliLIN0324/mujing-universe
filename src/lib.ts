@@ -15,11 +15,13 @@ export async function allWorks() {
       || (WORKS_RANK[a.slug] ?? 0) - (WORKS_RANK[b.slug] ?? 0)
       || (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
   });
-  // 图床简写：JSON 里写文件名即可，统一在这里展开成 fig/<slug>/<文件>；写全 URL 的照旧
+  // 图床简写：JSON 里写文件名即可，统一在这里展开成 fig/<slug>/<文件>；
+  // 写全 URL 的照旧；以 / 开头的站内相对路径也照旧（public/ 下的东西，别再拼 R2 前缀）。
+  const isAbs = (s: string) => /^https?:\/\//i.test(s) || s.startsWith('/');
   return ws.map((w,i) => ({
     ...w,
-    images: (w.images ?? []).map((src) => (/^https?:\/\//.test(src) ? src : `${R2_FIG}/${w.slug}/${src}`)),
-    icon: w.icon && !/^https?:\/\//.test(w.icon) ? `${R2_FIG}/${w.slug}/${w.icon}` : w.icon,
+    images: (w.images ?? []).map((src) => (isAbs(src) ? src : `${R2_FIG}/${w.slug}/${src}`)),
+    icon: w.icon && !isAbs(w.icon) ? `${R2_FIG}/${w.slug}/${w.icon}` : w.icon,
     no: String(i+1).padStart(2,'0'),
   }));
 }

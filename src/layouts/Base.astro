@@ -173,13 +173,27 @@ themeBtn?.addEventListener('click', () => {
   applyTheme(dark);
   try { localStorage.setItem('mj-theme', dark ? 'dark' : 'light'); } catch (e) {}
 });
-document.querySelectorAll('img[data-r2]').forEach(img => img.addEventListener('error', () => {
-  img.closest('[data-hide-on-err]')?.remove() ?? img.remove();
-}));
-// 鸡场蛋按钮：静态构建看不到 query，客户端把 href/标签纠正（?farm=1 时点一下回干净地址）。
+/* 坏图兜底（2026-11-04）：
+   R2 对不存在的对象回 404 + text/html，Chrome 的 ORB 会拦掉 —— 实测此时 <img> 仍会触发 error，
+   所以这里能收到。但不保险的浏览器可能只把图算成"加载完但没内容"，所以 load 后再查一次 naturalWidth。
+   两道都做：整格收起（data-hide-on-err 的父级），没有父级就只删图本身。
+   注意：原来写的是 `a?.remove() ?? b.remove()` —— `?.remove()` 返回 undefined，
+   `??` 会让右侧也执行，属于误写，这里改成明确的 if/else。 */
+const dropBroken = (img) => {
+  const holder = img.closest('[data-hide-on-err]');
+  if (holder) holder.remove();
+  else img.remove();
+};
+document.querySelectorAll('img[data-r2]').forEach(img => {
+  if (img.complete) { if (img.naturalWidth === 0) dropBroken(img); return; }
+  img.addEventListener('load', () => { if (img.naturalWidth === 0) dropBroken(img); });
+  img.addEventListener('error', () => dropBroken(img));
+});
+// 鸡场蛋按钮：静态构建看不到 query，客户端把 href/标签纠正（?farm=1 / ?farm=0 时点一下回干净地址）。
 const eggBtn = document.querySelector('a.farm-egg');
-if (eggBtn && new URLSearchParams(location.search).get('farm') === '1') {
-  eggBtn.setAttribute('href', location.pathname);
+if (eggBtn) {
+  const farmFlag = new URLSearchParams(location.search).get('farm');
+  if (farmFlag === '1' || farmFlag === '0') eggBtn.setAttribute('href', location.pathname);
 }
 // 三入口一致（浮层 chips / 合作页 chips / 页脚蛋）：蛋 = 开↔收，同一 farm:toggle；
 // 收起后 ChickenFarm 移除 body.farm-on，全站 cursor 恢复。标签随状态同步。
@@ -193,6 +207,8 @@ if (eggBtn) {
   syncEgg();
 }
 </script>
+<!-- 页脚鸡场入口保持朴素链接：蛋图标 + 「小鸡」文字，样式走 global.css 的 .farm-egg。
+     2026-11-03 撤掉了这里的「胶带标签」皮肤——纯装饰不算功能，先把功能定下来再谈外观。 -->
 {!isContact && <MimiChat />}
 </body>
 </html>
