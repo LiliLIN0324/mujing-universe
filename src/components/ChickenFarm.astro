@@ -34,6 +34,9 @@ const farmContent = [
   ...works.map((w) => ({
     id: 'work:' + w.slug, kind: 'work', label: '新作品',
     title: w.title, text: cut(w.description), href: '/works/' + w.slug + '/',
+    /* 地图上谷仓边的作品架要缩略图：机制在引擎，内容在站侧（作品天天在变） */
+    cover: w.icon || (w.images && w.images[0]) || '',
+    place: 'works',
   })),
   ...newsRows.map((n) => ({
     id: 'news:' + n.id, kind: 'news', label: '新动态',

@@ -692,13 +692,33 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   a.farm-maprow:hover { background: var(--orange); color: var(--white); }
   /* 鸡场地图（真的那张）：一块地 = 一个地方 = 一个站页面。
      画法照 art-style.md：扁平色块、墨色轮廓、色块间白色描边、禁渐变禁阴影。 */
-  .farm-mapart { display: flex; justify-content: center; margin: 0 0 12px; }
-  .farm-mapart svg { width: 100%; max-width: 400px; height: auto; display: block; font-family: inherit; }
+  .farm-mapart { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 12px; }
+  /* 视口：地图装在里面，可以放大平移（手机端看得清） */
+  .farm-mapart .mp-view { position: relative; width: 100%; max-width: 400px; overflow: hidden; border-radius: 6px; touch-action: none; cursor: grab; }
+  .farm-mapart .mp-view.is-drag { cursor: grabbing; }
+  .farm-mapart svg { width: 100%; max-width: 400px; height: auto; display: block; font-family: inherit; transform-origin: 0 0; }
   .farm-mapart .mp-name { font-size: 12px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
   .farm-mapart .mp-num { font-size: 10px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
   .farm-mapart .mp-n { font-size: 9px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+  .farm-mapart .mp-ch { font-size: 7px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
   .farm-mapart a.mp-plot { cursor: pointer; }
   .farm-mapart g.mp-plot.is-off { cursor: not-allowed; }
+  /* 悬停地块：草地描边变橙、手绘虚线圈变实线（没通路的灰地不响应） */
+  .farm-mapart .mp-ground { transition: stroke .12s ease, stroke-width .12s ease; }
+  .farm-mapart a.mp-plot:hover .mp-ground,
+  .farm-mapart a.mp-plot:focus-visible .mp-ground { stroke: var(--orange); stroke-width: 3; }
+  .farm-mapart a.mp-plot:hover .mp-ring,
+  .farm-mapart a.mp-plot:focus-visible .mp-ring { stroke: var(--orange); stroke-width: 2.6; stroke-dasharray: none; }
+  .farm-mapart a.mp-plot:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .farm-mapart a.mp-cover { cursor: pointer; }
+  .farm-mapart a.mp-cover:hover rect,
+  .farm-mapart a.mp-cover:focus-visible rect { stroke: var(--orange); stroke-width: 2; }
+  /* 工具条：放大 / 缩小 / 复位（手机端靠它放大） */
+  .farm-mapart .mp-tools { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .farm-mapart .mp-btn { min-width: 34px; height: 30px; padding: 0 8px; border: 2px solid var(--ink); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 15px; line-height: 1; cursor: pointer; }
+  .farm-mapart .mp-btn:hover { background: var(--orange); color: var(--white); }
+  .farm-mapart .mp-btn:active { transform: translateY(1px); }
+  .farm-mapart .mp-hint { font-size: 11px; color: var(--gray); }
   /* 整理台的动作行（散场 / 召回）：按钮要抹平浏览器默认样式。
      底色跟统计行区分开 —— 不然玩家以为那也是一行数字，不会去点。 */
   button.farm-maprow {
@@ -2817,6 +2837,197 @@ const root = document.getElementById('farm');
       },
     };
 
+    /* ===== 地图的四件配套（2026-11-05 夜）=====
+       ① 鸡在地图上动：每块地按该页鸡数画小鸡，在院里走来走去（地图是活的，不是摆件）
+       ② 悬停地块高亮：草地描边变橙、手绘虚线圈变实线（纯 CSS，不改引擎逻辑）
+       ③ 手机端可放大：视口 + 放大/缩小/复位按钮 + 拖动 + 双指捏合
+       ④ 作品上图：站侧推来的作品摆在谷仓边的架子上，点一下直接进那个作品 */
+    let mapBirds = [];                     // 地图上走动的小鸡
+    let mapView = { k: 1, x: 0, y: 0 };    // 缩放 / 平移（px）
+    let mapMoved = false;                  // 刚拖过 → 别把这一下点击当成跳转
+    let mapViewEl = null;                  // 当前地图视口（每次开地图换一个新元素）
+
+    /* 地图上的小鸡：头朝右的一只黄小鸡（线比场上细，地图比场上小） */
+    function mapBirdShape(g) {
+      add(g, 'ellipse', { cx: -1.4, cy: 0, rx: 3.4, ry: 2.6, fill: 'var(--yellow)', stroke: 'var(--ink)', 'stroke-width': 1 });
+      add(g, 'circle', { cx: 0.9, cy: -1.8, r: 2, fill: 'var(--yellow)', stroke: 'var(--ink)', 'stroke-width': 1 });
+      add(g, 'path', { d: 'M2.8,-1.9 L4.9,-1.2 L2.8,-0.7 Z', fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 0.8, 'stroke-linejoin': 'round' });
+      add(g, 'ellipse', { cx: 0.3, cy: -3.7, rx: 1.2, ry: 0.8, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 0.8 });
+      add(g, 'circle', { cx: 1.8, cy: -2.3, r: 0.45, fill: 'var(--ink)' });
+    }
+
+    /* ④ 作品架：works 这类地方的旁边摆一个架子，架子上是站侧推来的作品缩略图。
+       内容在站侧（作品天天在变），引擎只管怎么摆、怎么点。 */
+    function drawMapShelves(svg, cfg) {
+      const works = contentItems.filter((it) => it && it.kind === 'work');
+      if (!works.length) return;
+      Object.keys(cfg.places || {}).forEach((id) => {
+        const p = cfg.places[id];
+        const sh = p && p.shelf;
+        if (!sh) return;
+        const mine = works.filter((w) => (w.place || id) === id);
+        if (!mine.length) return;
+        const n = Math.min(mine.length, sh.n || 4);
+        const cw = sh.w || 12, ch = sh.h || 9, gap = sh.gap || 3;
+        const total = n * cw + (n - 1) * gap;
+        const at = sh.at || [p.at[0], p.at[1] + 26];
+        const x0 = at[0] - total / 2;
+        const y0 = at[1];
+        const g = add(svg, 'g', { class: 'mp-shelf' });
+        /* 架子：一条木板 + 两条腿 */
+        add(g, 'rect', { x: x0 - 2.6, y: y0 + ch + 1.2, width: total + 5.2, height: 2.4, rx: 1, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.4 });
+        add(g, 'rect', { x: x0 - 0.6, y: y0 + ch + 3.4, width: 1.6, height: 3.4, fill: 'var(--ink)' });
+        add(g, 'rect', { x: x0 + total - 1, y: y0 + ch + 3.4, width: 1.6, height: 3.4, fill: 'var(--ink)' });
+        mine.slice(0, n).forEach((w, i) => {
+          const x = x0 + i * (cw + gap);
+          const a = add(g, 'a', { href: w.href || '#', class: 'mp-cover' });
+          const ttl = add(a, 'title', {});
+          ttl.textContent = w.title || '';
+          add(a, 'rect', { x, y: y0, width: cw, height: ch, fill: 'var(--white)', stroke: 'var(--ink)', 'stroke-width': 1.3, 'stroke-linejoin': 'round' });
+          if (w.cover) {
+            add(a, 'image', { href: w.cover, x: x + 1.2, y: y0 + 1.2, width: cw - 2.4, height: ch - 2.4, preserveAspectRatio: 'xMidYMid slice' });
+          } else {
+            add(a, 'rect', { x: x + 1.2, y: y0 + 1.2, width: cw - 2.4, height: ch - 2.4, fill: 'var(--paper)' });
+            const t = add(a, 'text', { x: x + cw / 2, y: y0 + ch / 2 + 2.4, class: 'mp-ch' });
+            t.textContent = (w.title || '?').slice(0, 1);
+          }
+        });
+      });
+    }
+
+    /* ① 地图上的小鸡：在院子里绕着走（跟着主循环跑，面板关着就不动） */
+    function mapTick(t) {
+      if (!mapBirds.length) return;
+      const panel = $('farm-map');
+      if (!panel || panel.hidden) return;
+      for (const b of mapBirds) {
+        const a = b.phase + t * b.speed;
+        const x = b.cx + Math.cos(a) * b.rx;
+        const y = b.cy + Math.sin(a * 1.6) * b.ry;
+        const dir = Math.cos(a) < 0 ? -1 : 1;
+        const bob = Math.sin(t * 7 + b.phase * 3) * 0.35;
+        b.el.setAttribute('transform', `translate(${x.toFixed(2)} ${(y + bob).toFixed(2)}) scale(${dir} 1)`);
+      }
+    }
+
+    /* ③ 缩放 / 平移：CSS transform 作用在 svg 上，视口负责裁切 */
+    function mapApply() {
+      const host = $('farm-mapart');
+      const svg = host && host.querySelector('svg');
+      if (!svg) return;
+      svg.style.transform = `translate(${mapView.x.toFixed(1)}px, ${mapView.y.toFixed(1)}px) scale(${mapView.k.toFixed(3)})`;
+      const view = host.querySelector('.mp-view');
+      if (view) view.style.touchAction = mapView.k > 1.001 ? 'none' : 'pan-y';
+    }
+    function mapClamp() {
+      const host = $('farm-mapart');
+      const view = host && host.querySelector('.mp-view');
+      if (!view) return;
+      const w = view.clientWidth || 1;
+      const h = view.clientHeight || 1;
+      const k = mapView.k;
+      if (k <= 1.001) { mapView.x = 0; mapView.y = 0; return; }
+      mapView.x = Math.min(6, Math.max(w * (1 - k) - 6, mapView.x));
+      mapView.y = Math.min(6, Math.max(h * (1 - k) - 6, mapView.y));
+    }
+    function mapZoomAt(factor, px, py) {
+      const host = $('farm-mapart');
+      const view = host && host.querySelector('.mp-view');
+      if (!view) return;
+      const k0 = mapView.k;
+      const k1 = Math.min(4, Math.max(1, k0 * factor));
+      if (Math.abs(k1 - k0) < 0.001) return;
+      const r = view.getBoundingClientRect();
+      const cx = px == null ? r.width / 2 : px;
+      const cy = py == null ? r.height / 2 : py;
+      mapView.x = cx - (cx - mapView.x) * (k1 / k0);
+      mapView.y = cy - (cy - mapView.y) * (k1 / k0);
+      mapView.k = k1;
+      mapClamp();
+      mapApply();
+    }
+    function mapReset() {
+      mapView.k = 1; mapView.x = 0; mapView.y = 0;
+      mapApply();
+    }
+
+    /* ③ 手势：拖动平移 + 双指捏合缩放 + Ctrl/Cmd + 滚轮缩放。
+       普通滚轮不拦 —— 让它照常滚页面；地图缩放交给按钮、捏合和 Ctrl+滚轮。
+       坑：pointerdown 就 setPointerCapture 的话，click 的目标会变成视口 div，
+       里面的 <a> 就不跳了 —— 所以**不抢指针**，改成拖动开始才接管，
+       并且 pointermove/pointerup 挂在 window 上（拖出地图外也跟得住）。 */
+    const mapPts = new Map();
+    let mapDrag = null;
+    let mapPinch = null;
+    function mapPointerMove(e) {
+      const view = mapViewEl;
+      if (!view || !mapPts.has(e.pointerId)) return;
+      mapPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (mapPts.size >= 2 && mapPinch) {
+        const [a, b] = [...mapPts.values()];
+        const d = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+        const r = view.getBoundingClientRect();
+        const k1 = Math.min(4, Math.max(1, mapPinch.k * (d / mapPinch.d)));
+        const cx = (a.x + b.x) / 2 - r.left;
+        const cy = (a.y + b.y) / 2 - r.top;
+        mapView.x = cx - (cx - mapView.x) * (k1 / mapPinch.k);
+        mapView.y = cy - (cy - mapView.y) * (k1 / mapPinch.k);
+        mapView.k = k1;
+        mapClamp(); mapApply(); mapMoved = true;
+        return;
+      }
+      if (!mapDrag) return;
+      const dx = e.clientX - mapDrag.x;
+      const dy = e.clientY - mapDrag.y;
+      if (!mapDrag.moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) mapDrag.moved = true;
+      if (!mapDrag.moved) return;
+      mapView.x = mapDrag.vx + dx;
+      mapView.y = mapDrag.vy + dy;
+      mapClamp(); mapApply(); mapMoved = true;
+    }
+    function mapPointerEnd(e) {
+      mapPts.delete(e.pointerId);
+      if (mapPts.size < 2) mapPinch = null;
+      if (mapPts.size === 0) mapDrag = null;
+    }
+    function mapWinInit() {
+      if (window.__farmMapWinBound) return;
+      window.__farmMapWinBound = true;
+      window.addEventListener('pointermove', mapPointerMove);
+      window.addEventListener('pointerup', mapPointerEnd);
+      window.addEventListener('pointercancel', mapPointerEnd);
+    }
+    function mapBindView() {
+      const host = $('farm-mapart');
+      const view = host && host.querySelector('.mp-view');
+      mapViewEl = view;
+      mapWinInit();
+      if (!view) return;
+      view.addEventListener('pointerdown', (e) => {
+        mapPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        mapMoved = false;
+        if (mapPts.size >= 2) {
+          const [a, b] = [...mapPts.values()];
+          mapPinch = { d: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), k: mapView.k };
+          mapDrag = null;
+        } else {
+          mapDrag = { x: e.clientX, y: e.clientY, vx: mapView.x, vy: mapView.y, moved: false };
+        }
+      });
+      /* 拖过之后别把这一下点击当成「点地方跳转」 */
+      view.addEventListener('click', (e) => {
+        if (!mapMoved) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }, true);
+      view.addEventListener('wheel', (e) => {
+        if (!(e.ctrlKey || e.metaKey)) return;
+        e.preventDefault();
+        const r = view.getBoundingClientRect();
+        mapZoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top);
+      }, { passive: false });
+    }
+
     function renderMapArt(snap) {
       const host = $('farm-mapart');
       if (!host) return false;
@@ -2824,13 +3035,20 @@ const root = document.getElementById('farm');
       if (!cfg || !cfg.places || !Object.keys(cfg.places).length) {
         host.innerHTML = '';
         host.hidden = true;
+        mapBirds = [];
         return false;
       }
       host.hidden = false;
       host.innerHTML = '';
+      mapBirds = [];
+      /* 视口：地图装在里面，能放大平移（手机端看得清）；工具条放在地图下面 */
+      const view = document.createElement('div');
+      view.className = 'mp-view';
+      view.id = 'farm-mapview';
+      host.appendChild(view);
       const W = cfg.width || 360;
       const H = cfg.height || 250;
-      const svg = add(host, 'svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.title || '鸡场地图' });
+      const svg = add(view, 'svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.title || '鸡场地图' });
       /* 纸底 + 手绘虚线边框（像一张摊在桌上的地图） */
       add(svg, 'rect', { x: 3, y: 3, width: W - 6, height: H - 6, rx: 6, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-dasharray': '7 5' });
       /* 河：白边垫底 + 蓝带（色块之间白色描边） */
@@ -2873,9 +3091,10 @@ const root = document.getElementById('farm');
           ? `${p.name || PAGE_NAMES[id]}（${PAGE_NAMES[id]}）· ${n} 只 · 点过去看看`
           : `${p.name || id} · 还没通路`;
         /* 草地 */
-        add(g, 'polygon', { points: (p.ground || []).map((q) => q.join(',')).join(' '), fill: live ? 'var(--green)' : 'var(--gray)', stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
+        add(g, 'polygon', { class: 'mp-ground', points: (p.ground || []).map((q) => q.join(',')).join(' '), fill: live ? 'var(--green)' : 'var(--gray)', stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
         /* 手绘圈（虚线椭圆，art-style §3.4） */
         add(g, 'circle', {
+          class: 'mp-ring',
           cx: x, cy: y - 4, r: 17, fill: 'none',
           stroke: here ? 'var(--orange)' : (live ? 'var(--ink)' : 'var(--gray)'),
           'stroke-width': here ? 2.6 : 2,
@@ -2885,6 +3104,25 @@ const root = document.getElementById('farm');
         const gg = add(g, 'g', { transform: `translate(${x} ${y - 4})` });
         const gl = MAP_GLYPHS[p.glyph];
         if (gl) gl(gg);
+        /* ① 这块地上有几只鸡，就画几只小鸡在院里走来走去（地图是活的，不是摆件） */
+        const birds = live ? Math.min(n, 8) : 0;
+        if (birds > 0) {
+          const fg = add(g, 'g', { class: 'mp-flock' });
+          for (let i = 0; i < birds; i += 1) {
+            const b = add(fg, 'g', { class: 'mp-bird' });
+            mapBirdShape(b);
+            mapBirds.push({
+              el: b,
+              cx: x,
+              cy: y + 4,
+              /* 在院子前头绕着走（多在地标脚下，不压在地标身上），还在手绘圈里 */
+              rx: 12.5 + (i % 3) * 1.6,
+              ry: 4.5 + (i % 2) * 2,
+              phase: i * 2.399 + (x % 9) * 0.37,
+              speed: 0.22 + (i % 4) * 0.06,
+            });
+          }
+        }
         /* 地名 */
         const nm = add(g, 'text', { x: x, y: y + 24, class: 'mp-name' });
         nm.textContent = p.name || PAGE_NAMES[id] || id;
@@ -2897,9 +3135,11 @@ const root = document.getElementById('farm');
         /* 「你在这儿」的小旗 */
         if (here) {
           add(g, 'line', { x1: x - 15, y1: y - 21, x2: x - 15, y2: y - 32, stroke: 'var(--ink)', 'stroke-width': 1.8, 'stroke-linecap': 'round' });
-          add(g, 'polygon', { points: `${x - 15},${y - 32} ${x - 5},${y - 28.5} ${x - 15},${y - 25}`, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
+          add(g, 'polygon', { class: 'mp-flag', points: `${x - 15},${y - 32} ${x - 5},${y - 28.5} ${x - 15},${y - 25}`, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
         }
       });
+      /* ④ 作品架：站侧推来的作品摆在谷仓边的架子上，点一下直接进那个作品 */
+      drawMapShelves(svg, cfg);
       /* 罗盘：告诉人哪边是北 */
       const ccx = W - 34;
       const ccy = 26;
@@ -2907,11 +3147,34 @@ const root = document.getElementById('farm');
       add(svg, 'polygon', { points: `${ccx},${ccy - 8} ${ccx + 4},${ccy + 3} ${ccx},${ccy} ${ccx - 4},${ccy + 3}`, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.4, 'stroke-linejoin': 'round' });
       const nt = add(svg, 'text', { x: ccx, y: ccy - 14, class: 'mp-n' });
       nt.textContent = 'N';
+      /* ③ 工具条：放大 / 缩小 / 复位（手机端靠它看清地名和作品） */
+      const tools = document.createElement('div');
+      tools.className = 'mp-tools';
+      const mkBtn = (label, title, fn) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'mp-btn';
+        b.textContent = label;
+        b.setAttribute('aria-label', title);
+        b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); fn(); });
+        return b;
+      };
+      tools.appendChild(mkBtn('放大', '放大地图', () => mapZoomAt(1.4)));
+      tools.appendChild(mkBtn('缩小', '缩小地图', () => mapZoomAt(1 / 1.4)));
+      tools.appendChild(mkBtn('复位', '复位地图', () => mapReset()));
+      const hint = document.createElement('span');
+      hint.className = 'mp-hint';
+      hint.textContent = '能拖着走，双指能捏大';
+      tools.appendChild(hint);
+      host.appendChild(tools);
+      mapBindView();
       return true;
     }
 
     function openMap() {
       const snap = snapshot();
+      /* 每次开地图都从头看（上次放大到哪儿跟这次无关） */
+      mapView.k = 1; mapView.x = 0; mapView.y = 0;
       /* 地图（真的那张）。没有 map 段的老包 → 退回列表视图 */
       const useMap = renderMapArt(snap);
       const titleEl = $('farm-map-title');
@@ -2978,10 +3241,11 @@ const root = document.getElementById('farm');
       try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ }
     });
 
-    /* 地图上点地方 = 跳到那一页（跟列表行同一套：先记「开」偏好，落地页自动开鸡场） */
+    /* 地图上点地方 = 跳到那一页（跟列表行同一套：先记「开」偏好，落地页自动开鸡场）
+       作品架上的封面同理：点一下直接进那个作品 */
     $('farm-mapart').addEventListener('click', (e) => {
       if (!e.target || !e.target.closest) return;
-      if (!e.target.closest('a.mp-plot')) return;
+      if (!e.target.closest('a.mp-plot, a.mp-cover')) return;
       try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ }
     });
 
@@ -3895,6 +4159,8 @@ const root = document.getElementById('farm');
           title,
           text: String(raw.text || '').trim(),
           href: String(raw.href || '').trim(),
+          cover: String(raw.cover || '').trim(),   // 地图上的作品架用（站侧给封面）
+          place: String(raw.place || '').trim(),   // 摆到哪块地上（站侧给）
           src: 'site',
         };
         const i = contentItems.findIndex((x) => x.id === id);
@@ -4737,6 +5003,7 @@ const root = document.getElementById('farm');
       }
       for (const c of flock) if (!c.dead) stepChick(c, dt, t);
       for (const c of flock) if (!c.dead) footPiano(c);
+      mapTick(t);                            // 地图打开时，院里的小鸡在走动
       if (flock.some((c) => c.dead)) flock = flock.filter((c) => !c.dead);
       if (taskClock++ % 60 === 0) {
         checkTasks(); refreshMood(); refreshExpr();

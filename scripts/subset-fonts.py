@@ -76,7 +76,7 @@ json.dump({'generated': datetime.date.today().isoformat(), 'chars': text},
           open(MANIFEST, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 new_v = hashlib.sha1(text.encode('utf-8')).hexdigest()[:8]
 import re
-pat = re.compile(r'(AlibabaPuHuiTi-3-\d+-[A-Za-z]+\.woff2)\?v=\d+')
+pat = re.compile(r'(AlibabaPuHuiTi-3-\d+-[A-Za-z]+\.woff2)\?v=[0-9a-f]+')
 changed = False
 for target in (CSS, LAYOUT):
     text_old = open(target, encoding='utf-8').read()
