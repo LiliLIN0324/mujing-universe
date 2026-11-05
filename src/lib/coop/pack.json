@@ -4,7 +4,7 @@
     "title": "幕景默认包",
     "artist": "林丽丽",
     "avatar": "packs/mujing/mimi.png",
-    "license": "TBD — 授权条款（CC BY 4.0 / CC BY-NC）确认前请勿公开分发本包美术",
+    "license": "CC BY-NC 4.0 — © 2026 林丽丽。允许自由署名转载与演绎，禁止商用（含改编后商用）。转载须署名「林丽丽 / 幕景宇宙」并注明是否修改，许可证 https://creativecommons.org/licenses/by-nc/4.0/",
     "note": "色音映射为斯克里亚宾调性-色彩圈：黄=D4 橙=G3 绿=A3 蓝白=E4 粉=Bb3 灰=Eb3 金=C 大三琶音。sprite 同目录 sprite.svg（symbol id：youji/shiji/douji/wuji/taoji/guizu/yuanbao/egg/egg-cracked/shell-half/shelltop/feather）。",
     "rive": "packs/mujing/mimi.riv"
   },

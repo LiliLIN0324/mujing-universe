@@ -8,7 +8,7 @@
  * coop.js v0.1.0 — 一行 script 给任何网站养一群鸡
  * 光标小鸡 · 点空白下蛋 · 图鉴收集（软保底/概率公示）· 跨页账本 · 触发点微光 · 品种音高
  * 零依赖、零追踪、localStorage 本地账。MIT。
- * 引擎与行为规范：web-pet-layer skill；默认美术包 © 林丽丽（授权条款确认前请勿公开分发本包）。
+ * 引擎与行为规范：web-pet-layer skill；默认美术包 © 林丽丽（CC BY-NC 4.0，允许署名转载、禁止商用）。
  * 公开事件 API（window CustomEvent）：farm:state / farm:say / farm:cmd / farm:toggle / farm:open
  */
 /* 纸张颗粒：一小块噪声贴图（内联 data URI，不引外部图片），给纸面做旧用 */
@@ -479,6 +479,13 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   /* 表情表：九格精灵表，切帧只改 background-position（不换图 → 不闪）。
      格子比例写在 --rig-ar 里（格子宽/高），脚底仍对齐盒底。 */
   .farm-chick-art.is-expr { background-repeat: no-repeat; background-position: 0 0; }
+  /* 素材没上线的退路（2026-11-05）：鸡场美术不入公开仓（授权条款待定），
+     线上 /packs 会 404 —— 这时用 sprite.svg 的内联矢量小鸡顶上，**不留破图方块**。
+     摆法照抄 .farm-chick-art：脚底对齐盒底，水平居中。 */
+  .farm-chick-rig.is-fallback .farm-chick-fallback {
+    position: absolute; left: 50%; bottom: 0; height: 100%; width: auto;
+    transform: translateX(-50%); transform-origin: 50% 100%;
+  }
   /* 姿态表情：rig 模式（丽丽的角色真图）没有表情帧，情绪改用**姿态**表达 ——
      --pose 叠在 art 层（支点在脚底，不悬空），跟 .farm-chick-in 上的动作动画
      （is-peck / is-hop）不抢同一个 transform。
@@ -1558,15 +1565,72 @@ const root = document.getElementById('farm');
         + '<g filter="url(#' + fid + ')"><use href="#farm-sym-' + breed.svg + '"/></g>';
       return s;
     }
+    /* 退路：内联矢量小鸡（sprite.svg 的符号，随 bundle 内联 → 永远拿得到）。
+       素材图没上线时用它顶上 —— 跟 showHatch / 光标小鸡同一个原则：
+       **线上 /packs 会 404，不能给用户看破图方块**。
+       品种没有 svg 就没有退路（那就别换，宁可空着也不画错品种）。 */
+    function chickFallbackNode(breed) {
+      if (!breed || !breed.svg) return null;
+      const s = chickSVG(breed);
+      s.setAttribute('class', 'farm-chick-fallback');
+      return s;
+    }
+    /* 按 id 认回品种：图鉴格子是 innerHTML 注入的，只能靠 data 属性认。 */
+    function breedById(id) {
+      if (!id) return null;
+      for (const b of (pack.breeds || [])) if (b.id === id) return b;
+      return null;
+    }
+    /* 图坏了 → 原地换成矢量小鸡。
+       换法：删掉 .farm-chick-art（连坏图一起），塞进矢量小鸡。
+       **不 replaceWith 整个盒子**：图可能还没进 DOM 就报错，那时 replaceWith 会白干一场。 */
+    function rigFallback(box, breed) {
+      if (!box || box.dataset.fallback) return;
+      const fb = chickFallbackNode(breed);
+      if (!fb) return;
+      box.dataset.fallback = '1';
+      box.classList.add('is-fallback');
+      const art = box.querySelector('.farm-chick-art');
+      if (art) art.remove();
+      box.appendChild(fb);
+    }
+    /* 给 rig 盒子里的图接上退路。
+       ⚠ 标志用**属性**（_wf）不用 dataset：图鉴格子的图是 outerHTML 序列化出来的，
+       dataset 会被一起序列化 → 注入后的新盒子带着「已接线」的假标志 → 图鉴里还是破图。
+       属性不序列化 → 注入后必然重新接一遍。 */
+    function wireRigFallback(box) {
+      if (!box || box._wf) return;
+      box._wf = true;
+      const breed = breedById(box.dataset.breed);
+      for (const img of box.querySelectorAll('img')) {
+        img.onerror = () => rigFallback(box, breed);
+        /* 接线晚了一步（加载已经失败）：当场补上 */
+        if (img.complete && img.naturalWidth === 0) rigFallback(box, breed);
+      }
+    }
+    /* 精灵表是 CSS background：坏了**不报错**，鸡会整个消失（比破图更糟）。
+       用一个同 URL 的 Image 探一下（走同一份缓存，不多花流量），坏了就换矢量小鸡。 */
+    function wireExprProbe(box) {
+      if (!box || box._we) return;
+      const url = box.dataset.exprSheet;
+      if (!url) return;
+      box._we = true;
+      const breed = breedById(box.dataset.breed);
+      const probe = new Image();
+      probe.onerror = () => rigFallback(box, breed);
+      probe.src = url;
+    }
     /* 一只换皮（rig）：丽丽的**角色真图**分层 PNG，按画板百分比摆位。
        画板等比：.farm-chick-art 用 aspect-ratio 锁住 w/footY 比例，各层按画板百分比摆位，
        横向纵向同一把尺（旧的 100/w 与 100/footY 两套比例不等 → 鸡被横向撑胖 16%）。
-       脚线 footY 对齐画板底 = 盒底；idleRotate 支点在脚底（transform-origin 50% 100%）。 */
-    function rigVisual(rig, rot) {
+       脚线 footY 对齐画板底 = 盒底；idleRotate 支点在脚底（transform-origin 50% 100%）。
+       图加载失败 → 原地换成矢量小鸡（见 rigFallback）。 */
+    function rigVisual(rig, rot, breed) {
       const W = rig.w || 244, H = rig.h || 366, footY = rig.footY || H;
       const box = document.createElement('div');
       box.className = 'farm-chick-rig';
       box.setAttribute('aria-hidden', 'true');
+      box.dataset.breed = (breed && breed.id) || '';
       const art = document.createElement('div');
       art.className = 'farm-chick-art';
       art.style.aspectRatio = W + ' / ' + footY;
@@ -1585,6 +1649,7 @@ const root = document.getElementById('farm');
         art.appendChild(img);
       }
       box.appendChild(art);
+      wireRigFallback(box);
       /* pack idleRotate：闲置造型倾角（造型九式 lean）；不立正 */
       if (rot) box.style.setProperty('--rig-rot', rot + 'deg');
       return box;
@@ -1596,10 +1661,10 @@ const root = document.getElementById('farm');
        lux 给了就用「豪华成鸡」那张（成鸡之后的可选形态，见 luxRig）。 */
     function chickVisual(breed, stageKey, lux) {
       const lr = lux ? luxRig(breed) : null;
-      if (lr) return rigVisual(lr, 0);   /* ⚠ 必须渲染成 DOM —— 返回 rig 对象会变成 "[object Object]" 文字 */
+      if (lr) return rigVisual(lr, 0, breed);   /* ⚠ 必须渲染成 DOM —— 返回 rig 对象会变成 "[object Object]" 文字 */
       const rig = stageKey ? stageRig(stageKey, breed) : null;
-      if (rig) return rigVisual(rig, 0);
-      if (breed && breed.rig && breed.rig.base) return rigVisual(breed.rig, Number(breed.idleRotate != null ? breed.idleRotate : (breed.rig.idleRotate != null ? breed.rig.idleRotate : 0)));
+      if (rig) return rigVisual(rig, 0, breed);
+      if (breed && breed.rig && breed.rig.base) return rigVisual(breed.rig, Number(breed.idleRotate != null ? breed.idleRotate : (breed.rig.idleRotate != null ? breed.rig.idleRotate : 0)), breed);
       if (breed && breed.expr) return exprVisual(breed);
       return chickSVG(breed);
     }
@@ -1816,10 +1881,17 @@ const root = document.getElementById('farm');
       const art = document.createElement('div');
       art.className = 'farm-chick-art is-expr';
       art.style.setProperty('--rig-ar', `${ex.cellW} / ${ex.cellH}`);
-      art.style.backgroundImage = `url("${ex.sheet}${window.__coopVer ? '?v=' + window.__coopVer : ''}")`;
+      const sheetUrl = `${ex.sheet}${window.__coopVer ? '?v=' + window.__coopVer : ''}`;
+      art.style.backgroundImage = `url("${sheetUrl}")`;
       art.style.backgroundSize = `${ex.cols * 100}% ${ex.rows * 100}%`;
       art.dataset.expr = '1';
       box.appendChild(art);
+      /* 精灵表是 CSS background：坏了**不报错**，鸡会整个消失（比破图更糟）。
+         探一下（见 wireExprProbe），坏了就换成矢量小鸡。
+         data 属性写全：图鉴格子是 innerHTML 注入的，注入后要靠它重新接。 */
+      box.dataset.breed = (breed && breed.id) || '';
+      box.dataset.exprSheet = ex.sheet ? sheetUrl : '';
+      wireExprProbe(box);
       const rot = Number(breed.idleRotate != null ? breed.idleRotate : 0);
       if (rot) box.style.transform = `rotate(${rot}deg)`;
       return box;
@@ -3402,7 +3474,15 @@ const root = document.getElementById('farm');
         }
       }
       html += '<svg class="farm-annot" aria-hidden="true" focusable="false"></svg>';
-      $('farm-bookgrid').innerHTML = html;
+      const gridEl = $('farm-bookgrid');
+      gridEl.innerHTML = html;
+      /* innerHTML 注入会丢掉事件处理函数（格子的图是 outerHTML 序列化来的，
+         onerror 是**属性**不是 attribute → 序列化时没了）→ 重新接一遍退路，
+         不然图鉴里又是一地破图。 */
+      for (const box of gridEl.querySelectorAll('.farm-cellimg .farm-chick-rig')) {
+        wireRigFallback(box);
+        wireExprProbe(box);
+      }
       updateAnnot();
     }
 
@@ -3648,6 +3728,12 @@ const root = document.getElementById('farm');
           img.className = 'farm-deco-img';
           img.alt = '';
           img.draggable = false;
+          /* 器物图没上线（部署漏了 / CDN 抽风）→ 退回中性虚线框（同「没登记」的样子），
+             不给用户看破图图标。 */
+          img.onerror = () => {
+            img.remove();
+            delete el.dataset.art;
+          };
           img.src = art.img + (window.__coopVer ? ('?' + window.__coopVer) : '');
           el.appendChild(img);
         }
