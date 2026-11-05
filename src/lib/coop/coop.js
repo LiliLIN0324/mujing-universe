@@ -693,7 +693,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   /* 鸡场地图（真的那张）：一块地 = 一个地方 = 一个站页面。
      画法照 art-style.md：扁平色块、墨色轮廓、色块间白色描边、禁渐变禁阴影。 */
   .farm-mapart { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 12px; }
-  /* 视口：地图装在里面，可以放大平移（手机端看得清） */
+  /* 视口：地图装在里面，可以放大平移（手机端看得清）
+     touch-action: none —— 让双指捏合归我们管（浏览器别把捏合当成整页缩放） */
   .farm-mapart .mp-view { position: relative; width: 100%; max-width: 400px; overflow: hidden; border-radius: 6px; touch-action: none; cursor: grab; }
   .farm-mapart .mp-view.is-drag { cursor: grabbing; }
   .farm-mapart svg { width: 100%; max-width: 400px; height: auto; display: block; font-family: inherit; transform-origin: 0 0; }
@@ -713,12 +714,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-mapart a.mp-cover { cursor: pointer; }
   .farm-mapart a.mp-cover:hover rect,
   .farm-mapart a.mp-cover:focus-visible rect { stroke: var(--orange); stroke-width: 2; }
-  /* 工具条：放大 / 缩小 / 复位（手机端靠它放大） */
-  .farm-mapart .mp-tools { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; }
-  .farm-mapart .mp-btn { min-width: 34px; height: 30px; padding: 0 8px; border: 2px solid var(--ink); border-radius: 8px; background: var(--card); color: var(--ink); font: inherit; font-size: 15px; line-height: 1; cursor: pointer; }
-  .farm-mapart .mp-btn:hover { background: var(--orange); color: var(--white); }
-  .farm-mapart .mp-btn:active { transform: translateY(1px); }
-  .farm-mapart .mp-hint { font-size: 11px; color: var(--gray); }
+  /* 一行小提示：缩放全靠手势，不摆按钮 */
+  .farm-mapart .mp-hint { margin: 0; font-size: 11px; color: var(--gray); text-align: center; }
   /* 整理台的动作行（散场 / 召回）：按钮要抹平浏览器默认样式。
      底色跟统计行区分开 —— 不然玩家以为那也是一行数字，不会去点。 */
   button.farm-maprow {
@@ -893,8 +890,7 @@ const DEFAULT_PACK = {
   }
 };
 export default function init(cfg = {}) {
-  if (window.__coopInit) return window.__coop; // 幂等：重复 init 直接返回句柄
-  window.__coopInit = true;
+  if (window.__coopInit) return window.__coop; // 幂等：引擎已经起好了，直接给句柄
   const pack = cfg.pack || DEFAULT_PACK;
   /* ===== 事件：鸡会跑来报信（2026-11-04）=====
      机制在引擎，**内容由站侧推来**（window 的 farm:content 事件，detail.items）。
@@ -936,6 +932,34 @@ export default function init(cfg = {}) {
   const page = cfg.page || document.body.dataset.page || 'home';
   const VER = window.__coopVer || 'v0200'; // 版本参数：缓存失效统一走这里（chat 动态导入在引擎块外也要用它）
 
+  /* 句柄先给出去：里面全是转发到 window.__coopSnapshot 之类，
+     引擎块跑起来后才有真值 —— 这样「DOM 还没就绪」时也能安全返回一个能用的句柄。 */
+  window.__coop = {
+    open: () => window.dispatchEvent(new Event('farm:open')),
+    toggle: () => window.dispatchEvent(new Event('farm:toggle')),
+    pages,   // 站点页面表（管家 goto 选项与 system 注入用）
+    pack,    // 资产包（dialogue 可在包里覆盖默认剧本树）
+    snapshot: () => (window.__coopSnapshot ? window.__coopSnapshot() : null), // 实时账本快照
+    behaviors: () => (window.__coopBehaviors ? window.__coopBehaviors() : null), // 行为表 + 分布（验收/调试用）
+    events: () => (window.__coopEvents ? window.__coopEvents() : null),         // 快讯台账（验收/调试用）
+    fireEvent: (opts) => (window.__coopFireEvent ? window.__coopFireEvent(opts) : null), // 手动报一条快讯
+  };
+
+  /* DOM 还没就绪 → **不占幂等名额**，等 DOMContentLoaded 自己再来一次。
+     以前是先置 window.__coopInit 再往下走：DOM 没就绪时整块引擎被跳过，
+     之后谁再调 init() 都只拿得到一个空壳（没 snapshot / 没 behaviors），
+     鸡场就永远起不来 —— 而且控制台一句错都不报，最难查的那种。 */
+  const retryWhenReady = () => {
+    if (document.readyState !== 'loading') return;
+    document.addEventListener('DOMContentLoaded', () => {
+      try { init(cfg); } catch (e) { /* 还是起不来就算了 */ }
+    }, { once: true });
+  };
+  if (!document.body) {
+    retryWhenReady();
+    return window.__coop;
+  }
+
   /* 样式与精灵图注入（可自托管：sprite 传字符串，spriteUrl 传地址） */
   if (!document.getElementById('coop-style')) {
     const st = document.createElement('style');
@@ -974,6 +998,17 @@ export default function init(cfg = {}) {
 
 const root = document.getElementById('farm');
   const stage = document.getElementById('farm-stage');
+  if (!root || !stage) {
+    /* 容器没成 → 也不占名额，等 DOM 好了再来一次 */
+    retryWhenReady();
+    return window.__coop;
+  }
+  /* 上一次引擎块中途抛异常就死了：flag 留下来了、引擎其实没起来。
+     这种「假活着」最坑 —— 下一次 init() 看到 flag 就在、跳过引擎块，
+     然后把 window.__coopInit 置成 true，于是「引擎死了」被固化成「引擎好了」。
+     判据用 __coopSnapshot（引擎块跑到最后才落的根）：它不在 = 引擎没起来。
+     注意这里**不**去清 flag 让它重跑：上一次跑了一半的引擎可能还留着定时器，
+     重跑会起两个引擎（双份心跳）。这种情况刷新页面就好 —— flag 挂在 DOM 上，刷新即重来。 */
   if (root && stage && !stage.dataset.farmInit) {
     stage.dataset.farmInit = '1';
 
@@ -1197,6 +1232,7 @@ const root = document.getElementById('farm');
     function blankState() {
       return {
         v: 1, seq: 0, eggs: 0, hatched: 0, pity: 0, dex: {}, chickens: [], decos: [], stash: [],
+        names: {},   // 鸡名（id → 名）：重开鸡场要连它一起清掉（seq 归零后 id 会复用）
         visits: { total: 0, work: 0, news: 0 }, pending: [], unlocked: ['rice', 'piano', 'plate', 'basket'],
         events: { fired: {}, count: 0, day: '', dayCount: 0, last: '' },
         tally: emptyTally(),
@@ -1330,6 +1366,15 @@ const root = document.getElementById('farm');
       }
       a.unlocked = unionArr(a.unlocked, b.unlocked);
       a.pending = unionArr(a.pending, b.pending);
+      /* 名字：别的标签页起的名也要认；**同名时谁新听谁的**（名字带时间戳）。
+         以前是「本地优先」—— 两个标签页各改各的会来回顶：玩家刚起的名
+         被另一个标签页的一次心跳冲掉，刷新就变回旧名（真丢数据）。 */
+      const BN = (b.names && typeof b.names === 'object') ? b.names : {};
+      if (!a.names || typeof a.names !== 'object') a.names = {};
+      for (const k in BN) {
+        if (!(k in a.names)) { a.names[k] = BN[k]; continue; }      // 本地没有 → 直接收下
+        if (nameTs(BN[k]) > nameTs(a.names[k])) a.names[k] = BN[k];   // 对方更新 → 听对方的
+      }
       /* 快讯记账：同一条消息取「最近一次播报时间」（谁晚听谁的），累计条数取大数 */
       if (!a.events || typeof a.events !== 'object') a.events = { fired: {}, count: 0 };
       const BE = (b.events && typeof b.events === 'object') ? b.events : null;
@@ -1362,6 +1407,9 @@ const root = document.getElementById('farm');
       for (const it of (b.stash || [])) a.stash.push(it);
       a.unlocked = [...(b.unlocked || [])];
       a.pending = [...(b.pending || [])];
+      /* 名字也跟着整份接过来：重开鸡场后 seq 归零，新鸡会复用旧 id ——
+         不把 names 一起清掉，新鸡一出生就顶着上一只的名字（以前漏了这一项）。 */
+      a.names = { ...(b.names || {}) };
       a.events = JSON.parse(JSON.stringify(b.events || { fired: {}, count: 0, day: '', dayCount: 0, last: '' }));
       a.resetAt = Number(b.resetAt) || 0;
       syncDerived();
@@ -2270,6 +2318,9 @@ const root = document.getElementById('farm');
 
     function stepChick(c, dt, t) {
       if (c.mode === 'leave') {
+        /* 装篮淡出中：站着别走，等计时器把它收掉（走出屏要十几秒，
+           那段时间台上比上限多几只，面板上的数跟画面对不上） */
+        if (c.fadeOut) { draw(c, t, true); return; }
         const d = c.tx - c.x;
         const sp = c.speed * 1.5 * dt;
         if (Math.abs(d) <= sp) { kill(c); return; }
@@ -2458,16 +2509,18 @@ const root = document.getElementById('farm');
     }
 
     function trimFlock() {
+      /* 台上最多 MAX_PAGE 只：超了就让最老的几只「装篮」（淡出退场，账还在）。
+         以前一次只让一只走 —— 一次召回十几只时台上会挤爆（超过同屏上限），
+         而且「装篮」那一行的数会跟着算错。改成循环到不超为止。
+         淡出而不是慢慢走出屏：走一屏要十几秒（散场那栏是同一个道理），
+         那段时间台上比上限多几只，面板上的「装篮」数跟画面对不上。 */
       const active = flock.filter((c) => c.mode !== 'leave' && !c.dead);
-      if (active.length <= MAX_PAGE) return;
-      const old = active[0];
-      old.mode = 'leave';
-      old.tx = old.x < stage.clientWidth / 2 ? -80 : stage.clientWidth + 80; // 装篮：走出屏，账还在
-      if (reduce) {
+      for (let i = 0; i < active.length - MAX_PAGE; i += 1) {
+        const old = active[i];
+        old.mode = 'leave';
+        old.fadeOut = true;
         old.el.classList.add('is-fade');
-        old.timers.push(window.setTimeout(() => { old.dead = true; old.el.remove(); }, 900));
-      } else {
-        old.timers.push(window.setTimeout(() => old.el.classList.add('is-fade'), 500));
+        old.timers.push(window.setTimeout(() => kill(old), 750));
       }
     }
 
@@ -2475,12 +2528,26 @@ const root = document.getElementById('farm');
     const LINES = pack.lines;
     const RARE_LINES = pack.rareLines || {};
 
+    /* ===== 鸡名：值有两种形态 ——
+       老档是纯字符串（'花花'），新的是 { n: '花花', at: 时间戳 }。
+       为什么加时间戳：两个标签页同时给同一只鸡改名时，
+       「本地优先」会让两边各写各的、落盘来回顶 ——
+       玩家刚起的名会被另一个标签页的一次心跳冲掉，刷新就变回旧名（真丢数据）。
+       带时间戳之后：同名时谁新听谁的，两边最终收敛到同一个名字。 */
+    function nameVal(v) { return (v && typeof v === 'object') ? (v.n || '') : (v || ''); }
+    function nameTs(v) { return (v && typeof v === 'object') ? (Number(v.at) || 0) : 0; }
+    function nameOf(id) { return nameVal(state.names && state.names[id]); }
+    function setName(id, n) {
+      state.names = state.names || {};
+      state.names[id] = { n, at: Date.now() };
+    }
+
     function nameChick(c) {
       const inp = document.createElement('input');
       inp.className = 'farm-rename';
       inp.maxLength = 8;
       inp.placeholder = '给它起个名字';
-      inp.value = (state.names && state.names[c.id]) || '';
+      inp.value = nameOf(c.id);
       inp.style.left = clamp(c.x - 60, 8, stage.clientWidth - 130) + 'px';
       inp.style.top = clamp(c.y - 74, 40, stage.clientHeight - 34) + 'px';
       layer.appendChild(inp);
@@ -2493,8 +2560,7 @@ const root = document.getElementById('farm');
         if (doSave) {
           const v = inp.value.trim();
           if (v) {
-            state.names = state.names || {};
-            state.names[c.id] = v;
+            setName(c.id, v);
             c.named = v;
             save();
             bubble(c.x, c.y, `记住了，我叫「${v}」～`);
@@ -2528,7 +2594,7 @@ const root = document.getElementById('farm');
       el.setAttribute('aria-label', (c.breed && c.breed.name ? c.breed.name : '小鸡') + ' 的菜单');
       /* 三轴现状写在菜单顶上：玩家点进来就能看见「它现在缺什么」 */
       const m = Math.round(chickMood(c)), f = Math.round(chickFull(c)), k = Math.round(chickClean(c));
-      const name = (state.names && state.names[c.id]) || (c.breed && c.breed.name) || '小鸡';
+      const name = nameOf(c.id) || (c.breed && c.breed.name) || '小鸡';
       let html = '<div class="farm-cmenu-head">' + name + '</div>';
       html += '<div class="farm-cmenu-vitals">'
         + '<span title="心情">心 ' + m + '</span>'
@@ -2916,8 +2982,6 @@ const root = document.getElementById('farm');
       const svg = host && host.querySelector('svg');
       if (!svg) return;
       svg.style.transform = `translate(${mapView.x.toFixed(1)}px, ${mapView.y.toFixed(1)}px) scale(${mapView.k.toFixed(3)})`;
-      const view = host.querySelector('.mp-view');
-      if (view) view.style.touchAction = mapView.k > 1.001 ? 'none' : 'pan-y';
     }
     function mapClamp() {
       const host = $('farm-mapart');
@@ -2951,8 +3015,8 @@ const root = document.getElementById('farm');
       mapApply();
     }
 
-    /* ③ 手势：拖动平移 + 双指捏合缩放 + Ctrl/Cmd + 滚轮缩放。
-       普通滚轮不拦 —— 让它照常滚页面；地图缩放交给按钮、捏合和 Ctrl+滚轮。
+    /* ③ 手势：滚轮缩放 + 拖动平移 + 双指捏合 + 双击放大。
+       **不摆按钮** —— 地图上缩放全靠手势，UI 干干净净。
        坑：pointerdown 就 setPointerCapture 的话，click 的目标会变成视口 div，
        里面的 <a> 就不跳了 —— 所以**不抢指针**，改成拖动开始才接管，
        并且 pointermove/pointerup 挂在 window 上（拖出地图外也跟得住）。 */
@@ -3014,14 +3078,24 @@ const root = document.getElementById('farm');
           mapDrag = { x: e.clientX, y: e.clientY, vx: mapView.x, vy: mapView.y, moved: false };
         }
       });
-      /* 拖过之后别把这一下点击当成「点地方跳转」 */
+      /* 拖过之后别把这一下点击当成「点地方跳转」；
+         双击 / 双指双击 = 放大（已经放大了就复位）—— 没有按钮，手势就是全部入口 */
       view.addEventListener('click', (e) => {
-        if (!mapMoved) return;
-        e.preventDefault();
-        e.stopPropagation();
+        if (mapMoved) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        if (e.detail >= 2) {
+          e.preventDefault();
+          e.stopPropagation();
+          const r = view.getBoundingClientRect();
+          if (mapView.k > 1.4) mapReset();
+          else mapZoomAt(1.9, e.clientX - r.left, e.clientY - r.top);
+        }
       }, true);
+      /* 滚轮缩放：地图是浮层，滚过去就是在缩地图，不是滚页面 */
       view.addEventListener('wheel', (e) => {
-        if (!(e.ctrlKey || e.metaKey)) return;
         e.preventDefault();
         const r = view.getBoundingClientRect();
         mapZoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top);
@@ -3147,26 +3221,11 @@ const root = document.getElementById('farm');
       add(svg, 'polygon', { points: `${ccx},${ccy - 8} ${ccx + 4},${ccy + 3} ${ccx},${ccy} ${ccx - 4},${ccy + 3}`, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.4, 'stroke-linejoin': 'round' });
       const nt = add(svg, 'text', { x: ccx, y: ccy - 14, class: 'mp-n' });
       nt.textContent = 'N';
-      /* ③ 工具条：放大 / 缩小 / 复位（手机端靠它看清地名和作品） */
-      const tools = document.createElement('div');
-      tools.className = 'mp-tools';
-      const mkBtn = (label, title, fn) => {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'mp-btn';
-        b.textContent = label;
-        b.setAttribute('aria-label', title);
-        b.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); fn(); });
-        return b;
-      };
-      tools.appendChild(mkBtn('放大', '放大地图', () => mapZoomAt(1.4)));
-      tools.appendChild(mkBtn('缩小', '缩小地图', () => mapZoomAt(1 / 1.4)));
-      tools.appendChild(mkBtn('复位', '复位地图', () => mapReset()));
-      const hint = document.createElement('span');
+      /* ③ 不摆按钮：缩放靠手势（滚轮 / 双指捏合 / 双击），地图干干净净 */
+      const hint = document.createElement('p');
       hint.className = 'mp-hint';
-      hint.textContent = '能拖着走，双指能捏大';
-      tools.appendChild(hint);
-      host.appendChild(tools);
+      hint.textContent = '滚轮 · 双指可缩放，能拖着走';
+      host.appendChild(hint);
       mapBindView();
       return true;
     }
@@ -4915,8 +4974,8 @@ const root = document.getElementById('farm');
         const a = onStage[Math.floor(Math.random() * onStage.length)];
         const b = onStage.filter((c) => c !== a).sort((x, y) => Math.hypot(x.x - a.x, x.y - a.y) - Math.hypot(y.x - a.x, y.y - a.y))[0];
         if (!b) return;
-        const an = (state.names && state.names[a.id]) || a.breed.name;
-        const bn = (state.names && state.names[b.id]) || b.breed.name;
+        const an = nameOf(a.id) || a.breed.name;
+        const bn = nameOf(b.id) || b.breed.name;
         bubble(a.x, a.y - 20, `${an}：咯咯，站远点，这是我的位置。`);
         window.setTimeout(() => { if (!b.dead) bubble(b.x, b.y - 20, `${bn}：呵，整个场都是我的。`); }, 1300);
       } else {
@@ -5468,16 +5527,12 @@ const root = document.getElementById('farm');
       acts: flock.filter((c) => c && !c.dead).map((c) => ({ breed: (c.breed && c.breed.id) || '', act: c.act || '' })),
     }); // 行为表 + 分布：验收脚本靠它看「行为有没有变」
   }
-  window.__coop = {
-    open: () => window.dispatchEvent(new Event('farm:open')),
-    toggle: () => window.dispatchEvent(new Event('farm:toggle')),
-    pages,   // 站点页面表（管家 goto 选项与 system 注入用）
-    pack,    // 资产包（dialogue 可在包里覆盖默认剧本树）
-    snapshot: () => (window.__coopSnapshot ? window.__coopSnapshot() : null), // 实时账本快照
-    behaviors: () => (window.__coopBehaviors ? window.__coopBehaviors() : null), // 行为表 + 分布（验收/调试用）
-    events: () => (window.__coopEvents ? window.__coopEvents() : null),         // 快讯台账（验收/调试用）
-    fireEvent: (opts) => (window.__coopFireEvent ? window.__coopFireEvent(opts) : null), // 手动报一条快讯
-  };
+  /* 引擎真的起来了才占幂等名额（引擎块外面那个 window.__coop 句柄已经先给好了）。
+     判据用 __coopSnapshot：它是引擎块跑到最后才落的根 ——
+     引擎块中途抛异常 → 它不在 → 不占名额，下次 init() 还能重来
+     （以前是在函数开头就置 flag：DOM 没就绪时整块引擎被跳过，
+       之后谁再调 init() 都只拿得到空壳句柄 → 鸡场永远起不来，还一句错都不报）。 */
+  window.__coopInit = !!window.__coopSnapshot;
   /* 管家挂件：cfg.chat 传入即挂（离线剧本树全功能；api 配置后为真智能体） */
   if (cfg.chat) {
     import('./chat.js?' + VER)
