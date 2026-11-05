@@ -103,6 +103,10 @@
     "林丽丽"
    ],
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-cupum-2025-kg/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-cupum-2025-kg/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-cupum-2025-kg/02.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -121,15 +125,7 @@
    ],
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/01.jpg",
    "images": [
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/01.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/02.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/03.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/04.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/05.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/06.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/07.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/08.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/09.jpg"
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-iacp-2025-kg/01.jpg"
    ],
    "source": "archive"
   },
@@ -148,6 +144,10 @@
     "林丽丽"
    ],
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-icua-2025-heat/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-icua-2025-heat/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-icua-2025-heat/02.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -188,6 +188,10 @@
     "林丽丽"
    ],
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-aaai-2026-heat/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-aaai-2026-heat/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-aaai-2026-heat/02.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -229,6 +233,13 @@
     "林丽丽"
    ],
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-udik-2024/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-udik-2024/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-udik-2024/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-udik-2024/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-udik-2024/04.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-udik-2024/05.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -245,7 +256,14 @@
     "林丽丽"
    ],
    "source": "archive",
-   "place": "上海同济大学"
+   "place": "上海同济大学",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-ai4cities-2025/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-ai4cities-2025/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-ai4cities-2025/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-ai4cities-2025/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-ai4cities-2025/04.jpg"
+   ]
   },
   {
    "id": "activity-digital-futures-2023",
@@ -269,13 +287,21 @@
   {
    "id": "tech-scendance",
    "section": "tech",
-   "title": "林丽丽在杭州学军中学黑客松做出了幕景 Scendance",
-   "summary": "活动布置工作台：平面图、按真实尺寸入库的物料，和用一句话生成的布置方案，放在同一个三维场景里。",
+   "title": "林丽丽在杭州学军中学参加了首届回响 · 48H 青年创造营，做出《幕景 Scendance》",
+   "summary": "和队友在 48 小时内做出《幕景 Scendance》：把平面图和真实尺寸的物料放进同一个工作台，用一句话生成布置方案。",
    "start": "2026-10-01",
    "end": "2026-10-03",
    "href": "/works/scendance/",
    "hrefLabel": "查看作品",
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/01.jpg",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/01.jpg?v=2",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/01.jpg?v=2",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/02.jpg?v=2",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/03.jpg?v=2",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/04.jpg?v=2",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/05.jpg?v=2",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/tech-scendance/06.jpg?v=2"
+   ],
    "source": "work"
   },
   {
@@ -320,6 +346,13 @@
    ],
    "href": "/works/peace-elite-hust-campus/",
    "hrefLabel": "查看作品",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-oasis-hust-2023/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-oasis-hust-2023/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-oasis-hust-2023/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-oasis-hust-2023/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-oasis-hust-2023/04.jpg"
+   ],
    "source": "work"
   },
   {
@@ -366,6 +399,13 @@
    "people": [
     "林丽丽"
    ],
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-dachuang-2023/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-dachuang-2023/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-dachuang-2023/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-dachuang-2023/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-dachuang-2023/04.jpg"
+   ],
    "source": "archive"
   },
   {
@@ -382,6 +422,7 @@
    ],
    "href": "https://www.evolo.us/the-piled-ark-water-purification-skyscraper/",
    "hrefLabel": "eVolo 官网",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-evolo-2022/01.jpg",
    "source": "archive"
   },
   {
@@ -398,6 +439,13 @@
    ],
    "href": "/works/bmw-meta-island/",
    "hrefLabel": "查看作品",
+   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-bmw-tongji-2022/01.jpg",
+   "images": [
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-bmw-tongji-2022/01.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-bmw-tongji-2022/02.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-bmw-tongji-2022/03.jpg",
+    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-bmw-tongji-2022/04.jpg"
+   ],
    "source": "work"
   },
   {

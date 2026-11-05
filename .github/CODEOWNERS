@@ -1,0 +1,8 @@
+# 默认：所有改动都需要仓库所有者 review。
+# 配合 main 的分支保护（必须 PR + 1 次 review + 状态检查）使用。
+*       @LiliLIN0324
+
+# 自动化工具（Renovate / superagent / 其他 agent）只允许开 PR，不得直推 main。
+/.github/       @LiliLIN0324
+/src/content/   @LiliLIN0324
+/public/        @LiliLIN0324
