@@ -1,4 +1,8 @@
 ---
+import { allWorks } from '../lib';
+import newsData from '../data/news.json';
+import artist from '../data/artist.json';
+
 /**
  * 幕景鸡场：官网适配层。
  * 引擎权威源 = GitHub endtree-FDE/coop.js（src/coop.js）。
@@ -11,10 +15,49 @@
  *   站侧引擎副本 src/lib/coop/coop.js 由 scripts/sync-site.mjs 单向覆盖，禁手改。
  */
 const { page = 'home' } = Astro.props;
+
+/* ===== 鸡场快讯的内容源（2026-11-04）=====
+   机制在引擎，内容由站侧推：引擎只管「什么时候报、报哪条、怎么显示、给什么奖励、别重复报」，
+   内容由官网给 —— 引擎抄一份就会过期（官网天天有新作品和新动态）。
+   这里把作品 / 动态 / 履历整理成快讯条目，页面加载时推给引擎（window 的 farm:content）。 */
+const NEWS_MAX = 8;              // 动态只推最近 8 条（更早的报出来也没人看）
+const cut = (s, n = 42) => {
+  const t = String(s || '').replace(/\s+/g, ' ').trim();
+  return t.length > n ? t.slice(0, n) + '…' : t;
+};
+const works = await allWorks();
+const newsRows = (newsData.items || [])
+  .slice()
+  .sort((a, b) => String(b.start || '').localeCompare(String(a.start || '')))
+  .slice(0, NEWS_MAX);
+const farmContent = [
+  ...works.map((w) => ({
+    id: 'work:' + w.slug, kind: 'work', label: '新作品',
+    title: w.title, text: cut(w.description), href: '/works/' + w.slug + '/',
+  })),
+  ...newsRows.map((n) => ({
+    id: 'news:' + n.id, kind: 'news', label: '新动态',
+    title: cut(n.title, 30), text: cut(n.summary), href: '/news/#' + n.id,
+  })),
+  ...(artist.talks || []).map((t, i) => ({
+    id: 'talk:' + i + ':' + t.title, kind: 'bio', label: '履历',
+    title: cut(t.title, 34), text: cut([t.event, t.location].filter(Boolean).join(' · ')), href: '/about/',
+  })),
+  ...(artist.awards || []).flatMap((a) => (a.items || []).map((it) => ({
+    id: 'award:' + a.category + ':' + it.name + ':' + (it.year || ''), kind: 'bio', label: '获奖',
+    title: cut(it.name, 30), text: cut([a.category, it.year].filter(Boolean).join(' · ')), href: '/about/',
+  }))),
+];
+/* 塞进 <script type="application/json"> 之前，把 "<" 换成 < 的 JSON 转义 ——
+   否则内容里出现 "</script>" 会把标签提前关掉。JSON.parse 会把它还原回 <。 */
+const farmContentJson = JSON.stringify(farmContent).replace(/</g, '\\u003c');
 ---
 <!-- tip coop.js 在 #farm 不存在时注入 MARKUP（含货架/地琴 DOM）。此处不重复 markup。 -->
 <!-- 给适配脚本可读的当前页 id（tip 也读 body[data-page] / cfg.page） -->
 <div id="coop-page-bridge" data-page={page} hidden></div>
+
+<!-- 鸡场快讯的内容源：给下面的适配脚本读（引擎不抄内容，抄了会过期） -->
+<script type="application/json" id="farm-content" is:inline set:html={farmContentJson}></script>
 
 <script>
   /* ===== 官网适配层：tip init + 站侧页面表 / 不挂库内 chat（MimiChat.astro）===== */
@@ -57,6 +100,19 @@ const { page = 'home' } = Astro.props;
     pages,
     /* 不传 chat：管家由 MimiChat.astro 承担，避免 tip 再挂 src/chat.js */
   });
+
+  /* ===== 鸡场快讯：把官网的内容推给引擎 =====
+     引擎监听 window 的 farm:content（detail.items = [{id,kind,label,title,text,href}]），
+     收到之后会挑一条让鸡走到场中央冒泡，并给一点奖励。两条路都走：
+       1) window.__coopContent —— 引擎起得晚（动态 import）时也能读到；
+       2) farm:content 事件 —— 引擎已经在跑时立刻生效。 */
+  let farmContent = [];
+  try {
+    const raw = document.getElementById('farm-content')?.textContent || '[]';
+    farmContent = JSON.parse(raw);
+  } catch { /* 读不到就不推，鸡场照常跑 */ }
+  window.__coopContent = { items: farmContent };
+  window.dispatchEvent(new CustomEvent('farm:content', { detail: { items: farmContent } }));
 
   /* ===== A 逛站联动：站侧把「你看了什么」告诉鸡场 =====
      引擎监听 window 上的 farm:visit：看作品给米、看动态给蛋，

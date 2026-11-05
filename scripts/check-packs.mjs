@@ -10,12 +10,16 @@
  *
  * 检查项（全部从 pack.json 里读真相，不硬编码文件名）：
  *   1. public/packs/mujing/ 在，且 pack.json 能 parse
- *   2. 每个品种的表情表精灵图 + 帧表 + 整只图在
+ *   2. 每个品种的表情表精灵图 + 整只图在
  *   3. 每个品种 rig 的每一层 PNG 在
  *   4. 每件器物的图片在
  *   5. src/lib/coop/pack.json 与 public/packs/mujing/pack.json 是同一份
  *      （src/lib/coop/ 下的是引擎副本，public/ 下的是站点运行时用的）
  *   6. src/lib/coop/sprite.svg 在
+ *
+ * 帧表 JSON（expr-sheet.json）是**构建期源数据**，只在引擎仓，站点运行时读 pack.json
+ * 里的 frames/格子尺寸。所以这里只查**浏览器真会 fetch 的 PNG** ——
+ * 帧表跟 pack 对不对得上由引擎仓的 check-rig 校验（它同时查引擎和官网两份 pack.json）。
  *
  * 两种情况要分开看（2026-11-04 加，否则会误伤 Cloudflare 自动构建）：
  *   A. **这个构建压根没有鸡场美术**（public/packs/ 整个目录不存在）
@@ -92,17 +96,17 @@ try {
 /** pack.json 里的绝对站内路径 /packs/mujing/xxx → public/packs/mujing/xxx */
 const pubFile = (sitePath) => path.join(root, 'public', sitePath.replace(/^\/+/, ''));
 
-/* 1) 表情表精灵图 + 每个品种目录里的帧表与整只图 */
+/* 1) 表情表精灵图 + 每个品种目录里的整只图 */
 need(path.join(PACK_DIR, 'breeds', 'breeds.json'), '品种元信息');
 for (const b of pack.breeds || []) {
   const name = b.name || b.id;
+  /* 表情表精灵图在哪由 pack.expr.sheet 说了算：
+     大多数品种在 breeds/<id>/expr-sheet.png，universe01 用共享的根级 expr-sheet.png。 */
   if (b.expr?.sheet) need(pubFile(b.expr.sheet), `品种「${name}」的表情表精灵图`);
-  /* 有些品种有独立的 breeds/<id>/ 目录（帧表 + 整只图），
-     有些用共享的根级表情表（如 universe01 用 rig 分层 + 根 expr-sheet.png）——
-     目录存在才查里面的文件，不存在不是缺失。 */
+  /* 有些品种有独立的 breeds/<id>/ 目录（整只图），
+     有些用共享的根级素材 —— 目录存在才查里面的文件，不存在不是缺失。 */
   const dir = path.join(PACK_DIR, 'breeds', b.id);
   if (fs.existsSync(dir)) {
-    need(path.join(dir, 'expr-sheet.json'), `品种「${name}」的表情帧表`);
     need(path.join(dir, 'full.png'), `品种「${name}」的整只图`);
   }
   /* rig 分层：每一层都得在 */
@@ -116,6 +120,33 @@ for (const b of pack.breeds || []) {
 /* 2) 器物图 */
 for (const [id, d] of Object.entries(pack.decos || {})) {
   if (d.img) need(pubFile(d.img), `器物「${id}」的图`);
+}
+
+/* 2·补. 成长阶段的图（2026-11-04）
+   浏览器**真的会 fetch** 这些：每只鸡按阶段换图（雏/小/中/大 各一张按品种色改色的图）。
+   缺一张 = 那只鸡直接破图，所以跟品种 rig 一样要查。 */
+let stageCount = 0;
+if (pack.stages && Array.isArray(pack.stages.order) && pack.stages.base) {
+  for (const k of pack.stages.order) {
+    const st = (pack.stages.list || {})[k];
+    if (!st || !st.art) continue;   // 成鸡：图走 breeds/<id>/full.png
+    stageCount++;
+    for (const b of pack.breeds || []) {
+      const file = (pack.stages.file || '<stage>/<breed>.png')
+        .replace('<stage>', k).replace('<breed>', b.id);
+      need(path.join(root, 'public', pack.stages.base.replace(/^\/+/, ''), file), `成长阶段「${k}」的 ${b.id} 图`);
+    }
+  }
+  /* 演出图（破壳那一刻）：不在阶段链里，但浏览器一样会 fetch */
+  for (const [k, def] of Object.entries(pack.stages.show || {})) {
+    if (!def || !def.art) continue;
+    stageCount++;
+    for (const b of pack.breeds || []) {
+      const file = (pack.stages.file || '<stage>/<breed>.png')
+        .replace('<stage>', k).replace('<breed>', b.id);
+      need(path.join(root, 'public', pack.stages.base.replace(/^\/+/, ''), file), `演出图「${k}」的 ${b.id} 图`);
+    }
+  }
 }
 
 /* 3) 引擎副本：pack.json 要跟 public 下的是同一份（sync:packs 同步过去的） */
@@ -156,4 +187,4 @@ function fail() {
 /* 全套在位：报个数，让人知道构建带上了什么 */
 const breedCount = (pack.breeds || []).length;
 const decoCount = Object.keys(pack.decos || {}).length;
-console.log(`✓ 鸡场素材齐全（${breedCount} 个品种 / ${decoCount} 件器物 / 精灵图与帧表都在）`);
+console.log(`✓ 鸡场素材齐全（${breedCount} 个品种 / ${decoCount} 件器物 / ${stageCount} 档成长阶段 / 精灵图与帧表都在）`);

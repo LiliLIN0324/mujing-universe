@@ -1247,6 +1247,8 @@ const email = 'lily1326685527@gmail.com';
         if (key in s.breeds) return s.breeds[key];
         if (key in s.pagesMap) return s.pagesMap[key];
         if (key === 'chickens' || key === 'eggs' || key === 'dex_left' || key === 'here') return s[key];
+        /* 最后报的那条快讯（鸡场快讯机制在引擎，内容由站侧推） */
+        if (key === 'news') return (s.events && s.events.last) || '';
       }
       return 0;
     }
@@ -1298,7 +1300,7 @@ const email = 'lily1326685527@gmail.com';
 
     /* 标记解释器：[[FARM:*]] / [[COOP]] 不进正文，转总线命令（与后端扣留同一协议） */
     const MARK = /\[\[\s*(FARM:[a-z:|]+|COOP)\s*\]\]/g;
-    const VALID = /^(gift:egg|goto:(home|works|about|news|contact)|map|concert:(twinkle|ode|birthday|greensleeves)|coop)$/
+    const VALID = /^(gift:egg|goto:(home|works|about|news|contact)|map|event|concert:(twinkle|ode|birthday|greensleeves)|coop)$/
     function stripMarks(t) {
       const cmds = [];
       const shown = String(t).replace(MARK, (_, m) => {

@@ -8,7 +8,7 @@
     "grammar": {
       "node": "nodes.{id} = { lines, choices?, next?, llm?, back? }。lines 顺序播放；choices 出现后等待点击；next 为播放完的落脚点；llm:true 表示该节点交自由聊（走 /api/chat）；back 是自由聊结束后的返回节点。",
       "reserved": "__llm 自由聊节点、__close 关闭对话框。",
-      "line": "{ text, tags? }。text 里的 [[FARM:*]] / [[COOP]] 标记不进正文，由 ButlerDialogueBox 解释成 farm:cmd 事件发给鸡场总线；{key} 是插值占位。",
+      "line": "{ text, tags? }。text 里的 [[FARM:*]] / [[COOP]] 标记不进正文，由 ButlerDialogueBox 解释成 farm:cmd 事件发给鸡场总线；{key} 是插值占位。「event」= 让鸡场报一条快讯（鸡会跑来播报官网的消息，带「去看看」链接）。",
       "tags": [
         "if:VAR —— VAR 真值才显示该行（vars 优先，farm 快照兜底：chickens/eggs/各品种 id/各页面 slug/pages/dex_left）",
         "if:!VAR —— VAR 假值才显示",
@@ -81,6 +81,10 @@
         {
           "label": "放几只去别的页面",
           "next": "goto_pick"
+        },
+        {
+          "label": "最近有什么动静",
+          "next": "news"
         },
         {
           "label": "要一张地图",
@@ -312,6 +316,14 @@
       "lines": [
         {
           "text": "《绿袖子》，预备——这首走 E 小调，黑键也上。[[FARM:concert:greensleeves]]"
+        }
+      ],
+      "next": "hub"
+    },
+    "news": {
+      "lines": [
+        {
+          "text": "它正好有话要说——喏，鸡自己跑过来了。[[FARM:event]]"
         }
       ],
       "next": "hub"
