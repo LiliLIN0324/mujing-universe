@@ -16,8 +16,11 @@ const GRAIN = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg
 
 const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白色描边 / 纸张颗粒 / 手写标注）。
    #farm 本体透明、不挡点击（pointer-events:none），只有鸡/蛋/HUD/浮层可交互。 */
-  /* 画风令牌：墨 / 米白 / 盘面白 / 橙 / 绿 / 黄 / 深红 / 蓝 / 白。
-     #coop-reopen、.farm-ghost 挂在 body 上（不在 .farm 里），单独带上同一套。 */
+  /* 画风令牌：墨 / 米白 / 盘面白 / 橙 / 绿 / 黄 / 深红 / 蓝 / 粉 / 灰 / 白。
+     粉与灰是 2026-11-04 补的（画风唯一出处 research/art-style.md §2）：
+     色音映射里 粉=Bb3、灰=Eb3 是既定的一档，之前没有这两个 token，
+     粉·桃鸡的音符只能降级成橙、灰·贵族降级成墨 —— 音符是「这只鸡是谁」的标识，
+     撞色就白做了。色值来自丽丽自己的素材（粉 #eaa98d / 灰 #9c9c93）。 */
   .farm, .farm-piano, #coop-reopen, .farm-ghost {
     --ink: #2B2118;
     --paper: #F3EBDD;
@@ -27,6 +30,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
     --yellow: #E8B93C;
     --red: #9C3A31;
     --blue: #4A6E96;
+    --pink: #EAA98D;
+    --gray: #9C9C93;
     --white: #FFFFFF;
     --grain: ${GRAIN};
   }
@@ -247,6 +252,18 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-deco .farm-grain { width: 5px; height: 5px; }
   /* 心情差 = 蔫：降饱和、微微下垂 */
   .farm-chick.is-glum { filter: saturate(.5) brightness(.95); }
+  /* 脏了 = 清洁低（状态多维）：去饱和一点 + 轻微抖一下。
+     跟 is-glum 的区别：蔫是「心情不好」（降饱和 + 暗），
+     脏是「没洗澡」（降饱和 + 抖）—— 两者的画面信号不能一样，
+     不然玩家分不清该去陪它还是该去添水。 */
+  .farm-chick.is-dirty { filter: saturate(.72); }
+  .farm-chick.is-dirty .farm-chick-in { animation: farm-shiver 0.5s ease-in-out infinite; }
+  @keyframes farm-shiver {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(-1px) rotate(-1.2deg); }
+    75% { transform: translateX(1px) rotate(1.2deg); }
+  }
+  @media (prefers-reduced-motion: reduce) { .farm-chick.is-dirty .farm-chick-in { animation: none; } }
   /* 打盹：站着微微点头 */
   .farm-chick.is-sleep .farm-chick-in { animation: farm-nap 2.6s ease-in-out infinite; }
   @keyframes farm-nap { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(1px) rotate(-3deg); } }
@@ -272,6 +289,19 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
     background: var(--yellow); border: 2px solid var(--ink);
     box-shadow: inset 0 0 0 2px var(--white);
   }
+  /* 「收」工具的图标：开口的箱子 + 一个向上的箭头（收 = 从场上拿回来）。
+     纯 CSS 简形，不引外部图（和上面几个道具图标同一套画法）。 */
+  .farm-ico.pickup { position: relative; width: 20px; height: 18px; }
+  .farm-ico.pickup::before {
+    content: ""; position: absolute; left: 2px; bottom: 0; width: 16px; height: 8px;
+    background: var(--paper); border: 2px solid var(--ink); border-top: 0;
+    border-radius: 0 0 3px 3px;
+  }
+  .farm-ico.pickup::after {
+    content: ""; position: absolute; left: 7px; top: 1px; width: 0; height: 0;
+    border-left: 4px solid transparent; border-right: 4px solid transparent;
+    border-bottom: 7px solid var(--orange);
+  }
   /* 货架图标：能取到真图就用真图（和摆出来的道具长得一样），取不到才用上面那几行简形 */
   .farm-ico.is-art {
     width: 24px; height: 24px; border: 0; border-radius: 0; box-shadow: none; background: none;
@@ -291,6 +321,11 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   }
   .farm-ghost.is-piano::before {
     content: ""; position: absolute; left: 0; right: 0; top: 0; height: 6px; background: var(--ink);
+  }
+  /* 「收」工具的光标：虚线框（跟摆东西的五个点不一样，一看就知道是「拿回来」） */
+  .farm-ghost.is-pick {
+    width: 30px; height: 22px; margin: -11px -15px;
+    border: 2px dashed var(--ink); border-radius: 4px; background: none; opacity: .6;
   }
 
   /* 气氛层：默认全关。网页不按本地时钟铺夜幕。以后一次性事件（烟花等）可短暂使用，用完卸下。 */
@@ -329,8 +364,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   /* 光标即小鸡：开着时全站藏系统光标（reduced-motion 例外，见文末） */
   body.farm-on, body.farm-on * { cursor: none !important; }
   /* 对话框、面板、表单内恢复真光标：那里没有小鸡，不能让指针失明 */
-  body.farm-on :is(.mimi-panel, .farm-card, input, textarea, select),
-  body.farm-on :is(.mimi-panel, .farm-card, input, textarea, select) * { cursor: auto !important; }
+  body.farm-on :is(.mimi-panel, .farm-card, .farm-bcast-link, input, textarea, select),
+  body.farm-on :is(.mimi-panel, .farm-card, .farm-bcast-link, input, textarea, select) * { cursor: auto !important; }
   /* 触发点微光：精确落点的橙色光点（小鸡是身体，光点是喙）+ 可点元素橙色描边 */
   .farm-dot {
     position: fixed; left: 0; top: 0; width: 7px; height: 7px;
@@ -387,6 +422,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-cursor { position: absolute; left: 0; top: 0; width: 56px; height: 67px; z-index: 1000; pointer-events: none; will-change: transform; transition: opacity 0.2s ease; }
   .farm-cursor-in { width: 100%; height: 100%; transform-origin: 50% 88%; }
   .farm-cursor svg { width: 100%; height: 100%; display: block; }
+  /* 光标小鸡用角色真图（丽丽品种全家福）：等比缩到盒高，脚落在盒底 */
+  .farm-cursor-in img.farm-cursor-art { width: auto; height: 100%; max-width: 100%; display: block; margin: 0 auto; }
   .farm-cursor-in.is-squat { animation: farm-squat 0.34s ease both; }
   @keyframes farm-squat { 0% { transform: translateY(0) scaleY(1); } 45% { transform: translateY(5px) scaleY(0.72); } 100% { transform: translateY(0) scaleY(1); } }
 
@@ -433,8 +470,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   }
   /* 分层换皮：动画样片 01-造型九式-01。画板按素材等比缩放（aspect-ratio 锁比例），
      脚线 footY 落盒底；倾角支点在脚底（transform-origin 50% 100%），不悬空。 */
-  .farm-chick-rig { position: relative; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 100%; }
-  .farm-chick-art { position: absolute; left: 50%; bottom: 0; height: 100%; width: auto; aspect-ratio: var(--rig-ar, 244 / 340); transform: translateX(-50%); }
+  .farm-chick-rig { position: relative; width: 100%; height: 100%; overflow: visible; transform-origin: 50% 100%; transform: rotate(var(--rig-rot, 0deg)); }
+  .farm-chick-art { position: absolute; left: 50%; bottom: 0; height: 100%; width: auto; aspect-ratio: var(--rig-ar, 244 / 340); transform: translateX(-50%) var(--pose, ); transform-origin: 50% 100%; }
   .farm-chick-rig .farm-part {
     position: absolute; display: block; pointer-events: none;
     transform-origin: 50% 100%;
@@ -442,6 +479,26 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   /* 表情表：九格精灵表，切帧只改 background-position（不换图 → 不闪）。
      格子比例写在 --rig-ar 里（格子宽/高），脚底仍对齐盒底。 */
   .farm-chick-art.is-expr { background-repeat: no-repeat; background-position: 0 0; }
+  /* 姿态表情：rig 模式（丽丽的角色真图）没有表情帧，情绪改用**姿态**表达 ——
+     --pose 叠在 art 层（支点在脚底，不悬空），跟 .farm-chick-in 上的动作动画
+     （is-peck / is-hop）不抢同一个 transform。
+     等丽丽按全家福造型补了 9 表情九宫格，切回 expr 模式，这些姿态就退成兜底。 */
+  .farm-chick.is-cheer { --pose: translateY(-2px) scale(1.03); }
+  .farm-chick.is-hungry { --pose: rotate(8deg) translateY(3px); }
+  .farm-chick.is-doubt { --pose: rotate(-9deg); }
+  .farm-chick.is-shock { --pose: scale(1.07) translateY(-3px); }
+  .farm-chick.is-blink { --pose: scaleY(.93); }
+  /* 进化演出：跨阶时弹一下（数码蛋那套「进化要有仪式感」的最小实现）。
+     放在 .farm-chick-in 上 —— 跟 is-peck / is-hop 同层，但选择器特异性更高，进化的 0.9 秒里
+     啄食动作会让位（那一下本来就该是「主角时刻」）。 */
+  .farm-chick.is-evolve .farm-chick-in { animation: farm-evolve 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+  @keyframes farm-evolve {
+    0% { transform: scale(1) translateY(0); }
+    32% { transform: scale(1.16) translateY(-10px); }
+    66% { transform: scale(0.95) translateY(0); }
+    100% { transform: scale(1) translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .farm-chick.is-evolve .farm-chick-in { animation: none; } }
 
 
   /* 蛋与蛋壳（蛋可点，作为世界的一部分） */
@@ -452,6 +509,16 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-egg.is-wob svg { animation: farm-wob 1.15s ease-in-out both; }
   @keyframes farm-wob { 0% { transform: rotate(0); } 15% { transform: rotate(-9deg); } 35% { transform: rotate(8deg); } 55% { transform: rotate(-7deg); } 75% { transform: rotate(5deg); } 90% { transform: rotate(-3deg); } 100% { transform: rotate(0); } }
   .farm-egg.is-crack { --cfcrack: 1; }
+  /* 破壳图（丽丽 成长阶梯-05 改色）：蛋壳裂开、雏头探出来。
+     演出图，不是阶段 —— 碎壳之后就是「雏鸡」这一阶。
+     图没加载到（线上 /packs 会 404）就退回 SVG 蛋的裂纹，不留破图。 */
+  .farm-egg img.farm-egg-hatch {
+    position: absolute; left: 50%; bottom: 0; height: 100%; width: auto;
+    transform: translateX(-50%); transform-origin: 50% 100%; display: block;
+  }
+  .farm-egg.is-hatch { transform-origin: 50% 100%; animation: farm-hatch 0.3s ease-in-out 3; }
+  @keyframes farm-hatch { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-4deg) scale(1.03); } }
+  @media (prefers-reduced-motion: reduce) { .farm-egg.is-hatch { animation: none; } }
   /* 蛋壳默认黄（JS 会按品种改成 shellColor 的派生色）——别让 color 漏了变成墨色 */
   .farm-egg, .farm-shells { color: var(--yellow); }
   .farm-shells { position: absolute; left: 0; top: 0; width: 0; height: 0; pointer-events: none; }
@@ -460,6 +527,51 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-shl-t { width: 30px; height: 22px; left: -15px; top: -43px; animation: farm-shlt 0.75s cubic-bezier(0.2, 0.7, 0.4, 1) both; }
   @keyframes farm-shlb { 0% { transform: translateY(0); opacity: 1; } 35% { transform: translateY(-7px); opacity: 1; } 100% { transform: translateY(1px); opacity: 0; } }
   @keyframes farm-shlt { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(-34px, -42px) rotate(-130deg); opacity: 0; } }
+
+  /* 点鸡弹出的菜单（VPet ToolBar 式，2026-11-04）
+     画风照 §2：扁平色块 + 墨色 2px 描边 + 白色描边分隔，无渐变、无阴影投影。
+     菜单是临时气泡，不是常驻面板 —— 成熟游戏都不长期飘着名字。 */
+  .farm-cmenu {
+    position: absolute; z-index: 1160; pointer-events: auto;
+    width: 132px; padding: 6px;
+    background: var(--card); border: 2px solid var(--ink); border-radius: 10px;
+    box-shadow: inset 0 0 0 2px var(--white);
+    font-size: 12px; font-weight: 600; color: var(--ink);
+    user-select: none; -webkit-user-select: none;
+  }
+  .farm-cmenu-head {
+    font-weight: 700; font-size: 12px; line-height: 1.2;
+    padding: 1px 4px 3px; margin-bottom: 3px;
+    border-bottom: 2px solid var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  /* 三轴现状：谁低谁就显出来（玩家一眼看出该做什么） */
+  .farm-cmenu-vitals {
+    display: flex; gap: 3px; padding: 0 2px 4px; font-size: 11px;
+  }
+  .farm-cmenu-vitals span {
+    flex: 1; text-align: center; padding: 1px 0;
+    background: var(--paper); border: 1.5px solid var(--ink); border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .farm-cmenu-btn {
+    display: block; width: 100%; margin-top: 3px;
+    font: inherit; font-size: 12px; font-weight: 700; line-height: 1.2;
+    background: var(--yellow); color: var(--ink);
+    border: 2px solid var(--ink); border-radius: 6px;
+    box-shadow: inset 0 0 0 2px var(--white);
+    padding: 4px 6px; cursor: pointer; text-align: left;
+  }
+  .farm-cmenu-btn:hover { background: var(--orange); color: var(--white); }
+  .farm-cmenu-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .farm-cmenu-btn + .farm-cmenu-btn { margin-top: 3px; }
+  /* 条件没满足的项：灰掉 + 不可点（但**仍可见** —— 玩家要看得见「还有这条路」） */
+  .farm-cmenu-btn.is-off,
+  .farm-cmenu-btn[disabled] {
+    background: var(--paper); color: color-mix(in srgb, var(--ink) 55%, transparent);
+    cursor: not-allowed; box-shadow: none;
+  }
+  .farm-cmenu-btn.is-off:hover, .farm-cmenu-btn[disabled]:hover { background: var(--paper); color: color-mix(in srgb, var(--ink) 55%, transparent); }
 
   /* 视觉音符：品种音发声处浮起一枚 ♪（品种色、12-18px、上浮 40px 渐隐 1.6s） */
   .farm-note {
@@ -480,15 +592,36 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-bubble {
     position: absolute; transform: translate(-50%, -100%);
     background: var(--card); border: 2px solid var(--ink); border-radius: 8px;
-    padding: 4px 9px; font-size: 12px; font-weight: 600; white-space: nowrap;
-    z-index: 900; pointer-events: none;
-    animation: farm-bubin 0.16s ease both, farm-bubout 0.3s ease 1.55s both;
+    padding: 4px 9px; font-size: 12px; font-weight: 600;
+    white-space: pre-line;          /* 第二行要能单独成行（成长进度） */
+    text-align: center; max-width: 220px;
+    /* z-index 要高过光标小鸡（1000）：点鸡时鼠标就在鸡身上，
+       光标小鸡会正好压住气泡 —— 气泡是正在读的东西，得在最上面。 */
+    z-index: 1100; pointer-events: none;
+    animation: farm-bubin 0.16s ease both, farm-bubout 0.3s ease var(--bubout, 1.55s) both;
   }
   .farm-bubble::after {
     content: ""; position: absolute; left: 50%; bottom: -5px; width: 7px; height: 7px;
     background: var(--card); border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink);
     transform: translateX(-50%) rotate(45deg);
   }
+  /* 站内快讯：鸡冒泡报的官网消息。气泡比普通台词宽，左对齐，末尾挂一个「去看看」链接。
+     规矩：这是**临时气泡**，不是常驻控件（官网每页内容都满，不能再挂常驻东西）。 */
+  .farm-bubble.is-bcast { max-width: 300px; text-align: left; padding: 6px 10px 7px; font-weight: 500; }
+  .farm-bcast-tag {
+    display: inline-block; vertical-align: 1px; margin-right: 5px;
+    background: var(--orange); color: var(--white);
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+    border-radius: 3px; padding: 1px 5px;
+  }
+  .farm-bcast-title { font-weight: 700; }
+  .farm-bcast-body { display: block; margin-top: 2px; font-size: 11px; opacity: 0.72; }
+  .farm-bcast-link {
+    display: inline-block; margin-top: 4px; font-size: 11px; font-weight: 700;
+    color: var(--blue); text-decoration: underline; text-underline-offset: 2px;
+    pointer-events: auto;   /* 气泡本体不挡点击，只有这个链接可点 */
+  }
+  .farm-bcast-link:hover { color: var(--orange); }
   @keyframes farm-bubin { 0% { transform: translate(-50%, -30%) scale(0.6); opacity: 0; } 100% { transform: translate(-50%, -100%) scale(1); opacity: 1; } }
   @keyframes farm-bubout { to { opacity: 0; } }
 
@@ -557,6 +690,42 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-maprow.is-here span::after { content: "（本页）"; color: var(--orange); font-size: 11px; }
   a.farm-maprow { color: inherit; text-decoration: none; cursor: pointer; }
   a.farm-maprow:hover { background: var(--orange); color: var(--white); }
+  /* 鸡场地图（真的那张）：一块地 = 一个地方 = 一个站页面。
+     画法照 art-style.md：扁平色块、墨色轮廓、色块间白色描边、禁渐变禁阴影。 */
+  .farm-mapart { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0 0 12px; }
+  /* 视口：地图装在里面，可以放大平移（手机端看得清）
+     touch-action: none —— 让双指捏合归我们管（浏览器别把捏合当成整页缩放） */
+  .farm-mapart .mp-view { position: relative; width: 100%; max-width: 400px; overflow: hidden; border-radius: 6px; touch-action: none; cursor: grab; }
+  .farm-mapart .mp-view.is-drag { cursor: grabbing; }
+  .farm-mapart svg { width: 100%; max-width: 400px; height: auto; display: block; font-family: inherit; transform-origin: 0 0; }
+  .farm-mapart .mp-name { font-size: 12px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+  .farm-mapart .mp-num { font-size: 10px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+  .farm-mapart .mp-n { font-size: 9px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+  .farm-mapart .mp-ch { font-size: 7px; font-weight: 700; fill: var(--ink); text-anchor: middle; }
+  .farm-mapart a.mp-plot { cursor: pointer; }
+  .farm-mapart g.mp-plot.is-off { cursor: not-allowed; }
+  /* 悬停地块：草地描边变橙、手绘虚线圈变实线（没通路的灰地不响应） */
+  .farm-mapart .mp-ground { transition: stroke .12s ease, stroke-width .12s ease; }
+  .farm-mapart a.mp-plot:hover .mp-ground,
+  .farm-mapart a.mp-plot:focus-visible .mp-ground { stroke: var(--orange); stroke-width: 3; }
+  .farm-mapart a.mp-plot:hover .mp-ring,
+  .farm-mapart a.mp-plot:focus-visible .mp-ring { stroke: var(--orange); stroke-width: 2.6; stroke-dasharray: none; }
+  .farm-mapart a.mp-plot:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .farm-mapart a.mp-cover { cursor: pointer; }
+  .farm-mapart a.mp-cover:hover rect,
+  .farm-mapart a.mp-cover:focus-visible rect { stroke: var(--orange); stroke-width: 2; }
+  /* 一行小提示：缩放全靠手势，不摆按钮 */
+  .farm-mapart .mp-hint { margin: 0; font-size: 11px; color: var(--gray); text-align: center; }
+  /* 整理台的动作行（散场 / 召回）：按钮要抹平浏览器默认样式。
+     底色跟统计行区分开 —— 不然玩家以为那也是一行数字，不会去点。 */
+  button.farm-maprow {
+    font: inherit; text-align: left; width: 100%; cursor: pointer;
+    background: color-mix(in srgb, var(--yellow) 26%, var(--card)); color: var(--ink);
+    border: 0; font-weight: 700;
+    border-top: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+  }
+  button.farm-maprow:hover { background: var(--orange); color: var(--white); }
+  button.farm-maprow:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 
   @media (max-width: 768px) {
     .farm-hud { left: 10px; bottom: calc(10px + env(safe-area-inset-bottom, 0px)); max-width: calc(100vw - 20px); }
@@ -582,7 +751,9 @@ const MARKUP = (brand, page) => `<div class="farm" id="farm" data-page="${page}"
         <span class="farm-stat">蛋 <b id="farm-n-eggs">0</b></span>
         <span class="farm-stat">鸡 <b id="farm-n-chicks">0</b></span>
         <span class="farm-stat">图鉴 <b id="farm-n-dex">0/7</b></span>
-        <span class="farm-stat">心情 <b id="farm-n-mood">0</b></span>
+        <span class="farm-stat farm-vitals" title="心情 · 饱腹 · 清洁：陪它说话 / 摆食盆 / 添水">
+          心情 <b id="farm-n-mood">0</b> · 饱 <b id="farm-n-full">0</b> · 洁 <b id="farm-n-clean">0</b>
+        </span>
       </div>
       <div class="farm-btns">
         <button type="button" class="farm-btn" id="farm-btn-butler">管家</button>
@@ -601,6 +772,7 @@ const MARKUP = (brand, page) => `<div class="farm" id="farm" data-page="${page}"
         <button type="button" class="farm-prop" data-prop="basket" aria-label="竹篮" title="竹篮" aria-pressed="false"><span class="farm-ico basket" aria-hidden="true"></span><em>竹篮</em></button>
         <button type="button" class="farm-prop" data-prop="incubator" aria-label="孵化窝" title="孵化窝（逛站解锁）" aria-pressed="false" data-locked="1"><span class="farm-ico incubator" aria-hidden="true"></span><em>孵化窝</em></button>
         <button type="button" class="farm-prop" data-prop="water" aria-label="水缸" title="水缸（逛站解锁）" aria-pressed="false" data-locked="1"><span class="farm-ico water" aria-hidden="true"></span><em>水缸</em></button>
+        <button type="button" class="farm-prop farm-prop-tool" data-prop="pickup" aria-label="收走" title="收走：点一下场上的器物，把它收回货架（篮子里的蛋、盘子里的米都留着）" aria-pressed="false"><span class="farm-ico pickup" aria-hidden="true"></span><em>收</em></button>
       </div>
     </div>
 
@@ -623,9 +795,10 @@ const MARKUP = (brand, page) => `<div class="farm" id="farm" data-page="${page}"
     <div class="farm-wrap farm-ui" id="farm-map" hidden>
       <div class="farm-scrim" id="farm-map-scrim"></div>
       <div class="farm-card" role="dialog" aria-label="鸡场地图">
-        <div class="farm-cardhead"><b class="farm-tape">鸡场地图 · 一页一圈舍</b><button type="button" class="farm-btn" id="farm-map-x" aria-label="关闭">×</button></div>
+        <div class="farm-cardhead"><b class="farm-tape" id="farm-map-title">鸡场地图 · 一页一圈舍</b><button type="button" class="farm-btn" id="farm-map-x" aria-label="关闭">×</button></div>
+        <div class="farm-mapart" id="farm-mapart"></div>
         <div class="farm-maprows" id="farm-maprows"></div>
-        <p class="farm-tip">鸡在哪，账就在哪。管家说「放几只去别的页面」，账就记到那一页。</p>
+        <p class="farm-tip" id="farm-map-tip">鸡在哪，账就在哪。放去别的页的鸡，逛完自己回来，还带礼物。</p>
       </div>
     </div>
   </div>
@@ -717,13 +890,75 @@ const DEFAULT_PACK = {
   }
 };
 export default function init(cfg = {}) {
-  if (window.__coopInit) return window.__coop; // 幂等：重复 init 直接返回句柄
-  window.__coopInit = true;
+  if (window.__coopInit) return window.__coop; // 幂等：引擎已经起好了，直接给句柄
   const pack = cfg.pack || DEFAULT_PACK;
+  /* ===== 事件：鸡会跑来报信（2026-11-04）=====
+     机制在引擎，**内容由站侧推来**（window 的 farm:content 事件，detail.items）。
+     为什么不让引擎自己抄官网内容：官网的作品/动态是活的，抄一份就会过期。
+     所以引擎只管「什么时候报、报什么样式、给什么奖励、去重」，
+     官网只管「有什么内容可报」——两边都不存第二份。
+     pack.events 段放机制参数 + 一批「鸡场日常」事件（不依赖官网内容，当保底）。 */
+  const EVENT_CFG = (pack.events && typeof pack.events === 'object') ? pack.events : {};
+
+  /* ===== 出门逛（2026-11-05）=====
+     鸡**自己**决定去别的页面逛一圈 —— 不是玩家手动放，也不是管家派。
+     走的是跟「放去别的页」同一条路（领差事 → 办完带礼物回来 → 自己回来），
+     差别只在于「谁决定的」。
+     参数在 pack.json 的 `wander` 段（唯一出处，引擎不存第二份）。 */
+  const WANDER_CFG = (pack.wander && typeof pack.wander === 'object') ? pack.wander : {};
+
+  /* ===== 鸡场地图（2026-11-05）=====
+     地图的形状、地名、地标、路、河、桥全在 pack.json 的 `map` 段（唯一出处）——
+     引擎只画不编，改图只改 pack.json 再跑 scripts/make-map-pack.mjs。
+     站侧只给路由 id（pages），地图按 id 认地方；认不到的地方照样画出来，
+     但灰掉、点不动（规矩：条件不满足的入口灰掉但仍可见）。
+     老包没有 map 段 → 地图面板自动退回原来的列表视图，不炸。 */
+  const MAP_CFG = (pack.map && typeof pack.map === 'object') ? pack.map : null;
+
+  /* ===== 成长阶段（2026-11-04，方案见 research/growth-mechanics.md）=====
+     阶段链写在 pack.json 的 `stages` 段：**改成长节奏 / 改体型不用改引擎代码**
+     （和「行为表数据化」一个思路 —— 数据是唯一出处）。
+     规矩：阶段只前进不后退（数码蛋的铁律）；离线也在长；**不惩罚不上线的人**
+     （不回退、不生病、不死）；互动能加速（VPet 的「经验来自主动互动」）。 */
+  const STAGE_LIST = (pack.stages && pack.stages.list) || {};
+  const STAGE_ORDER = (pack.stages && Array.isArray(pack.stages.order) && pack.stages.order.length)
+    ? pack.stages.order.filter((k) => STAGE_LIST[k]) : [];
+  const STAGE_BOOST = (pack.stages && pack.stages.boost) || {};
+  const STAGE_LAST = STAGE_ORDER.length ? STAGE_ORDER[STAGE_ORDER.length - 1] : '';
+  /* 舞台上鸡的缩放：手机上跟原来的 43/48 一起缩，别让大鸡把手机屏幕挤满 */
+  const stageScale = () => (window.innerWidth <= 768 ? 43 / 48 : 1);
   const pages = cfg.pages && cfg.pages.length ? cfg.pages : [{ id: 'home', label: '首页', href: '/' }];
   const brand = cfg.brand || '鸡场';
   const page = cfg.page || document.body.dataset.page || 'home';
   const VER = window.__coopVer || 'v0200'; // 版本参数：缓存失效统一走这里（chat 动态导入在引擎块外也要用它）
+
+  /* 句柄先给出去：里面全是转发到 window.__coopSnapshot 之类，
+     引擎块跑起来后才有真值 —— 这样「DOM 还没就绪」时也能安全返回一个能用的句柄。 */
+  window.__coop = {
+    open: () => window.dispatchEvent(new Event('farm:open')),
+    toggle: () => window.dispatchEvent(new Event('farm:toggle')),
+    pages,   // 站点页面表（管家 goto 选项与 system 注入用）
+    pack,    // 资产包（dialogue 可在包里覆盖默认剧本树）
+    snapshot: () => (window.__coopSnapshot ? window.__coopSnapshot() : null), // 实时账本快照
+    behaviors: () => (window.__coopBehaviors ? window.__coopBehaviors() : null), // 行为表 + 分布（验收/调试用）
+    events: () => (window.__coopEvents ? window.__coopEvents() : null),         // 快讯台账（验收/调试用）
+    fireEvent: (opts) => (window.__coopFireEvent ? window.__coopFireEvent(opts) : null), // 手动报一条快讯
+  };
+
+  /* DOM 还没就绪 → **不占幂等名额**，等 DOMContentLoaded 自己再来一次。
+     以前是先置 window.__coopInit 再往下走：DOM 没就绪时整块引擎被跳过，
+     之后谁再调 init() 都只拿得到一个空壳（没 snapshot / 没 behaviors），
+     鸡场就永远起不来 —— 而且控制台一句错都不报，最难查的那种。 */
+  const retryWhenReady = () => {
+    if (document.readyState !== 'loading') return;
+    document.addEventListener('DOMContentLoaded', () => {
+      try { init(cfg); } catch (e) { /* 还是起不来就算了 */ }
+    }, { once: true });
+  };
+  if (!document.body) {
+    retryWhenReady();
+    return window.__coop;
+  }
 
   /* 样式与精灵图注入（可自托管：sprite 传字符串，spriteUrl 传地址） */
   if (!document.getElementById('coop-style')) {
@@ -763,6 +998,17 @@ export default function init(cfg = {}) {
 
 const root = document.getElementById('farm');
   const stage = document.getElementById('farm-stage');
+  if (!root || !stage) {
+    /* 容器没成 → 也不占名额，等 DOM 好了再来一次 */
+    retryWhenReady();
+    return window.__coop;
+  }
+  /* 上一次引擎块中途抛异常就死了：flag 留下来了、引擎其实没起来。
+     这种「假活着」最坑 —— 下一次 init() 看到 flag 就在、跳过引擎块，
+     然后把 window.__coopInit 置成 true，于是「引擎死了」被固化成「引擎好了」。
+     判据用 __coopSnapshot（引擎块跑到最后才落的根）：它不在 = 引擎没起来。
+     注意这里**不**去清 flag 让它重跑：上一次跑了一半的引擎可能还留着定时器，
+     重跑会起两个引擎（双份心跳）。这种情况刷新页面就好 —— flag 挂在 DOM 上，刷新即重来。 */
   if (root && stage && !stage.dataset.farmInit) {
     stage.dataset.farmInit = '1';
 
@@ -788,11 +1034,13 @@ const root = document.getElementById('farm');
 
     /* 色音映射（斯克里亚宾调性-色彩圈，palette.md）：黄=D4 橙=G3 绿=A3 蓝白=E4 粉=Bb3 灰=Eb3 金=C 大三琶音 */
     const BREEDS = pack.breeds;
-    /* 品种符号颜色统一收进画风变量（♪ 音符用），别在行内 style 里写死 hex */
+    /* 品种符号颜色统一收进画风变量（♪ 音符用），别在行内 style 里写死 hex。
+       粉与灰是 2026-11-04 补的 token（art-style.md §2）——
+       之前粉·桃鸡降级成橙、灰·贵族降级成墨，音符撞了色。 */
     const BREED_TONE = {
       universe01: 'var(--yellow)', butter: 'var(--yellow)', ingot: 'var(--yellow)',
       mist: 'var(--blue)', bean: 'var(--green)', persimmon: 'var(--orange)',
-      peach: 'var(--orange)', noble: 'var(--ink)', fu: 'var(--red)',
+      peach: 'var(--pink)', noble: 'var(--gray)', fu: 'var(--red)',
     };
     const toneOf = (b) => (b && BREED_TONE[b.id]) || 'var(--orange)';
     /* 蛋壳色 = 品种色派生（2026-11-04）
@@ -829,6 +1077,32 @@ const root = document.getElementById('farm');
     const PAGES = pages.map((p) => p.id); // 地图即索引：一页一圈舍，圈舍行是普通链接
     const PAGE_NAMES = Object.fromEntries(pages.map((p) => [p.id, p.label]));
     const PAGE_HREF = Object.fromEntries(pages.map((p) => [p.id, p.href]));
+
+    /* ===== 状态多维（2026-11-04，抄 VPet 的多维状态）=====
+       我们原来只有一个 mood，四件器物共用这一个数 → 「摆出来的东西有什么用」
+       在数值上是模糊的，只能靠 PROPS[].tip 的一句话撑着。
+       拆成三轴之后，每件器物的作用**在数值上直接可读**：
+         心情 mood   ← 跟它说话（poke）
+         饱腹 full   ← 吃米（食盆 / 地上的谷子）
+         清洁 clean  ← 喝水（水缸）
+       三条纪律（抄 VPet 但不抄它的坏处）：
+         ① 不惩罚不上线的人：三轴掉到 0 也不会死、不会跑，蔫着而已；
+         ② 老档平迁：老账本没有新字段 → 补到「中等值」，不补成 0（不突然蔫）；
+         ③ 只掉不涨的只有时间，互动立刻回 —— 数值实时可见（规矩 3）。
+       键名沿用 mood/moodAt，另加 full/fullAt、clean/cleanAt。
+       ⚠ 这三个常量**必须声明在存储段之前** —— 下面的老档迁移要用它们，
+         而 const 有暂时性死区：放在后面会抛
+         "Cannot access 'FULL_START' before initialization"，
+         **老档用户的鸡场会整个起不来**（2026-11-04 真的踩到过）。 */
+    const FULL_MAX = 100;
+    const FULL_START = 70;     // 老档平迁的落点：中等偏上
+    const FULL_DECAY_H = 16;   // 饿得快 → 逼玩家去摆食盆
+    const FULL_EAT = 26;       // 吃一口米回多少（比心情多：这是吃饭的主要收益）
+    const CLEAN_MAX = 100;
+    const CLEAN_START = 75;
+    const CLEAN_DECAY_H = 9;   // 脏得慢 → 别让人天天来擦
+    const CLEAN_WATER = 30;    // 喝一次水（点水缸）回多少
+    const CLEAN_LOW = 25;      // 低于这个算"脏"（看得见）
 
     const rand = (a, b) => a + Math.random() * (b - a);
     const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -883,12 +1157,47 @@ const root = document.getElementById('farm');
     })();
     /* 布景道具（decos）：老档没有这字段，补上空数组，不迁版本号 */
     if (!Array.isArray(state.decos)) state.decos = [];
+    /* 收进货架的器物（stash）：收走时存这儿，再摆出来时存量（篮子里的蛋）跟着回来 */
+    if (!Array.isArray(state.stash)) state.stash = [];
+    /* 出门逛的记账：上次是哪只鸡自己跑出去的（老档没有这字段，补默认值） */
+    if (!state.wander || typeof state.wander !== 'object') state.wander = { lastAt: 0 };
     /* 逛站计数 / 待兑现奖励 / 解锁表：老档没有，补默认值，不迁版本号 */
     if (!state.visits || typeof state.visits !== 'object') state.visits = { total: 0, work: 0, news: 0 };
     for (const k of ['total', 'work', 'news']) if (typeof state.visits[k] !== 'number') state.visits[k] = 0;
     if (!Array.isArray(state.pending)) state.pending = [];
+    /* 鸡场快讯记账（2026-11-04）：每条消息最近一次播报的时间 + 今天已报几条。
+       老档没有这字段，补默认值，不迁版本号。 */
+    if (!state.events || typeof state.events !== 'object') state.events = { fired: {}, count: 0, day: '', dayCount: 0, last: '' };
+    if (!state.events.fired || typeof state.events.fired !== 'object') state.events.fired = {};
+    if (typeof state.events.count !== 'number') state.events.count = 0;
+    if (typeof state.events.dayCount !== 'number') state.events.dayCount = 0;
+    if (typeof state.events.day !== 'string') state.events.day = '';
     if (!Array.isArray(state.unlocked) || !state.unlocked.length) state.unlocked = ['rice', 'piano', 'plate', 'basket'];
     if (!state.dex || typeof state.dex !== 'object') state.dex = {};
+    /* 成长阶段迁移（2026-11-04）：老档的鸡没有 stage 字段 → 当成成鸡。
+       理由：老账本里没有可信的「出生时间」（lastSeen 是「最后一次被看到」），硬折算会让
+       老用户的鸡**突然变大** —— 那是没必要的惊吓。**新孵的蛋**才走完整成长线。
+       这里把字段补上，账本才自洽（不然每次 load 都要现推一遍）。 */
+    if (!Array.isArray(state.chickens)) state.chickens = [];
+    if (STAGE_ORDER.length) {
+      for (const r of state.chickens) {
+        if (!r || typeof r !== 'object') continue;
+        if (STAGE_ORDER.indexOf(r.stage) < 0) { r.stage = STAGE_LAST; r.stageAt = Date.now(); r.growth = 0; }
+        else if (typeof r.stageAt !== 'number') r.stageAt = Date.now();
+        if (typeof r.growth !== 'number') r.growth = 0;
+      }
+    }
+    /* 状态多维迁移（2026-11-04）：老档的鸡没有饱腹/清洁 → 补成「中等值」，**不补成 0**。
+       理由跟成长阶段一样：老账本里没有可信的「上次喂食/喝水」时间，
+       补成 0 等于说「你的鸡一直饿着一直脏着」—— 那是没必要的惊吓。
+       时间戳补成 now：老鸡**不会**因为这次升级突然掉一大截。 */
+    for (const r of state.chickens) {
+      if (!r || typeof r !== 'object') continue;
+      if (typeof r.full !== 'number') { r.full = FULL_START; r.fullAt = Date.now(); }
+      else if (typeof r.fullAt !== 'number') r.fullAt = Date.now();
+      if (typeof r.clean !== 'number') { r.clean = CLEAN_START; r.cleanAt = Date.now(); }
+      else if (typeof r.cleanAt !== 'number') r.cleanAt = Date.now();
+    }
 
     /* ===== 跨标签页同步（2026-11-03） =====
        一个账本被两个标签页同时打开时，最怕「后写的把先写的盖掉」。
@@ -922,8 +1231,10 @@ const root = document.getElementById('farm');
     /* 空白账（重开鸡场用） */
     function blankState() {
       return {
-        v: 1, seq: 0, eggs: 0, hatched: 0, pity: 0, dex: {}, chickens: [], decos: [],
+        v: 1, seq: 0, eggs: 0, hatched: 0, pity: 0, dex: {}, chickens: [], decos: [], stash: [],
+        names: {},   // 鸡名（id → 名）：重开鸡场要连它一起清掉（seq 归零后 id 会复用）
         visits: { total: 0, work: 0, news: 0 }, pending: [], unlocked: ['rice', 'piano', 'plate', 'basket'],
+        events: { fired: {}, count: 0, day: '', dayCount: 0, last: '' },
         tally: emptyTally(),
       };
     }
@@ -954,8 +1265,17 @@ const root = document.getElementById('farm');
       for (const b in state.tally.dex) state.dex[b] = tallySum(state.tally.dex[b]);
     }
     /* 记录的时间戳：谁更新得晚听谁的（心情写在 moodAt 里，比 lastSeen 还细）
-       注意：Date.now() 是 13 位，**不能 | 0**（会截成 32 位变负数，顺序就乱了） */
-    function recTs(r) { return Math.max(Number(r.lastSeen) || 0, Number(r.moodAt) || 0, Number(r.at) || 0); }
+       注意：Date.now() 是 13 位，**不能 | 0**（会截成 32 位变负数，顺序就乱了）
+       stageAt 也要算进去 —— 成长阶段写在它里面，跨标签页合并时别被旧记录盖回去。
+       fullAt / cleanAt 同理：状态多维的饱腹/清洁也写在各自的时间戳里。
+       stowedAt 同理：散场/召回写在它里面，跨标签页合并时别被旧记录盖回去。 */
+    function recTs(r) {
+      return Math.max(
+        Number(r.lastSeen) || 0, Number(r.moodAt) || 0, Number(r.at) || 0,
+        Number(r.stageAt) || 0, Number(r.fullAt) || 0, Number(r.cleanAt) || 0,
+        Number(r.stowedAt) || 0
+      );
+    }
     function cmpId(x, y) {
       const a = String(x), b = String(y);
       const na = /(\d+)(?!.*\d)/.exec(a), nb = /(\d+)(?!.*\d)/.exec(b);
@@ -1031,8 +1351,39 @@ const root = document.getElementById('farm');
       /* 名单类按 id 取并集 */
       mergeById(a.chickens, b.chickens);
       mergeById(a.decos, b.decos);
+      /* 收走的器物：同一件不能在「场上」和「货架」两处同时存在 —— 以更新时间新的那边为准 */
+      if (!Array.isArray(a.stash)) a.stash = [];
+      mergeById(a.stash, b.stash);
+      if (Array.isArray(a.decos) && Array.isArray(a.stash)) {
+        for (const s of a.stash) {
+          const i = a.decos.findIndex((v) => v.id === s.id);
+          if (i >= 0 && recTs(s) >= recTs(a.decos[i])) a.decos.splice(i, 1);
+        }
+        for (const d of a.decos) {
+          const j = a.stash.findIndex((v) => v.id === d.id);
+          if (j >= 0 && recTs(d) > recTs(a.stash[j])) a.stash.splice(j, 1);
+        }
+      }
       a.unlocked = unionArr(a.unlocked, b.unlocked);
       a.pending = unionArr(a.pending, b.pending);
+      /* 名字：别的标签页起的名也要认；**同名时谁新听谁的**（名字带时间戳）。
+         以前是「本地优先」—— 两个标签页各改各的会来回顶：玩家刚起的名
+         被另一个标签页的一次心跳冲掉，刷新就变回旧名（真丢数据）。 */
+      const BN = (b.names && typeof b.names === 'object') ? b.names : {};
+      if (!a.names || typeof a.names !== 'object') a.names = {};
+      for (const k in BN) {
+        if (!(k in a.names)) { a.names[k] = BN[k]; continue; }      // 本地没有 → 直接收下
+        if (nameTs(BN[k]) > nameTs(a.names[k])) a.names[k] = BN[k];   // 对方更新 → 听对方的
+      }
+      /* 快讯记账：同一条消息取「最近一次播报时间」（谁晚听谁的），累计条数取大数 */
+      if (!a.events || typeof a.events !== 'object') a.events = { fired: {}, count: 0 };
+      const BE = (b.events && typeof b.events === 'object') ? b.events : null;
+      if (BE) {
+        const AF = a.events.fired || (a.events.fired = {});
+        const BF = BE.fired || {};
+        for (const k in BF) AF[k] = Math.max(Number(AF[k]) || 0, Number(BF[k]) || 0);
+        a.events.count = Math.max(Number(a.events.count) || 0, Number(BE.count) || 0);
+      }
       syncDerived();
       return a;
     }
@@ -1047,12 +1398,19 @@ const root = document.getElementById('farm');
       a.tally = JSON.parse(JSON.stringify(b.tally || emptyTally()));
       if (!Array.isArray(a.chickens)) a.chickens = [];
       if (!Array.isArray(a.decos)) a.decos = [];
+      if (!Array.isArray(a.stash)) a.stash = [];
       a.chickens.length = 0;
       for (const it of (b.chickens || [])) a.chickens.push(it);
       a.decos.length = 0;
       for (const it of (b.decos || [])) a.decos.push(it);
+      a.stash.length = 0;
+      for (const it of (b.stash || [])) a.stash.push(it);
       a.unlocked = [...(b.unlocked || [])];
       a.pending = [...(b.pending || [])];
+      /* 名字也跟着整份接过来：重开鸡场后 seq 归零，新鸡会复用旧 id ——
+         不把 names 一起清掉，新鸡一出生就顶着上一只的名字（以前漏了这一项）。 */
+      a.names = { ...(b.names || {}) };
+      a.events = JSON.parse(JSON.stringify(b.events || { fired: {}, count: 0, day: '', dayCount: 0, last: '' }));
       a.resetAt = Number(b.resetAt) || 0;
       syncDerived();
       return a;
@@ -1134,9 +1492,10 @@ const root = document.getElementById('farm');
     function snapshot() {
       const breeds = {};
       const pagesMap = {};
-      let here = 0;
+      let here = 0, stowed = 0;
       for (const c of state.chickens) {
         breeds[c.breed] = (breeds[c.breed] || 0) + 1;
+        if (c.stowed) { stowed += 1; continue; }   // 窝里的（散场收起来的）不算在任何一页
         pagesMap[c.page] = (pagesMap[c.page] || 0) + 1;
         if (c.page === HERE) here += 1;
       }
@@ -1148,8 +1507,14 @@ const root = document.getElementById('farm');
         breeds,
         pagesMap,
         here,
-        elsewhere: state.chickens.length - here,
+        elsewhere: state.chickens.length - here - stowed,
+        stowed,                   // 窝里待命的只数
         dex_left: BREEDS.length - found,
+        events: {                // 鸡场快讯：报过几条、今天几条、最后一条是什么
+          count: state.events.count | 0,
+          dayCount: state.events.dayCount | 0,
+          last: state.events.last || '',
+        },
       };
     }
 
@@ -1163,6 +1528,9 @@ const root = document.getElementById('farm');
       if (type === 'gift:egg') giftEgg();
       else if (type.startsWith('goto:')) sendAway(type.slice(5));
       else if (type === 'map') openMap();
+      else if (type === 'stow') stowAll();          // 散场：鸡回窝里（记录全留）
+      else if (type === 'unstow') unstowAll();      // 召回：窝里的放回场上
+      else if (type === 'event') fireEvent({ force: true }); // 快讯：立刻报一条（管家 / 调试）
       else if (type === 'concert:stop') concertStop();
       else if (type.startsWith('concert:')) concertStart(type.slice(8));
       /* 'butler' 由对话框自己消费；未知命令一律忽略（白名单边界） */
@@ -1190,14 +1558,11 @@ const root = document.getElementById('farm');
         + '<g filter="url(#' + fid + ')"><use href="#farm-sym-' + breed.svg + '"/></g>';
       return s;
     }
-    /* 一只换皮：有 breed.rig 时叠 PNG 六件套（含 eye）。
+    /* 一只换皮（rig）：丽丽的**角色真图**分层 PNG，按画板百分比摆位。
        画板等比：.farm-chick-art 用 aspect-ratio 锁住 w/footY 比例，各层按画板百分比摆位，
        横向纵向同一把尺（旧的 100/w 与 100/footY 两套比例不等 → 鸡被横向撑胖 16%）。
-       脚线 footY 对齐画板底 = 盒底；idleRotate 支点在脚底（.farm-chick-rig transform-origin 50% 100%）。 */
-    function chickVisual(breed) {
-      if (breed && breed.expr) return exprVisual(breed);
-      if (!breed || !breed.rig || !breed.rig.base) return chickSVG(breed);
-      const rig = breed.rig;
+       脚线 footY 对齐画板底 = 盒底；idleRotate 支点在脚底（transform-origin 50% 100%）。 */
+    function rigVisual(rig, rot) {
       const W = rig.w || 244, H = rig.h || 366, footY = rig.footY || H;
       const box = document.createElement('div');
       box.className = 'farm-chick-rig';
@@ -1221,9 +1586,222 @@ const root = document.getElementById('farm');
       }
       box.appendChild(art);
       /* pack idleRotate：闲置造型倾角（造型九式 lean）；不立正 */
-      const rot = Number(breed.idleRotate != null ? breed.idleRotate : (rig.idleRotate != null ? rig.idleRotate : 0));
-      if (rot) box.style.transform = `rotate(${rot}deg)`;
+      if (rot) box.style.setProperty('--rig-rot', rot + 'deg');
       return box;
+    }
+    /* rig 优先（2026-11-04）：以前 expr 优先 → 屏幕上跑的是「表情九宫格」那只正面 study chick，
+       跟丽丽的正式形象（品种全家福）完全对不上，9 个品种全是同一只圆鸡只差颜色。
+       现在先走角色真图（全家福），表情表留作 fallback。
+       stageKey 给了就用成长阶段的图（雏 → 小 → 中 → 大 → 成），没给就是成鸡。
+       lux 给了就用「豪华成鸡」那张（成鸡之后的可选形态，见 luxRig）。 */
+    function chickVisual(breed, stageKey, lux) {
+      const lr = lux ? luxRig(breed) : null;
+      if (lr) return rigVisual(lr, 0);   /* ⚠ 必须渲染成 DOM —— 返回 rig 对象会变成 "[object Object]" 文字 */
+      const rig = stageKey ? stageRig(stageKey, breed) : null;
+      if (rig) return rigVisual(rig, 0);
+      if (breed && breed.rig && breed.rig.base) return rigVisual(breed.rig, Number(breed.idleRotate != null ? breed.idleRotate : (breed.rig.idleRotate != null ? breed.rig.idleRotate : 0)));
+      if (breed && breed.expr) return exprVisual(breed);
+      return chickSVG(breed);
+    }
+
+    /* ===== 豪华成鸡（2026-11-04）=====
+       素材 = 丽丽「部件库/03-成年大鸡六只」那套造型（铅笔线稿 + 花冠 + 长尾羽），
+       按品种色改色出 9 张（scripts/make-lux-sprites.mjs）。
+       ⚠ 它**不是成长线的第 6 阶**：那一套是另一套画风（淡彩肌理 + 长尾羽），
+         硬接进 stages.order 就是「换装感」—— 从扁平色块的成鸡突然变成线稿。
+         所以它是**成鸡之后的一个可选形态**：照顾得好（三轴都达标）就能「加冕」，
+         画风不同反而成了「豪华版」的卖点。
+       解锁条件写在 pack.json 的 lux.unlock（引擎只读，不硬编码）。 */
+    function luxRig(breed) {
+      const L = pack.lux;
+      if (!L || !L.base || !breed || !breed.id) return null;
+      const tmpl = L.file || '<breed>.png';
+      const file = tmpl.replace('<breed>', breed.id);
+      const art = (L.breeds && L.breeds[breed.id]) || L.art;
+      if (!art) return null;
+      return {
+        base: L.base, w: art.w, h: art.h, footY: art.h,
+        layers: [{ file, role: 'body', left: 0, top: 0, w: art.w, h: art.h }],
+      };
+    }
+    /* 能不能加冕：成鸡 + 三轴都达标（条件在 pack.json 的 lux.unlock 里） */
+    function luxUnlocked(c) {
+      const L = pack.lux;
+      if (!L || !L.unlock) return false;
+      if (stageOf(c && c.rec) !== STAGE_LAST) return false;
+      const u = L.unlock;
+      return chickMood(c) >= (u.mood || 0)
+        && chickFull(c) >= (u.full || 0)
+        && chickClean(c) >= (u.clean || 0);
+    }
+    /* 换装成豪华成鸡（或者还原） */
+    function applyLux(c, on) {
+      if (!c || !c.inn) return;
+      const old = c.inn.firstElementChild;
+      const v = chickVisual(c.breed, c.stage, on);
+      if (old && v) old.replaceWith(v);
+      else if (v) c.inn.appendChild(v);
+      c.art = c.inn.querySelector('.farm-chick-art');
+      c.lux = !!on;
+      if (c.rec) {
+        c.rec.lux = on ? 1 : 0;
+        c.rec.luxAt = Date.now();   // 跨标签页合并用（见 recTs）
+      }
+      /* 豪华版画得更大（renderH 在 pack.json 的 lux 段） */
+      if (c.el) {
+        const L = pack.lux;
+        if (on && L && L.renderH) {
+          const b = luxBox(c.breed);
+          if (b) { c.el.style.width = b[0] + 'px'; c.el.style.height = b[1] + 'px'; }
+        } else {
+          const box = stageBox(c.stage, c.breed);
+          if (box) { c.el.style.width = box[0] + 'px'; c.el.style.height = box[1] + 'px'; }
+        }
+        c.el.dataset.lux = on ? '1' : '0';
+      }
+    }
+
+    /* ===== 成长阶段：状态、推进、换装 =====
+       阶段状态记在账本记录上（rec.stage / rec.stageAt / rec.growth），
+       离线也在长（时间是真的走），互动能加速（成长值）。
+       阶段只前进不后退；老档没有 stage 字段 → 当成成鸡（不突然变大）。 */
+    function stageOf(rec) {
+      if (!STAGE_ORDER.length) return '';
+      if (!rec) return STAGE_LAST;
+      const i = STAGE_ORDER.indexOf(rec.stage);
+      return i < 0 ? STAGE_LAST : STAGE_ORDER[i];
+    }
+    function stageMs(key) {
+      const s = STAGE_LIST[key];
+      return s && typeof s.ms === 'number' && s.ms > 0 ? s.ms : 0;
+    }
+    function stageProgress(rec) {
+      if (!rec) return 0;
+      const at = typeof rec.stageAt === 'number' ? rec.stageAt : Date.now();
+      const g = typeof rec.growth === 'number' ? rec.growth : 0;
+      return Math.max(0, Date.now() - at) + Math.max(0, g);
+    }
+    /* 推进一阶。返回新阶段名，没得推就返回 null（终态 / 还没到时间）。 */
+    function advanceStage(rec) {
+      if (!rec || !STAGE_ORDER.length) return null;
+      const key = stageOf(rec);
+      const ms = stageMs(key);
+      if (!ms) return null;                       // 最后一阶：终态
+      if (stageProgress(rec) < ms) return null;   // 还没待够
+      const next = STAGE_ORDER[STAGE_ORDER.indexOf(key) + 1];
+      if (!next) return null;
+      const over = stageProgress(rec) - ms;       // 多出来的算进下一阶
+      rec.stage = next;
+      rec.stageAt = Date.now();
+      rec.growth = over > 0 ? over : 0;
+      return next;
+    }
+    /* 互动加速：折算成毫秒成长值（VPet 的「经验来自主动互动」） */
+    function addGrowth(c, ms) {
+      if (!c || !c.rec || !ms) return;
+      c.rec.growth = (typeof c.rec.growth === 'number' ? c.rec.growth : 0) + ms;
+    }
+    /* 成长阶段的图：单层 rig（每品种一张改色图）；成鸡没有 art → 走品种自己的全家福 */
+    function stageRig(key, breed) {
+      const st = STAGE_LIST[key];
+      if (!st || !st.art || !breed || !breed.id) return null;
+      if (!pack.stages || !pack.stages.base) return null;
+      const tmpl = pack.stages.file || '<stage>/<breed>.png';
+      const file = tmpl.replace('<stage>', key).replace('<breed>', breed.id);
+      return {
+        base: pack.stages.base, w: st.art.w, h: st.art.h, footY: st.art.h,
+        layers: [{ file, role: 'body', left: 0, top: 0, w: st.art.w, h: st.art.h }],
+      };
+    }
+    /* 这一阶该画多大：高度 = renderH（成长必须看得见），宽度按素材长宽比推 */
+    function stageBox(key, breed) {
+      const st = STAGE_LIST[key];
+      if (!st || !st.renderH) return null;
+      const k = stageScale();
+      const h = Math.max(1, Math.round(st.renderH * k));
+      let ar = 1;
+      if (st.art && st.art.h) ar = st.art.w / st.art.h;
+      else if (breed && breed.rig && breed.rig.h) ar = breed.rig.w / breed.rig.h;
+      return [Math.max(1, Math.round(h * ar)), h];
+    }
+    /* 豪华成鸡的盒子（画得比普通成鸡大一点 —— 豪华版要有分量） */
+    function luxBox(breed) {
+      const L = pack.lux;
+      if (!L || !L.renderH) return null;
+      const art = (L.breeds && breed && L.breeds[breed.id]) || L.art;
+      if (!art) return null;
+      const h = Math.max(1, Math.round(L.renderH * stageScale()));
+      const ar = art.h ? art.w / art.h : 0.65;
+      return [Math.max(1, Math.round(h * ar)), h];
+    }
+    /* 这只鸡现在的盒子：豪华版优先 */
+    function chickBox(c) {
+      if (c && c.lux) {
+        const b = luxBox(c.breed);
+        if (b) return b;
+      }
+      return stageBox(c ? c.stage : '', c ? c.breed : null);
+    }
+    /* 换装：把鸡换成某一阶的样子（换图 + 换盒子大小） */
+    function applyStage(c, key) {
+      if (!c || !c.inn) return;
+      const k = (key && STAGE_ORDER.indexOf(key) >= 0) ? key : STAGE_LAST;
+      const old = c.inn.firstElementChild;
+      /* 豪华版要保住 —— 成长换阶时不能把加冕状态洗掉 */
+      const v = chickVisual(c.breed, k, c.lux);
+      if (old && v) old.replaceWith(v);
+      else if (v) c.inn.appendChild(v);
+      c.art = c.inn.querySelector('.farm-chick-art');
+      c.stage = k;
+      if (c.el) {
+        c.el.dataset.stage = k;
+        const box = chickBox(c);
+        if (box) { c.el.style.width = box[0] + 'px'; c.el.style.height = box[1] + 'px'; }
+      }
+    }
+    /* 进化演出：弹一下 + 品种音上行 + 一句话（数码蛋那套「进化要有仪式感」） */
+    function evolveShow(c) {
+      if (!c || !c.el) return;
+      const el = c.el;
+      el.classList.remove('is-evolve');
+      void el.offsetWidth;
+      el.classList.add('is-evolve');
+      window.setTimeout(() => el.classList.remove('is-evolve'), 1000);
+      const f = (c.breed && c.breed.f) ? c.breed.f : 660;
+      play((t) => {
+        [0, 0.09, 0.18].forEach((d, i) => cluck(t + d, f * (1 + i * 0.26), 0.12));
+        noteFloat(c.x, c.y - 46, 'var(--yellow)', c);
+      });
+      emitSay('小鸡长大了一点！');
+    }
+    /* 扫一遍所有鸡，把到点的推一阶。
+       场上这只 → 换装 + 演出；不在本页的 → 静默补账（回来只报喜，不连播动画）。 */
+    function checkGrowth(show) {
+      if (!STAGE_ORDER.length) return 0;
+      let grew = 0;
+      for (const c of flock) {
+        if (!c || c.dead || !c.rec) continue;
+        /* ⚠ 别写成 `while ((next = advanceStage(rec)) && …)`：
+           循环最后一次 next = null，会把「涨到哪一阶」抹掉 →
+           账上进了新阶段，画面却还是旧图（鸡长得不换脸）。 */
+        let got = null, guard = 0;
+        while (guard++ < 60) {
+          const n = advanceStage(c.rec);
+          if (!n) break;
+          got = n;
+        }
+        if (got) {
+          applyStage(c, got);
+          if (show) evolveShow(c);
+          grew++;
+        }
+      }
+      for (const r of state.chickens) {
+        if (!r || flock.some((c) => c.rec === r)) continue;
+        let guard = 0;
+        while (advanceStage(r) && guard++ < 60) grew++;
+      }
+      return grew;
     }
 
     /* 表情表：一只鸡 = 一张九宫精灵表，切帧只改 background-position。
@@ -1248,7 +1826,10 @@ const root = document.getElementById('farm');
     }
     /* 切表情：只改 background-position */
     function setExpr(c, id) {
-      if (!c || !c.breed || !c.breed.expr) return;
+      if (!c || !c.breed) return;
+      /* rig 模式（角色真图）：没有表情帧可切 → 情绪改用姿态表达（见 applyMoodPose） */
+      if (c.rigged) { applyMoodPose(c, id); return; }
+      if (!c.breed.expr) return;
       if (c.expr === id) return;
       c.expr = id;
       const art = c.art;
@@ -1268,15 +1849,42 @@ const root = document.getElementById('farm');
        蔫 = 心情低于 MOOD_LOW；饿 = 心情偏低想要吃的；
        开心 = 心情不错 / 刚吃过米；兴奋 = 正在啄（专注）或心情爆表；
        惊喜 = 刚收到礼物或传说出壳；困 = 深夜；疑惑 = 发呆太久没事干；
-       眨眼 = 随机眨一下；其余 = 平静。 */
+       眨眼 = 随机眨一下；其余 = 平静。
+       状态多维（2026-11-04）后，「饿」跟「脏」有了各自的依据：
+         饿 = **饱腹低**（吃米能回）；脏 = **清洁低**（添水能回）；
+       心情低仍然是蔫 —— 三档各对应一件器物，玩家一眼能看出该做什么。 */
+    /* 姿态表情：rig 模式没有表情帧（丽丽还没按「品种全家福」这套造型画 9 表情九宫格），
+       情绪改用**姿态**表达 —— 每一种都对应画面上真看得见的变化，不是装饰：
+       蔫 = 降饱和（is-glum，由心情直接判定，见 stepChick）/ 脏 = 去饱和 + 抖（is-dirty）/
+       困 = 点头（is-sleep）/
+       开心·兴奋 = 轻弹（is-cheer）/ 饿 = 低头（is-hungry）/ 疑惑 = 歪头（is-doubt）/
+       惊喜 = 一缩（is-shock）/ 眨眼 = 一挤（is-blink）。
+       等九宫格按全家福造型补齐，把 pack.json 的 expr 打开、切回 expr 模式，
+       这些姿态就退成兜底 —— 表情 id 的语义两边是一致的，不用重写。 */
+    const POSE_CLASS = {
+      calm: [], blink: ['is-blink'], happy: ['is-cheer'], excited: ['is-cheer'],
+      hungry: ['is-hungry'], shock: ['is-shock'], doubt: ['is-doubt'],
+      glum: [], sleepy: ['is-sleep'], dirty: [],
+    };
+    function applyMoodPose(c, id) {
+      if (!c || !c.el) return;
+      const want = POSE_CLASS[id] || [];
+      for (const list of Object.values(POSE_CLASS)) {
+        for (const k of list) if (want.indexOf(k) < 0) c.el.classList.remove(k);
+      }
+      for (const k of want) c.el.classList.add(k);
+    }
     function refreshExpr() {
       const now = Date.now();
       const hour = new Date().getHours();
       const night = hour >= 23 || hour < 5;
       for (const c of flock) {
-        if (!c || c.dead || !c.breed || !c.breed.expr) continue;
+        if (!c || c.dead || !c.breed) continue;
+        if (!c.breed.expr && !c.rigged) continue;   // rig 模式也走这里（姿态表情）
         let e = 'calm';
         const mood = chickMood(c);
+        const full = chickFull(c);      // 饱腹：吃米能回
+        const clean = chickClean(c);    // 清洁：添水能回
         /* 附近有没有吃的：没有就「疑惑」一阵子 */
         const hasFood = !!(nearestGrain(c) || nearestPlateFood(c));
         if (hasFood) c.noFoodSince = 0;
@@ -1284,7 +1892,9 @@ const root = document.getElementById('farm');
         if (c.shockUntil && now < c.shockUntil) e = 'shock';
         else if (c.eatCool > 0) e = 'happy';
         else if (c.inn && c.inn.classList.contains('is-peck')) e = 'excited';
-        else if (mood < MOOD_LOW) e = 'glum';
+        else if (mood < MOOD_LOW) e = 'glum';           // 心情低 → 蔫（该去陪它）
+        else if (full < 25) e = 'hungry';               // 饱腹低 → 饿（该摆食盆）
+        else if (clean < CLEAN_LOW) e = 'dirty';        // 清洁低 → 脏（该添水）
         else if (mood < 45) e = 'hungry';
         else if (mood >= 88) e = 'excited';
         else if (mood >= 70) e = 'happy';
@@ -1296,7 +1906,8 @@ const root = document.getElementById('farm');
     }
     /* 眨眼：随机 2.4~6.6 秒眨一下，130ms 后回到原表情 */
     function scheduleBlink(c) {
-      if (!c || c.dead || !c.breed || !c.breed.expr) return;
+      if (!c || c.dead || !c.breed) return;
+      if (!c.breed.expr && !c.rigged) return;
       c.timers.push(window.setTimeout(() => {
         if (!c || c.dead) return;
         setExpr(c, 'blink');
@@ -1307,14 +1918,30 @@ const root = document.getElementById('farm');
       }, 2400 + Math.random() * 4200));
     }
 
-    function bubble(x, y, text) {
+    function bubble(x, y, text, ms) {
       const b = document.createElement('div');
       b.className = 'farm-bubble';
       b.textContent = text;
       b.style.left = `${clamp(x, 70, Math.max(72, stage.clientWidth - 70))}px`;
       b.style.top = `${clamp(y - 46, 30, Math.max(32, stage.clientHeight))}px`;
+      /* 两行（加成长进度）时多留一会儿，别还没看清就淡出 */
+      const dur = ms && ms > 1900 ? ms : 1900;
+      if (dur > 1900) b.style.setProperty('--bubout', ((dur - 350) / 1000).toFixed(2) + 's');
       layer.appendChild(b);
-      window.setTimeout(() => b.remove(), 1900);
+      window.setTimeout(() => b.remove(), dur);
+    }
+
+    /* 成长进度：让玩家看得见「还要多久才长大」。
+       规矩 3「数值要实时可见」—— 成长值不能只存在于账里。 */
+    function growthText(c) {
+      if (!c || !c.rec || !STAGE_ORDER.length) return '';
+      const key = stageOf(c.rec);
+      const ms = stageMs(key);
+      if (!ms) return '我已经长成大鸡啦！';
+      const left = ms - stageProgress(c.rec);
+      if (left <= 0) return '我马上要长大了！';
+      const m = Math.ceil(left / 60000);
+      return m >= 60 ? `再过 ${Math.round(m / 60)} 小时我就长大了` : `再过 ${m} 分钟我就长大了`;
     }
 
     /* ===== 模块四：状态机 =====
@@ -1341,7 +1968,34 @@ const root = document.getElementById('farm');
       spawnEgg(x, y, breed);
     }
 
-    /* 蛋的落地动画与破壳：落地蛋、从篮子里取出的蛋共用这一段 */
+    /* 破壳图：蛋壳裂开、雏头探出来（丽丽 成长阶梯-05 改色）。
+       演出图，不是阶段 —— 碎壳之后就是「雏鸡」这一阶。
+       **加载失败就退回 SVG 蛋的裂纹**（线上 /packs 会 404，不能留破图）。 */
+    function showHatch(egg, breed) {
+      const show = (pack.stages && pack.stages.show) || {};
+      const def = show.hatch;
+      if (!def || !def.art || !breed || !breed.id) return false;
+      const svg = egg.querySelector('svg');
+      const img = document.createElement('img');
+      img.className = 'farm-egg-hatch';
+      img.alt = '';
+      img.decoding = 'async';
+      const tmpl = pack.stages.file || '<stage>/<breed>.png';
+      const file = tmpl.replace('<stage>', 'hatch').replace('<breed>', breed.id);
+      img.src = pack.stages.base + file + (window.__coopVer ? ('?' + window.__coopVer) : '');
+      img.onerror = () => {
+        img.remove();
+        if (svg) svg.style.display = '';
+        egg.classList.add('is-crack');   // 退回原来的裂纹蛋
+      };
+      if (svg) svg.style.display = 'none';
+      egg.appendChild(img);
+      if (!reduce) egg.classList.add('is-hatch');
+      return true;
+    }
+
+    /* 蛋的落地动画与破壳：落地蛋、从篮子里取出的蛋共用这一段
+       时序：drop(0) → wob(540) → 破壳(1500，雏头探出) → 碎壳出雏鸡(2300) */
     function spawnEgg(x, y, breed) {
       const egg = document.createElement('div');
       egg.className = reduce ? 'farm-egg' : 'farm-egg is-drop';
@@ -1358,8 +2012,11 @@ const root = document.getElementById('farm');
         return;
       }
       eggTimers.push(window.setTimeout(() => { egg.classList.remove('is-drop'); egg.classList.add('is-wob'); }, 540));
-      eggTimers.push(window.setTimeout(() => egg.classList.add('is-crack'), 1640));
-      eggTimers.push(window.setTimeout(() => { egg.remove(); hatch(x, y, breed); }, 1980));
+      eggTimers.push(window.setTimeout(() => {
+        /* 破壳图没有就退回 SVG 裂纹（老包 / 图没加载） */
+        if (!showHatch(egg, breed)) egg.classList.add('is-crack');
+      }, 1500));
+      eggTimers.push(window.setTimeout(() => { egg.remove(); hatch(x, y, breed); }, 2300));
     }
 
     function hatch(x, y, breed) {
@@ -1375,9 +2032,10 @@ const root = document.getElementById('farm');
       state.hatched = tallyAdd(state.tally.hatched, 1);
       if (!state.tally.dex[breed.id]) state.tally.dex[breed.id] = {};
       state.dex[breed.id] = tallyAdd(state.tally.dex[breed.id], 1);
+      let bornRec = null;
       if (state.chickens.length < MAX_FLOCK) {
         state.seq = tallyAdd(state.tally.seq, 1);
-        state.chickens.push({
+        bornRec = {
           id: `c-${state.seq}-${ORIGIN}`,
           breed: breed.id,
           page: HERE,
@@ -1385,12 +2043,24 @@ const root = document.getElementById('farm');
           lastSeen: Date.now(),
           mood: MOOD_START,
           moodAt: Date.now(),
-        });
+          /* 状态多维（2026-11-04）：心情 / 饱腹 / 清洁三轴。
+             饱腹靠吃米回、清洁靠喝水回 —— 每件器物的收益在数值上分得开。 */
+          full: FULL_START,
+          fullAt: Date.now(),
+          clean: CLEAN_START,
+          cleanAt: Date.now(),
+          /* 成长：出壳就是雏鸡，从这里开始往成鸡长（阶段只前进不后退） */
+          stage: STAGE_ORDER[0] || STAGE_LAST,
+          stageAt: Date.now(),
+          growth: 0,
+        };
+        state.chickens.push(bornRec);
       }
       save(); refreshHUD();
 
       if (!reduce) shells(x, y, breed);
-      const born = addChick(x, y, breed, true);
+      /* 阶段显式给：账本满了没进册时，新鸡也该是雏鸡（别去拿上一只的阶段） */
+      const born = addChick(x, y, breed, true, bornRec ? bornRec.stage : (STAGE_ORDER[0] || STAGE_LAST), bornRec);
       if (born && breed.rarity === 'legendary') born.shockUntil = Date.now() + 2400; // 传说出壳：惊一下
       trimFlock();
       emitState();
@@ -1416,22 +2086,38 @@ const root = document.getElementById('farm');
       window.setTimeout(() => s.remove(), 800);
     }
 
-    function addChick(x, y, breed, fresh) {
+    function addChick(x, y, breed, fresh, stageKey, rec) {
+      /* 阶段：给了就用给的；没给就按账本里那条记录（刚孵出来的那只有 stage='chick'）；
+         都没有 → 成鸡（老档没有 stage 字段，当成待够久的老鸡，不突然变大）。 */
+      let st = stageKey || '';
+      if (!st && rec) st = stageOf(rec);
+      if (!st && fresh) {
+        const last = state.chickens[state.chickens.length - 1];
+        if (last) st = stageOf(last);
+      }
+      if (!st) st = STAGE_LAST;
       const el = document.createElement('div');
       el.className = 'farm-chick';
       el.dataset.breed = breed && breed.id ? breed.id : '';   // 验收脚本靠它认品种
+      el.dataset.stage = st;                                  // 验收脚本靠它认阶段
+      /* 豪华成鸡：账本记着 rec.lux → 刷新回来仍是豪华版（别让玩家以为加冕白给了） */
+      const isLux = !!(rec && rec.lux && pack.lux && pack.lux.base);
+      if (isLux) el.dataset.lux = '1';
       const wob = document.createElement('div');
       wob.className = 'farm-chick-wob';
       const inn = document.createElement('div');
       inn.className = `farm-chick-in${fresh && !reduce ? ' is-pop' : ''}`;
-      inn.appendChild(chickVisual(breed));
+      inn.appendChild(chickVisual(breed, st, isLux));
       wob.appendChild(inn);
       el.appendChild(wob);
       layer.appendChild(el);
 
       const c = {
         el, wob, inn, breed,
-        id: fresh ? state.chickens[state.chickens.length - 1]?.id || '' : '',
+        rigged: !!(breed && breed.rig && breed.rig.base),   // 角色真图（品种全家福）还是表情九宫格
+        stage: st,          // 当前成长阶段
+        lux: isLux,         // 豪华成鸡（成鸡之后的可选形态）
+        id: rec ? rec.id : (fresh ? state.chickens[state.chickens.length - 1]?.id || '' : ''),
         x, y, tx: x, ty: y,
         flip: Math.random() < 0.5 ? -1 : 1,
         speed: rand(36, 68),
@@ -1446,6 +2132,10 @@ const root = document.getElementById('farm');
         act: '',         // 当前行为（idle/peck/walk…，从行为表抽的）
         noFoodSince: 0,  // 附近没吃的开始时间（久了 → 疑惑）
       };
+      /* 盒子大小按阶段来（雏鸡小、成鸡大 —— 成长必须看得见）；豪华版另有尺寸 */
+      const box0 = isLux ? (luxBox(breed) || stageBox(st, breed)) : stageBox(st, breed);
+      if (box0) { el.style.width = box0[0] + 'px'; el.style.height = box0[1] + 'px'; }
+
       let pressT = 0, pressMoved = false; // 长按起名：按下时刻与是否挪动（up 时判 >550ms 且未拖拽才起名）
       const onMove = (ev) => {
         if (held && Math.hypot(ev.clientX - held.lastX, ev.clientY - held.lastY) > 3) pressMoved = true;
@@ -1469,7 +2159,7 @@ const root = document.getElementById('farm');
       if (!reduce) { c.mode = 'walk'; newTarget(c); }
       draw(c, 0);
       flock.push(c);
-      c.rec = state.chickens.find((r) => r.id === c.id) || null; // 对上账本记录（心情等状态记在上面）
+      c.rec = rec || state.chickens.find((r) => r.id === c.id) || null; // 对上账本记录（心情/成长等状态记在上面）
       /* 表情表品种：记住画布 + 开始随机眨眼 */
       c.art = c.inn.querySelector('.farm-chick-art');
       if (c.breed && c.breed.expr) { setExpr(c, 'calm'); scheduleBlink(c); }
@@ -1488,7 +2178,7 @@ const root = document.getElementById('farm');
        （Shimeji 的 frequency=0 等价物）。
        表里没有的行为一律不做；表整个缺失 → 退回「只走路」，
        **不退回硬编码的默认频率** —— 那会让 pack.json 不再是唯一出处。 */
-    const BEHAVIOR_ACTIONS = ['idle', 'peck', 'walk', 'seekFood', 'eatPlate', 'stand'];
+    const BEHAVIOR_ACTIONS = ['idle', 'peck', 'walk', 'seekFood', 'eatPlate', 'stand', 'chaseMouse'];
     const BEHAVIOR_COUNTS = { idle: 0, peck: 0, walk: 0 }; // 累计次数（验收看分布用）
     const BEHAVIOR_BY_BREED = {}; // 品种 → { idle, peck, walk }：哪只鸡最爱啄
     function normalizeBehaviors(raw) {
@@ -1510,7 +2200,17 @@ const root = document.getElementById('farm');
           const a = Number(b.duration[0]), z = Number(b.duration[1]);
           if (isFinite(a) && isFinite(z)) dur = [Math.min(a, z), Math.max(a, z)];
         }
-        out[id] = { id, action, frequency: trigger ? 0 : freq, duration: dur, trigger };
+        /* 触发器行为可以带自己的参数（chaseMouse 的 radius / cooldown 等）——
+           原样带出来，让「参数也归 pack.json 管」成立（改半径不用改引擎代码）。
+           只带纯数字的键，避免把 note 之类的说明文字塞进行为对象。 */
+        const params = {};
+        for (const k of Object.keys(b)) {
+          if (k === 'id' || k === 'action' || k === 'trigger' || k === 'frequency'
+            || k === 'duration' || k === 'enabled' || k === 'note' || k === 'weight') continue;
+          const v = b[k];
+          if (typeof v === 'number' && isFinite(v)) params[k] = v;
+        }
+        out[id] = { id, action, frequency: trigger ? 0 : freq, duration: dur, trigger, params };
       }
       return out;
     }
@@ -1552,10 +2252,51 @@ const root = document.getElementById('farm');
       }
       return null;
     }
+    /* 开始追鼠标（ChaseMouse）：命中就设好目标点，返回 true 表示「这次决策是追鼠标」。
+       目标点要**钉住**（c.chaseX/chaseY），不能每帧追着鼠标的最新位置走 ——
+       那样鸡会一直冲过头再折返（实测：逼近到 55px 后又跑回 88px）。
+       钉住 + 到了 26px 内就停，才像「走过去看一眼」。 */
+    function startChase(c, cfg, radOverride) {
+      if (!c || !cfg) return false;
+      const P = cfg.params || {};
+      const now = performance.now();
+      /* 冷却：追过一次要歇一会儿，不然鸡会一直黏着指针（很吵） */
+      if (c.chaseUntil && now < c.chaseUntil) return false;
+      if (!mouseStage.on) return false;
+      const rad = radOverride || P.radius || 160;
+      const d = Math.hypot(mouseStage.x - c.x, mouseStage.y - c.y);
+      /* 太近了不用追（已经在旁边）；太远了不追（不许满屏乱跑） */
+      if (d <= 26 || d >= rad) return false;
+      c.mode = 'walk';
+      c.tx = mouseStage.x; c.ty = mouseStage.y;
+      c.chaseX = mouseStage.x; c.chaseY = mouseStage.y;
+      c.chaseTarget = true;
+      c.chaseAimAt = now;
+      c.chaseUntil = now + (P.cooldown || 12) * 1000;
+      c.act = 'chaseMouse';
+      c.el.dataset.act = 'chaseMouse';
+      BEHAVIOR_COUNTS.chaseMouse = (BEHAVIOR_COUNTS.chaseMouse || 0) + 1;
+      const bk = (c.breed && c.breed.id) || '';
+      if (bk) {
+        const per = (BEHAVIOR_BY_BREED[bk] = BEHAVIOR_BY_BREED[bk] || {});
+        per.chaseMouse = (per.chaseMouse || 0) + 1;
+      }
+      return true;
+    }
     function decide(c) {
       const B = behaviorsFor(c);
       /* 音乐会受控鸡：站桩等指令（行为表里关掉 stand → 音乐会散场，鸡自由活动） */
       if (c.concert && B.stand) { c.mode = 'wait'; c.wait = 0.3; return; }
+      /* ChaseMouse（Shimeji 的必备行为，2026-11-04）**优先于**加权抽签：
+         我们原来只有「光标小鸡」跟着指针走 —— 那是装饰性跟随，不是「鸡自己追鼠标」。
+         现在鼠标靠近，小鸡自己走过去看一眼。
+         为什么放在 decide() 而不是 stepChick 的 wait 分支：
+         放那儿的话，只有鸡恰好在发呆（wait）的那一瞬间才可能触发 ——
+         而鸡大部分时间在走，触发窗口太窄，实测几乎追不上（鸡径直走开了）。
+         decide() 是每次「做完一件事、下一步干什么」的决策点，在这里判定才是对的。
+         半径/冷却都从行为表读（pack.json 的 behaviors.chaseMouse），
+         关掉它就完全不追（enabled:false）。 */
+      if (B.chaseMouse && startChase(c, B.chaseMouse)) return;
       const b = pickBehavior(B);
       /* 表里没有能做的（表缺失，或加权行为全被关掉）→ 至少走走。
          别让鸡僵在原地 —— 那比「退化」更难看。 */
@@ -1577,11 +2318,14 @@ const root = document.getElementById('farm');
 
     function stepChick(c, dt, t) {
       if (c.mode === 'leave') {
+        /* 装篮淡出中：站着别走，等计时器把它收掉（走出屏要十几秒，
+           那段时间台上比上限多几只，面板上的数跟画面对不上） */
+        if (c.fadeOut) { draw(c, t, true); return; }
         const d = c.tx - c.x;
         const sp = c.speed * 1.5 * dt;
         if (Math.abs(d) <= sp) { kill(c); return; }
         c.x += d > 0 ? sp : -sp;
-        draw(c, t);
+        draw(c, t, true);   // free = 离场不夹在舞台里（见 draw 的说明）
         return;
       }
       if (c.mode === 'held') { draw(c, t); return; }
@@ -1601,8 +2345,10 @@ const root = document.getElementById('farm');
         draw(c, t);
         return;
       }
-      /* 心情低 → 蔫（看得见）；蔫的鸡吃不下东西，得先哄 */
+      /* 心情低 → 蔫（看得见）；蔫的鸡吃不下东西，得先哄。
+         清洁低 → 脏（另一套画面信号：去饱和 + 抖，见 CSS 的 is-dirty）。 */
       c.el.classList.toggle('is-glum', chickMood(c) < MOOD_LOW);
+      c.el.classList.toggle('is-dirty', chickMood(c) >= MOOD_LOW && chickClean(c) < CLEAN_LOW);
       c.eatCool = (c.eatCool || 0) - dt; // 吃一口歇一会儿，别把盘吃穿
       /* 找吃的：地上的谷子优先；没有就去看盘子里有没有米
          （seekFood / eatPlate 也能在行为表里关掉 —— 「摆出来的东西必须有用」反过来：
@@ -1621,11 +2367,71 @@ const root = document.getElementById('farm');
         if (c.wait <= 0) decide(c);
         return;
       }
+      /* 追鼠标的**中断**判定（2026-11-04 补）：鸡正在走的时候，鼠标凑近也要能立刻掉头去追。
+         为什么 decide() 里判还不够：decide() 只发生在「走到位」或「发呆结束」——
+         鸡大部分时间在走，等它下一次 decide，早走出半径了，追鼠标变成看运气
+         （实测：鼠标放在 90px 外，8 秒里一次都没触发，鸡径直走开 250px）。
+         中断半径比 decide 的半径小：真的凑到跟前才值得掉头（半径写在 pack.json 里）。 */
+      if (!c.chaseTarget && mouseStage.on) {
+        const cm = behaviorsFor(c).chaseMouse;
+        if (cm) {
+          const P = cm.params || {};
+          const ir = P.interruptRadius || 110;
+          const d = Math.hypot(mouseStage.x - c.x, mouseStage.y - c.y);
+          if (d > 26 && d < ir) startChase(c, cm, ir);
+        }
+      }
+      /* 追鼠标：走到「够近」就停（26px 内），别顶到鼠标上挡着指针。
+         目标点**定期重新瞄准光标**（限速 0.5s 一次）：
+         原来完全钉死在起追那一刻的坐标 —— 鼠标一直在动的话，鸡会跑去一个
+         早就过时的点（实测：鸡停在光标经过的中间某个位置，看着像没追上）。
+         ⚠ 这一段必须排在算位移**之前**：重瞄之后 tx/ty 变了，
+         后面算 dx/dy 要用新目标，否则鸡永远在追旧点。 */
+      if (c.chaseTarget) {
+        const live = mouseStage.on ? mouseStage : null;
+        const cd = Math.hypot((c.chaseX || c.tx) - c.x, (c.chaseY || c.ty) - c.y);
+        /* 停的判据看**当前光标**（不是钉住的目标）：钉住的目标可能早过时了 */
+        const ld = live ? Math.hypot(live.x - c.x, live.y - c.y) : Infinity;
+        if ((live && ld < 26) || (!live && cd < 26)) {
+          /* 追到了：站住看一会儿（2.5~4 秒）再散。
+             停太短的话，普通行为会立刻接管（decide → 随机 walk 目标），
+             鸡转头就走 —— 那不叫「走过去看一眼」，像没追上。 */
+          c.chaseTarget = false;
+          c.mode = 'wait'; c.wait = rand(2.5, 4.0);
+          return;
+        }
+        /* 重新瞄准：每 0.5s 挪一次目标，追着光标的方向走，但不追着抖 */
+        const now = performance.now();
+        if (live && now - (c.chaseAimAt || 0) > 500) {
+          c.chaseAimAt = now;
+          const cm = behaviorsFor(c).chaseMouse;
+          const rad = (cm && cm.params && cm.params.radius) || 160;
+          if (ld < rad) { c.chaseX = live.x; c.chaseY = live.y; c.tx = live.x; c.ty = live.y; }
+        }
+      }
       const dx = c.tx - c.x;
       const dy = c.ty - c.y;
       const dist = Math.hypot(dx, dy);
       if (dist < 5) {
+        /* 快讯播报：这只鸡是专门走到场中央来报消息的，到了就冒泡（先于其他到达判定） */
+        if (c.bcast) {
+          const b = c.bcast; c.bcast = null;
+          showBcast(c, b.item, b.manual);
+          c.mode = 'wait'; c.wait = rand(1.2, 2.2);
+          return;
+        }
         if (c.grainTarget && !c.grainTarget.taken) { eatGrain(c, c.grainTarget); c.grainTarget = null; c.mode = 'wait'; c.wait = rand(0.4, 0.9); return; }
+        if (c.chaseTarget) {
+          /* 只是走到了钉住的目标点，但光标已经挪走了 → 立刻重新瞄准，继续追。
+             （光标还在附近才继续；光标跑远了就到此为止） */
+          const live = mouseStage.on ? mouseStage : null;
+          const ld = live ? Math.hypot(live.x - c.x, live.y - c.y) : 0;
+          if (ld >= 26) { c.chaseAimAt = 0; return; }
+          /* 追到了：站在那儿看一眼，别顶着鼠标不动（挡着指针） */
+          c.chaseTarget = false;
+          c.mode = 'wait'; c.wait = rand(0.5, 1.4);
+          return;
+        }
         if (c.plateTarget) {
           const pd = c.plateTarget;
           c.plateTarget = null;
@@ -1633,6 +2439,8 @@ const root = document.getElementById('farm');
             pd.rice -= 1;
             pd.at = Date.now();
             addMood(c, MOOD_EAT);
+            addFull(c, FULL_EAT);     // 吃米涨饱腹（状态多维：米 = 饱腹）
+            addGrowth(c, STAGE_BOOST.eat);   // 喂食也能催大它（VPet：经验来自主动互动）
             c.eatCool = 1.6;
             noteFloat(c.x, c.y - 40, 'var(--yellow)', c);
             save(); renderDecos();
@@ -1649,9 +2457,13 @@ const root = document.getElementById('farm');
       draw(c, t);
     }
 
-    function draw(c, t) {
+    function draw(c, t, free) {
       const wobA = reduce ? 0 : Math.sin(t * 11 + c.phase) * 6;
-      c.x = clamp(c.x, 20, Math.max(24, stage.clientWidth - 20));
+      /* 离场中的鸡（mode='leave'）**不夹在舞台里**。
+         原来这里一律把 x 夹在 [20, w-20]，于是要走出去的鸡走到边缘就被夹住 ——
+         它永远到不了终点，也就永远不会被 kill（2026-11-05 实测：
+         派去别的页的鸡一直站在屏幕边上不走，像卡住了）。 */
+      if (!free) c.x = clamp(c.x, 20, Math.max(24, stage.clientWidth - 20));
       c.y = clamp(c.y, 30, Math.max(34, stage.clientHeight - 20));
       c.el.style.transform = `translate3d(${c.x - 23}px, ${c.y - 42}px, 0)`;
       const br = reduce ? 0 : 0.5 + 0.5 * Math.sin(t * ((Math.PI * 2) / 1.9) + c.phase);
@@ -1697,16 +2509,18 @@ const root = document.getElementById('farm');
     }
 
     function trimFlock() {
+      /* 台上最多 MAX_PAGE 只：超了就让最老的几只「装篮」（淡出退场，账还在）。
+         以前一次只让一只走 —— 一次召回十几只时台上会挤爆（超过同屏上限），
+         而且「装篮」那一行的数会跟着算错。改成循环到不超为止。
+         淡出而不是慢慢走出屏：走一屏要十几秒（散场那栏是同一个道理），
+         那段时间台上比上限多几只，面板上的「装篮」数跟画面对不上。 */
       const active = flock.filter((c) => c.mode !== 'leave' && !c.dead);
-      if (active.length <= MAX_PAGE) return;
-      const old = active[0];
-      old.mode = 'leave';
-      old.tx = old.x < stage.clientWidth / 2 ? -80 : stage.clientWidth + 80; // 装篮：走出屏，账还在
-      if (reduce) {
+      for (let i = 0; i < active.length - MAX_PAGE; i += 1) {
+        const old = active[i];
+        old.mode = 'leave';
+        old.fadeOut = true;
         old.el.classList.add('is-fade');
-        old.timers.push(window.setTimeout(() => { old.dead = true; old.el.remove(); }, 900));
-      } else {
-        old.timers.push(window.setTimeout(() => old.el.classList.add('is-fade'), 500));
+        old.timers.push(window.setTimeout(() => kill(old), 750));
       }
     }
 
@@ -1714,12 +2528,26 @@ const root = document.getElementById('farm');
     const LINES = pack.lines;
     const RARE_LINES = pack.rareLines || {};
 
+    /* ===== 鸡名：值有两种形态 ——
+       老档是纯字符串（'花花'），新的是 { n: '花花', at: 时间戳 }。
+       为什么加时间戳：两个标签页同时给同一只鸡改名时，
+       「本地优先」会让两边各写各的、落盘来回顶 ——
+       玩家刚起的名会被另一个标签页的一次心跳冲掉，刷新就变回旧名（真丢数据）。
+       带时间戳之后：同名时谁新听谁的，两边最终收敛到同一个名字。 */
+    function nameVal(v) { return (v && typeof v === 'object') ? (v.n || '') : (v || ''); }
+    function nameTs(v) { return (v && typeof v === 'object') ? (Number(v.at) || 0) : 0; }
+    function nameOf(id) { return nameVal(state.names && state.names[id]); }
+    function setName(id, n) {
+      state.names = state.names || {};
+      state.names[id] = { n, at: Date.now() };
+    }
+
     function nameChick(c) {
       const inp = document.createElement('input');
       inp.className = 'farm-rename';
       inp.maxLength = 8;
       inp.placeholder = '给它起个名字';
-      inp.value = (state.names && state.names[c.id]) || '';
+      inp.value = nameOf(c.id);
       inp.style.left = clamp(c.x - 60, 8, stage.clientWidth - 130) + 'px';
       inp.style.top = clamp(c.y - 74, 40, stage.clientHeight - 34) + 'px';
       layer.appendChild(inp);
@@ -1732,8 +2560,7 @@ const root = document.getElementById('farm');
         if (doSave) {
           const v = inp.value.trim();
           if (v) {
-            state.names = state.names || {};
-            state.names[c.id] = v;
+            setName(c.id, v);
             c.named = v;
             save();
             bubble(c.x, c.y, `记住了，我叫「${v}」～`);
@@ -1744,6 +2571,137 @@ const root = document.getElementById('farm');
       inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') finish(true); if (e.key === 'Escape') finish(false); });
       inp.addEventListener('blur', () => finish(true));
     }
+    /* ===== 点鸡弹小菜单（2026-11-04，抄 VPet 的 ToolBar / Shimeji 的右键菜单）=====
+       原来点鸡 = 它说一句话，一句话就结束了，**没有第二次交互的入口**。
+       现在点一下：先照旧说一句话（不破坏「点小鸡听它说话」这个老习惯），
+       同时在旁边弹一个小菜单 —— 一次点击给出多个可能。
+       菜单项跟着**状态多维**走：心情/饱腹/清洁各有一项能立刻改善它，
+       不用去猜「摆食盆还是添水」（规矩：装饰要么承载信息，要么不做）。
+       菜单是**临时气泡**，不是常驻面板 —— 成熟游戏都不长期飘着名字。 */
+    let chickMenu = null;
+    function closeChickMenu() {
+      if (!chickMenu) return;
+      const m = chickMenu; chickMenu = null;
+      if (m.el) m.el.remove();
+      window.removeEventListener('pointerdown', m.onAway, true);
+      window.removeEventListener('keydown', m.onKey, true);
+    }
+    function openChickMenu(c) {
+      closeChickMenu();
+      const el = document.createElement('div');
+      el.className = 'farm-cmenu';
+      el.setAttribute('role', 'menu');
+      el.setAttribute('aria-label', (c.breed && c.breed.name ? c.breed.name : '小鸡') + ' 的菜单');
+      /* 三轴现状写在菜单顶上：玩家点进来就能看见「它现在缺什么」 */
+      const m = Math.round(chickMood(c)), f = Math.round(chickFull(c)), k = Math.round(chickClean(c));
+      const name = nameOf(c.id) || (c.breed && c.breed.name) || '小鸡';
+      let html = '<div class="farm-cmenu-head">' + name + '</div>';
+      html += '<div class="farm-cmenu-vitals">'
+        + '<span title="心情">心 ' + m + '</span>'
+        + '<span title="饱腹（吃米回）">饱 ' + f + '</span>'
+        + '<span title="清洁（添水回）">洁 ' + k + '</span>'
+        + '</div>';
+      /* 菜单项：每项都对应一个**立刻见效**的动作 */
+      const items = [
+        { id: 'talk', label: '摸摸头', act: () => poke(c) },
+        { id: 'feed', label: '喂一口', act: () => feedChick(c) },
+        { id: 'wash', label: '添点水', act: () => washChick(c) },
+        { id: 'info', label: '查状态', act: () => showChickInfo(c) },
+      ];
+      /* 鸡场快讯：玩家可以主动打听（冷却中就灰掉，但仍然看得见这条路） */
+      if (evCfg().hasAny) {
+        const ns = newsMenuState();
+        items.push({ id: 'news', label: ns.label, disabled: ns.disabled, act: () => askNews(c) });
+      }
+      /* 豪华成鸡：成鸡 + 三轴都达标才能「加冕」（条件在 pack.json 的 lux.unlock）。
+         没条件时这一项显示为「还没到时候」（灰掉但仍可见 → 玩家知道有这条路）。 */
+      if (pack.lux && pack.lux.base) {
+        if (c.lux) {
+          items.push({ id: 'unlux', label: '还原', act: () => {
+            applyLux(c, false);
+            bubble(c.x, c.y, '还是原来那只～');
+            save(); refreshHUD();
+          } });
+        } else {
+          const ready = luxUnlocked(c);
+          items.push({ id: 'lux', label: ready ? '加冕' : '还没到时候', disabled: !ready, act: () => {
+            if (!luxUnlocked(c)) { bubble(c.x, c.y, '再把我照顾好一点（心·饱·洁都满格）'); return; }
+            applyLux(c, true);
+            bubble(c.x, c.y, '加冕！我成豪华版了～');
+            save(); refreshHUD();
+          } });
+        }
+      }
+      for (const it of items) {
+        html += '<button type="button" class="farm-cmenu-btn' + (it.disabled ? ' is-off' : '') + '" role="menuitem" data-act="' + it.id + '"'
+          + (it.disabled ? ' disabled aria-disabled="true"' : '') + '>' + it.label + '</button>';
+      }
+      el.innerHTML = html;
+      /* 定位：贴着鸡的**下方偏右**。
+         为什么放下面：点鸡时鸡头上方会冒一个气泡（品种台词 + 成长进度），
+         菜单放右上会压住气泡的右半边（看着像字被挡了）。
+         气泡在上、菜单在下，互不重叠；菜单也不挡鸡本身。
+         超出屏幕就翻边（高度按实际渲染量，别拿估值糊弄）。 */
+      const bw = 132;
+      layer.appendChild(el);
+      const bh = Math.max(120, el.offsetHeight || 132);
+      let left = c.x + 30, top = c.y + 4;
+      if (left + bw > stage.clientWidth - 6) left = Math.max(6, c.x - 30 - bw);
+      if (top + bh > stage.clientHeight - 6) top = Math.max(6, c.y - 4 - bh);
+      if (top < 6) top = 6;
+      el.style.left = Math.round(left) + 'px';
+      el.style.top = Math.round(top) + 'px';
+      el.addEventListener('pointerdown', (e) => e.stopPropagation());  // 点菜单别下蛋
+      el.addEventListener('click', (e) => {
+        const b = e.target.closest ? e.target.closest('.farm-cmenu-btn') : null;
+        if (!b) return;
+        e.stopPropagation();
+        const it = items.find((x) => x.id === b.dataset.act);
+        closeChickMenu();
+        if (it) it.act();
+      });
+      const onAway = (e) => {
+        if (el.contains(e.target)) return;
+        closeChickMenu();
+      };
+      const onKey = (e) => { if (e.key === 'Escape') closeChickMenu(); };
+      window.setTimeout(() => {
+        window.addEventListener('pointerdown', onAway, true);
+        window.addEventListener('keydown', onKey, true);
+      }, 0);
+      chickMenu = { el, onAway, onKey };
+    }
+    /* 菜单动作：喂一口（饱腹）、添点水（清洁）—— 都只作用于这一只鸡 */
+    function feedChick(c) {
+      addFull(c, FULL_EAT);
+      addMood(c, Math.round(MOOD_EAT / 2));
+      addGrowth(c, STAGE_BOOST.eat);
+      c.eatCool = 1.2;
+      c.lastSeen = Date.now();
+      bubble(c.x, c.y, '好好吃～');
+      play((t) => cluck(t, c.breed.f * rand(0.97, 1.03), 0.13));
+      save(); refreshHUD();
+    }
+    function washChick(c) {
+      addClean(c, CLEAN_WATER);
+      addMood(c, Math.round(MOOD_WATER / 2));
+      addGrowth(c, STAGE_BOOST.water);
+      c.lastSeen = Date.now();
+      bubble(c.x, c.y, '洗得香喷喷～');
+      play((t) => cluck(t, c.breed.f * rand(1.02, 1.06), 0.11));
+      save(); refreshHUD();
+    }
+    /* 查状态：把三轴 + 成长进度讲清楚（数值要看得见，规矩 3） */
+    function showChickInfo(c) {
+      const m = Math.round(chickMood(c)), f = Math.round(chickFull(c)), k = Math.round(chickClean(c));
+      const g = growthText(c);
+      let tip = '心 ' + m + ' · 饱 ' + f + ' · 洁 ' + k;
+      if (f < 25) tip += '\n我饿了，摆个食盆吧';
+      else if (k < CLEAN_LOW) tip += '\n我脏了，添点水吧';
+      else if (m < MOOD_LOW) tip += '\n我有点蔫，陪我说说话';
+      if (g) tip += '\n' + g;
+      bubble(c.x, c.y, tip, 3200);
+    }
     function poke(c) {
       if (!reduce) {
         c.inn.classList.remove('is-hop');
@@ -1752,8 +2710,11 @@ const root = document.getElementById('farm');
         c.timers.push(window.setTimeout(() => c.inn.classList.remove('is-hop'), 520));
       }
       const line = RARE_LINES[c.breed.id] && Math.random() < 0.7 ? RARE_LINES[c.breed.id] : LINES[Math.floor(Math.random() * LINES.length)];
-      bubble(c.x, c.y, line.replace('{E}', String(state.eggs)));
+      /* 第二行报成长进度（没长大才有话说；成鸡了就说长大了） */
+      const g = growthText(c);
+      bubble(c.x, c.y, g ? `${line.replace('{E}', String(state.eggs))}\n${g}` : line.replace('{E}', String(state.eggs)), g ? 2600 : 0);
       addMood(c, MOOD_TALK); // 跟它说句话，它就高兴一点
+      addGrowth(c, STAGE_BOOST.talk); // 说话也算照顾，能催大一点
       c.lastSeen = Date.now();
       /* poke = 品种音，发声处浮起视觉音符 */
       play((t) => {
@@ -1764,6 +2725,18 @@ const root = document.getElementById('farm');
 
     /* ===== 模块四·二：总线命令的落点（gift / goto / map） ===== */
     let lastPoint = null;
+    /* 鼠标在**舞台坐标系**里的位置（ChaseMouse 用）。
+       lastPoint 记的是 client 坐标，跟鸡的坐标（舞台相对）不是一个坐标系 —— 别混用。
+       stage 是 inset:0 的整页层，所以这里换算基本等于 client 坐标，
+       但仍然按 getBoundingClientRect 算，将来舞台不铺满整页也不会错。 */
+    let mouseStage = { x: -1, y: -1, on: false };
+    function trackMouseStage(e) {
+      const sr = stage.getBoundingClientRect();
+      mouseStage.x = e.clientX - sr.left;
+      mouseStage.y = e.clientY - sr.top;
+      mouseStage.on = mouseStage.x >= 0 && mouseStage.y >= 0
+        && mouseStage.x <= stage.clientWidth && mouseStage.y <= stage.clientHeight;
+    }
 
     function giftEgg() {
       /* 管家送蛋：走完整孵化流程，品种概率不动（稀缺性守恒，方案 §三.2） */
@@ -1774,40 +2747,564 @@ const root = document.getElementById('farm');
 
     function sendAway(target) {
       if (!PAGES.includes(target) || target === HERE) return;
-      const gone = state.chickens.filter((r) => r.page === HERE).slice(0, 3); // 「放几只」：一次至多 3 只
+      const gone = state.chickens.filter((r) => r.page === HERE && !r.stowed).slice(0, 3); // 「放几只」：一次至多 3 只
       if (!gone.length) { emitSay('眼下本页一只可放的都没有。先下几颗蛋吧。'); return; }
-      for (const r of gone) {
-        r.page = target;
-        r.pos = [rand(0.3, 0.7), rand(0.4, 0.8)];
-        r.lastSeen = Date.now();
-        /* 派去别的页 = 给它一件差事：办完带礼物回来（跨页真的成立） */
-        r.task = { due: Date.now() + TASK_MS };
-        const dom = flock.find((c) => c.id === r.id && !c.dead && c.mode !== 'leave');
-        if (dom) { // 账面先转移，画面上走出屏（目标页下次载入时恢复）
-          dom.mode = 'leave';
-          dom.tx = dom.x < stage.clientWidth / 2 ? -80 : stage.clientWidth + 80;
-        }
-      }
+      for (const r of gone) sendOneAway(r, target, TASK_MS);
       save(); refreshHUD(); emitState();
       bubble(stage.clientWidth / 2, stage.clientHeight * 0.3, `去 ${PAGE_NAMES[target]} 的，走好。`);
+    }
+    /* 把一只鸡派去别的页：领差事 → 办完带礼物回来 → 自己回来。
+       玩家手动放（sendAway）和鸡自己出门逛（checkWander）共用这一条路 ——
+       差别只在「谁决定的」，机制不重复造。 */
+    function sendOneAway(r, target, ms) {
+      r.page = target;
+      r.pos = [rand(0.3, 0.7), rand(0.4, 0.8)];
+      r.lastSeen = Date.now();
+      r.task = { due: Date.now() + (ms || TASK_MS), from: HERE };   // from = 它从哪来，回哪去
+      const dom = flock.find((c) => c.id === r.id && !c.dead && c.mode !== 'leave');
+      if (dom) { // 账面先转移，画面上走出屏（目标页下次载入时恢复）
+        dom.mode = 'leave';
+        dom.tx = dom.x < stage.clientWidth / 2 ? -80 : stage.clientWidth + 80;
+      }
+      return dom || null;
+    }
+    /* ===== 鸡自己决定出门逛（2026-11-05）=====
+       原来跨页串门只有两个入口：玩家手动放、管家派 —— 都是「外面叫它走」。
+       现在多一个：**鸡自己想出去看看**。它自己走、办完自己回来还带礼物，
+       页面因此有了「活着」的感觉（不必盯着，鸡场也会自己有点事发生）。
+       参数全在 pack.json 的 wander 段：enabled / intervalMin / maxOut / awayMin / awayMax。 */
+    function wanderCfg() {
+      const W = WANDER_CFG || {};
+      const iv = Array.isArray(W.intervalMin) ? W.intervalMin : [8, 20];
+      return {
+        enabled: W.enabled !== false && Object.keys(W).length > 0,
+        min: Math.max(1, Number(iv[0]) || 8) * 60000,
+        max: Math.max(2, Number(iv[1]) || Number(iv[0]) || 20) * 60000,
+        maxOut: W.maxOut == null ? 2 : Math.max(0, Number(W.maxOut) || 0),
+        awayMin: Math.max(1, Number(W.awayMin) || 3) * 60000,
+        awayMax: Math.max(2, Number(W.awayMax) || Number(W.awayMin) || 8) * 60000,
+      };
+    }
+    function checkWander() {
+      const W = wanderCfg();
+      if (!W.enabled) return;
+      const now = Date.now();
+      const last = Number(state.wander.lastAt) || 0;
+      /* 第一次：只记下起点，别一开鸡场就立刻走一只（像出了故障） */
+      if (!last) { state.wander.lastAt = now; save(); return; }
+      if (now - last < W.min) return;
+      /* 在外面的（去别的页办事的）别太多 */
+      const out = state.chickens.filter((r) => r.page !== HERE && !r.stowed && r.task).length;
+      if (out >= W.maxOut) return;
+      const mine = state.chickens.filter((r) => r.page === HERE && !r.stowed);
+      if (!mine.length) return;
+      const targets = PAGES.filter((p) => p !== HERE);
+      if (!targets.length) return;
+      const r = mine[(Math.random() * mine.length) | 0];
+      const target = targets[(Math.random() * targets.length) | 0];
+      state.wander.lastAt = now;
+      const dom = sendOneAway(r, target, rand(W.awayMin, W.awayMax));
+      /* 走得要有交代：玩家得看见「它自己出去了」，不然像是鸡凭空消失 */
+      if (dom) bubble(dom.x, dom.y, `我自己去${PAGE_NAMES[target]}看看～`);
+      save(); refreshHUD(); emitState();
+    }
+
+    /* ===== 整理台：散场（鸡回窝）/ 召回（窝里的放回场上）=====
+       终树要的是「一键清屏」：场上一次清空，但**图鉴和成长记录全留**。
+       所以鸡不是被删，是被「收回窝里」（r.stowed = 1）：
+         - 记录、成长阶段、三轴状态全在账本上 → 一样保留、一样继续走时间；
+         - 图鉴（dex）不动；
+         - 窝里的鸡不上任何页面；召回时再放回场上 —— 可能已经长大了
+           （散场期间它们在长，这是「散场」的正反馈，不是惩罚）。
+       地上的蛋不动：蛋是玩家的资产，清掉是惩罚（见 farm-features 的三轴纪律）。
+       不可逆的只有「重开鸡场」（手册里那个，两步确认）。 */
+    function stowAll() {
+      const mine = state.chickens.filter((r) => r.page === HERE && !r.stowed);
+      if (!mine.length) { emitSay('本页没有鸡可收。'); return; }
+      const now = Date.now();
+      for (const r of mine) { r.stowed = 1; r.stowedAt = now; }
+      /* 画面上让它们退场：**淡出 + 移除**，不是慢慢走出屏 ——
+         「清屏」要的是立刻干净，走一屏要十几秒，那不叫清屏。 */
+      for (const c of flock) {
+        if (!c || c.dead) continue;
+        c.mode = 'wait'; c.wait = 0.8;    // 别再乱走，站着淡出
+        c.el.classList.add('is-fade');
+        c.timers.push(window.setTimeout(() => kill(c), 750));
+      }
+      save(); refreshHUD(); emitState();
+      bubble(stage.clientWidth / 2, stage.clientHeight * 0.3,
+        `${mine.length} 只回窝了 —— 它们还在长大，随时放回来。`);
+    }
+    function unstowAll() {
+      const list = state.chickens.filter((r) => r.stowed);
+      if (!list.length) { emitSay('窝里没有鸡。'); return; }
+      const now = Date.now();
+      for (const r of list) {
+        r.stowed = 0; r.stowedAt = now; r.page = HERE;
+        r.pos = [rand(0.2, 0.8), rand(0.45, 0.85)];
+        placeOne(r);
+      }
+      trimFlock();   // 超上限的自动装篮（账还在，和以前一样）
+      save(); refreshHUD(); emitState();
+      bubble(stage.clientWidth / 2, stage.clientHeight * 0.3,
+        `${list.length} 只回场了 —— 窝里空了。`);
+    }
+
+    /* ===== 鸡场地图：一张真的地图 =====
+       画法：纸底 + 手绘虚线边框 → 河 → 路 → 桥 → 树 → 地块 → 圈 → 地标 → 地名 → 数量角标。
+       地点认路由：PAGE_HREF[id] 有 → 可点；没有 → 灰掉、点不动（但仍然看得见）。
+       数量角标 = 这一页几只鸡（数值实时可见，规矩同 HUD）。 */
+    const SVGNS = 'http://www.w3.org/2000/svg';
+    function add(p, tag, attrs) {
+      const e = document.createElementNS(SVGNS, tag);
+      if (attrs) for (const k in attrs) e.setAttribute(k, String(attrs[k]));
+      p.appendChild(e);
+      return e;
+    }
+    /* 地标剪影：一地一套扁平图形，墨色 2px 轮廓 + 色块之间留白（art-style.md §3.4） */
+    const MAP_GLYPHS = {
+      /* 鸡舍：纸身 + 橙顶 + 小门 */
+      coop(g) {
+        add(g, 'rect', { x: -9, y: -1, width: 18, height: 12, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' });
+        add(g, 'polygon', { points: '-11,-1 0,-12 11,-1', fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' });
+        add(g, 'rect', { x: -3, y: 5, width: 6, height: 6, fill: 'var(--ink)' });
+      },
+      /* 谷仓：橙身 + 纸顶 + 大门 */
+      barn(g) {
+        add(g, 'rect', { x: -11, y: -2, width: 22, height: 14, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' });
+        add(g, 'polygon', { points: '-14,-2 0,-13 14,-2', fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' });
+        add(g, 'rect', { x: -5, y: 2, width: 10, height: 10, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 2 });
+      },
+      /* 磨坊：石磨盘 + 四根辐条 + 推杆（小尺寸也得一眼认出来，别画风车叶子那种碎图形） */
+      mill(g) {
+        add(g, 'circle', { cx: 0, cy: 0, r: 10, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 2 });
+        add(g, 'line', { x1: -7, y1: 0, x2: 7, y2: 0, stroke: 'var(--ink)', 'stroke-width': 1.6 });
+        add(g, 'line', { x1: 0, y1: -7, x2: 0, y2: 7, stroke: 'var(--ink)', 'stroke-width': 1.6 });
+        add(g, 'circle', { cx: 0, cy: 0, r: 2.4, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.4 });
+        add(g, 'line', { x1: 7, y1: -1, x2: 13, y2: -9, stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linecap': 'round' });
+      },
+      /* 晒谷场：一束麦穗（别在方框里点黄点 —— 那会被看成一盒鸡蛋；
+   麦穗跟场上四件道具、跟别的地标都不撞脸） */
+      yard(g) {
+        [[-7, -6, -25], [0, -9, 0], [7, -6, 25]].forEach(([x, y, rot]) => {
+          add(g, 'line', { x1: 0, y1: 10, x2: x, y2: y, stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-linecap': 'round' });
+          const cx = x * 1.08;
+          const cy = y - 3.4;
+          add(g, 'ellipse', { cx, cy, rx: 1.9, ry: 4.4, fill: 'var(--yellow)', stroke: 'var(--ink)', 'stroke-width': 1.3, transform: `rotate(${rot} ${cx} ${cy})` });
+        });
+        add(g, 'rect', { x: -3.4, y: 6.4, width: 6.8, height: 2.6, rx: 1, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.3 });
+      },
+      /* 村口：两根橙柱 + 横梁 + 小木牌 */
+      gate(g) {
+        add(g, 'rect', { x: -9, y: -7, width: 3.5, height: 19, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.8 });
+        add(g, 'rect', { x: 5.5, y: -7, width: 3.5, height: 19, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.8 });
+        add(g, 'rect', { x: -12, y: -10, width: 24, height: 4, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linejoin': 'round' });
+        add(g, 'rect', { x: -4, y: -3, width: 8, height: 7, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 1.6 });
+      },
+    };
+
+    /* ===== 地图的四件配套（2026-11-05 夜）=====
+       ① 鸡在地图上动：每块地按该页鸡数画小鸡，在院里走来走去（地图是活的，不是摆件）
+       ② 悬停地块高亮：草地描边变橙、手绘虚线圈变实线（纯 CSS，不改引擎逻辑）
+       ③ 手机端可放大：视口 + 放大/缩小/复位按钮 + 拖动 + 双指捏合
+       ④ 作品上图：站侧推来的作品摆在谷仓边的架子上，点一下直接进那个作品 */
+    let mapBirds = [];                     // 地图上走动的小鸡
+    let mapView = { k: 1, x: 0, y: 0 };    // 缩放 / 平移（px）
+    let mapMoved = false;                  // 刚拖过 → 别把这一下点击当成跳转
+    let mapViewEl = null;                  // 当前地图视口（每次开地图换一个新元素）
+
+    /* 地图上的小鸡：头朝右的一只黄小鸡（线比场上细，地图比场上小） */
+    function mapBirdShape(g) {
+      add(g, 'ellipse', { cx: -1.4, cy: 0, rx: 3.4, ry: 2.6, fill: 'var(--yellow)', stroke: 'var(--ink)', 'stroke-width': 1 });
+      add(g, 'circle', { cx: 0.9, cy: -1.8, r: 2, fill: 'var(--yellow)', stroke: 'var(--ink)', 'stroke-width': 1 });
+      add(g, 'path', { d: 'M2.8,-1.9 L4.9,-1.2 L2.8,-0.7 Z', fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 0.8, 'stroke-linejoin': 'round' });
+      add(g, 'ellipse', { cx: 0.3, cy: -3.7, rx: 1.2, ry: 0.8, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 0.8 });
+      add(g, 'circle', { cx: 1.8, cy: -2.3, r: 0.45, fill: 'var(--ink)' });
+    }
+
+    /* ④ 作品架：works 这类地方的旁边摆一个架子，架子上是站侧推来的作品缩略图。
+       内容在站侧（作品天天在变），引擎只管怎么摆、怎么点。 */
+    function drawMapShelves(svg, cfg) {
+      const works = contentItems.filter((it) => it && it.kind === 'work');
+      if (!works.length) return;
+      Object.keys(cfg.places || {}).forEach((id) => {
+        const p = cfg.places[id];
+        const sh = p && p.shelf;
+        if (!sh) return;
+        const mine = works.filter((w) => (w.place || id) === id);
+        if (!mine.length) return;
+        const n = Math.min(mine.length, sh.n || 4);
+        const cw = sh.w || 12, ch = sh.h || 9, gap = sh.gap || 3;
+        const total = n * cw + (n - 1) * gap;
+        const at = sh.at || [p.at[0], p.at[1] + 26];
+        const x0 = at[0] - total / 2;
+        const y0 = at[1];
+        const g = add(svg, 'g', { class: 'mp-shelf' });
+        /* 架子：一条木板 + 两条腿 */
+        add(g, 'rect', { x: x0 - 2.6, y: y0 + ch + 1.2, width: total + 5.2, height: 2.4, rx: 1, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.4 });
+        add(g, 'rect', { x: x0 - 0.6, y: y0 + ch + 3.4, width: 1.6, height: 3.4, fill: 'var(--ink)' });
+        add(g, 'rect', { x: x0 + total - 1, y: y0 + ch + 3.4, width: 1.6, height: 3.4, fill: 'var(--ink)' });
+        mine.slice(0, n).forEach((w, i) => {
+          const x = x0 + i * (cw + gap);
+          const a = add(g, 'a', { href: w.href || '#', class: 'mp-cover' });
+          const ttl = add(a, 'title', {});
+          ttl.textContent = w.title || '';
+          add(a, 'rect', { x, y: y0, width: cw, height: ch, fill: 'var(--white)', stroke: 'var(--ink)', 'stroke-width': 1.3, 'stroke-linejoin': 'round' });
+          if (w.cover) {
+            add(a, 'image', { href: w.cover, x: x + 1.2, y: y0 + 1.2, width: cw - 2.4, height: ch - 2.4, preserveAspectRatio: 'xMidYMid slice' });
+          } else {
+            add(a, 'rect', { x: x + 1.2, y: y0 + 1.2, width: cw - 2.4, height: ch - 2.4, fill: 'var(--paper)' });
+            const t = add(a, 'text', { x: x + cw / 2, y: y0 + ch / 2 + 2.4, class: 'mp-ch' });
+            t.textContent = (w.title || '?').slice(0, 1);
+          }
+        });
+      });
+    }
+
+    /* ① 地图上的小鸡：在院子里绕着走（跟着主循环跑，面板关着就不动） */
+    function mapTick(t) {
+      if (!mapBirds.length) return;
+      const panel = $('farm-map');
+      if (!panel || panel.hidden) return;
+      for (const b of mapBirds) {
+        const a = b.phase + t * b.speed;
+        const x = b.cx + Math.cos(a) * b.rx;
+        const y = b.cy + Math.sin(a * 1.6) * b.ry;
+        const dir = Math.cos(a) < 0 ? -1 : 1;
+        const bob = Math.sin(t * 7 + b.phase * 3) * 0.35;
+        b.el.setAttribute('transform', `translate(${x.toFixed(2)} ${(y + bob).toFixed(2)}) scale(${dir} 1)`);
+      }
+    }
+
+    /* ③ 缩放 / 平移：CSS transform 作用在 svg 上，视口负责裁切 */
+    function mapApply() {
+      const host = $('farm-mapart');
+      const svg = host && host.querySelector('svg');
+      if (!svg) return;
+      svg.style.transform = `translate(${mapView.x.toFixed(1)}px, ${mapView.y.toFixed(1)}px) scale(${mapView.k.toFixed(3)})`;
+    }
+    function mapClamp() {
+      const host = $('farm-mapart');
+      const view = host && host.querySelector('.mp-view');
+      if (!view) return;
+      const w = view.clientWidth || 1;
+      const h = view.clientHeight || 1;
+      const k = mapView.k;
+      if (k <= 1.001) { mapView.x = 0; mapView.y = 0; return; }
+      mapView.x = Math.min(6, Math.max(w * (1 - k) - 6, mapView.x));
+      mapView.y = Math.min(6, Math.max(h * (1 - k) - 6, mapView.y));
+    }
+    function mapZoomAt(factor, px, py) {
+      const host = $('farm-mapart');
+      const view = host && host.querySelector('.mp-view');
+      if (!view) return;
+      const k0 = mapView.k;
+      const k1 = Math.min(4, Math.max(1, k0 * factor));
+      if (Math.abs(k1 - k0) < 0.001) return;
+      const r = view.getBoundingClientRect();
+      const cx = px == null ? r.width / 2 : px;
+      const cy = py == null ? r.height / 2 : py;
+      mapView.x = cx - (cx - mapView.x) * (k1 / k0);
+      mapView.y = cy - (cy - mapView.y) * (k1 / k0);
+      mapView.k = k1;
+      mapClamp();
+      mapApply();
+    }
+    function mapReset() {
+      mapView.k = 1; mapView.x = 0; mapView.y = 0;
+      mapApply();
+    }
+
+    /* ③ 手势：滚轮缩放 + 拖动平移 + 双指捏合 + 双击放大。
+       **不摆按钮** —— 地图上缩放全靠手势，UI 干干净净。
+       坑：pointerdown 就 setPointerCapture 的话，click 的目标会变成视口 div，
+       里面的 <a> 就不跳了 —— 所以**不抢指针**，改成拖动开始才接管，
+       并且 pointermove/pointerup 挂在 window 上（拖出地图外也跟得住）。 */
+    const mapPts = new Map();
+    let mapDrag = null;
+    let mapPinch = null;
+    function mapPointerMove(e) {
+      const view = mapViewEl;
+      if (!view || !mapPts.has(e.pointerId)) return;
+      mapPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (mapPts.size >= 2 && mapPinch) {
+        const [a, b] = [...mapPts.values()];
+        const d = Math.max(1, Math.hypot(a.x - b.x, a.y - b.y));
+        const r = view.getBoundingClientRect();
+        const k1 = Math.min(4, Math.max(1, mapPinch.k * (d / mapPinch.d)));
+        const cx = (a.x + b.x) / 2 - r.left;
+        const cy = (a.y + b.y) / 2 - r.top;
+        mapView.x = cx - (cx - mapView.x) * (k1 / mapPinch.k);
+        mapView.y = cy - (cy - mapView.y) * (k1 / mapPinch.k);
+        mapView.k = k1;
+        mapClamp(); mapApply(); mapMoved = true;
+        return;
+      }
+      if (!mapDrag) return;
+      const dx = e.clientX - mapDrag.x;
+      const dy = e.clientY - mapDrag.y;
+      if (!mapDrag.moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) mapDrag.moved = true;
+      if (!mapDrag.moved) return;
+      mapView.x = mapDrag.vx + dx;
+      mapView.y = mapDrag.vy + dy;
+      mapClamp(); mapApply(); mapMoved = true;
+    }
+    function mapPointerEnd(e) {
+      mapPts.delete(e.pointerId);
+      if (mapPts.size < 2) mapPinch = null;
+      if (mapPts.size === 0) mapDrag = null;
+    }
+    function mapWinInit() {
+      if (window.__farmMapWinBound) return;
+      window.__farmMapWinBound = true;
+      window.addEventListener('pointermove', mapPointerMove);
+      window.addEventListener('pointerup', mapPointerEnd);
+      window.addEventListener('pointercancel', mapPointerEnd);
+    }
+    function mapBindView() {
+      const host = $('farm-mapart');
+      const view = host && host.querySelector('.mp-view');
+      mapViewEl = view;
+      mapWinInit();
+      if (!view) return;
+      view.addEventListener('pointerdown', (e) => {
+        mapPts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        mapMoved = false;
+        if (mapPts.size >= 2) {
+          const [a, b] = [...mapPts.values()];
+          mapPinch = { d: Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)), k: mapView.k };
+          mapDrag = null;
+        } else {
+          mapDrag = { x: e.clientX, y: e.clientY, vx: mapView.x, vy: mapView.y, moved: false };
+        }
+      });
+      /* 拖过之后别把这一下点击当成「点地方跳转」；
+         双击 / 双指双击 = 放大（已经放大了就复位）—— 没有按钮，手势就是全部入口 */
+      view.addEventListener('click', (e) => {
+        if (mapMoved) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
+        if (e.detail >= 2) {
+          e.preventDefault();
+          e.stopPropagation();
+          const r = view.getBoundingClientRect();
+          if (mapView.k > 1.4) mapReset();
+          else mapZoomAt(1.9, e.clientX - r.left, e.clientY - r.top);
+        }
+      }, true);
+      /* 滚轮缩放：地图是浮层，滚过去就是在缩地图，不是滚页面 */
+      view.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const r = view.getBoundingClientRect();
+        mapZoomAt(e.deltaY < 0 ? 1.15 : 1 / 1.15, e.clientX - r.left, e.clientY - r.top);
+      }, { passive: false });
+    }
+
+    function renderMapArt(snap) {
+      const host = $('farm-mapart');
+      if (!host) return false;
+      const cfg = MAP_CFG;
+      if (!cfg || !cfg.places || !Object.keys(cfg.places).length) {
+        host.innerHTML = '';
+        host.hidden = true;
+        mapBirds = [];
+        return false;
+      }
+      host.hidden = false;
+      host.innerHTML = '';
+      mapBirds = [];
+      /* 视口：地图装在里面，能放大平移（手机端看得清）；工具条放在地图下面 */
+      const view = document.createElement('div');
+      view.className = 'mp-view';
+      view.id = 'farm-mapview';
+      host.appendChild(view);
+      const W = cfg.width || 360;
+      const H = cfg.height || 250;
+      const svg = add(view, 'svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': cfg.title || '鸡场地图' });
+      /* 纸底 + 手绘虚线边框（像一张摊在桌上的地图） */
+      add(svg, 'rect', { x: 3, y: 3, width: W - 6, height: H - 6, rx: 6, fill: 'var(--paper)', stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-dasharray': '7 5' });
+      /* 河：白边垫底 + 蓝带（色块之间白色描边） */
+      if (cfg.river) {
+        const rw = cfg.riverW || 11;
+        add(svg, 'path', { d: cfg.river, fill: 'none', stroke: 'var(--white)', 'stroke-width': rw + 5, 'stroke-linecap': 'round' });
+        add(svg, 'path', { d: cfg.river, fill: 'none', stroke: 'var(--blue)', 'stroke-width': rw, 'stroke-linecap': 'round' });
+      }
+      /* 路：铅笔灰虚线（地形归地形，地标才是内容） */
+      (cfg.roads || []).forEach((rd) => {
+        const A = cfg.places[rd.a];
+        const B = cfg.places[rd.b];
+        if (!A || !B) return;
+        const pts = [A.at].concat(rd.via || [], [B.at]).map((p) => p.join(',')).join(' ');
+        add(svg, 'polyline', { points: pts, fill: 'none', stroke: 'var(--gray)', 'stroke-width': 1.6, 'stroke-dasharray': '5 4', 'stroke-linecap': 'round' });
+      });
+      /* 桥：压在河上的板 */
+      (cfg.bridges || []).forEach((b) => {
+        add(svg, 'rect', { x: b[0] - 10, y: b[1] - 2.6, width: 20, height: 5.2, rx: 1.2, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.6 });
+      });
+      /* 树 */
+      (cfg.trees || []).forEach((t) => {
+        add(svg, 'line', { x1: t[0], y1: t[1] + 2, x2: t[0], y2: t[1] + 7, stroke: 'var(--ink)', 'stroke-width': 1.8, 'stroke-linecap': 'round' });
+        add(svg, 'circle', { cx: t[0], cy: t[1], r: 5, fill: 'var(--green)', stroke: 'var(--ink)', 'stroke-width': 1.6 });
+      });
+      /* 地块 */
+      Object.keys(cfg.places).forEach((id) => {
+        const p = cfg.places[id];
+        const x = p.at[0];
+        const y = p.at[1];
+        const live = !!PAGE_HREF[id];
+        const n = live ? (snap.pagesMap[id] | 0) : 0;
+        const here = live && id === HERE;
+        const g = add(svg, live ? 'a' : 'g', live
+          ? { href: PAGE_HREF[id], class: 'mp-plot' }
+          : { class: 'mp-plot is-off' });
+        /* 悬停提示：地名 + 页面名 + 几只鸡 */
+        const ttl = add(g, 'title', {});
+        ttl.textContent = live
+          ? `${p.name || PAGE_NAMES[id]}（${PAGE_NAMES[id]}）· ${n} 只 · 点过去看看`
+          : `${p.name || id} · 还没通路`;
+        /* 草地 */
+        add(g, 'polygon', { class: 'mp-ground', points: (p.ground || []).map((q) => q.join(',')).join(' '), fill: live ? 'var(--green)' : 'var(--gray)', stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
+        /* 手绘圈（虚线椭圆，art-style §3.4） */
+        add(g, 'circle', {
+          class: 'mp-ring',
+          cx: x, cy: y - 4, r: 17, fill: 'none',
+          stroke: here ? 'var(--orange)' : (live ? 'var(--ink)' : 'var(--gray)'),
+          'stroke-width': here ? 2.6 : 2,
+          'stroke-dasharray': here ? 'none' : '4 3',
+        });
+        /* 地标 */
+        const gg = add(g, 'g', { transform: `translate(${x} ${y - 4})` });
+        const gl = MAP_GLYPHS[p.glyph];
+        if (gl) gl(gg);
+        /* ① 这块地上有几只鸡，就画几只小鸡在院里走来走去（地图是活的，不是摆件） */
+        const birds = live ? Math.min(n, 8) : 0;
+        if (birds > 0) {
+          const fg = add(g, 'g', { class: 'mp-flock' });
+          for (let i = 0; i < birds; i += 1) {
+            const b = add(fg, 'g', { class: 'mp-bird' });
+            mapBirdShape(b);
+            mapBirds.push({
+              el: b,
+              cx: x,
+              cy: y + 4,
+              /* 在院子前头绕着走（多在地标脚下，不压在地标身上），还在手绘圈里 */
+              rx: 12.5 + (i % 3) * 1.6,
+              ry: 4.5 + (i % 2) * 2,
+              phase: i * 2.399 + (x % 9) * 0.37,
+              speed: 0.22 + (i % 4) * 0.06,
+            });
+          }
+        }
+        /* 地名 */
+        const nm = add(g, 'text', { x: x, y: y + 24, class: 'mp-name' });
+        nm.textContent = p.name || PAGE_NAMES[id] || id;
+        /* 数量角标：这页几只鸡 */
+        if (live) {
+          add(g, 'circle', { cx: x + 25, cy: y - 19, r: 8.5, fill: 'var(--card)', stroke: n > 0 ? 'var(--orange)' : 'var(--gray)', 'stroke-width': 2 });
+          const bt = add(g, 'text', { x: x + 25, y: y - 15.6, class: 'mp-num' });
+          bt.textContent = String(n);
+        }
+        /* 「你在这儿」的小旗 */
+        if (here) {
+          add(g, 'line', { x1: x - 15, y1: y - 21, x2: x - 15, y2: y - 32, stroke: 'var(--ink)', 'stroke-width': 1.8, 'stroke-linecap': 'round' });
+          add(g, 'polygon', { class: 'mp-flag', points: `${x - 15},${y - 32} ${x - 5},${y - 28.5} ${x - 15},${y - 25}`, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.6, 'stroke-linejoin': 'round' });
+        }
+      });
+      /* ④ 作品架：站侧推来的作品摆在谷仓边的架子上，点一下直接进那个作品 */
+      drawMapShelves(svg, cfg);
+      /* 罗盘：告诉人哪边是北 */
+      const ccx = W - 34;
+      const ccy = 26;
+      add(svg, 'circle', { cx: ccx, cy: ccy, r: 11, fill: 'var(--card)', stroke: 'var(--ink)', 'stroke-width': 1.6 });
+      add(svg, 'polygon', { points: `${ccx},${ccy - 8} ${ccx + 4},${ccy + 3} ${ccx},${ccy} ${ccx - 4},${ccy + 3}`, fill: 'var(--orange)', stroke: 'var(--ink)', 'stroke-width': 1.4, 'stroke-linejoin': 'round' });
+      const nt = add(svg, 'text', { x: ccx, y: ccy - 14, class: 'mp-n' });
+      nt.textContent = 'N';
+      /* ③ 不摆按钮：缩放靠手势（滚轮 / 双指捏合 / 双击），地图干干净净 */
+      const hint = document.createElement('p');
+      hint.className = 'mp-hint';
+      hint.textContent = '滚轮 · 双指可缩放，能拖着走';
+      host.appendChild(hint);
+      mapBindView();
+      return true;
     }
 
     function openMap() {
       const snap = snapshot();
-      const rows = PAGES.map((p) => {
+      /* 每次开地图都从头看（上次放大到哪儿跟这次无关） */
+      mapView.k = 1; mapView.x = 0; mapView.y = 0;
+      /* 地图（真的那张）。没有 map 段的老包 → 退回列表视图 */
+      const useMap = renderMapArt(snap);
+      const titleEl = $('farm-map-title');
+      if (titleEl) titleEl.textContent = useMap
+        ? (MAP_CFG.title || '鸡场地图')
+        : '鸡场地图 · 一页一圈舍';
+      const tipEl = $('farm-map-tip');
+      if (tipEl) tipEl.textContent = useMap
+        ? '橙圈是你现在这页。鸡在哪，账就在哪 —— 放去别的页的鸡，逛完自己回来，还带礼物。'
+        : '鸡在哪，账就在哪。放去别的页的鸡，逛完自己回来，还带礼物。';
+      /* 没有地图的时候才列页面行（地图上每个地方都有数了）。
+         地图有了、但某个站页面还没画到地图上（站侧加了新页）→ 那个页面照样列一行，
+         不能让它在地图上静默消失（规矩 12：看得见「还有这条路」）。 */
+      const rowFor = (p) => {
         const n = snap.pagesMap[p] | 0;
         return `<a class="farm-maprow${p === HERE ? ' is-here' : ''}" href="${PAGE_HREF[p] || '/'}" aria-label="去${PAGE_NAMES[p]}看鸡"><span>${PAGE_NAMES[p]}</span><b>${n} 只</b></a>`;
-      }).join('');
-      const basket = snap.chickens - state.chickens.length; // 装篮的只进计数
-      $('farm-maprows').innerHTML = rows +
+      };
+      const rows = useMap
+        ? PAGES.filter((id) => !(MAP_CFG.places || {})[id]).map(rowFor).join('')
+        : PAGES.map(rowFor).join('');
+      /* 装篮 = 账上有、场上没有（超出本页上限被收起来的那些） */
+      const onStage = flock.filter((c) => c && !c.dead && c.mode !== 'leave').length;
+      const hereRec = state.chickens.filter((r) => r.page === HERE && !r.stowed).length;
+      const basket = Math.max(0, hereRec - onStage);
+      /* 操作行：散场 / 召回 / 倒蛋（有才显示，不占地方也不误导） */
+      let acts = '';
+      if ((snap.pagesMap[HERE] | 0) > 0) {
+        acts += `<button type="button" class="farm-maprow is-act" data-farm-act="stow">`
+          + `<span>散场 · 鸡全回窝里</span><b>${snap.pagesMap[HERE] | 0} 只</b></button>`;
+      }
+      if (snap.stowed > 0) {
+        acts += `<button type="button" class="farm-maprow is-act" data-farm-act="unstow">`
+          + `<span>窝里的放回场上</span><b>${snap.stowed} 只</b></button>`;
+      }
+      /* 倒蛋：篮子里攒的蛋能一次倒掉（篮子满了就不接新蛋，先倒掉腾地方） */
+      const bk = (state.decos || []).find((v) => v.id === 'basket');
+      const bkN = bk ? eggCount(bk) : 0;
+      if (bkN > 0) {
+        acts += `<button type="button" class="farm-maprow is-act" data-farm-act="dump">`
+          + `<span>倒蛋 · 篮子里的全倒掉</span><b>${bkN} 颗</b></button>`;
+      }
+      $('farm-maprows').innerHTML = rows + acts +
         `<div class="farm-maprow"><span>装篮（只记数）</span><b>${basket} 只</b></div>` +
+        (snap.stowed > 0 ? `<div class="farm-maprow"><span>窝里待命（只记数）</span><b>${snap.stowed} 只</b></div>` : '') +
         `<div class="farm-maprow"><span>累计出鸡</span><b>${snap.chickens} 只</b></div>`;
       $('farm-map').hidden = false;
     }
 
     /* 地图点击 = 普通跳转；先记「开」偏好，落地页 prefOn() 命中自动开鸡场 */
     $('farm-maprows').addEventListener('click', (e) => {
-      if (!e.target || !e.target.closest || !e.target.closest('a.farm-maprow')) return;
+      if (!e.target || !e.target.closest) return;
+      /* 整理台的两个动作：散场 / 召回（不走跳转） */
+      const act = e.target.closest('button[data-farm-act]');
+      if (act) {
+        e.preventDefault();
+        const kind = act.dataset.farmAct;
+        if (kind === 'stow') stowAll();
+        else if (kind === 'unstow') unstowAll();
+        else if (kind === 'dump') dumpBasketEggs();
+        openMap();          // 面板留在原地 → 当场看得到「窝里 N 只」变了
+        return;
+      }
+      if (!e.target.closest('a.farm-maprow')) return;
+      try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ }
+    });
+
+    /* 地图上点地方 = 跳到那一页（跟列表行同一套：先记「开」偏好，落地页自动开鸡场）
+       作品架上的封面同理：点一下直接进那个作品 */
+    $('farm-mapart').addEventListener('click', (e) => {
+      if (!e.target || !e.target.closest) return;
+      if (!e.target.closest('a.mp-plot, a.mp-cover')) return;
       try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ }
     });
 
@@ -1816,6 +3313,8 @@ const root = document.getElementById('farm');
     const elChicks = $('farm-n-chicks');
     const elDex = $('farm-n-dex');
     const elMood = $('farm-n-mood');
+    const elFull = $('farm-n-full');
+    const elClean = $('farm-n-clean');
     const hint = $('farm-hint');
 
     function refreshHUD() {
@@ -1824,7 +3323,9 @@ const root = document.getElementById('farm');
       let found = 0;
       for (const b of BREEDS) if ((state.dex[b.id] | 0) > 0) found += 1;
       elDex.textContent = `${found}/${BREEDS.length}`;
-      if (elMood) elMood.textContent = String(avgMood());
+      if (elMood) elMood.textContent = String(avgAxis(chickMood));
+      if (elFull) elFull.textContent = String(avgAxis(chickFull));
+      if (elClean) elClean.textContent = String(avgAxis(chickClean));
       const dexBtn = $('farm-btn-dexcard');
       if (dexBtn) dexBtn.hidden = found < BREEDS.length; // 集齐了才给图鉴卡
       renderBook();
@@ -1928,9 +3429,33 @@ const root = document.getElementById('farm');
     const curEl = document.createElement('div');
     curEl.className = 'farm-cursor';
     curEl.setAttribute('aria-hidden', 'true');
-    curEl.innerHTML = '<div class="farm-cursor-in"><svg viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-youji"/></svg></div>';
+    curEl.innerHTML = '<div class="farm-cursor-in"></div>';
     if (!reduce) stage.appendChild(curEl);
     const curIn = curEl.firstChild;
+    /* 光标小鸡的长相（2026-11-04）：以前用的是 sprite.svg 里的扁平符号鸡 ——
+       跟舞台上的鸡两套形象，全站最显眼的一只鸡反而最弱智。
+       现在跟舞台一致，用丽丽的角色真图（品种全家福）。
+       线上还没公开美术（/packs 会 404）→ 图加载失败就退回旧 SVG 符号，不留破图。 */
+    {
+      const breeds = pack.breeds || [];
+      const cb = breeds.find((b) => b.id === 'universe01') || breeds[0];
+      const layers = (cb && cb.rig && cb.rig.layers) || [];
+      const one = cb && cb.rig && cb.rig.base && layers.length === 1 ? cb.rig.base + layers[0].file : '';
+      const svgFallback = () => {
+        curIn.innerHTML = '<svg viewBox="0 0 100 120" aria-hidden="true"><use href="#farm-sym-' + ((cb && cb.svg) || 'youji') + '"/></svg>';
+      };
+      if (!one) {
+        svgFallback();
+      } else {
+        const img = document.createElement('img');
+        img.className = 'farm-cursor-art';
+        img.alt = '';
+        img.decoding = 'async';
+        img.onerror = svgFallback;
+        img.src = one + (window.__coopVer ? '?v=' + window.__coopVer : '');
+        curIn.appendChild(img);
+      }
+    }
     const cur = { x: 0, y: 0, tx: 0, ty: 0, flip: 1, spd: 0 };
     cur.x = cur.tx = window.innerWidth / 2;
     cur.y = cur.ty = window.innerHeight * 0.55;
@@ -1945,6 +3470,7 @@ const root = document.getElementById('farm');
 
     window.addEventListener('pointermove', (e) => {
       lastPoint = { x: e.clientX, y: e.clientY };
+      trackMouseStage(e);
       cur.tx = clamp(e.clientX, 26, Math.max(28, window.innerWidth - 26));
       cur.ty = clamp(e.clientY, 30, Math.max(32, window.innerHeight - 40));
       cursorOnUI = !!(e.target && e.target.closest && e.target.closest(CURSOR_HIDE));
@@ -1987,6 +3513,8 @@ const root = document.getElementById('farm');
       basket: { id: 'basket', name: '竹篮', kind: 'deco', tip: '竹篮 · 蛋篓：下的蛋落进篮子攒着，点篮子能挑品种孵出来' },
       incubator: { id: 'incubator', name: '孵化窝', kind: 'deco', tip: '孵化窝 · 孵化器：下的蛋优先落进窝里，自己会孵（90 秒出壳），底下那条是进度' },
       water: { id: 'water', name: '水缸', kind: 'deco', tip: '水缸 · 水盆：点一下给鸡喝水，回一点心情' },
+      /* 「收」不是摆件，是工具：点场上的器物，把它收回货架（存量跟着走）。 */
+      pickup: { id: 'pickup', name: '收走', kind: 'tool', tip: '收走 · 收纳：点一下场上的器物，把它收回货架。篮子里的蛋、盘子里的米都留着，随时能再摆出来' },
     };
     void PROPS_HIDDEN;
     let armedPropId = null;
@@ -2010,7 +3538,7 @@ const root = document.getElementById('farm');
             ? 'url("' + art.img + (window.__coopVer ? ('?' + window.__coopVer) : '') + '")'
             : '';
         }
-        const locked = !state.unlocked.includes(b.dataset.prop);
+        const locked = prop.kind !== 'tool' && !state.unlocked.includes(b.dataset.prop);
         b.dataset.locked = locked ? '1' : '0';
         b.title = locked ? (prop.name + '（还没解锁：多逛逛站就会开）') : (prop.tip || prop.name);
         if (locked) { b.classList.remove('is-armed'); b.setAttribute('aria-pressed', 'false'); return; }
@@ -2035,10 +3563,13 @@ const root = document.getElementById('farm');
     function updateCursorGhost() {
       ghostEl.replaceChildren();
       ghostEl.classList.remove('is-piano');
+      ghostEl.classList.remove('is-pick');
       const prop = PROPS[armedPropId];
       if (!prop) { ghostEl.hidden = true; return; }
       ghostEl.hidden = false;
       if (lastPoint) ghostEl.style.transform = `translate(${lastPoint.x}px, ${lastPoint.y}px)`;
+      /* 「收」工具：画一个虚线框（提示「点这里能收」） */
+      if (prop.kind === 'tool') { ghostEl.classList.add('is-pick'); return; }
       if (prop.kind === 'piano') { ghostEl.classList.add('is-piano'); return; }
       for (let i = 0; i < 5; i += 1) {
         const dot = document.createElement('i');
@@ -2055,6 +3586,8 @@ const root = document.getElementById('farm');
     function placeArmed(clientX, clientY) {
       const prop = PROPS[armedPropId];
       if (!prop) return;
+      /* 「收」工具：点场上的器物 → 收回货架（不是往地上摆） */
+      if (prop.kind === 'tool') { pickUpAt(clientX, clientY); return; }
       if (prop.kind === 'pile') { scatterGrain(clientX, clientY); return; }
       if (prop.kind === 'piano') {
         placePiano(clientX, clientY);
@@ -2222,9 +3755,60 @@ const root = document.getElementById('farm');
       if (!Array.isArray(state.decos)) state.decos = [];
       const exist = state.decos.find((v) => v.id === id);
       if (exist) { exist.x = x; exist.y = y; exist.at = Date.now(); }
-      else state.decos.push({ id, x, y, at: Date.now() });
+      else {
+        /* 从「收走」里拿回来的：把存量一起带回来（篮子里的蛋、盘里的米不能丢） */
+        const si = (state.stash || []).findIndex((v) => v.id === id);
+        if (si >= 0) {
+          const d = state.stash.splice(si, 1)[0];
+          d.x = x; d.y = y; d.at = Date.now();
+          state.decos.push(d);
+        } else state.decos.push({ id, x, y, at: Date.now() });
+      }
       renderDecos();
       save();
+    }
+    /* ===== 收走器物（2026-11-05）=====
+       终树：「单个收走器物（摆上去就下不来）」——
+       原来器物只能摆、只能拖，摆上去就下不来。现在能拿回来了：
+         - 货架上多一个「收」工具，武装后点场上的器物 → 收回货架；
+         - 收走**不丢存量**：篮子里的蛋、盘子里的米跟着进「货架」，
+           什么时候再摆出来，存量还在（state.stash）；
+         - 鸡、蛋、图鉴、成长都不受影响 —— 收的只是器物本身。 */
+    /* 命中测试：屏幕坐标 → 场上哪个器物 */
+    function decoAt(clientX, clientY) {
+      const sr = stage.getBoundingClientRect();
+      const x = clientX - sr.left, y = clientY - sr.top;
+      const sw = stage.clientWidth || 1, sh = stage.clientHeight || 1;
+      for (const d of (state.decos || [])) {
+        const [w, h] = decoBox(d.id);
+        const left = clamp(d.x * sw - w / 2, 0, Math.max(0, sw - w));
+        const top = clamp(d.y * sh - h / 2, 0, Math.max(0, sh - h));
+        if (x >= left && x <= left + w && y >= top && y <= top + h) return d;
+      }
+      return null;
+    }
+    function pickUpAt(clientX, clientY) {
+      const d = decoAt(clientX, clientY);
+      if (!d) {
+        bubble(stage.clientWidth / 2, stage.clientHeight * 0.42, '这儿没有器物可收');
+        return false;
+      }
+      pickUpDeco(d);
+      return true;
+    }
+    function pickUpDeco(d) {
+      const i = state.decos.indexOf(d);
+      if (i < 0) return false;
+      const name = (PROPS[d.id] && PROPS[d.id].name) || '器物';
+      state.decos.splice(i, 1);
+      if (!Array.isArray(state.stash)) state.stash = [];
+      const si = state.stash.findIndex((v) => v.id === d.id);
+      if (si >= 0) Object.assign(state.stash[si], d); else state.stash.push(d);
+      renderDecos();
+      save();
+      bubble(stage.clientWidth / 2, stage.clientHeight * 0.3,
+        name + '收回货架了 —— 随时能再摆出来');
+      return true;
     }
     function beginDecoDrag(e) {
       const el = e.target && e.target.closest ? e.target.closest('.farm-deco') : null;
@@ -2329,9 +3913,13 @@ const root = document.getElementById('farm');
       return r.mood;
     }
     function chickMood(c) { return c && c.rec ? recMood(c.rec) : MOOD_START; }
-    /* HUD 心情数单独刷（不重建图鉴），每秒一次 */
+    /* HUD 三轴（心情 / 饱腹 / 清洁）单独刷（不重建图鉴），每秒一次。
+       三轴分得开之后，玩家一眼能看出「该做什么」：
+       心情低 → 去陪它说话；饱腹低 → 摆食盆；清洁低 → 添水。 */
     function refreshMood() {
-      if (elMood) elMood.textContent = String(avgMood());
+      if (elMood) elMood.textContent = String(avgAxis(chickMood));
+      if (elFull) elFull.textContent = String(avgAxis(chickFull));
+      if (elClean) elClean.textContent = String(avgAxis(chickClean));
     }
     function avgMood() {
       const live = flock.filter((c) => !c.dead && c.mode !== 'leave' && c.rec);
@@ -2342,6 +3930,55 @@ const root = document.getElementById('farm');
       if (!c || !c.rec) return;
       recMood(c.rec);
       c.rec.mood = Math.max(0, Math.min(MOOD_MAX, c.rec.mood + d));
+    }
+
+    /* ---- 状态多维：饱腹 / 清洁（心情在上面）----
+       记法跟心情一模一样：值 + 时间戳（xxAt），离线期间按真实时间补掉。
+       老档没有这两个字段 → recFull/recClean 补成「中等值」，不补成 0
+       （老用户回来看到的是「七分饱」，不是「饿瘪了」）。 */
+    function recFull(r) {
+      if (!r) return FULL_START;
+      if (typeof r.full !== 'number') r.full = FULL_START;
+      if (typeof r.fullAt !== 'number') r.fullAt = Date.now();
+      const h = (Date.now() - r.fullAt) / 3600000;
+      if (h > 0.002) { r.full = Math.max(0, r.full - h * FULL_DECAY_H); r.fullAt = Date.now(); }
+      return r.full;
+    }
+    function recClean(r) {
+      if (!r) return CLEAN_START;
+      if (typeof r.clean !== 'number') r.clean = CLEAN_START;
+      if (typeof r.cleanAt !== 'number') r.cleanAt = Date.now();
+      const h = (Date.now() - r.cleanAt) / 3600000;
+      if (h > 0.002) { r.clean = Math.max(0, r.clean - h * CLEAN_DECAY_H); r.cleanAt = Date.now(); }
+      return r.clean;
+    }
+    function chickFull(c) { return c && c.rec ? recFull(c.rec) : FULL_START; }
+    function chickClean(c) { return c && c.rec ? recClean(c.rec) : CLEAN_START; }
+    function addFull(c, d) {
+      if (!c || !c.rec) return;
+      recFull(c.rec);
+      c.rec.full = Math.max(0, Math.min(FULL_MAX, c.rec.full + d));
+    }
+    function addClean(c, d) {
+      if (!c || !c.rec) return;
+      recClean(c.rec);
+      c.rec.clean = Math.max(0, Math.min(CLEAN_MAX, c.rec.clean + d));
+    }
+    /* 全场平均（HUD 用） */
+    function avgAxis(fn) {
+      const live = flock.filter((c) => !c.dead && c.mode !== 'leave' && c.rec);
+      if (!live.length) return fn === chickFull ? FULL_START : (fn === chickClean ? CLEAN_START : MOOD_START);
+      return Math.round(live.reduce((s, c) => s + fn(c), 0) / live.length);
+    }
+    /* 三轴里最低的那一档 → 决定这只鸡现在的表情（心情低=蔫，饱腹低=饿，清洁低=脏） */
+    function chickState(c) {
+      const m = chickMood(c);
+      const f = chickFull(c);
+      const k = chickClean(c);
+      if (m < MOOD_LOW) return 'glum';
+      if (f < 25) return 'hungry';
+      if (k < CLEAN_LOW) return 'dirty';
+      return 'ok';
     }
 
     /* ---- 布景道具：位置与存量 ---- */
@@ -2488,14 +4125,18 @@ const root = document.getElementById('farm');
       save(); renderDecos();
       spawnEgg(clamp(p.x, 30, stage.clientWidth - 30), clamp(p.y + 6, 60, stage.clientHeight - 30), breed);
     }
-    /* 点水缸：给全场鸡添水，回一点心情 */
+    /* 点水缸：给全场鸡添水 —— 涨**清洁**（状态多维：水缸 = 清洁），顺带回一点心情 */
     function drinkWater() {
       const live = flock.filter((c) => !c.dead && c.mode !== 'leave');
       if (!live.length) { emitSay('场上还没有鸡。'); return; }
-      for (const c of live) addMood(c, MOOD_WATER);
+      for (const c of live) {
+        addClean(c, CLEAN_WATER);   // 主收益：清洁
+        addMood(c, MOOD_WATER);     // 附赠：心情
+        addGrowth(c, STAGE_BOOST.water);
+      }
       const w = (state.decos || []).find((v) => v.id === 'water');
       const p = w ? decoCenter(w) : { x: stage.clientWidth / 2, y: stage.clientHeight / 2 };
-      bubble(p.x, p.y - 26, '添了点水，大家都精神了');
+      bubble(p.x, p.y - 26, '添了点水，大家都干净了');
       save(); refreshHUD();
     }
 
@@ -2521,6 +4162,268 @@ const root = document.getElementById('farm');
       if (!root.hidden) redeemPending();
       else emitSay('你逛站的时候，鸡场都记着呢。');
     });
+
+    /* ===== 鸡场快讯：官网的消息，鸡跑来报（2026-11-04）=====
+       **机制在引擎，内容由站侧推。**
+       官网内容是活的（天天有新作品、新动态、新的演讲和奖项）——
+       引擎要是抄一份，抄完就过期了。所以分工是：
+         - 引擎只管：什么时候报、报哪条、怎么显示、给什么奖励、别重复报；
+         - 站侧通过 window 的 farm:content 事件把内容条目推过来
+           （detail.items = [{ id, kind, label, title, text, href }]）。
+       跟已有的 farm:visit 是同一套边界：站侧接线，引擎出玩法。
+       机制参数 + 一批「鸡场日常」保底事件在 pack.json 的 events 段（唯一出处）。 */
+    const EVENT_KINDS = {
+      work: { label: '新作品', weight: 3 },
+      news: { label: '新动态', weight: 3 },
+      bio:  { label: '履历',   weight: 2 },
+      farm: { label: '鸡场日常', weight: 1 },
+    };
+    let contentItems = [];   // 站侧推来的内容条目（内存态：内容以站侧为准，不落盘）
+    const EV = { nextAt: 0, pending: null };
+
+    function evCfg() {
+      const C = EVENT_CFG || {};
+      const iv = Array.isArray(C.intervalSec) ? C.intervalSec : [150, 320];
+      return {
+        enabled: C.enabled !== false,
+        min: Math.max(20, Number(iv[0]) || 150) * 1000,
+        max: Math.max(30, Number(iv[1]) || Number(iv[0]) || 320) * 1000,
+        dailyLimit: C.dailyLimit == null ? 4 : Math.max(0, Number(C.dailyLimit) || 0),
+        cooldown: (C.cooldownMin == null ? 240 : Number(C.cooldownMin) || 240) * 60000,
+        manualCool: (C.manualCooldownSec == null ? 15 : Number(C.manualCooldownSec) || 15) * 1000,
+        bubbleMs: Number(C.bubbleMs) || 9000,
+        reward: (C.reward && typeof C.reward === 'object') ? C.reward : { egg: 1, mood: 6 },
+        pool: Array.isArray(C.pool) ? C.pool : [],
+        hasAny: Object.keys(C).length > 0,   // pack 里没配 events 段 → 整个功能不出现
+      };
+    }
+    function evDayKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    }
+    /* 站侧内容条目进来：按 id 覆盖（站点内容变了就更新），没 id / 没标题的丢掉 */
+    function ingestContent(items) {
+      if (!Array.isArray(items)) return 0;
+      let n = 0;
+      for (const raw of items) {
+        if (!raw || typeof raw !== 'object') continue;
+        const id = String(raw.id || '').trim();
+        const title = String(raw.title || '').trim();
+        if (!id || !title) continue;
+        const kind = EVENT_KINDS[raw.kind] ? raw.kind : 'farm';
+        const it = {
+          id,
+          kind,
+          label: String(raw.label || '').trim() || EVENT_KINDS[kind].label,
+          title,
+          text: String(raw.text || '').trim(),
+          href: String(raw.href || '').trim(),
+          cover: String(raw.cover || '').trim(),   // 地图上的作品架用（站侧给封面）
+          place: String(raw.place || '').trim(),   // 摆到哪块地上（站侧给）
+          src: 'site',
+        };
+        const i = contentItems.findIndex((x) => x.id === id);
+        if (i >= 0) contentItems[i] = it; else contentItems.push(it);
+        n += 1;
+      }
+      return n;
+    }
+    /* 站侧推内容：window 的 farm:content 事件（detail.items）。
+       这里**不吭声**：推内容是数据接入，不是消息本身 ——
+       真正要报的是那条快讯（showBcast 会冒泡 + 给奖励）。 */
+    window.addEventListener('farm:content', (e) => {
+      const d = e.detail || {};
+      ingestContent(d.items);
+    });
+    /* 兜底：站侧脚本先跑、引擎后起（动态 import）→ 从 window.__coopContent 读一份 */
+    try {
+      if (window.__coopContent && Array.isArray(window.__coopContent.items)) ingestContent(window.__coopContent.items);
+    } catch { /* 忽略 */ }
+
+    /* 候选池 = 站侧内容 + pack.json 里的鸡场日常 */
+    function evItems() {
+      const C = evCfg();
+      const out = contentItems.slice();
+      for (const it of C.pool) {
+        if (!it || !it.id || !it.title) continue;
+        const kind = EVENT_KINDS[it.kind] ? it.kind : 'farm';
+        out.push({
+          id: String(it.id), kind,
+          label: String(it.label || '') || EVENT_KINDS[kind].label,
+          title: String(it.title || ''),
+          text: String(it.text || ''),
+          href: String(it.href || ''),
+          src: 'pack',
+          reward: (it.reward && typeof it.reward === 'object') ? it.reward : null,
+        });
+      }
+      return out;
+    }
+    /* 抽一条：没报过的优先；报过的要过了冷却才能再报。
+       站侧内容权重更高（官网消息是新鲜事），鸡场日常垫底。 */
+    function pickEvent() {
+      const C = evCfg();
+      const now = Date.now();
+      const fresh = [], old = [];
+      for (const it of evItems()) {
+        const last = Number(state.events.fired[it.id]) || 0;
+        if (!last) fresh.push(it);
+        else if (now - last >= C.cooldown) old.push(it);
+      }
+      const pool = fresh.length ? fresh : old;
+      if (!pool.length) return null;
+      const bag = [];
+      for (const it of pool) {
+        const w = it.src === 'site' ? (EVENT_KINDS[it.kind] ? EVENT_KINDS[it.kind].weight : 2) : 1;
+        for (let i = 0; i < w; i += 1) bag.push(it);
+      }
+      return bag[(Math.random() * bag.length) | 0];
+    }
+    /* 让这只鸡走到场中央去报（到了才冒泡，见 stepChick 的 bcast 分支） */
+    function startBcast(c, item, manual) {
+      state.events.fired[item.id] = Date.now();
+      state.events.count = (state.events.count | 0) + 1;
+      /* 一天几条只管**自动**播报 —— 玩家主动问的不占这个额度 */
+      if (!manual) state.events.dayCount = (state.events.dayCount | 0) + 1;
+      state.events.last = item.title;
+      state.events.lastId = item.id;
+      if (manual) state.events.lastManual = Date.now();
+      c.bcast = { item, manual: !!manual, fired: false, at: Date.now() };
+      c.chaseTarget = false; c.grainTarget = null; c.plateTarget = null;
+      c.mode = 'walk';
+      c.tx = Math.round(stage.clientWidth / 2);
+      c.ty = Math.round(stage.clientHeight * 0.62);
+      c.act = 'bcast';
+      c.el.dataset.act = 'bcast';
+      save();
+    }
+    /* 报一条：找一只鸡走到场中央去播报；场上没鸡就先排队，等鸡回来再报 */
+    function fireEvent(opts) {
+      const o = opts || {};
+      const C = evCfg();
+      if (!C.enabled && !o.force) return null;
+      if (root.hidden) return null;            // 鸡场关着不报（回来再说）
+      const day = evDayKey();
+      if (state.events.day !== day) { state.events.day = day; state.events.dayCount = 0; }
+      if (!o.force) {
+        if (o.manual) {
+          /* 玩家主动问：不受「一天报几条」的限制（那条限制是给自动播报防刷的），
+             只受自己的冷却限制 —— 玩家点了就该有回应。 */
+          const left = C.manualCool - (Date.now() - (Number(state.events.lastManual) || 0));
+          if (left > 0) return null;
+        } else if (C.dailyLimit && state.events.dayCount >= C.dailyLimit) {
+          return null;
+        }
+      }
+      const item = o.item || pickEvent();
+      if (!item) return null;
+      const c = flock.find((x) => x && !x.dead && x.mode !== 'leave' && x.mode !== 'held');
+      if (!c) { EV.pending = item; return item; }   // 排队等鸡上场
+      EV.pending = null;
+      startBcast(c, item, !!o.manual);
+      return item;
+    }
+    /* 冒泡：分类标签 + 标题 + 一行正文 + 「去看看」链接（回到官网对应页面） */
+    function showBcast(c, item, manual) {
+      const C = evCfg();
+      const b = document.createElement('div');
+      b.className = 'farm-bubble is-bcast';
+      const tag = document.createElement('span');
+      tag.className = 'farm-bcast-tag';
+      tag.textContent = item.label || (EVENT_KINDS[item.kind] ? EVENT_KINDS[item.kind].label : '快讯');
+      const ti = document.createElement('span');
+      ti.className = 'farm-bcast-title';
+      ti.textContent = item.title || '';
+      b.appendChild(tag);
+      b.appendChild(ti);
+      if (item.text) {
+        const bd = document.createElement('span');
+        bd.className = 'farm-bcast-body';
+        bd.textContent = item.text;
+        b.appendChild(bd);
+      }
+      if (item.href) {
+        const a = document.createElement('a');
+        a.className = 'farm-bcast-link';
+        a.href = item.href;
+        a.textContent = '去看看 →';
+        b.appendChild(a);
+      }
+      /* 气泡宽（最多 300px）→ 贴边时别让它跑出屏 */
+      b.style.left = clamp(c.x, 152, Math.max(154, stage.clientWidth - 152)) + 'px';
+      b.style.top = clamp(c.y - 46, 30, Math.max(32, stage.clientHeight)) + 'px';
+      const dur = C.bubbleMs;
+      b.style.setProperty('--bubout', ((dur - 350) / 1000).toFixed(2) + 's');
+      layer.appendChild(b);
+      window.setTimeout(() => b.remove(), dur);
+      giveEventReward(c, item, manual);
+      play((t) => cluck(t, c.breed.f * 1.06, 0.13));
+      emitSay('站内快讯：' + (item.title || ''));
+      save(); refreshHUD();
+    }
+    /* 奖励：数值当场变（规矩 3「数值要实时可见」）
+       主动打听只给心情，不给蛋/米：蛋和米是「逛站」的奖励，
+       这里要是也给，点几下就能把蛋刷出来（一天的条数拦不住玩家主动问）。 */
+    function giveEventReward(c, item, manual) {
+      const C = evCfg();
+      const r = (item.reward && typeof item.reward === 'object') ? item.reward : (C.reward || {});
+      const n = (k) => Number(r[k]) || 0;
+      if (n('mood')) addMood(c, n('mood'));
+      if (manual) return;
+      if (n('egg')) state.eggs = tallyAdd(state.tally.eggs, n('egg'));
+      if (n('full')) addFull(c, n('full'));
+      if (n('clean')) addClean(c, n('clean'));
+      if (n('rice')) {
+        /* 没食盆就撒地上 —— 奖励不能因为「没摆盆子」就丢了 */
+        if (!giveRice(n('rice'))) {
+          for (let i = 0; i < Math.ceil(n('rice') / 2); i += 1) {
+            scatterGrain(rand(60, Math.max(70, stage.clientWidth - 60)), rand(90, Math.max(100, stage.clientHeight - 60)));
+          }
+        }
+      }
+    }
+    /* 时钟：到点报一条（鸡场开着才走） */
+    function checkEventClock() {
+      const C = evCfg();
+      if (!C.enabled) return;
+      const now = Date.now();
+      if (!EV.nextAt) { EV.nextAt = now + rand(C.min, C.max); return; }
+      if (now < EV.nextAt) return;
+      EV.nextAt = now + rand(C.min, C.max);
+      /* 兜底：鸡走过来太慢（被别的行为打断）→ 12 秒后直接在原地报 */
+      for (const c of flock) {
+        if (c.bcast && !c.bcast.fired && now - c.bcast.at > 12000) {
+          const b = c.bcast; c.bcast = null;
+          showBcast(c, b.item, b.manual);
+        }
+      }
+      /* 上次排队等着报的（当时场上没鸡）→ 现在有鸡了就报出来 */
+      if (EV.pending) {
+        const it = EV.pending; EV.pending = null;
+        fireEvent({ item: it, force: true });
+        return;
+      }
+      fireEvent({});
+    }
+    /* 玩家主动打听（点鸡菜单里的一项）：条件不满足时也回一句话，别装死 */
+    function askNews(c) {
+      const C = evCfg();
+      const left = C.manualCool - (Date.now() - (Number(state.events.lastManual) || 0));
+      if (left > 0) {
+        bubble(c.x, c.y, '消息还没新鲜，' + Math.ceil(left / 1000) + ' 秒后再问');
+        return false;
+      }
+      const item = fireEvent({ manual: true });
+      if (!item) { bubble(c.x, c.y, '暂时没什么新消息。'); return false; }
+      return true;
+    }
+    /* 菜单项的现状：冷却中就灰掉，并把还差几秒写出来（条件要看得见） */
+    function newsMenuState() {
+      const C = evCfg();
+      const left = C.manualCool - (Date.now() - (Number(state.events.lastManual) || 0));
+      if (left > 0) return { label: '打听消息（' + Math.ceil(left / 1000) + 's）', disabled: true };
+      return { label: '打听消息', disabled: false };
+    }
 
     function redeemPending() {
       if (!state.pending.length) return;
@@ -2550,21 +4453,57 @@ const root = document.getElementById('farm');
       save(); refreshHUD(); paintArm();
     }
 
+    /* ===== 倒蛋：篮子（蛋篓）里攒的蛋一次倒掉（2026-11-05）=====
+       终树：「蛋能倒掉」—— 蛋落进篮子就下不来（只能一只一只孵），
+       现在能一次倒掉，腾出篮子。
+       蛋是玩家的资产，所以**只玩家点了才倒**，绝不自动清；
+       而且倒的是「篮子里的蛋」，不是累计下蛋数（那是成就卡上的记录，不能抹）。 */
+    function dumpBasketEggs() {
+      const bk = (state.decos || []).find((v) => v.id === 'basket');
+      if (!bk) { emitSay('还没摆篮子呢。'); return; }
+      const n = eggCount(bk);
+      if (!n) { emitSay('篮子是空的。'); return; }
+      bk.stock = [];
+      bk.at = Date.now();
+      save(); renderDecos();
+      bubble(stage.clientWidth / 2, stage.clientHeight * 0.3, `倒掉 ${n} 颗蛋 —— 篮子空了`);
+    }
+
     /* ===== E 跨页差事：派去的鸡会办事，办完带礼物回来 ===== */
     function checkTasks() {
       const now = Date.now();
       for (const r of state.chickens) {
         if (!r.task || now < r.task.due) continue;
         r.gift = Math.random() < 0.5 ? 'rice' : 'egg';
+        const from = r.task.from || '';
         r.task = null;
-        const c = flock.find((x) => x.id === r.id && !x.dead);
-        if (c) { bubble(c.x, c.y - 40, '差事办完了，带了份礼物'); c.shockUntil = Date.now() + 2200; }
+        r.lastSeen = now;
+        /* 差事办完 → **它自己回原来那一页**（串门结束）。
+           原来只记礼物、不送鸡回来 —— 派出去的鸡一去不回，
+           而气泡写着「它回来了」、文档也写着要回来（代码漏了这一步）。
+           鸡不在本页 → 走出屏；鸡要回本页 → 直接放上台。 */
+        if (from) {
+          r.page = from;
+          const c = flock.find((x) => x.id === r.id && !x.dead);
+          if (from === HERE) {
+            if (!c) placeOne(r, true);   // 它回家了 → 弹一下出场
+          } else if (c) {
+            bubble(c.x, c.y - 40, '差事办完了，回家去～');
+            c.shockUntil = Date.now() + 2200;
+            c.mode = 'leave';
+            c.tx = c.x < stage.clientWidth / 2 ? -80 : stage.clientWidth + 80;
+          }
+        }
       }
+      redeemGifts();   // 回到本页的鸡，礼物当场兑现（别让玩家干等下次开鸡场）
       save();
     }
     function redeemGifts() {
       for (const r of state.chickens) {
         if (!r.gift) continue;
+        /* 只兑现「已经回到本页」的鸡带的礼物：别的页的礼物等它回来那天兑现
+           （不然你人在 A 页，却收到 B 页那只鸡的米 —— 账对不上） */
+        if (r.page !== HERE) continue;
         const g = r.gift; r.gift = null;
         if (g === 'rice') {
           /* 没盘子就撒地上，别把礼物丢了 */
@@ -2622,8 +4561,10 @@ const root = document.getElementById('farm');
         }
         const btn = e.target && e.target.closest ? e.target.closest('.farm-prop') : null;
         if (!btn || !PROPS[btn.dataset.prop]) return;
-        if (!state.unlocked.includes(btn.dataset.prop)) {
-          const nm = PROPS[btn.dataset.prop].name;
+        const prop = PROPS[btn.dataset.prop];
+        /* 工具（收走）永远可用 —— 它不占解锁位，也不摆东西 */
+        if (prop.kind !== 'tool' && !state.unlocked.includes(btn.dataset.prop)) {
+          const nm = prop.name;
           emitSay(nm + '还没解锁——多逛逛站就会开。');
           bubble(stage.clientWidth / 2, stage.clientHeight * 0.42, nm + '还没解锁');
           return;
@@ -3033,8 +4974,8 @@ const root = document.getElementById('farm');
         const a = onStage[Math.floor(Math.random() * onStage.length)];
         const b = onStage.filter((c) => c !== a).sort((x, y) => Math.hypot(x.x - a.x, x.y - a.y) - Math.hypot(y.x - a.x, y.y - a.y))[0];
         if (!b) return;
-        const an = (state.names && state.names[a.id]) || a.breed.name;
-        const bn = (state.names && state.names[b.id]) || b.breed.name;
+        const an = nameOf(a.id) || a.breed.name;
+        const bn = nameOf(b.id) || b.breed.name;
         bubble(a.x, a.y - 20, `${an}：咯咯，站远点，这是我的位置。`);
         window.setTimeout(() => { if (!b.dead) bubble(b.x, b.y - 20, `${bn}：呵，整个场都是我的。`); }, 1300);
       } else {
@@ -3121,8 +5062,15 @@ const root = document.getElementById('farm');
       }
       for (const c of flock) if (!c.dead) stepChick(c, dt, t);
       for (const c of flock) if (!c.dead) footPiano(c);
+      mapTick(t);                            // 地图打开时，院里的小鸡在走动
       if (flock.some((c) => c.dead)) flock = flock.filter((c) => !c.dead);
-      if (taskClock++ % 60 === 0) { checkTasks(); refreshMood(); refreshExpr(); } // 跨页差事到期结算 + 心情数（每秒一次）
+      if (taskClock++ % 60 === 0) {
+        checkTasks(); refreshMood(); refreshExpr();
+        const grew = checkGrowth(true);   // 成长推进（每秒一次；离线期间的阶段在开场时补）
+        if (grew) save();
+        checkEventClock();                // 鸡场快讯：到点报一条
+        checkWander();                    // 鸡自己出门逛：到点走一只
+      }
       raf = requestAnimationFrame(tick);
     }
     function startLoop() { if (!raf) { lastT = -1; raf = requestAnimationFrame(tick); } }
@@ -3135,24 +5083,37 @@ const root = document.getElementById('farm');
     window.addEventListener('pagehide', () => flushSave());
     window.addEventListener('beforeunload', () => flushSave());
 
-    /* ===== 恢复：换页时把 page===HERE 的鸡放回本页（详见 farm-state.md 第三节） ===== */
-    function restore() {
+    /* 把一条账本记录放上台（还原 / 召回 / 差事办完自己回家 共用一条路）
+       pop = 刚回来时弹一下（还原/召回不弹 —— 那是「摆上去」，不是「回来了」） */
+    function placeOne(r, pop) {
       const w = stage.clientWidth || 1;
       const h = stage.clientHeight || 1;
-      const mine = state.chickens.filter((r) => r.page === HERE).slice(0, MAX_PAGE);
+      const breed = BREEDS.find((b) => b.id === r.breed) || BREEDS[0];
+      const x = clamp((r.pos[0] || 0.5) * w, 40, Math.max(42, w - 40));
+      const y = clamp((r.pos[1] || 0.6) * h, 40, Math.max(42, h - 60));
+      const c = addChick(x, y, breed, !!pop, stageOf(r), r);
+      c.id = r.id;   // 对上账本，goto 时好点名
+      c.rec = r;    // 心情等状态记在账本上，刷新还在
+      return c;
+    }
+
+    /* ===== 恢复：换页时把 page===HERE 的鸡放回本页（详见 farm-state.md 第三节） ===== */
+    function restore() {
+      /* 窝里的（散场收回来的）不上台 —— 它在账本上，但不在这页 */
+      const mine = state.chickens.filter((r) => r.page === HERE && !r.stowed).slice(0, MAX_PAGE);
       for (const r of mine) {
-        const breed = BREEDS.find((b) => b.id === r.breed) || BREEDS[0];
-        const x = clamp((r.pos[0] || 0.5) * w, 40, Math.max(42, w - 40));
-        const y = clamp((r.pos[1] || 0.6) * h, 40, Math.max(42, h - 60));
-        const c = addChick(x, y, breed, false);
-        c.id = r.id; // 对上账本，goto 时好点名
-        c.rec = r;   // 心情等状态记在账本上，刷新还在
+        placeOne(r);
       }
       trimFlock();
       renderDecos(); // 布景道具跟着鸡场一起回来（位置按比例，刷新还在）
       checkTasks();  // 跨页差事到期结算
       redeemGifts(); // 办完差事带回来的礼物
       redeemPending(); // 鸡场关着时逛站攒下的奖励，在这里兑现
+      /* 排队的快讯：刚才场上没鸡可报，现在鸡回来了 → 报出来 */
+      if (EV.pending) {
+        const it = EV.pending; EV.pending = null;
+        fireEvent({ item: it, force: true });
+      }
     }
 
     /* ===== 见面礼：第一次来的人，不该对着一个空舞台 =====
@@ -3232,6 +5193,8 @@ const root = document.getElementById('farm');
       g.taken = true; g.el.remove();
       peck(c);
       addMood(c, MOOD_EAT);
+      addFull(c, FULL_EAT);        // 吃米涨饱腹（状态多维）
+      addGrowth(c, STAGE_BOOST.eat);   // 吃米也催大
       c.eatCool = 1.6;   // 刚吃过 → 开心脸
       noteFloat(g.x, g.y - 10, 'var(--yellow)', null);
     }
@@ -3251,7 +5214,7 @@ const root = document.getElementById('farm');
     function moveHeld(e) { if (held) moveHeldInner(e); }
     function endHeld(e) { if (held) endHeldInner(e); }
     function grabChick(c, e) {
-      held = { c, vx: 0, vy: 0, lastX: e.clientX, lastY: e.clientY, lt: performance.now() };
+      held = { c, vx: 0, vy: 0, lastX: e.clientX, lastY: e.clientY, lt: performance.now(), moved: 0, x0: e.clientX, y0: e.clientY };
       c.mode = 'held';
       if (!reduce) { c.inn.classList.add('is-hop'); }
     }
@@ -3264,13 +5227,26 @@ const root = document.getElementById('farm');
       held.c.y = clamp(e.clientY - sr.y, 40, stage.clientHeight - 24);
       held.vx = (e.clientX - held.lastX) / dt;
       held.vy = (e.clientY - held.lastY) / dt;
+      /* 拖了多远（从按下那点算）：没超过 10px 就算「点一下」，不是「拎起来」 */
+      held.moved = Math.max(held.moved, Math.hypot(e.clientX - held.x0, e.clientY - held.y0));
       held.lastX = e.clientX; held.lastY = e.clientY; held.lt = now;
       draw(held.c, now / 1000);
     }
     function endHeldInner() {
       if (!held) return;
       const c = held.c;
+      const moved = held.moved;
+      const dur = performance.now() - held.lt;
       held = null;
+      if (moved < 10) {
+        /* 没拖动 = 只是「点它一下」，不是把它拎起来抛。
+           短按 → 它叫一声（poke）+ 弹小菜单（VPet ToolBar 式，2026-11-04）；
+           长按 → 交给起名那套（onUp 里按 550ms 判）。
+           （原来不管拖没拖都抛，跟这行注释写的「拖动>10px 即拎起」对不上。） */
+        c.mode = 'wait'; c.wait = rand(0.3, 0.9);
+        if (dur < 500) { poke(c); openChickMenu(c); }
+        return;
+      }
       c.mode = 'thrown';
       c.vx = Math.max(-560, Math.min(560, c.vx * 60)) || rand(-120, 120);
       c.vy = -rand(220, 420);
@@ -3499,7 +5475,17 @@ const root = document.getElementById('farm');
       isOpen = true;
       document.body.classList.add('farm-on');
       if (persist) { try { localStorage.setItem(ON_KEY, '1'); } catch { /* 隐私模式 */ } }
-      if (!opened) { opened = true; restore(); firstVisit(); } // 布局尺寸就绪后再把本页的鸡放回来；第一次来的人给个见面礼
+      if (!opened) {
+        opened = true;
+        /* 成长补账：离线期间长到的阶段在这里补上（静默 —— 不连播动画，回来只报一句喜） */
+        const grew = checkGrowth(false);
+        restore(); firstVisit();
+        /* 姿态立刻刷一次：refreshExpr 平时每 60 帧才跑一次，
+           刚放回来的鸡会先以「正常脸」出现一两秒 —— 饿的/脏的看不出来，
+           玩家会以为刚才的白粥白喂了。这里开场就刷，姿态立刻对。 */
+        refreshExpr(); refreshMood();
+        if (grew) window.setTimeout(() => emitSay(`有 ${grew} 只小鸡长大了`), 900);
+      } // 布局尺寸就绪后再把本页的鸡放回来；第一次来的人给个见面礼
       startLoop();
     }
     function closeFarm(persist) {
@@ -3523,6 +5509,17 @@ const root = document.getElementById('farm');
     $('farm-btn-close').addEventListener('click', () => { closeFarm(true); });
     if (prefOn()) openFarm(false);
     window.__coopSnapshot = snapshot; // 引擎块内落存根：挂件晚挂时补首读快照
+    window.__coopFireEvent = (opts) => fireEvent(opts || { force: true }); // 手动报一条快讯（验收 / 管家）
+    window.__coopEvents = () => ({
+      cfg: evCfg(),
+      content: contentItems.slice(),          // 站侧推来的条目
+      pool: evCfg().pool,                     // pack.json 里的鸡场日常
+      fired: Object.assign({}, state.events.fired), // 每条最近一次播报时间
+      count: state.events.count | 0,
+      dayCount: state.events.dayCount | 0,
+      last: state.events.last || '',
+      pending: EV.pending ? EV.pending.id : '',
+    }); // 快讯台账（验收脚本靠它看「报了什么、报了几次」）
     window.__coopBehaviors = () => ({
       table: BASE_BEHAVIORS, // 当前生效的行为表（品种覆盖后的）
       counts: Object.assign({}, BEHAVIOR_COUNTS), // 累计次数：idle/peck/walk
@@ -3530,14 +5527,12 @@ const root = document.getElementById('farm');
       acts: flock.filter((c) => c && !c.dead).map((c) => ({ breed: (c.breed && c.breed.id) || '', act: c.act || '' })),
     }); // 行为表 + 分布：验收脚本靠它看「行为有没有变」
   }
-  window.__coop = {
-    open: () => window.dispatchEvent(new Event('farm:open')),
-    toggle: () => window.dispatchEvent(new Event('farm:toggle')),
-    pages,   // 站点页面表（管家 goto 选项与 system 注入用）
-    pack,    // 资产包（dialogue 可在包里覆盖默认剧本树）
-    snapshot: () => (window.__coopSnapshot ? window.__coopSnapshot() : null), // 实时账本快照
-    behaviors: () => (window.__coopBehaviors ? window.__coopBehaviors() : null), // 行为表 + 分布（验收/调试用）
-  };
+  /* 引擎真的起来了才占幂等名额（引擎块外面那个 window.__coop 句柄已经先给好了）。
+     判据用 __coopSnapshot：它是引擎块跑到最后才落的根 ——
+     引擎块中途抛异常 → 它不在 → 不占名额，下次 init() 还能重来
+     （以前是在函数开头就置 flag：DOM 没就绪时整块引擎被跳过，
+       之后谁再调 init() 都只拿得到空壳句柄 → 鸡场永远起不来，还一句错都不报）。 */
+  window.__coopInit = !!window.__coopSnapshot;
   /* 管家挂件：cfg.chat 传入即挂（离线剧本树全功能；api 配置后为真智能体） */
   if (cfg.chat) {
     import('./chat.js?' + VER)

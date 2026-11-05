@@ -13,10 +13,10 @@
       "id": "universe01",
       "name": "宇宙·一式",
       "svg": "youji",
-      "color": "#fcd333",
+      "color": "#fad548",
       "rarity": "common",
       "f": 311.13,
-      "note": "表情九宫格：9 表情精灵表（丽丽 部件库/02-表情九宫格），引擎用 background-position 切帧。rig 段是同一只鸡的分层版（造型九式-01），保留登记；引擎优先用表情表。idleRotate=-8 保持 lean",
+      "note": "角色真图：丽丽 部件库/01b-品种全家福-亮色版 12 #fad548。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/expr-sheet.png",
         "cols": 3,
@@ -72,81 +72,8 @@
         ]
       },
       "rig": {
-        "base": "/packs/mujing/universe01/",
-        "w": 244,
-        "h": 366,
-        "footY": 340,
-        "layers": [
-          {
-            "file": "body.png",
-            "role": "body",
-            "left": 47,
-            "top": 45,
-            "w": 171,
-            "h": 249
-          },
-          {
-            "file": "comb.png",
-            "role": "comb",
-            "left": 98,
-            "top": 26,
-            "w": 44,
-            "h": 49
-          },
-          {
-            "file": "eye.png",
-            "role": "eye",
-            "left": 170,
-            "top": 68,
-            "w": 8,
-            "h": 9
-          },
-          {
-            "file": "wing.png",
-            "role": "wing",
-            "left": 77,
-            "top": 160,
-            "w": 57,
-            "h": 72
-          },
-          {
-            "file": "tail.png",
-            "role": "tail",
-            "left": 26,
-            "top": 231,
-            "w": 36,
-            "h": 40
-          },
-          {
-            "file": "leg-1.png",
-            "role": "leg",
-            "left": 150,
-            "top": 286,
-            "w": 29,
-            "h": 50
-          },
-          {
-            "file": "leg-2.png",
-            "role": "leg",
-            "left": 107,
-            "top": 293,
-            "w": 29,
-            "h": 47
-          }
-        ]
-      },
-      "idleRotate": -8
-    },
-    {
-      "id": "butter",
-      "name": "黄·油鸡",
-      "svg": "youji",
-      "color": "#f3cd4a",
-      "rarity": "common",
-      "f": 293.66,
-      "rig": {
-        "base": "/packs/mujing/breeds/butter/",
-        "w": 102,
+        "base": "/packs/mujing/breeds/universe01/",
+        "w": 104,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -155,12 +82,36 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 104,
+            "h": 140
+          }
+        ]
+      }
+    },
+    {
+      "id": "butter",
+      "name": "黄·油鸡",
+      "svg": "youji",
+      "color": "#fbd648",
+      "rarity": "common",
+      "f": 293.66,
+      "rig": {
+        "base": "/packs/mujing/breeds/butter/",
+        "w": 117,
+        "h": 140,
+        "footY": 140,
+        "layers": [
+          {
+            "file": "full.png",
+            "role": "body",
+            "left": 0,
+            "top": 0,
+            "w": 117,
             "h": 140
           }
         ]
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #fbd648 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：丽丽 部件库/01b-品种全家福-亮色版 02 #fbd648。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/breeds/butter/expr-sheet.png",
         "cols": 3,
@@ -220,12 +171,12 @@
       "id": "mist",
       "name": "蓝·雾鸡",
       "svg": "wuji",
-      "color": "#8296af",
+      "color": "#66ace4",
       "rarity": "common",
       "f": 329.63,
       "rig": {
         "base": "/packs/mujing/breeds/mist/",
-        "w": 102,
+        "w": 90,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -234,12 +185,12 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 90,
             "h": 140
           }
         ]
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #66ace4 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：丽丽 部件库/01b-品种全家福-亮色版 01 #66ace4。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/breeds/mist/expr-sheet.png",
         "cols": 3,
@@ -299,12 +250,12 @@
       "id": "persimmon",
       "name": "橙·柿鸡",
       "svg": "shiji",
-      "color": "#fb9032",
+      "color": "#fb8b2b",
       "rarity": "common",
       "f": 196,
       "rig": {
         "base": "/packs/mujing/breeds/persimmon/",
-        "w": 102,
+        "w": 104,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -313,12 +264,12 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 104,
             "h": 140
           }
         ]
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #fb8b2b 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：丽丽 部件库/01b-品种全家福-亮色版 03 #fb8b2b。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/breeds/persimmon/expr-sheet.png",
         "cols": 3,
@@ -378,12 +329,12 @@
       "id": "bean",
       "name": "绿·豆鸡",
       "svg": "douji",
-      "color": "#5db25f",
+      "color": "#5ab25b",
       "rarity": "common",
       "f": 220,
       "rig": {
         "base": "/packs/mujing/breeds/bean/",
-        "w": 102,
+        "w": 99,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -392,12 +343,12 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 99,
             "h": 140
           }
         ]
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #5ab25b 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：丽丽 部件库/01b-品种全家福-亮色版 06 #5ab25b。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/breeds/bean/expr-sheet.png",
         "cols": 3,
@@ -457,12 +408,12 @@
       "id": "peach",
       "name": "粉·桃鸡",
       "svg": "taoji",
-      "color": "#eaa98d",
+      "color": "#f9e4b9",
       "rarity": "common",
       "f": 233.08,
       "rig": {
         "base": "/packs/mujing/breeds/peach/",
-        "w": 102,
+        "w": 111,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -471,12 +422,12 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 111,
             "h": 140
           }
         ]
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #f9e4b9 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：丽丽 部件库/01b-品种全家福-亮色版 07 #f9e4b9。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/breeds/peach/expr-sheet.png",
         "cols": 3,
@@ -541,7 +492,7 @@
       "f": 155.56,
       "rig": {
         "base": "/packs/mujing/breeds/noble/",
-        "w": 102,
+        "w": 105,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -550,12 +501,12 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 105,
             "h": 140
           }
         ]
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #9c9c93 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：按丽丽制式改色补制 灰B（源 05 #89ca98 → #9c9c93）。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/breeds/noble/expr-sheet.png",
         "cols": 3,
@@ -620,7 +571,7 @@
       "f": 261.63,
       "rig": {
         "base": "/packs/mujing/breeds/ingot/",
-        "w": 102,
+        "w": 104,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -629,12 +580,12 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 104,
             "h": 140
           }
         ]
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #d9ac55 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：按丽丽制式改色补制 金A（源 12 #fad548 → #d9ac55）。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "expr": {
         "sheet": "/packs/mujing/breeds/ingot/expr-sheet.png",
         "cols": 3,
@@ -694,17 +645,17 @@
       "id": "fu",
       "name": "新年红·福鸡",
       "svg": "shiji",
-      "color": "#e33b2e",
+      "color": "#cd563a",
       "rarity": "legendary",
       "f": 392,
       "season": {
         "from": "01-01",
         "to": "01-15"
       },
-      "note": "正脸：丽丽「表情九宫格」九帧按体色 #cd563a 改色，本品种一张表情表（9 表情）+ 单图兜底。",
+      "note": "角色真图：丽丽 部件库/01b-品种全家福-亮色版 09 #cd563a。单图 rig（full.png 一层，裁到 alpha 包围盒），引擎按可见高度统一渲染 48px；胖瘦腿长是品种特征，不是缩放误差。",
       "rig": {
         "base": "/packs/mujing/breeds/fu/",
-        "w": 102,
+        "w": 101,
         "h": 140,
         "footY": 140,
         "layers": [
@@ -713,7 +664,7 @@
             "role": "body",
             "left": 0,
             "top": 0,
-            "w": 102,
+            "w": 101,
             "h": 140
           }
         ]
@@ -780,7 +731,7 @@
     "legendary": 2
   },
   "behaviors": {
-    "_doc": "行为表：鸡做什么、什么频率、能不能关。唯一出处，引擎不存第二份。frequency 是相对频率（不要求和为 1），0 = 关掉这个行为；enabled:false 同样能关。duration=[最短,最长] 秒。动作名：idle 发呆 / peck 啄地 / walk 走走 / seekFood 找地上的谷子 / eatPlate 去盘边吃米 / stand 音乐会站桩。",
+    "_doc": "行为表：鸡做什么、什么频率、能不能关。唯一出处，引擎不存第二份。frequency 是相对频率（不要求和为 1），0 = 关掉这个行为；enabled:false 同样能关。duration=[最短,最长] 秒。动作名：idle 发呆 / peck 啄地 / walk 走走 / seekFood 找地上的谷子 / eatPlate 去盘边吃米 / stand 音乐会站桩 / chaseMouse 鼠标靠近时走过去看。",
     "idle": {
       "frequency": 32,
       "duration": [
@@ -815,6 +766,14 @@
       "trigger": "concert",
       "enabled": true,
       "note": "音乐会站桩等指令"
+    },
+    "chaseMouse": {
+      "trigger": "mouseNear",
+      "enabled": true,
+      "radius": 160,
+      "interruptRadius": 110,
+      "cooldown": 12,
+      "note": "鼠标靠近时，小鸡自己走过去看（Shimeji 的 ChaseMouse）。radius = 决策时判定「鼠标在附近」的半径；interruptRadius = 走着走着鼠标凑近、立刻掉头去追的半径（比 radius 小：真凑到跟前才值得追）"
     }
   },
   "decos": {
@@ -876,6 +835,719 @@
       "title": "绿袖子",
       "bpm": 92,
       "abc": "E | G2 A B2 C2 B A F#2 E2 D#2 E F# G E2 E | D#2 E F# B2 B A G2 F# E2"
+    }
+  },
+  "stages": {
+    "_doc": "成长阶段（2026-11-04，方案见 research/growth-mechanics.md）。order=阶段顺序（只前进不后退）；list[k].ms=这一阶要待多久（毫秒，真实时间，离线也在长）；list[k].renderH=引擎把这只鸡画多高（px，成长必须看得见）；list[k].art=该阶段 PNG 的像素尺寸；base+file=素材路径模板；boost=一次互动折算多少毫秒成长值（VPet 的「经验来自互动」）。show=演出图（不在阶段链里，如破壳那一刻）。",
+    "order": [
+      "chick",
+      "small",
+      "medium",
+      "large",
+      "adult"
+    ],
+    "base": "/packs/mujing/growth/",
+    "file": "<stage>/<breed>.png",
+    "boost": {
+      "eat": 45000,
+      "talk": 15000,
+      "water": 30000
+    },
+    "list": {
+      "chick": {
+        "name": "雏鸡",
+        "ms": 180000,
+        "renderH": 30,
+        "art": {
+          "w": 42,
+          "h": 60
+        },
+        "src": "丽丽 部件库/02-体型与成长阶梯 07"
+      },
+      "small": {
+        "name": "小鸡",
+        "ms": 600000,
+        "renderH": 40,
+        "art": {
+          "w": 45,
+          "h": 80
+        },
+        "src": "丽丽 部件库/02-体型与成长阶梯 04"
+      },
+      "medium": {
+        "name": "中鸡",
+        "ms": 1500000,
+        "renderH": 50,
+        "art": {
+          "w": 48,
+          "h": 100
+        },
+        "src": "丽丽 部件库/02-体型与成长阶梯 03"
+      },
+      "large": {
+        "name": "大鸡",
+        "ms": 3600000,
+        "renderH": 58,
+        "art": {
+          "w": 61,
+          "h": 116
+        },
+        "src": "丽丽 部件库/02-体型与成长阶梯 02"
+      },
+      "adult": {
+        "name": "成鸡",
+        "ms": 0,
+        "renderH": 64,
+        "art": null,
+        "src": "丽丽 部件库/01b-品种全家福（9 个品种各自的造型）"
+      }
+    },
+    "show": {
+      "hatch": {
+        "name": "破壳",
+        "renderH": 41,
+        "art": {
+          "w": 52,
+          "h": 82
+        },
+        "src": "丽丽 部件库/02-体型与成长阶梯 05"
+      }
+    }
+  },
+  "lux": {
+    "_doc": "豪华成鸡（2026-11-04）：丽丽「部件库/03-成年大鸡六只」那套造型（铅笔线稿 + 花冠 + 长尾羽），按品种色改色。它是**成鸡之后的一个可选形态**，不是成长线的一阶 —— 画风与「品种全家福」不同，硬接进 stages.order 就是换装感。unlock 写解锁条件（引擎读它）。",
+    "base": "/packs/mujing/lux/",
+    "file": "<breed>.png",
+    "renderH": 72,
+    "art": {
+      "w": 94,
+      "h": 144
+    },
+    "src": "丽丽 部件库/03-成年大鸡六只（04 粉桃鸡那张，按品种色改色）",
+    "unlock": {
+      "mood": 80,
+      "full": 80,
+      "clean": 80,
+      "note": "三轴都到这个数才够格加冕（照顾得好才有豪华版）"
+    },
+    "breeds": {
+      "universe01": {
+        "w": 94,
+        "h": 144
+      },
+      "butter": {
+        "w": 94,
+        "h": 144
+      },
+      "mist": {
+        "w": 94,
+        "h": 144
+      },
+      "persimmon": {
+        "w": 94,
+        "h": 144
+      },
+      "bean": {
+        "w": 94,
+        "h": 144
+      },
+      "peach": {
+        "w": 94,
+        "h": 144
+      },
+      "noble": {
+        "w": 94,
+        "h": 144
+      },
+      "ingot": {
+        "w": 94,
+        "h": 144
+      },
+      "fu": {
+        "w": 94,
+        "h": 144
+      }
+    }
+  },
+  "events": {
+    "_doc": "鸡场快讯：机制在引擎，内容由站侧推（window 的 farm:content，detail.items = [{id,kind,label,title,text,href}]）。引擎不抄官网内容 —— 抄了就会过期。这里放机制参数 + 一批不依赖官网的「鸡场日常」保底事件。kind：work 新作品 / news 新动态 / bio 履历 / farm 鸡场日常。intervalSec 两次之间隔多久（随机区间，秒）；dailyLimit 一天最多报几条；cooldownMin 同一条隔多久能再报；manualCooldownSec 玩家主动「打听消息」的冷却；reward 默认奖励（egg 蛋 / mood 心情 / full 饱腹 / clean 清洁 / rice 米）；bubbleMs 快讯气泡停留多久。",
+    "enabled": true,
+    "intervalSec": [
+      150,
+      320
+    ],
+    "dailyLimit": 4,
+    "cooldownMin": 240,
+    "manualCooldownSec": 15,
+    "bubbleMs": 9000,
+    "reward": {
+      "egg": 1,
+      "mood": 6
+    },
+    "pool": [
+      {
+        "id": "farm-sun",
+        "kind": "farm",
+        "title": "今天太阳挺好",
+        "text": "晒得暖暖的，谁都不太想动。",
+        "reward": {
+          "mood": 5
+        }
+      },
+      {
+        "id": "farm-hungry",
+        "kind": "farm",
+        "title": "有点饿了",
+        "text": "食盆里的米还有吗？",
+        "reward": {
+          "mood": 3
+        }
+      },
+      {
+        "id": "farm-thirsty",
+        "kind": "farm",
+        "title": "想喝点水",
+        "text": "水缸好像见底了。",
+        "reward": {
+          "clean": 4
+        }
+      },
+      {
+        "id": "farm-sleep",
+        "kind": "farm",
+        "title": "有点困了",
+        "text": "眯一会儿，等下再玩。",
+        "reward": {
+          "mood": 4
+        }
+      },
+      {
+        "id": "farm-piano",
+        "kind": "farm",
+        "title": "楼下传来琴声",
+        "text": "地琴今天弹得不错。",
+        "reward": {
+          "mood": 5
+        }
+      },
+      {
+        "id": "farm-concert",
+        "kind": "farm",
+        "title": "音乐会开始了",
+        "text": "站桩的那几只都站好了。",
+        "reward": {
+          "mood": 4
+        }
+      },
+      {
+        "id": "farm-rain",
+        "kind": "farm",
+        "title": "外面下雨了",
+        "text": "我们躲到檐下待着。",
+        "reward": {
+          "mood": 4
+        }
+      },
+      {
+        "id": "farm-lux",
+        "kind": "farm",
+        "title": "听说还有豪华版",
+        "text": "心情、饱腹、清洁都满格就能加冕。",
+        "reward": {
+          "mood": 3
+        }
+      },
+      {
+        "id": "farm-dex",
+        "kind": "farm",
+        "title": "图鉴还没集齐",
+        "text": "还有几种没见过的家伙。",
+        "reward": {
+          "mood": 3
+        }
+      },
+      {
+        "id": "farm-visit",
+        "kind": "farm",
+        "title": "你今天逛站了吗",
+        "text": "看作品给米，看动态给蛋。",
+        "reward": {
+          "egg": 1,
+          "mood": 2
+        }
+      }
+    ]
+  },
+  "wander": {
+    "_doc": "鸡自己出门逛（自动串门）：偶尔一只鸡自己决定去别的页面逛一圈，办完带礼物回来。跟「放去别的页」是同一条机制（领差事 → 办完带礼物 → 自己回来），差别只在「谁决定的」。intervalMin = 两次出门之间隔多久（随机区间，分钟）；maxOut = 同时在外面办事的鸡上限；awayMin/awayMax = 逛多久（分钟）。",
+    "enabled": true,
+    "intervalMin": [
+      8,
+      20
+    ],
+    "maxOut": 2,
+    "awayMin": 3,
+    "awayMax": 8
+  },
+  "map": {
+    "title": "鸡场地图 · 幕景农场",
+    "width": 360,
+    "height": 250,
+    "river": "M -10 148 C 46 138 84 162 126 160 C 176 158 214 144 256 150 C 300 156 334 170 370 162",
+    "riverW": 11,
+    "bridges": [
+      [
+        130,
+        157
+      ],
+      [
+        298,
+        166
+      ]
+    ],
+    "trees": [
+      [
+        24,
+        24
+      ],
+      [
+        210,
+        22
+      ],
+      [
+        348,
+        60
+      ],
+      [
+        24,
+        140
+      ],
+      [
+        348,
+        126
+      ],
+      [
+        196,
+        184
+      ],
+      [
+        140,
+        206
+      ]
+    ],
+    "roads": [
+      {
+        "a": "home",
+        "b": "news",
+        "via": [
+          [
+            100,
+            116
+          ],
+          [
+            130,
+            157
+          ],
+          [
+            112,
+            188
+          ]
+        ]
+      },
+      {
+        "a": "works",
+        "b": "home",
+        "via": [
+          [
+            152,
+            104
+          ],
+          [
+            130,
+            157
+          ],
+          [
+            100,
+            116
+          ]
+        ]
+      },
+      {
+        "a": "works",
+        "b": "about",
+        "via": [
+          [
+            232,
+            68
+          ]
+        ]
+      },
+      {
+        "a": "about",
+        "b": "contact",
+        "via": [
+          [
+            302,
+            126
+          ],
+          [
+            298,
+            166
+          ]
+        ]
+      },
+      {
+        "a": "news",
+        "b": "contact",
+        "via": [
+          [
+            176,
+            220
+          ]
+        ]
+      }
+    ],
+    "places": {
+      "home": {
+        "name": "鸡舍",
+        "glyph": "coop",
+        "at": [
+          58,
+          74
+        ],
+        "ground": [
+          [
+            98.7,
+            74
+          ],
+          [
+            96,
+            88.4
+          ],
+          [
+            80.7,
+            96.5
+          ],
+          [
+            66,
+            101.8
+          ],
+          [
+            50,
+            101.5
+          ],
+          [
+            33.3,
+            98.5
+          ],
+          [
+            19.3,
+            88.7
+          ],
+          [
+            22.7,
+            74
+          ],
+          [
+            27.5,
+            62.4
+          ],
+          [
+            33.4,
+            49.6
+          ],
+          [
+            49.1,
+            43.3
+          ],
+          [
+            67,
+            43
+          ],
+          [
+            80.6,
+            51.6
+          ],
+          [
+            87.7,
+            62.7
+          ]
+        ]
+      },
+      "works": {
+        "name": "谷仓",
+        "glyph": "barn",
+        "at": [
+          170,
+          52
+        ],
+        "ground": [
+          [
+            211.4,
+            52
+          ],
+          [
+            202.6,
+            64
+          ],
+          [
+            192.5,
+            73.5
+          ],
+          [
+            178,
+            78.6
+          ],
+          [
+            161,
+            82.2
+          ],
+          [
+            143.5,
+            77.4
+          ],
+          [
+            139,
+            63.4
+          ],
+          [
+            135.4,
+            52
+          ],
+          [
+            134.2,
+            38.8
+          ],
+          [
+            145.1,
+            28.2
+          ],
+          [
+            161,
+            22.1
+          ],
+          [
+            177.9,
+            25.6
+          ],
+          [
+            190.9,
+            32
+          ],
+          [
+            207.5,
+            38.2
+          ]
+        ],
+        "shelf": {
+          "at": [
+            206,
+            90
+          ],
+          "n": 4,
+          "w": 12,
+          "h": 9,
+          "gap": 3
+        }
+      },
+      "about": {
+        "name": "磨坊",
+        "glyph": "mill",
+        "at": [
+          292,
+          96
+        ],
+        "ground": [
+          [
+            325.7,
+            96
+          ],
+          [
+            322,
+            107.5
+          ],
+          [
+            312.4,
+            116.5
+          ],
+          [
+            300.2,
+            124.6
+          ],
+          [
+            283.2,
+            126.9
+          ],
+          [
+            271.8,
+            116.3
+          ],
+          [
+            263.7,
+            106.9
+          ],
+          [
+            255.7,
+            96
+          ],
+          [
+            258.9,
+            83.3
+          ],
+          [
+            268.8,
+            72.7
+          ],
+          [
+            284.6,
+            70
+          ],
+          [
+            298.8,
+            72.3
+          ],
+          [
+            315.5,
+            72.5
+          ],
+          [
+            326.8,
+            82.6
+          ]
+        ]
+      },
+      "news": {
+        "name": "晒谷场",
+        "glyph": "yard",
+        "at": [
+          96,
+          212
+        ],
+        "ground": [
+          [
+            132.1,
+            212
+          ],
+          [
+            128.1,
+            223
+          ],
+          [
+            121.4,
+            234.6
+          ],
+          [
+            105.4,
+            241.4
+          ],
+          [
+            88.4,
+            235.8
+          ],
+          [
+            74.3,
+            231.3
+          ],
+          [
+            60.3,
+            224.2
+          ],
+          [
+            56.1,
+            212
+          ],
+          [
+            59.6,
+            199.5
+          ],
+          [
+            74,
+            192.4
+          ],
+          [
+            88.5,
+            188.7
+          ],
+          [
+            105.3,
+            183.1
+          ],
+          [
+            121.7,
+            189.1
+          ],
+          [
+            128.7,
+            200.8
+          ]
+        ]
+      },
+      "contact": {
+        "name": "村口",
+        "glyph": "gate",
+        "at": [
+          258,
+          214
+        ],
+        "ground": [
+          [
+            289.7,
+            214
+          ],
+          [
+            290.3,
+            225.9
+          ],
+          [
+            281.9,
+            237
+          ],
+          [
+            265,
+            237.3
+          ],
+          [
+            251.2,
+            236.8
+          ],
+          [
+            236,
+            235.1
+          ],
+          [
+            225.9,
+            225.8
+          ],
+          [
+            221.7,
+            214
+          ],
+          [
+            229,
+            203.3
+          ],
+          [
+            239.5,
+            196.3
+          ],
+          [
+            249.8,
+            186.7
+          ],
+          [
+            266.3,
+            186.1
+          ],
+          [
+            278.4,
+            194.4
+          ],
+          [
+            287.2,
+            203.3
+          ]
+        ]
+      }
     }
   }
 }

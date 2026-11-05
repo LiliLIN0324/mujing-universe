@@ -87,7 +87,7 @@ const COOP_MARK = '[[COOP]]';
 const FARM_HEAD = '[[FARM:';
 const FARM_TAIL = ']]';
 const FARM_MAX = 64; // FARM 标记按最长 64 字符算，超长仍未收尾就当普通文字放行，避免流被卡死
-const FARM_OK = /^(gift:egg|goto:(works|about|news)|map)$/; // 服务器白名单：模型只能输出这几种
+const FARM_OK = /^(gift:egg|goto:(works|about|news)|map|event)$/; // 服务器白名单：模型只能输出这几种
 
 const BREED_NAMES: Record<string, string> = {
   butter: '黄油鸡',
@@ -149,7 +149,7 @@ function farmLine(farm: Farm): string {
   if (rare.length) parts.push(`稀有：${rare.join('、')}`);
   const where = Object.entries(farm.pages).map(([id, n]) => `${PAGE_NAMES[id]} ${n}`);
   if (where.length) parts.push(`分布：${where.join('、')}`);
-  parts.push('这是访客自己鸡场的账，可以在鸡场话题里拿来打趣，不要当对外事实引用。访客问鸡在哪、有几只、去哪个页面、图鉴进度，直接用上面的账报数回答（管家的口气），不要推给合作页。访客在鸡场话题里可以送一颗蛋、放鸡去别的页面、要一张鸡场地图，做法是回答最后单独一行写标记之一，不要解释标记，非鸡场话题不要写：[[FARM:gift:egg]] 送一颗蛋，[[FARM:goto:works]] 或 [[FARM:goto:about]] 或 [[FARM:goto:news]] 放鸡去对应页面，[[FARM:map]] 给鸡场地图。一条回复只写一个标记。');
+  parts.push('这是访客自己鸡场的账，可以在鸡场话题里拿来打趣，不要当对外事实引用。访客问鸡在哪、有几只、去哪个页面、图鉴进度，直接用上面的账报数回答（管家的口气），不要推给合作页。访客在鸡场话题里可以送一颗蛋、放鸡去别的页面、要一张鸡场地图，做法是回答最后单独一行写标记之一，不要解释标记，非鸡场话题不要写：[[FARM:gift:egg]] 送一颗蛋，[[FARM:goto:works]] 或 [[FARM:goto:about]] 或 [[FARM:goto:news]] 放鸡去对应页面，[[FARM:map]] 给鸡场地图，[[FARM:event]] 让鸡自己跑来报一条站里的新消息（作品/动态/履历）。一条回复只写一个标记。');
   return parts.join('；').replace('；这是', '。这是'); // 首段与规则句之间用句号断开
 }
 /* ↑↑↑ 新增结束 ↑↑↑ */
@@ -379,7 +379,7 @@ async function onRequestPost(context: { request: Request; env: Env }): Promise<R
   if (farm) systemParts.push(farmLine(farm)); // 农场状态拼一行注入 SYSTEM 末尾
   if (butlerMode) {
     systemParts.push(
-      '鸡场管家模式：你仍是 Mimi，兼职管这座鸡场。鸡场事务用轻松的管家口吻：报数用上面的账、送蛋写[[FARM:gift:egg]]、放鸡去作品/关于/动态页写[[FARM:goto:works]]或[[FARM:goto:about]]或[[FARM:goto:news]]之一、要地图写[[FARM:map]]；圈舍只有这几处，别编地点。作品和团队的问题也直接答：用上面的事实清单和台词，规则与平时相同，保密口径照旧。聊到某件作品可以边放鸡边给那条作品的链接，人和鸡一起去。访客想合作：不用退出管家模式，按「聊合作」办——先问形式和时间，把需求理成几行小结，再按规则写[[COOP]]。一条回复只写一个标记，[[COOP]] 和鸡场标记不混用。',
+      '鸡场管家模式：你仍是 Mimi，兼职管这座鸡场。鸡场事务用轻松的管家口吻：报数用上面的账、送蛋写[[FARM:gift:egg]]、放鸡去作品/关于/动态页写[[FARM:goto:works]]或[[FARM:goto:about]]或[[FARM:goto:news]]之一、要地图写[[FARM:map]]、要听站内新消息写[[FARM:event]]；圈舍只有这几处，别编地点。作品和团队的问题也直接答：用上面的事实清单和台词，规则与平时相同，保密口径照旧。聊到某件作品可以边放鸡边给那条作品的链接，人和鸡一起去。访客想合作：不用退出管家模式，按「聊合作」办——先问形式和时间，把需求理成几行小结，再按规则写[[COOP]]。一条回复只写一个标记，[[COOP]] 和鸡场标记不混用。',
     );
   }
   const system = systemParts.join('\n');
