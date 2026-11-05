@@ -66,6 +66,12 @@ const studioIntro = '幕景宇宙是一家位于杭州的AI Native工作室，�
 
 </div>
 
+<section class="licensing reveal">
+  <p class="kicker cap">素材授权</p>
+  <h2>鸡场美术包</h2>
+  <p>本站<a href="/?farm=1">幕景鸡场</a>里的美术资产 —— 九个品种的全家福、成长阶梯、豪华成鸡与四件器物 —— 由林丽丽创作，以 <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener noreferrer">CC BY-NC 4.0</a> 授权：可以自由署名转载与演绎，<strong>不得用于商业目的</strong>。转载时请署名「林丽丽 / 幕景宇宙」，并注明是否作过修改。</p>
+</section>
+
 <section class="endcap reveal">
   <a class="btn" href="/works/">浏览作品 →</a>
   <Cooperate />
@@ -130,6 +136,14 @@ html.js .member.in .pimg { transform: none; }
 
 .endcap { text-align: left; margin-top: 64px; }
 .endcap .btn { margin: 6px 6px 6px 0; }
+
+/* 素材授权（CC BY-NC 4.0 要求可辨识的署名 + 许可证链接） */
+.licensing { margin-top: 56px; padding-top: 36px; border-top: 1px solid var(--rule); }
+.licensing h2 { font-size: clamp(24px, 3vw, 30px); font-weight: 600; letter-spacing: -0.03em; line-height: 1.2; margin: 0 0 16px; }
+.licensing p { font-size: 0.95rem; color: var(--ink2); line-height: 1.8; margin: 0; max-width: 54em; }
+.licensing a { color: inherit; text-decoration: none; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
+.licensing a:hover { opacity: 0.7; }
+.licensing strong { font-weight: 600; color: var(--ink); }
 
 @media (prefers-reduced-motion: reduce) {
   .pimg { transition: opacity 0.4s ease; }

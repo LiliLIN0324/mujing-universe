@@ -6,9 +6,11 @@ dist/
 # local-only preview copies of artist portraits (served when R2 object is missing in dev)
 public/_preview-portraits/
 
-# 鸡场美术素材：不入库（本仓是公开仓，pack.json 明写「授权条款确认前请勿公开分发本包美术」）
-# 器物图 / 9 个品种的表情表 / universe01 分层图 —— 构建或部署前在引擎仓跑 npm run sync:packs 生成
-public/packs/
+# 鸡场美术素材：运行时集合**入库**（授权 2026-11-05 定 CC BY-NC 4.0，© 林丽丽）
+# 器物图 / 9 个品种的表情表 / 品种全家福 / 成长阶段 / 豪华成鸡
+# 改动流程：引擎仓改素材 → npm run sync:packs → 官网提交 public/packs/
+# 丽丽的**源图目录**（breed-src/ expr-src/ deco-src/ growth-src/）只留在引擎仓，不进这里；
+# src/lib/coop/packs/ 是旧冗余副本（零引用），也不进
 src/lib/coop/packs/
 .import-tmp/
 .patch-*.cjs
