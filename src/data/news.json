@@ -14,9 +14,9 @@
    "people": [
     "丁科智"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-echo-48h-2026/01.jpg",
+   "image": "/r2/news/activity-echo-48h-2026/01.jpg",
    "images": [
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-echo-48h-2026/01.jpg",
+    "/r2/news/activity-echo-48h-2026/01.jpg",
     "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-echo-48h-2026/02.jpg"
    ]
   },
@@ -52,7 +52,7 @@
    "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-goai-2026-juchang/01.jpg",
    "images": [
     "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-goai-2026-juchang/01.jpg",
-    "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-goai-2026-juchang/02.jpg"
+    "/r2/news/activity-goai-2026-juchang/02.jpg"
    ]
   },
   {
@@ -85,7 +85,7 @@
    "people": [
     "林丽丽"
    ],
-   "image": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/news/activity-aaai-2025-kg/01.jpg",
+   "image": "/r2/news/activity-aaai-2025-kg/01.jpg",
    "source": "archive"
   },
   {

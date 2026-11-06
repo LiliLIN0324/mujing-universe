@@ -28,6 +28,14 @@ public/works/xihu-panorama/scroll/huajuan-viewer.jpg
 # 砖塘艺讯旧资产：内容已全走 R2 endtree/ 路径，本地孤本存档不入库
 public/works/zhuantang-yixun/
 
+# public/r2/ 是**站内压缩副本**，入库是有意的（2026-11-06）：
+#   R2 上引用到的图共 390 张 / 754MB，最大 9.45MB。弱网下并发拉大图会断流
+#   （net::ERR_CONTENT_LENGTH_MISMATCH，资源本身还在）→ 线上偶发破图；
+#   作品页光图片就要拉几十 MB。
+#   现在把 >800KB 的图统一压到 2000px 宽（画质肉眼无差别）放 public/r2/，
+#   走 Cloudflare Pages 同源分发，页面体积降到 1/10 左右。
+#   **源图仍在 R2 上，一个没删**；这条只是说明来历，别当垃圾清掉。
+
 # 本机工具缓存与一次性 OCR 排查产物
 .trae/
 .wrangler/
