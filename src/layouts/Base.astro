@@ -185,10 +185,40 @@ const dropBroken = (img) => {
   if (holder) holder.remove();
   else img.remove();
 };
-document.querySelectorAll('img[data-r2]').forEach(img => {
-  if (img.complete) { if (img.naturalWidth === 0) dropBroken(img); return; }
-  img.addEventListener('load', () => { if (img.naturalWidth === 0) dropBroken(img); });
-  img.addEventListener('error', () => dropBroken(img));
+/* Broken-image fallback, hardened 2026-11-06:
+   1) Retry before giving up. R2 occasionally drops a big transfer
+      (ERR_CONTENT_LENGTH_MISMATCH) — the object is fine, the connection was not.
+      The old code removed the whole figure on the first error, so one hiccup
+      turned into "the photo disappeared".
+   2) Watch every cross-origin image, not just img[data-r2]. The /about/ and
+      /news/ R2 images never carried that marker, so a failure showed a raw
+      broken-image icon. Same-origin images (the farm's /packs art) are left
+      alone on purpose: the engine owns their own fallback.
+   Marks use expando properties (_bt), not data-* attributes: data-* survives
+   an innerHTML clone, which would silently skip the newly injected image. */
+const isCrossOrigin = (img) => {
+  const raw = img.getAttribute('src') || '';
+  if (!raw || raw.startsWith('data:')) return false;
+  try { return new URL(raw, location.href).origin !== location.origin; } catch (e) { return false; }
+};
+const onImgError = (img) => {
+  if (!isCrossOrigin(img)) return;
+  const tries = img._bt || 0;
+  if (tries >= 2) { dropBroken(img); return; }
+  img._bt = tries + 1;
+  const src = img.currentSrc || img.src || '';
+  if (!src) { dropBroken(img); return; }
+  img.src = src + (src.includes('?') ? '&' : '?') + 'retry=' + img._bt;
+};
+/* error does not bubble -> listen in the capture phase on window, so images
+   injected later are covered too. */
+window.addEventListener('error', (e) => {
+  const t = e.target;
+  if (t && t.tagName === 'IMG') onImgError(t);
+}, true);
+document.querySelectorAll('img').forEach(img => {
+  if (img.complete) { if (img.naturalWidth === 0) onImgError(img); return; }
+  img.addEventListener('load', () => { if (img.naturalWidth === 0) onImgError(img); });
 });
 // 鸡场蛋按钮：静态构建看不到 query，客户端把 href/标签纠正（?farm=1 / ?farm=0 时点一下回干净地址）。
 const eggBtn = document.querySelector('a.farm-egg');
