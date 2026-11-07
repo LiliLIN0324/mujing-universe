@@ -1,0 +1,247 @@
+---
+import Base from '../layouts/Base.astro';
+import pack from '../lib/coop/pack.json';
+import { coopVer } from '../lib/coop-ver.mjs';
+
+/* 名册的每个数字都来自两处事实来源，不手写：
+   ① 品种本身（名字 / 稀有度 / 体色 / 体型 / 叫声音高 / 节日窗口）→ packs/mujing/pack.json
+   ② 抽中概率 → 引擎按稀有度加权（pack.weights），池内每个品种各占一份
+   软保底的起始颗数是引擎里的常量（PITY_START），这里显示的字面量由
+   scripts/check-roster.mjs 拿去和引擎副本对账，改了一边另一边就会红。 */
+const breeds = pack.breeds || [];
+const weights = pack.weights || { common: 16, rare: 18, legendary: 2 };
+const PITY_START = 30;
+/* 立绘走 public/packs/，不会像打包资源那样自带内容哈希 —— 补上版本号查询串，
+   换图后老缓存自然失效（和引擎内部给素材加 ?v= 是同一套办法）。 */
+const ver = coopVer({ dev: import.meta.env.DEV });
+
+const RARITY_CN = { common: '普通', rare: '稀有', legendary: '传说' };
+const RARITY_EN = { common: 'Common', rare: 'Rare', legendary: 'Legendary' };
+
+/* 与引擎 inSeason() 同口径：节日限定品种在窗口外自然缺席 */
+const md = (() => {
+  const d = new Date();
+  return String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+})();
+const inSeason = (b) => !b.season || (b.season.from <= md && md <= b.season.to);
+
+const pool = breeds.filter(inSeason);
+const total = pool.reduce((s, b) => s + (weights[b.rarity] || 0), 0);
+const pct = (b) => ((weights[b.rarity] || 0) / total) * 100;
+
+const rows = breeds.map((b, i) => {
+  const rig = b.rig || {};
+  return {
+    no: String(i + 1).padStart(2, '0'),
+    id: b.id,
+    name: b.name,
+    rarity: b.rarity,
+    rarityCn: RARITY_CN[b.rarity] || b.rarity,
+    rarityEn: RARITY_EN[b.rarity] || b.rarity,
+    color: b.color,
+    img: `${rig.base || `/packs/mujing/breeds/${b.id}/`}full.png?v=${ver}`,
+    w: rig.w || 0,
+    h: rig.h || 0,
+    ratio: rig.w && rig.h ? rig.w / rig.h : 0,
+    f: b.f,
+    season: b.season || null,
+    live: inSeason(b),
+    pct: pct(b),
+  };
+});
+
+const inWindow = rows.filter((r) => r.season);
+const legendRows = rows.filter((r) => r.rarity === 'legendary');
+const legendaryBase = legendRows.length ? legendRows[0].pct : 0;
+/* 普通档的只数与份额：从在池的普通档品种里数，不写死「六只」 */
+const commonRows = rows.filter((r) => r.rarity === 'common');
+const commonCount = commonRows.filter((r) => r.live).length;
+const commonPct = commonRows.length ? commonRows[0].pct : 0;
+---
+
+<Base
+  title="小鸡名册 · 幕景宇宙"
+  description="幕景鸡场九个品种的档案：真图、稀有度、抽中概率、体型、叫声音高与节日限定窗口。概率与引擎逐项对齐。"
+  active="/roster/"
+  navClass="top--unified"
+>
+<main class="wrap roster-page" data-pity-start={PITY_START} data-weights={JSON.stringify(weights)}>
+
+  <section class="intro reveal">
+    <p class="kicker cap">小鸡名册</p>
+    <h1>九个品种，都在册</h1>
+    <p class="lead">
+      站上任何一处空白点一下，会下一颗蛋；蛋孵出来是哪一只，取决于下面的概率。
+      这份名册把每个品种的档案摊开 —— 稀有度、抽中概率、体型、叫声的基频，
+      以及某些只在特定日子出现的限定款。数字与<a href="/?farm=1">幕景鸡场</a>的引擎逐项对齐，
+      引擎里概率每变一次，这里跟着变。
+    </p>
+  </section>
+
+  <section class="facts reveal">
+    <div class="fact">
+      <p class="kicker cap">抽蛋概率</p>
+      <p class="fact-v">
+        {rows.map((r) => r.pct.toFixed(2)).filter((v, i, a) => a.indexOf(v) === i).join(' / ')}<small>%</small>
+      </p>
+      <p class="fact-n">
+        依次是普通、稀有、传说。权重按档给：{Object.entries(weights).map(([k, v]) => `${RARITY_CN[k] || k} ${v}`).join(' · ')} ——
+        每个品种各带一份自己那一档的权重（**不是同档平分**），所以普通档那 {commonCount} 只鸡，每只都是 {commonPct.toFixed(2)}%。
+      </p>
+    </div>
+    <div class="fact">
+      <p class="kicker cap">软保底</p>
+      <p class="fact-v">第 {PITY_START + 1} 颗起<small>翻倍</small></p>
+      <p class="fact-n">
+        前 {PITY_START} 颗纯靠运气。从第 {PITY_START + 1} 颗起，传说档的**权重**逐次翻倍
+        （2 → 4 → 8 …，最多翻 {Math.pow(2, 5)} 倍），传说档的份额从 {legendaryBase.toFixed(2)}% 一路往上抬。
+        概率明写在案，不玩暗改那套。
+      </p>
+    </div>
+    <div class="fact">
+      <p class="kicker cap">限定窗口</p>
+      <p class="fact-v">{inWindow.length ? inWindow[0].season.from.slice(0, 2) + '月' : '—'}<small>起</small></p>
+      <p class="fact-n">
+        {inWindow.length
+          ? inWindow.map((r) => `${r.name}只在 ${r.season.from} ～ ${r.season.to} 出现，窗口外它不会出现在蛋里。`).join(' ')
+          : '目前没有节日限定品种。'}
+      </p>
+    </div>
+  </section>
+
+  <section class="roster reveal">
+    {rows.map((r) => (
+      <article class={'card' + (r.live ? '' : ' off')}>
+        <div class="pic" style={'--c:' + r.color}>
+          <img src={r.img} alt={r.name + ' 立绘'} width={r.w} height={r.h} loading="lazy" decoding="async"/>
+          <span class="no">{r.no}</span>
+          {!r.live && <span class="off-tag">歇业中</span>}
+        </div>
+        <div class="body">
+          <p class={'rarity r-' + r.rarity}>{r.rarityCn} <small>{r.rarityEn}</small></p>
+          <h2>{r.name}</h2>
+          <dl>
+            <div><dt>抽中概率</dt><dd>{r.pct.toFixed(2)}%</dd></div>
+            <div><dt>体色</dt><dd><i class="swatch" style={'background:' + r.color}></i>{r.color}</dd></div>
+            <div><dt>体型</dt><dd>{r.w} × {r.h}<small>px</small>　宽高比 {r.ratio.toFixed(2)}</dd></div>
+            <div><dt>叫声</dt><dd>{r.f}<small>Hz</small> 基频</dd></div>
+            {r.season && <div><dt>限定</dt><dd>{r.season.from} ～ {r.season.to}</dd></div>}
+          </dl>
+        </div>
+      </article>
+    ))}
+  </section>
+
+  <section class="endcap reveal">
+    <a class="btn" href="/?farm=1">去鸡场下个蛋 →</a>
+    <p class="cap-note">
+      美术：林丽丽（CC BY-NC 4.0）。集合齐全九种会解锁一张图鉴卡，见<a href="/about/">关于</a>里的授权说明。
+    </p>
+  </section>
+
+</main>
+
+<style>
+.roster-page { padding-top: 80px; padding-bottom: 96px; }
+
+.intro { margin-bottom: 56px; max-width: 46em; }
+.intro h1 { font-size: clamp(38px, 5vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.15; margin: 8px 0 20px; }
+.lead { font-size: 1.02rem; color: var(--ink2); line-height: 1.9; }
+
+/* 三条事实：概率 / 保底 / 限定窗口 */
+.facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin-bottom: 64px;
+}
+.fact { background: var(--paper); padding: 26px 24px 28px; }
+.fact-v { font-size: clamp(26px, 3vw, 36px); font-weight: 600; letter-spacing: -0.03em; margin: 10px 0 12px; line-height: 1.2; }
+.fact-v small { font-size: 0.42em; font-weight: 500; letter-spacing: 0; margin-left: 6px; color: var(--ink2); }
+.fact-n { font-size: 0.86rem; color: var(--muted); line-height: 1.8; margin: 0; }
+
+/* 名册表 */
+.roster { display: flex; flex-direction: column; }
+
+.card {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr);
+  column-gap: 44px;
+  align-items: start;
+  padding: 40px 0;
+  border-top: 1px solid var(--rule);
+}
+.card:first-child { border-top: 0; padding-top: 0; }
+.card.off { opacity: 0.55; }
+
+.pic {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  background: var(--bg2);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+  padding: 14px;
+}
+.pic::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 6px;
+  background: var(--c);
+}
+.pic img { width: auto; height: 88%; object-fit: contain; }
+.no {
+  position: absolute;
+  top: 10px; left: 12px;
+  font-family: var(--en);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--faint);
+}
+.off-tag {
+  position: absolute;
+  top: 10px; right: 12px;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  color: var(--ink2);
+  border: 1px solid var(--line-strong);
+  padding: 2px 7px;
+}
+
+.body { padding-top: 2px; }
+.rarity { margin: 0 0 8px; font-size: 0.78rem; letter-spacing: 0.08em; }
+.rarity small { font-family: var(--en); letter-spacing: 0.12em; color: var(--faint); margin-left: 6px; }
+.r-common { color: var(--ink2); }
+.r-rare { color: #4A6E96; }
+.r-legendary { color: #9C6B1F; }
+.body h2 { font-size: clamp(24px, 2.6vw, 32px); font-weight: 600; letter-spacing: -0.03em; margin: 0 0 18px; }
+
+dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 32px; margin: 0; }
+dl > div { border-top: 1px solid var(--rule); padding-top: 10px; }
+dt { font-size: 0.76rem; letter-spacing: 0.08em; color: var(--faint); margin: 0 0 5px; }
+dd { margin: 0; font-size: 0.95rem; font-family: var(--en); }
+dd small { font-size: 0.72em; color: var(--faint); margin-left: 3px; }
+.swatch {
+  display: inline-block;
+  width: 12px; height: 12px;
+  margin-right: 8px;
+  vertical-align: -1px;
+  border: 1px solid var(--line-strong);
+}
+
+.endcap { margin-top: 72px; display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+.cap-note { font-size: 0.84rem; color: var(--muted); line-height: 1.8; margin: 0; }
+.cap-note a { color: var(--ink); }
+
+@media (max-width: 860px) {
+  .facts { grid-template-columns: 1fr; }
+  .card { grid-template-columns: 1fr; row-gap: 20px; }
+  .pic { max-width: 220px; }
+  dl { grid-template-columns: 1fr; }
+}
+</style>
+</Base>
