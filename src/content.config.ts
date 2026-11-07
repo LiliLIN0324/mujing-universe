@@ -14,6 +14,7 @@ const works = defineCollection({
     repo: z.string().optional(), // 开源模板等真实仓库地址。
     feedback: z.string().optional(), // 改进提案的去处（GitHub 仓库地址）；缺省回落到本站仓。
     demo: z.string().optional(), // 真实可打开的体验地址。个人站 source 不是 Demo。
+    roster: z.boolean().optional(), // 这一页里要不要带上「小鸡名册」（鸡场作品用）。
   }),
 });
 export const collections = { works };

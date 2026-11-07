@@ -5,3 +5,6 @@
 /studio/ /about/ 301
 /consult /contact/ 301
 /consult/ /contact/ 301
+# 名册不再是独立页面，并进「小鸡宇宙」作品页里（2026-11-07）
+/roster /works/chicken-universe/ 301
+/roster/ /works/chicken-universe/ 301
