@@ -1,0 +1,26 @@
+# 行尾统一：仓里一律 LF
+#
+# 为什么（2026-11-07）：官网仓 core.autocrlf=true，工作区 checkout 出来是 CRLF，
+# 而**仓里的 blob 大多是 LF**。两边混着的时候，git diff 会偶尔整文件重写
+#（package.json 一行 astro 版本号改动，显示成 24 行全变）——
+# 根因是「写文件时用的是工作区的行尾，而不是仓里的」。
+#
+# 写死 eol=lf 之后：仓里、工作区、CI 全是 LF，diff 只反映真实改动。
+# 二进制资源单独标出来，别让行尾规则碰它们。
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.svg text eol=lf
+*.woff2 binary
+*.woff binary
+*.ttf binary
+*.otf binary
+*.mp4 binary
+*.webm binary
+*.pdf binary
+*.zip binary
