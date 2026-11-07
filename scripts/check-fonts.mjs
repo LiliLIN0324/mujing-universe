@@ -1,35 +1,20 @@
 /**
- * 构建前检查：src 里的每个字是否都在字体子集里。
+ * 构建前检查：src 里真正会渲染的每个字是否都在字体子集里。
  * 缺字时自动重跑 subset-fonts.py；Python 不可用才报错，避免站点悄悄用系统字体顶替。
+ *
+ * 取字口径（2026-11-07 改）：用 scripts/font-chars.mjs，**注释里的字不算**。
+ * 以前这里扫的是 src/ 下每个文件的每个字符（连注释一起），而补字要
+ * subset-fonts.py（需要 Python + fonttools）—— 本机有，Cloudflare 的构建
+ * 镜像里没有。于是一个只写在注释里的生僻字就能把整个站点的部署打挂：
+ * 2026-11-07 PR #127 的预览构建就是这么失败的（注释里的一个「掐」字）。
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import { renderedChars } from './font-chars.mjs';
 
 const root = path.resolve(import.meta.dirname, '..');
-const srcDir = path.join(root, 'src');
 const manifestPath = path.join(root, 'scripts', 'font-charset.json');
-const EXTS = new Set(['.astro', '.js', '.json', '.ts', '.css', '.mjs']);
-const EXTRA = '（）《》「」『』·—…！？：；、，。％℃①②③④⑤⑥⑦⑧⑨⑩×÷±→←↑↓';
-
-function siteChars() {
-  const chars = new Set();
-  const walk = (dir) => {
-    for (const name of fs.readdirSync(dir)) {
-      const file = path.join(dir, name);
-      const stat = fs.statSync(file);
-      if (stat.isDirectory()) walk(file);
-      else if (EXTS.has(path.extname(name))) {
-        for (const c of fs.readFileSync(file, 'utf8')) chars.add(c);
-      }
-    }
-  };
-  walk(srcDir);
-  for (let c = 0x20; c < 0x7f; c++) chars.add(String.fromCharCode(c));
-  for (const c of EXTRA) chars.add(c);
-  chars.delete('\n'); chars.delete('\r'); chars.delete('\t');
-  return chars;
-}
 
 function missingChars(wanted) {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
@@ -37,7 +22,7 @@ function missingChars(wanted) {
   return [...wanted].filter((c) => !baked.has(c));
 }
 
-const wanted = siteChars();
+const wanted = renderedChars(root);
 let missing = missingChars(wanted);
 
 if (missing.length) {

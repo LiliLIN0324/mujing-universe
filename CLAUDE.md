@@ -44,6 +44,21 @@
 - 字体子集只含 `src/` 里出现过的字；**运行时才生成的文案（聊天回复等）不在源文件里，
   遇到生僻字会回退系统字体**。
 
+### 补字只在「真会显示的字」上做，注释里的字不算（2026-11-07）
+- **踩坑现场**：在 `src/layouts/Base.astro` 的注释里写了个「掐」字，PR #127 的
+  Cloudflare 预览构建直接失败 —— 因为补字要 `scripts/subset-fonts.py`（Python +
+  fonttools），**本机有，Cloudflare 的构建镜像里没有**，于是 prebuild exit 1，
+  整个站点发不出去（本批 PR #125/#126/#127 全卡在这）。
+- **现在的口径**：`scripts/font-chars.mjs` 负责取字，按文件类型剥掉注释
+  （.astro 的 HTML 注释 / frontmatter 与 script 里的 JS 注释 / .js 的 JS 注释 /
+  .css 块注释；.json 没注释原样）。**只有真会显示的字才进子集。**
+- **为什么不能只按「字是不是新的」处理**：注释里的字进子集 → 改一句注释就得重生成
+  三个字重的 woff2 并提交二进制；不进子集 → CI 里补不上字，整个站发不出去。
+- **两头都有护栏**：`scripts/test-font-chars.mjs`（13 组用例，已接进 prebuild）断言
+  「注释里的字必须被剥掉、渲染用的字必须留着」；`scripts/check-fonts.mjs` 仍然会对
+  **界面文案**里缺字硬失败（exit 1），不会悄悄回退系统字体。
+- 子集只增不减：`subset-fonts.py` 取 `渲染字 ∪ 已有子集`，不会把历史上烘进去的字删掉。
+
 ## 鸡场美术素材：本地有，库里没有（2026-11-04）
 - `public/packs/mujing/`（器物图、9 个品种的表情表、universe01 分层图）和
   `src/lib/coop/packs/mujing/` **都不在 git 里**，已在 `.gitignore` 里排除。
