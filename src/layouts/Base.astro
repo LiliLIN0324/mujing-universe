@@ -50,7 +50,7 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
   <meta name="referrer" content="no-referrer"/>
   <meta name="format-detection" content="telephone=no"/>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
-  <link rel="preload" href="/fonts/AlibabaPuHuiTi-3-55-Regular.woff2?v=4ad0c4f8" as="font" type="font/woff2" crossorigin/>
+  <link rel="preload" href="/fonts/AlibabaPuHuiTi-3-55-Regular.woff2?v=56bd692a" as="font" type="font/woff2" crossorigin/>
   <link rel="preload" href="/fonts/CormorantSC-600-wordmark.woff2?v=20261024" as="font" type="font/woff2" crossorigin/>
   <link rel="preconnect" href="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev" crossorigin/>
   {canonical && <link rel="canonical" href={canonical}/>}
@@ -185,24 +185,28 @@ const dropBroken = (img) => {
   if (holder) holder.remove();
   else img.remove();
 };
-/* Broken-image fallback, hardened 2026-11-06:
+/* Broken-image fallback, hardened 2026-11-06, 口径修正 2026-11-07:
    1) Retry before giving up. R2 occasionally drops a big transfer
       (ERR_CONTENT_LENGTH_MISMATCH) — the object is fine, the connection was not.
       The old code removed the whole figure on the first error, so one hiccup
       turned into "the photo disappeared".
-   2) Watch every cross-origin image, not just img[data-r2]. The /about/ and
+   2) Watch every image, not just img[data-r2]. The /about/ and
       /news/ R2 images never carried that marker, so a failure showed a raw
-      broken-image icon. Same-origin images (the farm's /packs art) are left
-      alone on purpose: the engine owns their own fallback.
+      broken-image icon.
+   3) 口径修正：以前排除的是「**同源**」图，理由是鸡场素材（/packs）同源、引擎自己
+      有退路，站侧再插一脚会打架。但 2026-11-06/07 把作品大图全迁进站内 public/r2/ 之后，
+      站里几乎所有图都变成**同源**了 —— 旧口径等于把兜底整个废掉：
+      线上实测「拦掉第一次请求 → 图不重试、不收起、破图图标留在页面上」。
+      现在排除的只有**鸡场的 /packs 素材**，别的图（同源的 /r2/** 也算）统统走重试+收起。
    Marks use expando properties (_bt), not data-* attributes: data-* survives
    an innerHTML clone, which would silently skip the newly injected image. */
-const isCrossOrigin = (img) => {
+const isFarmArt = (img) => {
   const raw = img.getAttribute('src') || '';
-  if (!raw || raw.startsWith('data:')) return false;
-  try { return new URL(raw, location.href).origin !== location.origin; } catch (e) { return false; }
+  if (!raw || raw.startsWith('data:')) return true;   // data: URI 不会失败，也别去动
+  try { return new URL(raw, location.href).pathname.startsWith('/packs/'); } catch (e) { return true; }
 };
 const onImgError = (img) => {
-  if (!isCrossOrigin(img)) return;
+  if (isFarmArt(img)) return;
   const tries = img._bt || 0;
   if (tries >= 2) { dropBroken(img); return; }
   img._bt = tries + 1;
