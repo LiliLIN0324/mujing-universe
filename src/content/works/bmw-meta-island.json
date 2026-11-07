@@ -8,7 +8,7 @@
  "abstract": "",
  "challenge": "如何让 Z 世代在数字化体验中自然感知 BMW 的品牌价值，并愿意从线上体验继续走向线下互动。",
  "solution": "以咖啡联名作为现实入口，结合人格测试、车型匹配、森林与城市探索、BMW 元素收集和 Carbon Energy 机制，构建完整的 Meta Island 沉浸式品牌体验。",
- "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bmw-meta-island/logo.jpg",
+ "icon": "/r2/fig/bmw-meta-island/logo.jpg",
  "tech": [
   "Unity",
   "Blender",

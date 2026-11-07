@@ -8,14 +8,14 @@
  "abstract": "基于用户出生数据与环境因素提供个性化AI风水洞察的应用。",
  "challenge": "",
  "solution": "",
- "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bazi/logo.jpg",
+ "icon": "/r2/fig/bazi/logo.jpg",
  "tech": [
   "Figma",
   "React",
   "TypeScript"
  ],
  "images": [
-   "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bazi/01.jpg",
+   "/r2/fig/bazi/01.jpg",
    "/r2/fig/bazi/02.jpg",
    "/r2/fig/bazi/03.jpg",
    "/r2/fig/bazi/04.jpg",
@@ -23,7 +23,7 @@
    "/r2/fig/bazi/06.jpg",
    "/r2/fig/bazi/07.jpg",
    "/r2/fig/bazi/08.jpg",
-   "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/bazi/09.jpg",
+   "/r2/fig/bazi/09.jpg",
    "/r2/fig/bazi/10.jpg",
    "/r2/fig/bazi/11.jpg",
    "/r2/fig/bazi/12.jpg"

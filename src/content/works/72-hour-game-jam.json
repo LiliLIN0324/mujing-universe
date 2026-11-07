@@ -8,7 +8,7 @@
  "abstract": "",
  "challenge": "如何在短时间内完成一款兼具主题表达与可玩性的 Game Jam 作品，并让玩家感受到配送工作的责任与挑战。",
  "solution": "以物资配送为核心玩法，玩家通过连接道路、避开障碍并在限定时间内完成投送任务，在轻量的解谜体验中向城市无名英雄致敬。",
- "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/game-jam/logo.jpg",
+ "icon": "/r2/fig/game-jam/logo.jpg",
  "tech": [
   "Game Design",
   "Level Design",
