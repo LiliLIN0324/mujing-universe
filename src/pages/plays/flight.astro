@@ -1,0 +1,152 @@
+---
+import Base from '../../layouts/Base.astro';
+---
+<Base
+  title="小鸡开纸飞机 · 幕景宇宙"
+  description="幕景鸡场的小游戏：小鸡驾着纸飞机飞过农场，躲开被惊飞的瓢虫和麻雀。一局 72 秒，难度跟着农场层级走，不跟分数走。"
+  active="/plays/flight/"
+  navClass="top--unified"
+>
+<main class="wrap flight-page">
+
+  <section class="intro reveal">
+    <p class="kicker cap">小游戏</p>
+    <h1>小鸡开纸飞机</h1>
+    <p class="lead">
+      鸡场里那只最爱折腾的鸡，偷偷折了个纸飞机。一局 72 秒，从谷仓院一路飞到云上头 ——
+      躲开被惊飞的瓢虫和麻雀，撞上了就落回窝里。
+      难度跟着农场层级走，不跟分数走：同一天飞的是同一条航线。
+    </p>
+  </section>
+
+  <section class="stage reveal">
+    <canvas
+      id="flight"
+      role="button"
+      aria-label="小鸡开纸飞机（游戏画布）"
+      width="960"
+      height="640"
+    ></canvas>
+    <p class="stage-cap">
+      点一下画布或按空格起飞。转向用 ← →（或 A / D），加速用 ↑（或 W），
+      鼠标点击或空格发射羽毛，Esc 暂停、再按一次退出。
+    </p>
+  </section>
+
+  <section class="notes reveal">
+    <div class="note">
+      <p class="kicker cap">怎么玩</p>
+      <p>
+        移动和瞄准是分开的：方向键只管转向和加速，羽毛单独用鼠标或空格打出去。
+        转向会掉高度，得一边飞一边抬头 —— 这是全部的操作深度。
+      </p>
+    </div>
+    <div class="note">
+      <p class="kicker cap">分数</p>
+      <p>
+        飞过的距离加躲开的障碍数。退出只把已得分记进最高分，连胜一个字节都不动。
+        每天只有一次机会：同一天的航线是同一条，飞完全程才算走完。
+      </p>
+    </div>
+    <div class="note">
+      <p class="kicker cap">它长什么样</p>
+      <p>
+        纯程序化绘制：纸底颗粒、三层视差背景、纯色小方块尾焰，
+        没有一张外部图片。声音用鸡场那条音频链路现场合成，不另开 AudioContext。
+      </p>
+    </div>
+  </section>
+
+  <section class="endcap reveal">
+    <a class="btn" href="/works/chicken-flight/">在作品页看它 →</a>
+    <p class="cap-note">
+      玩法与美术：林丽丽（CC BY-NC 4.0）× 丁科智。引擎零依赖、零追踪，成绩只存在你自己的浏览器里。
+    </p>
+  </section>
+
+</main>
+
+<script>
+  /* 小鸡开纸飞机 —— 站侧只做「接线」：
+     游戏模块本身在引擎仓（src/minigame/flight/），由 npm run sync:site 单向同步过来。 */
+  import { createFlight } from '../../lib/coop/minigame/flight/main.js';
+
+  const cv = document.getElementById('flight');
+
+  /* 引擎那条 rAF 是小游戏的唯一驱动源（小游戏不新开 rAF）——
+     而引擎的循环**只在鸡场开着的时候跑**。所以这一页先把鸡场打开
+     （farm:open 不改用户的开合偏好，只是这一页需要它在跑）。 */
+  const boot = () => {
+    try { if (window.__coop && window.__coop.open) window.__coop.open(); } catch { /* 引擎还没好 */ }
+    try {
+      window.__flight = createFlight({ canvas: cv });
+    } catch (e) {
+      console.error('[flight] 启动失败', e);
+    }
+  };
+
+  /* 等引擎就位（引擎脚本是另一个模块，加载顺序不保证） */
+  let tries = 0;
+  const wait = () => {
+    if (window.__coop || tries++ > 60) { boot(); return; }
+    setTimeout(wait, 50);
+  };
+  wait();
+</script>
+
+<style is:global>
+  /* 游戏页：把真实鼠标指针还回来。
+     鸡场开着时 body.farm-on 会隐藏系统指针、由「光标小鸡」接管（z-index 1001）——
+     但那个小鸡正好压在准星上，瞄准就没法看了。这一页把它收起来。 */
+  body.farm-on { cursor: auto !important; }
+  .farm-cursor { display: none !important; }
+
+  /* 农场那套 chrome 在这一页让位：
+     HUD 的按钮条（fixed 居中在下）和左下的道具架都是 fixed 定位，
+     正好压在画布的下沿和左沿上 —— 玩的时候它们会挡住画面。
+     这一页只留农场的背景和走动的鸡，操作界面全给游戏。 */
+  .farm-hud, .farm-shelf { display: none !important; }
+</style>
+
+<style>
+  .flight-page { padding-top: 80px; padding-bottom: 96px; }
+
+  .intro { margin-bottom: 44px; max-width: 46em; }
+  .intro h1 { font-size: clamp(38px, 5vw, 56px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.15; margin: 8px 0 20px; }
+  .lead { font-size: 1.02rem; color: var(--ink2); line-height: 1.9; }
+
+  /* 画布：在鸡场舞台（z-index 90）之上 */
+  .stage { margin-bottom: 56px; }
+  .stage canvas {
+    display: block;
+    width: 100%;
+    max-width: 960px;
+    aspect-ratio: 3 / 2;
+    position: relative;
+    z-index: 200;
+    background: var(--bg2);
+    border: 1px solid var(--line-strong);
+    touch-action: none;
+    cursor: crosshair;
+  }
+  .stage-cap { margin-top: 14px; font-size: 0.86rem; color: var(--muted); line-height: 1.9; }
+
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    margin-bottom: 64px;
+  }
+  .note { background: var(--paper); padding: 24px 22px 26px; }
+  .note p { font-size: 0.9rem; color: var(--ink2); line-height: 1.85; margin: 10px 0 0; }
+
+  .endcap { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; }
+  .cap-note { font-size: 0.84rem; color: var(--muted); line-height: 1.8; margin: 0; }
+
+  @media (max-width: 860px) {
+    .notes { grid-template-columns: 1fr; }
+  }
+</style>
+</Base>

@@ -45,7 +45,14 @@ const httpUrl = (value?: string) => {
   const url = (value || '').trim();
   return /^https?:\/\//i.test(url) ? url : '';
 };
-const demoHref = httpUrl(w.demo);
+/* Demo 还可以是**站内路径**（/plays/flight/ 这种）——
+   站内的小游戏没有自己的域名，指相对路径过去；站外的一律只认 http(s)。 */
+const demoHref = (() => {
+  const v = (w.demo || '').trim();
+  if (/^https?:\/\//i.test(v)) return v;
+  if (v.startsWith('/')) return v;
+  return '';
+})();
 const repoHref = httpUrl(w.repo);
 const newsHref = httpUrl(w.link);
 /* 改进提案：作品有专属仓库就提到那里，否则提到本站仓；预填标题与当前页面地址。 */
@@ -126,25 +133,25 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
 
         <div class="wn-clips">
           <div class="wn-clip">
-            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-trigger.jpg">
+            <video controls preload="none" playsinline poster="/r2/fig/xihu-panorama/frame-trigger.jpg">
               <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_trigger.mp4" type="video/mp4"/>
             </video>
             <p class="wn-clip-label">风柳 · 柳丝因风而动，船只经过触发线，声随画起</p>
           </div>
           <div class="wn-clip">
-            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-rain.jpg">
+            <video controls preload="none" playsinline poster="/r2/fig/xihu-panorama/frame-rain.jpg">
               <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_rain.mp4" type="video/mp4"/>
             </video>
             <p class="wn-clip-label">雨 · 雨丝渐起，湖山压暗，雨声藏在乐声之下</p>
           </div>
           <div class="wn-clip">
-            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-climax.jpg">
+            <video controls preload="none" playsinline poster="/r2/fig/xihu-panorama/frame-climax.jpg">
               <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_climax.mp4" type="video/mp4"/>
             </video>
             <p class="wn-clip-label">暖 · 城楼暖光大盛，全卷至此处最为明亮</p>
           </div>
           <div class="wn-clip">
-            <video controls preload="none" playsinline poster="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/frame-snow.jpg">
+            <video controls preload="none" playsinline poster="/r2/fig/xihu-panorama/frame-snow.jpg">
               <source src="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/v_snow.mp4" type="video/mp4"/>
             </video>
             <p class="wn-clip-label">雪 · 远雪密、近雪疏，卷末题跋在雪中静至结束</p>

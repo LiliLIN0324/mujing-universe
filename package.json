@@ -5,17 +5,18 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "predev": "node scripts/check-packs.mjs --warn",
-    "prebuild": "node scripts/check-fonts.mjs && node scripts/check-packs.mjs",
+    "predev": "node scripts/check-packs.mjs --warn && node scripts/check-roster.mjs --warn",
+    "prebuild": "node scripts/check-fonts.mjs && node scripts/check-packs.mjs && node scripts/check-roster.mjs",
     "build": "astro build",
     "check:packs": "node scripts/check-packs.mjs",
+    "check:roster": "node scripts/check-roster.mjs",
     "fonts": "python scripts/subset-fonts.py",
     "fetch-covers": "node scripts/fetch-ring-covers.mjs",
     "preview": "astro preview --port 4471 --host 127.0.0.1"
   },
   "dependencies": {
     "@rive-app/canvas": "^2.45.1",
-    "astro": "^5.0.0",
+    "astro": "^7.4.7",
     "ogl": "^1.0.11"
   },
   "devDependencies": {

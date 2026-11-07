@@ -747,7 +747,7 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
     .farm-cursor { display: none; }
   }`;
 
-const MARKUP = (brand, page) => `<div class="farm" id="farm" data-page="${page}" hidden>
+const MARKUP = (brand, page, breedCount) => `<div class="farm" id="farm" data-page="${page}" hidden>
   <div class="farm-stage" id="farm-stage">
     <div class="farm-layer" id="farm-layer"></div>
     <div class="farm-night" id="farm-night" aria-hidden="true"></div>
@@ -757,7 +757,7 @@ const MARKUP = (brand, page) => `<div class="farm" id="farm" data-page="${page}"
         <span class="farm-stat farm-brand">${brand}</span>
         <span class="farm-stat">蛋 <b id="farm-n-eggs">0</b></span>
         <span class="farm-stat">鸡 <b id="farm-n-chicks">0</b></span>
-        <span class="farm-stat">图鉴 <b id="farm-n-dex">0/7</b></span>
+        <span class="farm-stat">图鉴 <b id="farm-n-dex">0/${breedCount}</b></span>
         <span class="farm-stat farm-vitals" title="心情 · 饱腹 · 清洁：陪它说话 / 摆食盆 / 添水">
           心情 <b id="farm-n-mood">0</b> · 饱 <b id="farm-n-full">0</b> · 洁 <b id="farm-n-clean">0</b>
         </span>
@@ -988,7 +988,7 @@ export default function init(cfg = {}) {
 
   if (!document.getElementById('farm')) {
     const t = document.createElement('div');
-    t.innerHTML = MARKUP(brand, page);
+    t.innerHTML = MARKUP(brand, page, (pack.breeds || []).length);
     document.body.appendChild(t.firstElementChild);
   }
   /* 收起药丸：关掉后左下角唯一可见的重开入口（解决「关了不知道哪里开」） */
@@ -4746,7 +4746,7 @@ const root = document.getElementById('farm');
         ctx.fillText('集齐荣誉证书', 360, 120);
         ctx.font = '16px system-ui, sans-serif';
         const names = Object.entries(state.dex || {}).map(([id, c]) => `${id}×${c}`).join('  ');
-        ctx.fillText(`7 个品种 · ${date}`, 360, 180);
+        ctx.fillText(`${BREEDS.length} 个品种 · ${date}`, 360, 180);
         ctx.fillStyle = cOrange; ctx.font = '600 20px system-ui, sans-serif';
         ctx.fillText('幕景鸡场 荣誉鸡舍', 360, 260);
         ctx.fillStyle = cInk; ctx.font = '14px system-ui, sans-serif';
@@ -4796,7 +4796,7 @@ const root = document.getElementById('farm');
     }
     $('farm-btn-card').addEventListener('click', () => {
       const done = Object.keys(state.dex || {}).length;
-      drawCard(done >= 7 ? 'cert' : (state.dex && state.dex.ingot) ? 'legend' : 'crowd');
+      drawCard(done >= BREEDS.length ? 'cert' : (state.dex && state.dex.ingot) ? 'legend' : 'crowd');
     });
     /* 图鉴卡：集齐全部品种才有的收藏卡（独立于成就卡） */
     const dexCardBtn = $('farm-btn-dexcard');
@@ -5128,6 +5128,12 @@ const root = document.getElementById('farm');
     let raf = 0;
     let lastT = -1;
     let taskClock = 0;
+    /* 扩展点：外部模块（小游戏）把 update(dt) 挂进**这条** rAF —— 引擎只有一条 rAF，
+       小游戏不新开（双 rAF 会和页面动画抢帧）。
+       回调签名 (dt, t, api)：api.audio() 返回引擎已有的音频链路 { actx, master }，
+       小游戏据此复用引擎的 AudioContext（不新开第二个 AudioContext）。
+       只加这一段，不动引擎任何逻辑。 */
+    const tickApi = { audio: () => (actx && master ? { actx, master } : null) };
     function tick(now) {
       const t = now / 1000;
       const dt = lastT < 0 ? 0.016 : Math.min(0.05, t - lastT);
@@ -5156,6 +5162,13 @@ const root = document.getElementById('farm');
         if (grew) save();
         checkEventClock();                // 鸡场快讯：到点报一条
         checkWander();                    // 鸡自己出门逛：到点走一只
+      }
+      /* 扩展点：遍历外部挂上来的 tick 回调（小游戏）。一个挂件炸了不能带塌引擎。 */
+      const hooks = window.__coopTick;
+      if (hooks && hooks.length) {
+        for (let i = 0; i < hooks.length; i++) {
+          try { const fn = hooks[i]; if (fn) fn(dt, t, tickApi); } catch (e) { /* 静默退化 */ }
+        }
       }
       raf = requestAnimationFrame(tick);
     }

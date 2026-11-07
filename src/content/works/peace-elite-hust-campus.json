@@ -8,7 +8,7 @@
  "abstract": "",
  "challenge": "如何在自营绿洲引擎工作流下完成高精度校园地标复原，并在性能限制下实现可用的多级细节模型。",
  "solution": "基于测绘资料完成南一楼三维建模、材质制作与场景优化，经过多轮蓝图讨论和 LOD 调整，最终实现兼顾精度与性能的校园数字资产。",
- "icon": "https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/peace-elite-hust/logo.jpg",
+ "icon": "/r2/fig/peace-elite-hust/logo.jpg",
  "tech": [
   "3D Modeling",
   "Oasis Engine",

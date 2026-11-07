@@ -6,13 +6,13 @@ import ChickenFarm from '../components/ChickenFarm.astro';
 const {
   title = '幕景宇宙 · 林丽丽艺术工作室',
   description = '幕景宇宙 · 林丽丽艺术工作室。以艺术家林丽丽为核心的 AIGC 文化艺术工作室，浙江杭州。',
-  image = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/fig/xihu-panorama/01.jpg?v=20261026',
+  image = '/r2/fig/xihu-panorama/01.jpg?v=20261026',
   active = '',
   home = false,
   fullscreen = false,
   navClass = '',
 } = Astro.props;
-const links = [['/works/', '作品'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '合作']];
+const links = [['/works/', '作品'], ['/roster/', '名册'], ['/about/', '关于'], ['/news/', '新闻'], ['/contact/', '合作']];
 // Every page uses the homepage 'Scendance Space' bar (header.top.top--home). `home` pages (homepage, work detail)
 // keep the auto-hide/overlay behaviour; all other pages add 'top--page': always visible, in flow, on the paper colour.
 const pageNav = navClass.split(' ').filter((c) => c && c !== 'top--unified').join(' ');
@@ -50,7 +50,7 @@ const farmHref = `${farmPath}?farm=1`; // 蛋按钮的无 JS 兜底；已开鸡�
   <meta name="referrer" content="no-referrer"/>
   <meta name="format-detection" content="telephone=no"/>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
-  <link rel="preload" href="/fonts/AlibabaPuHuiTi-3-55-Regular.woff2?v=901fd539" as="font" type="font/woff2" crossorigin/>
+  <link rel="preload" href="/fonts/AlibabaPuHuiTi-3-55-Regular.woff2?v=4ad0c4f8" as="font" type="font/woff2" crossorigin/>
   <link rel="preload" href="/fonts/CormorantSC-600-wordmark.woff2?v=20261024" as="font" type="font/woff2" crossorigin/>
   <link rel="preconnect" href="https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev" crossorigin/>
   {canonical && <link rel="canonical" href={canonical}/>}

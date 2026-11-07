@@ -2,6 +2,7 @@
 import { allWorks } from '../lib';
 import newsData from '../data/news.json';
 import artist from '../data/artist.json';
+import { coopVer } from '../lib/coop-ver.mjs';
 
 /**
  * 幕景鸡场：官网适配层。
@@ -54,6 +55,11 @@ const farmContent = [
 /* 塞进 <script type="application/json"> 之前，把 "<" 换成 < 的 JSON 转义 ——
    否则内容里出现 "</script>" 会把标签提前关掉。JSON.parse 会把它还原回 <。 */
 const farmContentJson = JSON.stringify(farmContent).replace(/</g, '\\u003c');
+
+/* 版本号：按 public/packs/** 的实际内容算出来（src/lib/coop-ver.mjs）。
+   以前是手写常量（'site-universe01-r8'）—— 换了图忘了改，用户就一直吃旧图。
+   现在换任何一张素材，构建出的版本号自动变，CDN 自然失效。 */
+const coopVerValue = coopVer({ dev: import.meta.env.DEV });
 ---
 <!-- tip coop.js 在 #farm 不存在时注入 MARKUP（含货架/地琴 DOM）。此处不重复 markup。 -->
 <!-- 给适配脚本可读的当前页 id（tip 也读 body[data-page] / cfg.page） -->
@@ -61,6 +67,9 @@ const farmContentJson = JSON.stringify(farmContent).replace(/</g, '\\u003c');
 
 <!-- 鸡场快讯的内容源：给下面的适配脚本读（引擎不抄内容，抄了会过期） -->
 <script type="application/json" id="farm-content" is:inline set:html={farmContentJson}></script>
+
+<!-- 素材缓存版本号：构建时算出来的，引擎拿它给 /packs/... 的 URL 加查询串 -->
+<script type="application/json" id="coop-ver" is:inline set:html={JSON.stringify(coopVerValue)}></script>
 
 <script>
   /* ===== 官网适配层：tip init + 站侧页面表 / 不挂库内 chat（MimiChat.astro）===== */
@@ -89,7 +98,13 @@ const farmContentJson = JSON.stringify(farmContent).replace(/</g, '\\u003c');
     document.head.appendChild(st);
   }
 
-  window.__coopVer = window.__coopVer || 'site-universe01-r8';
+  /* 版本号来自构建时算出的 #coop-ver（见 src/lib/coop-ver.mjs）。
+     读不到就退回一个显眼的占位值 —— 宁可缓存失效重来，也不要悄悄吃旧图。 */
+  let VER = 'site-universe01-unknown';
+  try {
+    VER = JSON.parse(document.getElementById('coop-ver')?.textContent || '""') || VER;
+  } catch { /* 读不到就用占位 */ }
+  window.__coopVer = window.__coopVer || VER;
   const bridge = document.getElementById('coop-page-bridge');
   const page = (bridge && bridge.dataset.page)
     || document.body?.dataset?.page
