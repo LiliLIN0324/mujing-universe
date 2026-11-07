@@ -1,11 +1,10 @@
 # 从 @fontpkg/alibaba-pu-hui-ti-3-0 的全量 TTF 重新生成站点字体子集。
-# 覆盖：src 全部文本字符 + ASCII + 中文标点（不再垫 GB2312 一级常用字）。
+# 覆盖：src 里真正会渲染的字符（注释里的字不算）+ ASCII + 中文标点。
 # 字符集不变时跳过重新生成；有新增用字时重生成并更新字体版本号。
 # 用法：npm run fonts   （或直接 python scripts/subset-fonts.py；需要 pip install fonttools brotli）
 import datetime, hashlib, json, os, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, 'src')
 TTF_DIR = os.path.join(ROOT, 'node_modules', '@fontpkg', 'alibaba-pu-hui-ti-3-0')
 OUT_DIR = os.path.join(ROOT, 'public', 'fonts')
 MANIFEST = os.path.join(ROOT, 'scripts', 'font-charset.json')
@@ -18,18 +17,25 @@ FONTS = [
     ('AlibabaPuHuiTi-3-75-SemiBold.ttf', 'AlibabaPuHuiTi-3-75-SemiBold.woff2'),
 ]
 
-# 1) 收集站点全部用字（含中英日韩与标点）
-chars = set()
-for root, dirs, files in os.walk(SRC):
-    for name in files:
-        if name.endswith(('.astro', '.js', '.json', '.ts', '.css', '.mjs')):
-            t = open(os.path.join(root, name), encoding='utf-8').read()
-            chars.update(t)
+# 1) 收集站点全部用字：用 scripts/font-chars.mjs（剥掉注释里的字）
+#    再和已有子集取并集 —— 只增不减，不会把历史上烘进去的字删掉。
+#    2026-11-07 改：以前这里直接扫 src/ 的每个字符（连注释一起），于是
+#    改一句中文注释就会让字体重生成一次；而且 CI（Cloudflare）里没有
+#    fonttools，补字补不上就直接把部署打挂。
+collected = subprocess.run(
+    ['node', os.path.join(ROOT, 'scripts', 'font-chars.mjs'), '--json'],
+    capture_output=True, encoding='utf-8', errors='replace')
+if collected.returncode != 0:
+    print('取字失败（node scripts/font-chars.mjs）：', (collected.stderr or '')[:400])
+    sys.exit(1)
+chars = set(json.loads(collected.stdout))
 
-# 2) ASCII 可打印 + 常用中文标点（聊天回复等运行时文本不在源文件里，遇到生僻字回退系统字体）
-chars.update(chr(c) for c in range(0x20, 0x7F))
-chars.update('（）《》「」『』·—…！？：；、，。％℃①②③④⑤⑥⑦⑧⑨⑩×÷±→←↑↓')
-chars.discard('\n'); chars.discard('\r'); chars.discard('\t')
+# 已烘进字体的字全部保留（只增不减）
+if os.path.exists(MANIFEST):
+    try:
+        chars.update(json.load(open(MANIFEST, encoding='utf-8')).get('chars') or '')
+    except Exception:
+        pass
 
 text = ''.join(sorted(chars))
 
