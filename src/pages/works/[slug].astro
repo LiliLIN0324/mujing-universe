@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Cooperate from '../../components/Cooperate.astro';
 import DemoEmbed from '../../components/DemoEmbed.astro';
+import Roster from '../../components/Roster.astro';
 import { allWorks, coverClip, pickBody, pickTech, workAudio, workFallback, workPaper, workHero, workStills, workStrip, workSubtitle } from '../../lib';
 export async function getStaticPaths() {
   const ws = await allWorks();
@@ -104,6 +105,8 @@ const XIHU_SHELL = w.slug === 'xihu-panorama';
       </div>
     </div>
   </section>
+
+  {w.roster && <section class="wd-page wd-roster"><Roster /></section>}
 
   {demoHref && <section class="wd-page wd-demo" id="demo" aria-labelledby="demo-h" data-dwell={PAGE_DWELL.scroll}>
     <div class="wd-wrap">
