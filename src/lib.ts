@@ -156,6 +156,11 @@ export function workAudio(w: { slug: string }): string | null {
   return coverClip(w.slug);
 }
 /**
+ * 压轻的封面片段放在 opt/：原片一个字节没动，改的只是这里的路径。
+ * 详情主视觉和作品卡会自动播（work-detail.js 的 kick()），所以码率是这里的事，LCP 不是。
+ */
+const R2_OPT = 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/opt';
+/**
  * 封面预览：只有 R2 上核对过的 mp4。没有片的作品不在这里，封面保持静图。
  * 路径用 Range 请求确认过（206、video/mp4），不按 slug 猜。
  * 首页章节和作品库用同一份名单。
@@ -167,14 +172,14 @@ const COVER_CLIP: Record<string, string> = {
   'genstyle': `${R2_FIG}/genstyle/cover.mp4`,
   'genshot-AI-video-generation-tool': `${R2_FIG}/genshot/cover.mp4`,
   'anyreal': `${R2_FIG}/anyreal/cover.mp4`,
-  'dragon-diffussion': `${R2_FIG}/dragon-diffusion/cover.mp4`,
+  'dragon-diffussion': `${R2_OPT}/covers/dragon-diffusion.mp4`,
   'bazi-fengshui-analysis': `${R2_FIG}/bazi/cover.mp4`,
   'bmw-meta-island': `${R2_FIG}/bmw-meta-island/cover.mp4`,
-  'peace-elite-hust-campus': `${R2_FIG}/peace-elite-hust/cover.mp4`,
-  '72-hour-game-jam': `${R2_FIG}/game-jam/cover.mp4`,
+  'peace-elite-hust-campus': `${R2_OPT}/covers/peace-elite-hust.mp4`,
+  '72-hour-game-jam': `${R2_OPT}/covers/game-jam.mp4`,
   'chicken-universe': `${R2_FIG}/chicken-universe/cover.mp4`,
   'zhuantang-yixun': `https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/zhuantang-yixun/cover.mp4`,
-  'venue-ahead': `https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/endtree/venue-ahead/cover.mp4`,
+  'venue-ahead': `${R2_OPT}/covers/venue-ahead.mp4`,
   'tuijian': 'https://pub-3209bcb7fc36444a914deb0e70ceca92.r2.dev/yaohao/tuijian/cover.mp4',
 };
 /** 首页章节、作品库封面和详情主视觉的真实预览。没有就返回 null，保持静图。 */
