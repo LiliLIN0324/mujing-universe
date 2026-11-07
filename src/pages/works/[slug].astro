@@ -45,7 +45,14 @@ const httpUrl = (value?: string) => {
   const url = (value || '').trim();
   return /^https?:\/\//i.test(url) ? url : '';
 };
-const demoHref = httpUrl(w.demo);
+/* Demo 还可以是**站内路径**（/plays/flight/ 这种）——
+   站内的小游戏没有自己的域名，指相对路径过去；站外的一律只认 http(s)。 */
+const demoHref = (() => {
+  const v = (w.demo || '').trim();
+  if (/^https?:\/\//i.test(v)) return v;
+  if (v.startsWith('/')) return v;
+  return '';
+})();
 const repoHref = httpUrl(w.repo);
 const newsHref = httpUrl(w.link);
 /* 改进提案：作品有专属仓库就提到那里，否则提到本站仓；预填标题与当前页面地址。 */

@@ -1,0 +1,30 @@
+{
+ "slug": "chicken-flight",
+ "title": "小鸡开纸飞机",
+ "category": "网页小游戏",
+ "year": "2026.11.7 至今",
+ "yearNum": 2026,
+ "line": "游戏",
+ "status": "进行中",
+ "description": "幕景鸡场的小游戏：小鸡驾着纸飞机飞过农场，躲开被惊飞的瓢虫和麻雀。一局 72 秒。",
+ "abstract": "小鸡宇宙的第二个作品。鸡场里那只最爱折腾的鸡偷偷折了个纸飞机，一局 72 秒，从谷仓院一路飞到云上头。移动和瞄准是分开的：方向键只管转向和加速，羽毛单独用鼠标或空格打出去；转向会掉高度，得一边飞一边抬头。难度跟着农场层级走（谷仓院 → 篱笆线 → 田垄上 → 远山坡 → 云上头），不跟分数走；同一天飞的是同一条航线，飞完全程才算走完。画面是纯程序化绘制的：纸底颗粒、三层视差背景、纯色小方块尾焰，没有一张外部图片；声音复用鸡场那条音频链路现场合成，不另开 AudioContext。技术上不新开 requestAnimationFrame —— 小游戏挂在引擎唯一那条 rAF 上，打游戏和养鸡共用一个时钟。",
+ "challenge": "小游戏最容易变成一个「另一个页面」：另起一套循环、另开一个 AudioContext、另画一套风格，玩一会儿就跟你熟的东西没关系了。这里反过来 —— 小游戏住在鸡场里，开局、计分、存档全走引擎已有的账，连 rAF 都是同一条。",
+ "solution": "在引擎主循环上开一个通用 tick 钩子（window.__coopTick），小游戏把 update(dt) 挂进去，异常由引擎那边 try/catch 兜住；音频通过引擎的只读出口拿到已有的 AudioContext 和 master，不开第二个。画风上只用农场那套 token 和纯色块，不引外部素材。玩法上把难度绑在「农场层级」而不是分数上 —— 分数只管炫耀，层级才管紧张感。",
+ "tech": [
+  "Canvas",
+  "WebAudio",
+  "JavaScript"
+ ],
+ "images": [
+  "/r2/fig/chicken-flight/01.jpg",
+  "/r2/fig/chicken-flight/02.jpg"
+ ],
+ "icon": "/r2/fig/chicken-flight/01.jpg",
+ "hasDemo": true,
+ "flags": [],
+ "source": "manual",
+ "sourceFile": "manual",
+ "by": "collab",
+ "credit": "林丽丽 Lili Lin × 丁科智 endTree",
+ "demo": "/plays/flight/"
+}
