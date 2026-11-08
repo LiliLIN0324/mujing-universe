@@ -40,6 +40,7 @@
 | [mujing-universe](https://github.com/LiliLIN0324/mujing-universe) | 本站源码（当前仓库） |
 | [Scendance2026](https://github.com/LiliLIN0324/Scendance2026) | Scendance · 3D 活动场景编辑器 |
 | [mimi-agent](https://github.com/endtree-FDE/mimi-agent) | Mimi 的开源模板：飞书群内答疑、查资料、记事 |
+| [yidian](https://github.com/endtree-FDE/yidian) | 一点 · 浏览器收藏回看扩展（endTree 出品，MIT） |
 | [tuijian](https://github.com/wustwyh/tuijian) | 推鉴 · 吴耀好的智能推荐作品 |
 | [LiliLIN0324.github.io](https://github.com/LiliLIN0324/LiliLIN0324.github.io) | 林丽丽的个人作品集（多数作品的原始出处） |
 
