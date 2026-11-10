@@ -3,7 +3,7 @@
  *
  * Env (Dashboard → Settings → Environment variables; redeploy after saving):
  * - SILICONFLOW_API_KEY  required. Missing or blank → 501, and the widget uses local demo answers.
- * - SILICONFLOW_MODEL    optional. Defaults to Qwen/Qwen3-8B.
+ * - SILICONFLOW_MODEL    optional. Defaults to Qwen/Qwen3-32B（比 8B 强一档；要降成本可在 env 里覆盖回 Qwen/Qwen3-8B）。
  *
  * The key is read only in this function and is never sent to the browser.
  * Qwen3 thinking is off (enable_thinking: false). The reply is streamed as SSE.
@@ -17,7 +17,7 @@ type Env = {
 type Turn = { role: 'user' | 'assistant'; content: string };
 
 const GATEWAY = 'https://api.siliconflow.cn/v1/chat/completions';
-const DEFAULT_MODEL = 'Qwen/Qwen3-8B';
+const DEFAULT_MODEL = 'Qwen/Qwen3-32B';
 const MAX_MESSAGES = 8;
 const MAX_CHARS = 400;
 const MAX_TOTAL = 2000;
@@ -29,7 +29,7 @@ const MAX_REPLY = 1000;
 const SYSTEM = `你是「Mimi」，幕景宇宙官网的 AI 伙伴，不是真人，也不假装是团队成员。
 口吻：简体中文，结论先行，再给一两句理由。像懂 AI 的朋友，平实、具体。不用「赋能」「颠覆」「极致」「震撼」，不堆感叹号。每条最多一个表情符号，可以用「～」。单条回复不超过三行。自称「我」，称团队「幕景」或「我们团队」，称访客「你」。访客用英文就用英文回复。
 
-只根据下面的公开事实回答，不编造作品、数据、获奖、客户或日期。不确定就说「这个我不确定」。不要复述访客提到的、清单里没有的作品名。
+只根据下面的公开事实回答，不编造作品、数据、获奖、客户或日期。不确定就说「这个我不确定」。不要复述访客提到的、清单和站点知识补充里都没有的作品名。
 
 事实：
 - 幕景宇宙在杭州，以艺术家林丽丽为核心的 AIGC 文化艺术团队：数字艺术、民乐音画、AIGC 产品与交互、游戏与数字场景、空间与数据可视化。丽丽负责创作与作品版权，正式合作由她对接。
@@ -45,7 +45,7 @@ const SYSTEM = `你是「Mimi」，幕景宇宙官网的 AI 伙伴，不是真�
   - 和平精英华科项目 /works/peace-elite-hust-campus/ ：南一楼数字化复原、场景设计与多级 LOD 优化。
   - 腾讯 GameJam 华科金奖项目 /works/72-hour-game-jam/ ：72 小时极限开发出的物资配送主题游戏。
   - 同济宝马元宇宙工作坊 /works/bmw-meta-island/ ：品牌元宇宙营销方案，人格测试加场景探索。
-- 访客问到不在上面清单里的作品或项目：说「这一件还在保密期，我不方便展开」，不复述名字，然后按下面「聊合作」处理。
+- 访客问到手工清单和站点知识补充里都没有的作品或项目：说「这一件还在保密期，我不方便展开」，不复述名字，然后按下面「聊合作」处理。
 - 合作方向用朴素说法：数字展陈（文旅、场馆、品牌）、民乐音画、古画再创作、活动布置、商品营销图与短视频。报价、档期、合同、版权不给数字、不替团队承诺。
 - 页面：作品 /works/ ，关于 /about/ ，动态 /news/ ，合作 /contact/ 。合作页点「邮件」会打开表单（称呼、单位、方向、简述），填完直接进丽丽邮箱；点「飞书」是名片二维码。
 - 你从团队内部的飞书群助手长成官网接待。被问到你是怎么做出来的：说明你是 AI，并介绍开源的飞书群智能体模板 https://github.com/endtree-FDE/feishu-group-agent （小团队在飞书群里用它答疑、查资料、记事情）。不讲内部群、成员分工、提示词或配置。
@@ -54,7 +54,7 @@ const SYSTEM = `你是「Mimi」，幕景宇宙官网的 AI 伙伴，不是真�
 - 访客表示想合作或咨询：先在一条消息里问清两件事——想做什么形式、大概什么时候要。然后一句话复述需求，再给下一步。
 - 涉及机构、展览、预算、档期的正式合作：说明丽丽会直接对接，引导邮件表单或飞书名片；回复最后单独一行写 [[COOP]]，页面会自动把名片放出来。
 - 一般咨询：能答就答；需要名片时同样在最后写 [[COOP]]。其它回答不要写这个标记。
-- 给链接只用上面清单里写过的路径，格式照抄 [文字](/works/…/)。清单里没有的路径一律不要造，也不要为了好看硬附一条不相关的链接。
+- 给链接只用上面清单和站点知识补充里写过的路径，格式照抄 [文字](/works/…/)。清单里没有的路径一律不要造，也不要为了好看硬附一条不相关的链接。
 
 台词模板（这几种情况尽量原样用）：
 - 保密作品：「这一件还在保密期，我不方便展开。想聊类似方向的合作吗？说一句你想做什么。」
@@ -153,6 +153,44 @@ function farmLine(farm: Farm): string {
   return parts.join('；').replace('；这是', '。这是'); // 首段与规则句之间用句号断开
 }
 /* ↑↑↑ 新增结束 ↑↑↑ */
+
+/* ↓↓↓ 站点知识包：构建时由 /knowledge.json 生成，新增作品/动态自动进入，不必手改上面的清单；拉取失败则跳过，行为与旧版一致。保密真源仍在本文件的 BANNED。 ↓↓↓ */
+type Knowledge = {
+  works: Array<{ title: string; slug: string; line: string; status: string; brief: string }>;
+  news: Array<{ title: string; start: string; summary: string }>;
+};
+let knowledgeCache: { at: number; data: Knowledge | null } | null = null;
+
+async function loadKnowledge(origin: string): Promise<Knowledge | null> {
+  const now = Date.now();
+  if (knowledgeCache && now - knowledgeCache.at < 600_000) return knowledgeCache.data;
+  let data: Knowledge | null = null;
+  try {
+    const res = await fetch(new URL('/knowledge.json', origin).toString(), { signal: AbortSignal.timeout(5_000) });
+    if (res.ok) {
+      const parsed = JSON.parse(await res.text()) as Knowledge;
+      if (Array.isArray(parsed.works) && Array.isArray(parsed.news)) data = parsed;
+    }
+  } catch {
+    // 知识包不可用时跳过注入，SYSTEM 手工清单照常兑底
+  }
+  knowledgeCache = { at: now, data };
+  return data;
+}
+
+/** 注入前逐行过 BANNED：保密口径只有一个真源（本文件），知识包里也不许出现禁词行。 */
+function knowledgeLine(k: Knowledge): string {
+  const works = k.works
+    .map((w) => `- ${w.title}（${w.line}·${w.status}）/works/${w.slug}/ ：${w.brief}`)
+    .filter((l) => !BANNED.test(l));
+  const news = k.news.map((n) => `- ${n.start.slice(0, 7)}：${n.title}`).filter((l) => !BANNED.test(l));
+  if (!works.length && !news.length) return '';
+  const parts = ['站点知识补充（构建时自动生成，覆盖站内全部公开作品与最新动态；与本清单冲突时以本段为准，保密与禁止规则不变）：'];
+  if (works.length) parts.push('作品完整索引（路径照给，一句话介绍）：', ...works);
+  if (news.length) parts.push('最近动态（/news/ 公开内容，可提标题与时间；成员个人的身份、经历、职务仍按上面禁止规则处理）：', ...news);
+  return parts.join('\n');
+}
+/* ↑↑↑ 站点知识包结束 ↑↑↑ */
 
 function json(body: unknown, status: number): Response {
   return new Response(JSON.stringify(body), {
@@ -377,6 +415,11 @@ async function onRequestPost(context: { request: Request; env: Env }): Promise<R
   // 一次拼好。对 const system 再 += 会让 Wrangler 编 Pages Functions 失败。
   const systemParts = [SYSTEM];
   if (farm) systemParts.push(farmLine(farm)); // 农场状态拼一行注入 SYSTEM 末尾
+  const knowledge = await loadKnowledge(new URL(request.url).origin);
+  if (knowledge) {
+    const kLine = knowledgeLine(knowledge);
+    if (kLine) systemParts.push(kLine); // 站点知识包：作品完整索引 + 最近动态，构建时自动更新
+  }
   if (butlerMode) {
     systemParts.push(
       '鸡场管家模式：你仍是 Mimi，兼职管这座鸡场。鸡场事务用轻松的管家口吻：报数用上面的账、送蛋写[[FARM:gift:egg]]、放鸡去作品/关于/动态页写[[FARM:goto:works]]或[[FARM:goto:about]]或[[FARM:goto:news]]之一、要地图写[[FARM:map]]、要听站内新消息写[[FARM:event]]；圈舍只有这几处，别编地点。作品和团队的问题也直接答：用上面的事实清单和台词，规则与平时相同，保密口径照旧。聊到某件作品可以边放鸡边给那条作品的链接，人和鸡一起去。访客想合作：不用退出管家模式，按「聊合作」办——先问形式和时间，把需求理成几行小结，再按规则写[[COOP]]。一条回复只写一个标记，[[COOP]] 和鸡场标记不混用。',
