@@ -158,6 +158,7 @@ export async function requestReply({ messages, demo, farm, butler, onDelta }) {
   let streamed = false;
   let nextDemo = !!demo;
   let threw = false;
+  let degraded = false; // 这一轮退回本地答案（上游限流/故障），整个会话没降级
   let farmCmd = ''; // 鸡场命令透传：只有 SSE 分支可能带，其余分支恒为空
   try {
     if (nextDemo) {
@@ -169,20 +170,29 @@ export async function requestReply({ messages, demo, farm, butler, onDelta }) {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.slice(-8),
+          messages: messages.slice(-16),
           ...(farm ? { farm } : {}),
           ...(butler ? { butler: true } : {}),
         }),
       });
       const ctype = res.headers.get('content-type') || '';
-      if (res.status === 501 || res.status === 404) {
+      if (res.status === 429) {
+        failed = true;
+        reply = RATE;
+      } else if (res.status === 501 || res.status === 404) {
+        // 没配 key / 接口不存在：整个会话进演示态
         nextDemo = true;
         const parsed = splitCoop(farmReply(q, farm) || localAnswer(q));
         reply = parsed.clean;
         showCoop = parsed.coop;
-      } else if (res.status === 429) {
-        failed = true;
-        reply = RATE;
+      } else if (res.status === 502 || res.status === 503 || res.status === 504) {
+        /* 上游模型排队满了或挂了：这一轮退回本地答案，别让访客吃一句道歉。
+           刻意不置 nextDemo —— 上游限流是分钟级的，一次限流就把整个会话打成
+           模板问答，比失败更伤。下一轮照常再试真模型。 */
+        degraded = true;
+        const parsed = splitCoop(farmReply(q, farm) || localAnswer(q));
+        reply = parsed.clean;
+        showCoop = parsed.coop;
       } else if (!res.ok) {
         failed = true;
         reply = FAIL;
@@ -219,5 +229,5 @@ export async function requestReply({ messages, demo, farm, butler, onDelta }) {
     reply = splitCoop(ANSWERS.skip).clean;
     showCoop = false;
   }
-  return { reply, showCoop, failed, streamed, demo: nextDemo, threw, farm: farmCmd };
+  return { reply, showCoop, failed, streamed, demo: nextDemo, threw, farm: farmCmd, degraded };
 }
