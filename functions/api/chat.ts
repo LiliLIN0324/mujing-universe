@@ -208,7 +208,6 @@ function knowledgeLine(k: Knowledge): string {
 /* ↑↑↑ 站点知识包结束 ↑↑↑ */
 
 function json(body: unknown, status: number, extra?: Record<string, string>): Response {
-function json(body: unknown, status: number, extra?: Record<string, string>): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {

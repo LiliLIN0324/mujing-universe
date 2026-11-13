@@ -6,11 +6,12 @@
   "scripts": {
     "dev": "astro dev",
     "predev": "node scripts/check-packs.mjs --warn && node scripts/check-roster.mjs --warn",
-    "prebuild": "node scripts/test-font-chars.mjs && node scripts/check-fonts.mjs && node scripts/test-mimi.mjs && node scripts/check-packs.mjs && node scripts/check-roster.mjs",
+    "prebuild": "node scripts/test-font-chars.mjs && node scripts/check-fonts.mjs && node scripts/check-functions.mjs && node scripts/test-mimi.mjs && node scripts/check-packs.mjs && node scripts/check-roster.mjs",
     "build": "astro build",
     "check:packs": "node scripts/check-packs.mjs",
     "check:roster": "node scripts/check-roster.mjs",
     "check:fonts": "node scripts/test-font-chars.mjs && node scripts/check-fonts.mjs",
+    "check:functions": "node scripts/check-functions.mjs",
     "test:mimi": "node scripts/test-mimi.mjs",
     "fonts": "python scripts/subset-fonts.py",
     "fetch-covers": "node scripts/fetch-ring-covers.mjs",
