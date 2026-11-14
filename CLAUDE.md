@@ -143,7 +143,18 @@
 - 动态创建的元素（JS 拼出来的 `.mimi-msg p` 等）身上没有 data 属性，
   scoped 那条本来就匹配不到，`html.dark` 那条有效 —— 别一起乱改。
 - **验收别只看截图**：用 CDP 量 computed color 与实际背景的对比度
-  （低于 2.2 就是读不出来），`workspace/cdp-audit-dark.mjs` 是现成的。
+  （低于 2.2 就是读不出来）。`node scripts/audit-mobile-dark.mjs` 一条命令就量，
+  它自己起 headless Edge、用完关掉，不需要 key。
+
+## 体检脚本：两个都是「自己起浏览器」，不用配环境（2026-11-14）
+- `npm run audit:dark` → `scripts/audit-mobile-dark.mjs`：390×844 真机视口 + 暗色，
+  量 Mimi 面板里每个文字的对比度（<2.2 报出来）、右下角头像有没有压住 CTA 按钮。
+  **只看截图看不出「读不出来」** —— 2026-11-14 的 chips 问题就是这么量出来的。
+- `npm run audit:badge` → `scripts/audit-badge.mjs`：徽标该是「在线」还是「演示」。
+  默认用 CDP 拦下 `/api/chat` 喂假的 SSE / 502（不需要 key）；
+  `--live` 才去问线上真模型。
+- 共享部分在 `scripts/cdp-lib.mjs`（起浏览器 + 连 CDP，Node 18+ 自带 WebSocket，无 npm 依赖）。
+- 体检脚本**必须能查出问题**才算数：改坏一行 CSS 跑一遍，它得报错退出 1。
 
 ## 行尾约定（别擅自改）
 - **现在的约定是 LF，全仓统一**（2026-11-07 #126 加的 `.gitattributes`：`* text=auto eol=lf`）。
@@ -160,14 +171,15 @@
 - #135 站点知识包注入 chat + 默认模型升 Qwen3-32B；#136 限流换模型重试并降级、
   站内链接白名单（前后端各一份）、保密口径「公开到进行中为止」、functions/ 自检；
   #137 新闻页加浙江音乐学院专题报道；#138 暗色模式快捷问题看不见 + 手机端头像压住按钮；
-  #139 面板徽标从「演示」改成「在线」（真模型答了写在线，本地模板/降级/失败退回演示）。
-  五条都已合并 main。
+  #139 面板徽标从「演示」改成「在线」（真模型答了写在线，本地模板/降级/失败退回演示）；
+  #140 提示词禁止模型自造网址或域名（线上实测它编过 https://www.mujing.com）。
+  六条都已合并 main。
 
 ## 待用户/丽丽审的 PR（别重复做）
-- **#140 fix/mimi-fake-domain**：访客问官网网址时，模型会自己编一个域名出来
-  （线上实测编了个 `https://www.mujing.com`）。链接白名单会把它剥成纯文字、不可点，
-  但页面上还是留着一个假网址 —— 提示词加一条「不要自己写网址或域名」，
-  访客问地址就说「作品页」「合作页」这些站内页面名。
+- **#141 feat/mimi-audit-scripts**：把这次的 CDP 验收脚本固化进仓库
+  （`scripts/audit-mobile-dark.mjs`、`scripts/audit-badge.mjs`、`scripts/cdp-lib.mjs`），
+  自己起 headless Edge、用完关掉，不需要 key、不依赖 npm 包。
+  改暗色模式或动 Mimi 面板之后，跑一遍就知道有没有把文字做成读不出来的样子。
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。
 - cursor/hero-no-autoplay：首页不自动播放，状态待确认。
