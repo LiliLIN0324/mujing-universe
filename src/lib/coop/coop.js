@@ -440,10 +440,10 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-dailytitle { font-size: 12px; font-weight: 700; margin: 0 0 6px; }
   .farm-dailyrow { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 2px 0; }
   .farm-dailyrow.is-done { color: color-mix(in srgb, var(--ink) 55%, transparent); }
-  .farm-dailybar { flex: 1 1 auto; height: 8px; border: 1px solid var(--ink); background: var(--paper); border-radius: 3px; overflow: hidden; }
+  .farm-dailybar { flex: 0 1 190px; height: 8px; border: 1px solid var(--ink); background: var(--paper); border-radius: 3px; overflow: hidden; }
   .farm-dailybar i { display: block; height: 100%; background: var(--orange); }
   .farm-dailyrow.is-done .farm-dailybar i { background: var(--green); }
-  .farm-dailyn { font-variant-numeric: tabular-nums; min-width: 36px; text-align: right; }
+  .farm-dailyn { font-variant-numeric: tabular-nums; min-width: 36px; text-align: right; margin-left: auto; }
   .farm-dailystreak { font-size: 11px; color: color-mix(in srgb, var(--ink) 62%, transparent); margin: 6px 0 0; }
   /* bond meter in the chick menu */
   .farm-bond { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; margin-top: 5px; }
