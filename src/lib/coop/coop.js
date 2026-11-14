@@ -418,7 +418,10 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   }
   .farm-hint.is-off { opacity: 0; }
 
-  /* daily chores: one chip in the HUD, detail in the manual card */
+  /* daily chores: one chip in the HUD, detail in the manual card.
+     The chip sits right after the brand on purpose: the HUD pill scrolls
+     horizontally, so anything placed last is off-screen on a phone
+     (390px viewport) — the daily goal is the reason to come back, it has to be seen. */
   .farm-stat.farm-daily { font: inherit; font-weight: 600; cursor: pointer; border-radius: 4px; }
   .farm-stat.farm-daily:hover { background: var(--yellow); }
   .farm-stat.farm-daily:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
@@ -778,13 +781,13 @@ const MARKUP = (brand, page, breedCount) => `<div class="farm" id="farm" data-pa
     <div class="farm-hud farm-ui">
       <div class="farm-stats">
         <span class="farm-stat farm-brand">${brand}</span>
+        <button type="button" class="farm-stat farm-daily" id="farm-btn-daily" hidden title="今天的小事">今日 <b id="farm-n-daily">0/3</b></button>
         <span class="farm-stat">蛋 <b id="farm-n-eggs">0</b></span>
         <span class="farm-stat">鸡 <b id="farm-n-chicks">0</b></span>
         <span class="farm-stat">图鉴 <b id="farm-n-dex">0/${breedCount}</b></span>
         <span class="farm-stat farm-vitals" title="心情 · 饱腹 · 清洁：陪它说话 / 摆食盆 / 添水">
           心情 <b id="farm-n-mood">0</b> · 饱 <b id="farm-n-full">0</b> · 洁 <b id="farm-n-clean">0</b>
         </span>
-        <button type="button" class="farm-stat farm-daily" id="farm-btn-daily" hidden title="今天的小事">今日 <b id="farm-n-daily">0/3</b></button>
       </div>
       <div class="farm-btns">
         <button type="button" class="farm-btn" id="farm-btn-butler">管家</button>
@@ -5218,14 +5221,17 @@ const root = document.getElementById('farm');
 
     /* 手册开合与两步确认重开 */
     $('farm-btn-book').addEventListener('click', () => { ensureAudio(); $('farm-book').hidden = !$('farm-book').hidden; updateAnnot(); });
-/* 今日小事的芯片 → 翻到手册里那一节（细节不挤在 HUD 上） */
+/* 今日小事的芯片 → 翻到手册里那一节（细节不挤在 HUD 上）。
+   ⚠ 能滚的是**卡片**（.farm-card，overflow:auto），不是外层 #farm-book 容器 ——
+   早先写成 book.scrollTop，结果滚不动，访客点开只看见图鉴，看不见今天要做的事。 */
 $('farm-btn-daily').addEventListener('click', () => {
   ensureAudio();
   const book = $('farm-book');
   if (book) book.hidden = false;
   updateAnnot();
   const box = $('farm-dailybox');
-  if (box && book) book.scrollTop = Math.max(0, box.offsetTop - 14);
+  const card = book ? book.querySelector('.farm-card') : null;
+  if (box && card) card.scrollTop = Math.max(0, box.offsetTop - 14);
 });
     $('farm-book-x').addEventListener('click', () => { $('farm-book').hidden = true; });
     $('farm-book-scrim').addEventListener('click', () => { $('farm-book').hidden = true; });
