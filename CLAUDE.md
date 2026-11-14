@@ -129,34 +129,57 @@
   （作品目录里它的简介还是占位文字，别拿占位当公开介绍）。它也不进站点知识包
   （`src/pages/knowledge.json.ts`）—— 进了模型就会照抄路径。
 
+## 暗色模式规则：别把 :global(html.dark …) 整条包起来（2026-11-14）
+- Astro 的 scoped 样式会给选择器加 `[data-astro-cid]`，**特异性 +1**。
+  整条包进 `:global(html.dark .mimi-quick button)` 时，那条只有 (0,2,1)；
+  scoped 那条 `.mimi-quick[data-x] button[data-x]` 是 (0,3,1) → **scoped 赢，dark 规则失效**。
+- 现场：暗色模式下 Mimi 的 5 个快捷问题 chip 文字是深色 `rgb(26,26,28)` 压在
+  深色面板 `rgb(29,29,33)` 上，对比度 **1.03**（完全看不见）；浅色模式正常，
+  所以只在深色下暴露 —— 截图看着「就是有点暗」，量一下才看得清。
+- **写法**：`:global(html.dark) .mimi-quick button` —— 只把 `html.dark` 留在全局，
+  后半段交给 scoped，特异性 (0,4,2) 稳赢。
+- 只有带**元素后缀**的规则会中招（`.x button` / `.x input` / `.x p`）；
+  单类规则（`.x`）是 (0,2,0) vs (0,2,1)，dark 照样赢。
+- 动态创建的元素（JS 拼出来的 `.mimi-msg p` 等）身上没有 data 属性，
+  scoped 那条本来就匹配不到，`html.dark` 那条有效 —— 别一起乱改。
+- **验收别只看截图**：用 CDP 量 computed color 与实际背景的对比度
+  （低于 2.2 就是读不出来），`workspace/cdp-audit-dark.mjs` 是现成的。
+
 ## 行尾约定（别擅自改）
-- **本仓的约定是 CRLF**（上游丽丽一直这么写，全仓 89 个文本文件都是）。
-  本机 `core.autocrlf=true`，所以 git 比较时会自动归一，diff 显示的是真实改动量。
-- **引擎仓 `C:\coop-js` 相反**：2026-11-04 加了 `.gitattributes`（`* text=auto eol=lf`），
-  统一 LF。那里只有 4 个 CRLF 文件，一次性归一化代价小；本仓 89 个，代价大，**先别动**。
-- 改本仓文件时**按 HEAD 里的行尾写**（脚本重写 JSON 尤其注意：
-  `JSON.stringify(x, null, 2)` 出来是 LF，会让 git diff 变成整文件重写）。
-  跨仓拷素材时更要按目标仓的行尾写、比对时归一化再比。
+- **现在的约定是 LF，全仓统一**（2026-11-07 #126 加的 `.gitattributes`：`* text=auto eol=lf`）。
+  仓库、工作区、CI 三处全是 LF，diff 只反映真实改动量。
+  以前记的「本仓用 CRLF、89 个文件都是」已经过期 —— **别再把文件转成 CRLF**。
+- 本机 `core.autocrlf=true`，但 `.gitattributes` 优先，检出就是 LF。
+- 改文件时按 LF 写就行（`edit` 工具插入的本来就是 LF）。
+- 引擎仓 `C:\coop-js` 同样是 LF。
+- 量行尾用 `git ls-files --eol <file>`（`i/`=仓库里的，`w/`=工作区的，`attr/`=属性），
+  别用 `git show`（会被转换）、也别用 PowerShell 管道（会重编码）。
 
 ## 已完成
 - 精选环 src/scripts/pick-ring.js（WebGL，手机版未改）：旋转环 + 间距/深浅层次/连续拖动惯性吸附/轻悬停；标题是画布下方固定条里的 DOM 文字，淡入淡出；印章移除，声音默认关。已合并 main（#49）。曾试过虚拟弧形方案，被否（压字、丑）。
+- #135 站点知识包注入 chat + 默认模型升 Qwen3-32B；#136 限流换模型重试并降级、
+  站内链接白名单（前后端各一份）、保密口径「公开到进行中为止」、functions/ 自检；
+  #137 新闻页加浙江音乐学院专题报道。三条都已合并 main。
 
 ## 待用户/丽丽审的 PR（别重复做）
-- **#136 fix/mimi-reliability**（接在 #135 之上）：Mimi 上游限流时换模型重试并降级、
-  站内链接白名单堵假作品链接、提示词事实纪律、保密口径改成「公开到进行中为止」、
-  回归测试 35 组 + functions/ 自检。
-  诊断与分档方案见 `research/mimi-intelligence.md`。
-  **还差一步：新的 SiliconFlow key 要终树自己在 Cloudflare 控制台填**
-  （`SILICONFLOW_API_KEY`，Preview 环境也要单独填一份），密钥不经聊天、不进仓库。
-- #135 feat/mimi-knowledge-pack：站点知识包注入 chat（作品/动态自动进 Mimi）+ 默认模型升 Qwen3-32B。
+- **#138 fix/mimi-mobile-dark**：手机端 + 暗色模式两个显示问题。
+  · 暗色下 Mimi 的 5 个快捷问题 chip 文字是深色压深色，**对比度 1.03**（完全看不见）——
+    Astro scoped 吃掉了 `:global(html.dark …)` 的特异性，浅色模式正常所以只在深色下暴露。
+  · 手机上面板打开时，右下角 Mimi 头像压在「写邮件」按钮上（重叠 2040px²），按不到。
+  规矩与修法写进上面「暗色模式规则」一节。
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。
 - cursor/hero-no-autoplay：首页不自动播放，状态待确认。
-- feat/news-zjcm-2026：新闻页加一条浙江音乐学院的专题报道（丁科智，2026-11-13），封面用文章里的肖像照。
 
 ## 下一步（顺序）
+0. **新的模型 key**：终树后面给「云端的 api」（比 SiliconFlow 免费档强）。
+   拿到后在 Cloudflare Pages → Settings → Environment variables 自己填
+   `SILICONFLOW_API_KEY`（**Production 与 Preview 各填一份**），改完要重新部署。
+   密钥不经聊天、不进仓库。顺带看一眼 `SILICONFLOW_MODEL`：现在生产环境把它显式设成了
+   `Qwen/Qwen3-8B`，盖过了代码里的默认 `Qwen/Qwen3-32B`（`x-mimi-model` 头能看到实际用的哪个）。
 1. 作品库「代表作」：6–8 件精选 + 折叠的全部作品归档（参考 Marshmallow Laser Feast 的 FEATURES / ALL WORKS）。先出效果图给用户看。
-2. 手机端：Mimi 头像对话气泡挡文字、作品库筛选行溢出。
+2. 手机端：Mimi 头像对话气泡挡文字（面板打开时头像压住「写邮件」按钮，已在 #138 修）、
+   作品库筛选行溢出。
 3. 详情页结构：概念 → 过程 → 成果（参考 Kimchi and Chips）；署名用 NONOTAK 式「画面：林丽丽 / 声音：丁科智」。
 4. 艺术家页。
 
