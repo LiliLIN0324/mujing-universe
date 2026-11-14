@@ -21,10 +21,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 /* 纯 JS 模块，不依赖 Node 的 TS 剥离 —— Cloudflare 的构建镜像里也能直接跑 */
 const libPath = fileURLToPath(new URL('../functions/api/_mimi-text.js', import.meta.url));
-const { sanitizeLinks, pendingLinkKeep, takeVisible, ALLOWED_LINKS } = await import(pathToFileURL(libPath).href);
+const { sanitizeLinks, pendingLinkKeep, takeVisible, ALLOWED_LINKS, applySecretRule } = await import(pathToFileURL(libPath).href);
 const chatPath = fileURLToPath(new URL('../functions/api/chat.ts', import.meta.url));
 const clientPath = fileURLToPath(new URL('../src/scripts/mimi-core.js', import.meta.url));
-const { requestReply } = await import(pathToFileURL(clientPath).href);
+const { requestReply, localAnswer } = await import(pathToFileURL(clientPath).href);
 
 let passed = 0;
 const failures = [];
@@ -195,11 +195,68 @@ check('提示词里出现的每个作品路径都在白名单里', () => {
   assert.deepEqual(missing, [], `提示词里有白名单管不到的路径：${missing.join(', ')}`);
 });
 
-check('保密作品不出现在白名单和提示词里', () => {
+check('进行中的作品不给链接：路径不进白名单、提示词里也不给路径', () => {
   const secret = 'xihu-panorama';
-  assert.ok(realSlugs.includes(secret), '作品目录里应该还有这件保密作品');
-  assert.ok(!Object.keys(ALLOWED_LINKS).some((k) => k.includes(secret)), '保密作品不该出现在白名单');
-  assert.ok(!promptPaths.some((p) => p.includes(secret)), '保密作品不该出现在提示词');
+  assert.ok(realSlugs.includes(secret), '作品目录里应该还有这件进行中的作品');
+  assert.ok(!Object.keys(ALLOWED_LINKS).some((k) => k.includes(secret)), '进行中的作品不该出现在链接白名单');
+  assert.ok(!promptPaths.some((p) => p.includes(secret)), '进行中的作品不该在提示词里给路径');
+});
+
+/* ===== 口径：进行中的作品，公开到名字和一句话为止（2026-11-14 终树拍板）=====
+   以前「当代西湖繁胜全景图」整段保密：访客照首页的大标题问，智能体却回「还在保密期」，
+   前后自相矛盾。现在允许说名字和一句话介绍 —— 但不给链接、不展开没公开的细节。
+   链接那道防线在白名单（链接被剥成纯文字，名字留着）；
+   细节那道防线在 ./_mimi-text.js 的 applySecretRule。 */
+
+const clientSrc = fs.readFileSync(clientPath, 'utf8');
+
+check('后端禁词不再拦这件作品的名字', () => {
+  const line = chatSrc.match(/const BANNED = .*/)?.[0] || '';
+  assert.ok(line, '后端应该还有 BANNED 常量');
+  assert.ok(!/西湖|繁胜/.test(line), `禁词里不该再出现作品名：${line}`);
+  assert.ok(/xihu-panorama/i.test(line), '禁词只该拦 slug 形态');
+});
+
+check('前后端禁词一致（口径不能两边各写一份）', () => {
+  const pick = (s) => (s.match(/\/.*?\/[a-z]*/i) || [''])[0];
+  const chatBanned = pick(chatSrc.match(/const BANNED = .*/)?.[0] || '');
+  const clientBanned = pick(clientSrc.match(/export const BANNED = .*/)?.[0] || '');
+  assert.equal(clientBanned, chatBanned, `前后端禁词应一致：后端 ${chatBanned} / 前端 ${clientBanned}`);
+  assert.ok(!/西湖|繁胜/.test(clientBanned), '前端也不该拦这件作品的名字');
+});
+
+check('提示词里写得出这件作品的名字', () => {
+  assert.ok(chatSrc.includes('当代西湖繁胜全景图'), '提示词里应该有这件作品的名字');
+});
+
+check('提名字不展开 → 原样放行', () => {
+  const text = '有一件叫「当代西湖繁胜全景图」，以宋画长卷重绘当代西湖，这一卷仍在创作中。';
+  assert.equal(applySecretRule(text), null, '正常介绍不该被拦');
+});
+
+check('展开细节 → 那一段换成受限说法', () => {
+  const out = applySecretRule('当代西湖繁胜全景图分十二卷，每卷长 3 米，细节还没公开。');
+  assert.ok(out, '带细节信号就该被拦');
+  assert.ok(!/3 米/.test(out), '细节不能留下');
+  assert.ok(out.includes('还在创作中'), '应换成受限说法');
+});
+
+check('展开细节时，别的段落不受牵连', () => {
+  const out = applySecretRule('幕景在杭州做 AIGC 文化艺术。\n\n当代西湖繁胜全景图分十二卷，每卷 3 米。');
+  assert.ok(out && out.includes('幕景在杭州'), '前面那段应保留');
+  assert.ok(out && !/3 米/.test(out), '细节不能留下');
+});
+
+check('前端：问这件作品给名字和一句话，不是保密话术', () => {
+  const a = localAnswer('当代西湖繁胜全景图是什么？');
+  assert.ok(a.includes('当代西湖繁胜全景图'), '应说出作品名');
+  assert.ok(!/保密期/.test(a), '不该再回保密话术');
+  assert.ok(!/\/works\/xihu-panorama\//.test(a), '不该给详情链接');
+});
+
+check('前端：问其他作品不受影响', () => {
+  const a = localAnswer('幕景是做什么的？');
+  assert.ok(!/保密期/.test(a), '别的作品不该被当成保密件');
 });
 
 /* ===== 前端降级路径：上游挂了，访客看到什么 ===== */

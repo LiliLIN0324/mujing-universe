@@ -48,6 +48,25 @@ export const ALLOWED_LINKS = {
 /* 外链只放行 GitHub（提示词里提到的开源模板），别的域名一律剥成纯文字 */
 export const ALLOWED_EXTERNAL = /^(https?:\/\/)?(www\.)?github\.com\//i;
 
+/* ---- 进行中的作品：只公开名字和一句话 ----
+   2026-11-14 终树拍板的口径：以前「当代西湖繁胜全景图」整段保密，访客照首页问却得到
+   「还在保密期」，前后自相矛盾。现在公开到进行中为止 ——
+     可以说名字和一句话介绍（首页本来就这么写），不给详情链接、不展开没公开的细节。
+   两道防线分开管：
+     链接 → 不放进 ALLOWED_LINKS，模型给的链接会被剥成纯文字（名字还留着）
+     细节 → 下面的 SECRETS + applySecretRule，命中就把那一段换成受限说法
+   提示词里那一件的一句话在 functions/api/chat.ts 的 SYSTEM 里手写（作品目录里
+   它的简介还是占位，别拿占位文字当公开介绍）。 */
+export const SECRETS = {
+  '当代西湖繁胜全景图': {
+    limited: '这一卷还在创作中，公开到名字和一句话为止，更多细节等完成再给你。',
+    /* 展开细节的信号词。只在谈这件作品的那一段里查，词要窄：
+       命中的是「分几卷」「多少米」「未公开的草稿」这类内部信息，
+       不是「长卷」「画面」这些正常说法。 */
+    detail: /第\s*[一二三四五六七八九十\d]+\s*[卷章节幕]|全卷|逐卷|分卷|卷首|未公开|未发布|内部资料|内部版|草稿|初稿|分镜|母版|原稿|底稿|原始文件|尺寸[:：]|\d+\s*[米厘]|长\s*\d|宽\s*\d/,
+  },
+};
+
 const LINK_RE = /\[([^\]\n]{0,80})\]\(([^)\s]{0,200})\)/g;
 
 /**
@@ -134,4 +153,26 @@ export function takeVisible(hold, chunk) {
     hold.buf = hold.buf.slice(hold.buf.length - keep);
     return out;
   }
+}
+
+/**
+ * 进行中的作品被展开细节时，把谈到它的那一段换成受限说法；别的段落原样保留。
+ * 按空行分段，一段一段查 —— 只在谈这件作品的那段里找细节信号，不牵连整条回答。
+ * @param {string} text
+ * @returns {string|null} 需要改写时返回新文本，不用改时返回 null
+ */
+export function applySecretRule(text) {
+  if (!text) return null;
+  const paras = String(text).split(/\n{2,}/);
+  let changed = false;
+  const out = paras.map((para) => {
+    for (const [title, rule] of Object.entries(SECRETS)) {
+      if (!para.includes(title)) continue;
+      if (!rule.detail.test(para)) continue;
+      changed = true;
+      return rule.limited;
+    }
+    return para;
+  });
+  return changed ? out.join('\n\n') : null;
 }

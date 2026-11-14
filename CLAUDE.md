@@ -114,6 +114,21 @@
 - 改 `functions/` 里的代码后，除了 `npm run build`，还要跑 `npm run check:functions`。
 - `functions/` 下以 `_` 开头的文件**不是路由**（共享模块放这儿，如 `_mimi-text.js`）。
 
+## 保密口径：「当代西湖繁胜全景图」公开到进行中为止（2026-11-14 终树拍板）
+- 以前 `BANNED = /西湖|繁胜全景|xihu-panorama/i` 会把任何提到这件作品的回答整段换成
+  「还在保密期」，而首页大标题就是它 —— 访客照首页问却得到保密，前后自相矛盾。
+- 现在的口径：**允许说作品名和一句话介绍；不给详情链接、不展开没公开的细节。首页不动。**
+- 两道防线都在 `functions/api/_mimi-text.js`：
+  - 链接 → 不放进 `ALLOWED_LINKS`，模型给的链接被剥成纯文字（名字留着、链接没有）
+  - 细节 → `SECRETS` + `applySecretRule`：谈到这件作品的那一段命中细节信号才换成受限说法，
+    **别的段落原样保留**，不整条 nuk掉
+- `BANNED` 收窄成 `/xihu-panorama/i`（只拦 slug / 裸路径），**前后端两处必须同步**
+  （`functions/api/chat.ts` 与 `src/scripts/mimi-core.js`），回归测试会断言两边一致。
+- **别把「西湖」「繁胜全景」加回禁词** —— 那等于把首页和智能体又弄成自相矛盾。
+- 提示词里这件作品**不给路径**（`/works/xihu-panorama/`），一句话介绍手写在 `chat.ts` 的 SYSTEM 里
+  （作品目录里它的简介还是占位文字，别拿占位当公开介绍）。它也不进站点知识包
+  （`src/pages/knowledge.json.ts`）—— 进了模型就会照抄路径。
+
 ## 行尾约定（别擅自改）
 - **本仓的约定是 CRLF**（上游丽丽一直这么写，全仓 89 个文本文件都是）。
   本机 `core.autocrlf=true`，所以 git 比较时会自动归一，diff 显示的是真实改动量。
@@ -128,8 +143,11 @@
 
 ## 待用户/丽丽审的 PR（别重复做）
 - **#136 fix/mimi-reliability**（接在 #135 之上）：Mimi 上游限流时换模型重试并降级、
-  站内链接白名单堵假作品链接、提示词事实纪律、回归测试 27 组 + functions/ 自检。
+  站内链接白名单堵假作品链接、提示词事实纪律、保密口径改成「公开到进行中为止」、
+  回归测试 35 组 + functions/ 自检。
   诊断与分档方案见 `research/mimi-intelligence.md`。
+  **还差一步：新的 SiliconFlow key 要终树自己在 Cloudflare 控制台填**
+  （`SILICONFLOW_API_KEY`，Preview 环境也要单独填一份），密钥不经聊天、不进仓库。
 - #135 feat/mimi-knowledge-pack：站点知识包注入 chat（作品/动态自动进 Mimi）+ 默认模型升 Qwen3-32B。
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。

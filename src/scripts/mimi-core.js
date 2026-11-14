@@ -3,7 +3,13 @@
  * 只打现有的 /api/chat，不带密钥。501 / 404 / 断网时用本地演示回答。
  */
 
-export const BANNED = /西湖|繁胜全景|xihu-panorama/i;
+/* 口径（2026-11-14 终树拍板）：「当代西湖繁胜全景图」不再整段保密 ——
+   可以说名字和一句话介绍，不给链接、不展开没公开的细节。
+   以前这里是 /西湖|繁胜全景|xihu-panorama/ ，访客照首页的大标题问，
+   前端又把整条回答换成「还在保密期」，前后自相矛盾。
+   现在只拦不该漏出来的标识形态（slug / 裸路径）；
+   链接那道防线在后端的白名单（functions/api/_mimi-text.js 的 ALLOWED_LINKS）。 */
+export const BANNED = /xihu-panorama/i;
 
 export const ANSWERS = {
   what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做古画、民乐音画，也做展览和委托。目录在[作品页](/works/)，怎么合作写在[合作页](/contact/)。',
@@ -13,7 +19,8 @@ export const ANSWERS = {
   made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是我的开源模板 mimi-agent，小团队可以在飞书群里用它答疑、查资料、记事情，写入操作要先本人确认：[mimi-agent](https://github.com/endtree-FDE/mimi-agent)。',
   coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
   secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
-  skip: '这一件还在保密期，我不方便展开。已经公开的作品在[作品页](/works/)。想聊类似方向的合作，去[合作页](/contact/)跟我说。', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
+  xihu: '当代西湖繁胜全景图，以宋画长卷重绘当代西湖，画面由声音转译生成，这一卷仍在创作中。更多细节等完成再给你。',
+  skip: '这一件还在保密期，我不方便展开。已经公开的作品在[作品页](/works/)。想聊类似方向的合作，去[合作页](/contact/)跟我说。', // 只用于清单里没有的作品；进行中的那件走 xihu
   other: '这个问题我答不准，也不能替团队承诺。想合作，点「怎么合作」，或去[合作页](/contact/)。',
   en: 'I can’t answer that precisely. For a project, open the [collaborate page](/contact/).', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
   enCoop: 'Say what you want to make. Then add 终树 on Feishu with the card below and leave a note. This site will not create a group, and there is no 24-hour assistant.\n[[COOP]]',
@@ -42,6 +49,8 @@ export function localAnswer(q) {
   const s = q.trim();
   const flat = s.replace(/\s+/g, '');
   if (BANNED.test(flat)) return ANSWERS.skip;
+  /* 问西湖那件 → 给名字和一句话（口径：公开到进行中为止），不再回「保密期」 */
+  if (/西湖/.test(flat)) return ANSWERS.xihu;
   if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
   if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
   if (flat === '作品在做什么' || /在做什么/.test(flat)) return ANSWERS.doing;
