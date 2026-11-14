@@ -6,8 +6,10 @@ export const prerender = true;
 
 // 站点知识包：供 functions/api/chat.ts 注入 Mimi 的 SYSTEM。
 // 新增作品/动态在构建时自动进入本包，不必手改 chat.ts 里的手工清单。
-// 保密口径：xihu-panorama 与 chat.ts 的 BANNED 保持一致，不出现在本包；
-// chat.ts 注入前还会对每一行做 BANNED 过滤（保密真源只在 chat.ts 一处）。
+// 口径（2026-11-14 终树拍板）：xihu-panorama 是「进行中」的作品 ——
+// 名字和一句话可以公开，但不给详情链接，所以不收进本包（收进来模型就会照抄路径）。
+// 它的一句话介绍手写在 chat.ts 的 SYSTEM 里；作品目录里那件的简介还是占位文字，
+// 别拿来当公开介绍。chat.ts 注入前还会对每一行做禁词过滤（口径真源只在 chat.ts 一处）。
 type WorkBrief = { slug: string; title: string; line: string; year: string; status: string; brief: string };
 type NewsBrief = { title: string; start: string; summary: string };
 

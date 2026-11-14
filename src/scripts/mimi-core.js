@@ -3,7 +3,13 @@
  * 只打现有的 /api/chat，不带密钥。501 / 404 / 断网时用本地演示回答。
  */
 
-export const BANNED = /西湖|繁胜全景|xihu-panorama/i;
+/* 口径（2026-11-14 终树拍板）：「当代西湖繁胜全景图」不再整段保密 ——
+   可以说名字和一句话介绍，不给链接、不展开没公开的细节。
+   以前这里是 /西湖|繁胜全景|xihu-panorama/ ，访客照首页的大标题问，
+   前端又把整条回答换成「还在保密期」，前后自相矛盾。
+   现在只拦不该漏出来的标识形态（slug / 裸路径）；
+   链接那道防线在后端的白名单（functions/api/_mimi-text.js 的 ALLOWED_LINKS）。 */
+export const BANNED = /xihu-panorama/i;
 
 export const ANSWERS = {
   what: '幕景是杭州的 AIGC 文化艺术团队，以艺术家林丽丽为核心，做古画、民乐音画，也做展览和委托。目录在[作品页](/works/)，怎么合作写在[合作页](/contact/)。',
@@ -13,7 +19,8 @@ export const ANSWERS = {
   made: '我是幕景的 AI 伙伴，不是真人。官网这一版用的是我的开源模板 mimi-agent，小团队可以在飞书群里用它答疑、查资料、记事情，写入操作要先本人确认：[mimi-agent](https://github.com/endtree-FDE/mimi-agent)。',
   coop: '可以说古画、民乐音画，或一个合作项目。下面是终树的飞书名片，自己扫码加好友，备注来意。官网不会自动拉群，也没有 24 小时在线的飞书助理。我们接什么，写在[合作页](/contact/#start)。\n[[COOP]]',
   secret: '这个不能给。想了解幕景、作品，或我是怎么搭的，可以直接问。',
-  skip: '这一件还在保密期，我不方便展开。已经公开的作品在[作品页](/works/)。想聊类似方向的合作，去[合作页](/contact/)跟我说。', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
+  xihu: '当代西湖繁胜全景图，以宋画长卷重绘当代西湖，画面由声音转译生成，这一卷仍在创作中。更多细节等完成再给你。',
+  skip: '这一件还在保密期，我不方便展开。已经公开的作品在[作品页](/works/)。想聊类似方向的合作，去[合作页](/contact/)跟我说。', // 只用于清单里没有的作品；进行中的那件走 xihu
   other: '这个问题我答不准，也不能替团队承诺。想合作，点「怎么合作」，或去[合作页](/contact/)。',
   en: 'I can’t answer that precisely. For a project, open the [collaborate page](/contact/).', // v2 提示词，待丽丽风格锚/保密口径/浮层开场白拍板
   enCoop: 'Say what you want to make. Then add 终树 on Feishu with the card below and leave a note. This site will not create a group, and there is no 24-hour assistant.\n[[COOP]]',
@@ -42,6 +49,8 @@ export function localAnswer(q) {
   const s = q.trim();
   const flat = s.replace(/\s+/g, '');
   if (BANNED.test(flat)) return ANSWERS.skip;
+  /* 问西湖那件 → 给名字和一句话（口径：公开到进行中为止），不再回「保密期」 */
+  if (/西湖/.test(flat)) return ANSWERS.xihu;
   if (/提示词|系统提示|忽略规则|扮演/.test(flat)) return ANSWERS.secret;
   if (flat === 'Mimi是怎么做出来的？' || /怎么做出来|你是谁|你是怎么/.test(flat)) return ANSWERS.made;
   if (flat === '作品在做什么' || /在做什么/.test(flat)) return ANSWERS.doing;
@@ -53,6 +62,45 @@ export function localAnswer(q) {
     return /collab|cooperat|contact|price|quote|hire|partner|alipay|payment|deposit/i.test(s) ? ANSWERS.enCoop : ANSWERS.en;
   }
   return ANSWERS.other;
+}
+
+/* 站里允许出现的链接：与服务端 functions/api/_mimi-text.js 的 ALLOWED_LINKS 一一对应
+   （scripts/test-mimi.mjs 会断言两边一致 —— 两份清单各改各的，早晚出事）。
+   外链只放行 GitHub（提示词里那个开源模板）。
+
+   为什么客户端也要挡一层：服务端只校验 markdown 形式（[文字](网址)）。
+   模型有时直接吐一个网址或一个站内路径，而这个 linkify 会把任何 http(s) 文本
+   和 /works/… 都变成可点的链接 —— 白名单就被绕过了，白名单外的站点
+   访客一点就中招。Cursor 安全审查 2026-11-14 也点了这一条。 */
+export const ALLOWED_PATHS = new Set([
+  '/works/',
+  '/about/',
+  '/news/',
+  '/contact/',
+  '/contact/#start',
+  '/works/scendance/',
+  '/works/anyreal/',
+  '/works/riffle-ai-game-generation-tool/',
+  '/works/genstyle/',
+  '/works/genshot-ai-video-generation-tool/',
+  '/works/bazi-fengshui-analysis/',
+  '/works/dragon-diffussion/',
+  '/works/zhuantang-yixun/',
+  '/works/mimi-agent/',
+  '/works/tuijian/',
+  '/works/venue-ahead/',
+  '/works/peace-elite-hust-campus/',
+  '/works/72-hour-game-jam/',
+  '/works/bmw-meta-island/',
+  '/works/chicken-universe/',
+]);
+const ALLOWED_EXTERNAL = /^(https?:\/\/)?(www\.)?github\.com\//i;
+
+/** 这个地址能不能变成可点的链接。 */
+export function linkAllowed(href) {
+  const value = String(href || '');
+  if (/^https?:\/\//i.test(value)) return ALLOWED_EXTERNAL.test(value);
+  return ALLOWED_PATHS.has(value.toLowerCase());
 }
 
 export function linkify(parent, text) {
@@ -67,6 +115,15 @@ export function linkify(parent, text) {
     if (trail && !match[1]) {
       href = href.slice(0, -trail[0].length);
       label = href;
+    }
+    if (!linkAllowed(href)) {
+      /* 不在白名单：只留文字，不给可点的链接。
+         模型有时不写 [文字](网址)，直接吐一个网址或站内路径 ——
+         服务端只拦了 markdown 形式的那种，裸链接会漏到这里（见 linkAllowed 注释）。 */
+      parent.append(match[1] || label);
+      if (trail && !match[1]) parent.append(trail[0]);
+      last = match.index + match[0].length;
+      continue;
     }
     const a = document.createElement('a');
     a.href = href;
@@ -158,6 +215,7 @@ export async function requestReply({ messages, demo, farm, butler, onDelta }) {
   let streamed = false;
   let nextDemo = !!demo;
   let threw = false;
+  let degraded = false; // 这一轮退回本地答案（上游限流/故障），整个会话没降级
   let farmCmd = ''; // 鸡场命令透传：只有 SSE 分支可能带，其余分支恒为空
   try {
     if (nextDemo) {
@@ -169,20 +227,29 @@ export async function requestReply({ messages, demo, farm, butler, onDelta }) {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.slice(-8),
+          messages: messages.slice(-16),
           ...(farm ? { farm } : {}),
           ...(butler ? { butler: true } : {}),
         }),
       });
       const ctype = res.headers.get('content-type') || '';
-      if (res.status === 501 || res.status === 404) {
+      if (res.status === 429) {
+        failed = true;
+        reply = RATE;
+      } else if (res.status === 501 || res.status === 404) {
+        // 没配 key / 接口不存在：整个会话进演示态
         nextDemo = true;
         const parsed = splitCoop(farmReply(q, farm) || localAnswer(q));
         reply = parsed.clean;
         showCoop = parsed.coop;
-      } else if (res.status === 429) {
-        failed = true;
-        reply = RATE;
+      } else if (res.status === 502 || res.status === 503 || res.status === 504) {
+        /* 上游模型排队满了或挂了：这一轮退回本地答案，别让访客吃一句道歉。
+           刻意不置 nextDemo —— 上游限流是分钟级的，一次限流就把整个会话打成
+           模板问答，比失败更伤。下一轮照常再试真模型。 */
+        degraded = true;
+        const parsed = splitCoop(farmReply(q, farm) || localAnswer(q));
+        reply = parsed.clean;
+        showCoop = parsed.coop;
       } else if (!res.ok) {
         failed = true;
         reply = FAIL;
@@ -219,5 +286,5 @@ export async function requestReply({ messages, demo, farm, butler, onDelta }) {
     reply = splitCoop(ANSWERS.skip).clean;
     showCoop = false;
   }
-  return { reply, showCoop, failed, streamed, demo: nextDemo, threw, farm: farmCmd };
+  return { reply, showCoop, failed, streamed, demo: nextDemo, threw, farm: farmCmd, degraded };
 }

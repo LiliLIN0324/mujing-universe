@@ -513,6 +513,16 @@ const email = 'lily1326685527@gmail.com';
   :global(.mimi-msg.bot a) { text-decoration: underline; text-underline-offset: 2px; }
   :global(.mimi--bench .mimi-msg) { font-size: 16px; }
 
+  /* 上游限流时的本地兜底标记：消息下的一行小字 */
+  :global(.mimi-note) {
+    display: block;
+    margin: 6px 0 0;
+    color: #6b6b6b;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  :global(html.dark .mimi-note) { color: #8B877F; }
+
   /* 管家消息：橙色名牌前缀，卡片底色区分 */
   :global(.mimi-msg.is-butler .mimi-plate) {
     display: inline-block;
@@ -900,7 +910,7 @@ const email = 'lily1326685527@gmail.com';
 
     let reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const EMAIL = 'lily1326685527@gmail.com';
-    const GREETING = '这卷西湖还在画。想听近况，或留下合作意向，都可以跟我说一句。';
+    const GREETING = '嗨，我是 Mimi。想知道幕景在做什么、怎么合作，或者随便看看，都可以问我。';
     const COOP_LINE = '可以说古画、民乐音画，或一个合作项目。说完我把飞书名片放出来，你自己加好友。官网不会自动拉群。我们接什么在[合作页](/contact/#start)。';
     const DEFAULT_PLACEHOLDER = '想了解幕景，直接问我';
     const SESSION_KEY = 'mimi-session-v1';
@@ -998,7 +1008,15 @@ const email = 'lily1326685527@gmail.com';
       else if (typed) typewrite(p, text, done);
       else finishText(p, text, done);
       log.scrollTop = log.scrollHeight;
-      return p;
+      return item;
+    }
+    /* 上游限流时的本地兜底回答：消息下加一行小字，访客知道这条不是模型实时答的 */
+    function markDegraded(item) {
+      if (!item || item.querySelector('.mimi-note')) return;
+      const note = document.createElement('small');
+      note.className = 'mimi-note';
+      note.textContent = '（暂时只能用常见答案回复你）';
+      item.append(note);
     }
     function appendButlerEl() {
       const item = document.createElement('div');
@@ -1481,7 +1499,7 @@ const email = 'lily1326685527@gmail.com';
       setState('thinking');
       let bubble = null;
       const result = await requestReply({
-        messages: llmTurns.slice(-8),
+        messages: llmTurns.slice(-16),
         demo: false,
         farm: snap(),
         butler: true,
@@ -1584,7 +1602,7 @@ const email = 'lily1326685527@gmail.com';
         bubble = null;
         streamed = false;
       }
-      const { reply, showCoop, failed } = result;
+      const { reply, showCoop, failed, degraded } = result;
       const after = () => { if (showCoop) showCoopCard(); };
       if (failed) {
         setState('error');
@@ -1603,7 +1621,8 @@ const email = 'lily1326685527@gmail.com';
         finishText(bubble, reply, after);
       } else {
         setState('answering');
-        append('bot', reply, true, after);
+        const item = append('bot', reply, true, after);
+        if (degraded) markDegraded(item);
         record({ r: 'bot', t: reply });
       }
       busy = false;
