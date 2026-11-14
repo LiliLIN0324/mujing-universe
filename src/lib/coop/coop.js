@@ -1625,6 +1625,11 @@ const root = document.getElementById('farm');
     const emitState = () => window.dispatchEvent(new CustomEvent('farm:state', { detail: snapshot() }));
     const emitSay = (text) => window.dispatchEvent(new CustomEvent('farm:say', { detail: { text } }));
     const emitCmd = (type) => window.dispatchEvent(new CustomEvent('farm:cmd', { detail: { type } }));
+    /* farm:modal：手册/地图这类模态开合 —— 外面（官网 Mimi 浮标）据此让位。
+       为什么需要：整层鸡场是 position:fixed + z-index:90，自己建了层叠上下文，
+       手册卡再怎么写 z-index（1200）也跳不出这一层；而官网的 Mimi 浮标在根层叠里是 162，
+       于是浮标压在手册上面 —— 手机端手册铺满屏，正好盖住「今天的小事」那几行的数字。 */
+    const emitModal = (open) => window.dispatchEvent(new CustomEvent('farm:modal', { detail: { open: !!open } }));
 
     window.addEventListener('farm:cmd', (e) => {
       const type = String(e.detail?.type || '');
@@ -5247,6 +5252,21 @@ $('farm-btn-daily').addEventListener('click', () => {
     $('farm-btn-map').addEventListener('click', () => { openMap(); bumpDaily('map'); });
     $('farm-map-x').addEventListener('click', () => { $('farm-map').hidden = true; });
     $('farm-map-scrim').addEventListener('click', () => { $('farm-map').hidden = true; });
+    /* 模态开合 → farm:modal（观察 hidden 属性：按钮/芯片/×/遮罩/Esc/重开 每条路径都覆盖，不会漏） */
+    (() => {
+      let open = false;
+      const sync = () => {
+        const now = ['farm-book', 'farm-map'].some((id) => { const el = $(id); return el && !el.hidden; });
+        if (now === open) return;
+        open = now;
+        emitModal(open);
+      };
+      for (const id of ['farm-book', 'farm-map']) {
+        const el = $(id);
+        if (el) new MutationObserver(sync).observe(el, { attributes: true, attributeFilter: ['hidden'] });
+      }
+      sync();
+    })();
     document.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       $('farm-book').hidden = true;
