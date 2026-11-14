@@ -397,6 +397,23 @@ check('正常 SSE：照常读出回复', async () => {
   }
 });
 
+/* ===== 别让模型自造网址（2026-11-14 线上复验）=====
+   访客问「你们官网的网址是多少」，模型自己编了个域名出来。
+   链接白名单会把它剥成纯文字、不可点，但页面上还是留着一个假网址 ——
+   提示词这一层先堵住，别指望模型自觉。 */
+
+const systemPrompt = chatSrc.match(/const SYSTEM = `([\s\S]*?)`;/)?.[1] || '';
+
+check('提示词里写明了「不要自己写网址或域名」', () => {
+  assert.ok(systemPrompt.includes('不要自己写网址或域名'), '这条纪律不能被删掉');
+});
+
+check('提示词里不出现白名单外的域名（模型会照抄）', () => {
+  const domains = [...systemPrompt.matchAll(/https?:\/\/[^\s`'"）)]+/g)].map((m) => m[0]);
+  const bad = domains.filter((d) => !/github\.com/i.test(d));
+  assert.deepEqual(bad, [], `提示词里的域名模型会照抄：${bad.join(', ')}`);
+});
+
 /* ===== 结果 ===== */
 
 await Promise.all(pending);
