@@ -64,6 +64,45 @@ export function localAnswer(q) {
   return ANSWERS.other;
 }
 
+/* 站里允许出现的链接：与服务端 functions/api/_mimi-text.js 的 ALLOWED_LINKS 一一对应
+   （scripts/test-mimi.mjs 会断言两边一致 —— 两份清单各改各的，早晚出事）。
+   外链只放行 GitHub（提示词里那个开源模板）。
+
+   为什么客户端也要挡一层：服务端只校验 markdown 形式（[文字](网址)）。
+   模型有时直接吐一个网址或一个站内路径，而这个 linkify 会把任何 http(s) 文本
+   和 /works/… 都变成可点的链接 —— 白名单就被绕过了，白名单外的站点
+   访客一点就中招。Cursor 安全审查 2026-11-14 也点了这一条。 */
+export const ALLOWED_PATHS = new Set([
+  '/works/',
+  '/about/',
+  '/news/',
+  '/contact/',
+  '/contact/#start',
+  '/works/scendance/',
+  '/works/anyreal/',
+  '/works/riffle-ai-game-generation-tool/',
+  '/works/genstyle/',
+  '/works/genshot-ai-video-generation-tool/',
+  '/works/bazi-fengshui-analysis/',
+  '/works/dragon-diffussion/',
+  '/works/zhuantang-yixun/',
+  '/works/mimi-agent/',
+  '/works/tuijian/',
+  '/works/venue-ahead/',
+  '/works/peace-elite-hust-campus/',
+  '/works/72-hour-game-jam/',
+  '/works/bmw-meta-island/',
+  '/works/chicken-universe/',
+]);
+const ALLOWED_EXTERNAL = /^(https?:\/\/)?(www\.)?github\.com\//i;
+
+/** 这个地址能不能变成可点的链接。 */
+export function linkAllowed(href) {
+  const value = String(href || '');
+  if (/^https?:\/\//i.test(value)) return ALLOWED_EXTERNAL.test(value);
+  return ALLOWED_PATHS.has(value.toLowerCase());
+}
+
 export function linkify(parent, text) {
   const re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+|\/(?!\/)[A-Za-z0-9/_\-.%#]*)\)|(https?:\/\/[^\s<]+)|(\/(?:works|contact|artist|studio)\/[A-Za-z0-9/_\-.#]*)/g;
   let last = 0;
@@ -76,6 +115,15 @@ export function linkify(parent, text) {
     if (trail && !match[1]) {
       href = href.slice(0, -trail[0].length);
       label = href;
+    }
+    if (!linkAllowed(href)) {
+      /* 不在白名单：只留文字，不给可点的链接。
+         模型有时不写 [文字](网址)，直接吐一个网址或站内路径 ——
+         服务端只拦了 markdown 形式的那种，裸链接会漏到这里（见 linkAllowed 注释）。 */
+      parent.append(match[1] || label);
+      if (trail && !match[1]) parent.append(trail[0]);
+      last = match.index + match[0].length;
+      continue;
     }
     const a = document.createElement('a');
     a.href = href;

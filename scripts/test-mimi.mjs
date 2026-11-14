@@ -24,7 +24,7 @@ const libPath = fileURLToPath(new URL('../functions/api/_mimi-text.js', import.m
 const { sanitizeLinks, pendingLinkKeep, takeVisible, ALLOWED_LINKS, applySecretRule } = await import(pathToFileURL(libPath).href);
 const chatPath = fileURLToPath(new URL('../functions/api/chat.ts', import.meta.url));
 const clientPath = fileURLToPath(new URL('../src/scripts/mimi-core.js', import.meta.url));
-const { requestReply, localAnswer } = await import(pathToFileURL(clientPath).href);
+const { requestReply, localAnswer, linkAllowed, ALLOWED_PATHS } = await import(pathToFileURL(clientPath).href);
 
 let passed = 0;
 const failures = [];
@@ -257,6 +257,26 @@ check('前端：问这件作品给名字和一句话，不是保密话术', () =
 check('前端：问其他作品不受影响', () => {
   const a = localAnswer('幕景是做什么的？');
   assert.ok(!/保密期/.test(a), '别的作品不该被当成保密件');
+});
+
+/* ===== 客户端也有一道白名单（裸链接的漏洞）=====
+   服务端只校验 markdown 形式（[文字](网址)）。模型直接吐网址或站内路径时，
+   客户端的 linkify 会把它变成可点的链接 —— 白名单就被绕过了。
+   Cursor 安全审查 2026-11-14 点的就是这一条。 */
+
+check('客户端白名单与服务端一致（两份清单各改各的会出事）', () => {
+  const server = Object.keys(ALLOWED_LINKS).map((k) => k.toLowerCase()).sort();
+  const client = [...ALLOWED_PATHS].map((k) => k.toLowerCase()).sort();
+  assert.deepEqual(client, server, '客户端与服务端的允许链接清单不一致');
+});
+
+check('白名单内的链接放行，白名单外的一律不做成链接', () => {
+  assert.equal(linkAllowed('https://github.com/endtree-FDE/mimi-agent'), true, 'GitHub 外链放行');
+  assert.equal(linkAllowed('https://example.com/x'), false, '别的外链不放行');
+  assert.equal(linkAllowed('/works/scendance/'), true, '作品页放行');
+  assert.equal(linkAllowed('/contact/#start'), true, '合作页锚点放行');
+  assert.equal(linkAllowed('/works/xihu-panorama/'), false, '进行中的那件不给链接');
+  assert.equal(linkAllowed('/works/不存在的/'), false, '白名单外的路径不给链接');
 });
 
 /* ===== 前端降级路径：上游挂了，访客看到什么 ===== */
