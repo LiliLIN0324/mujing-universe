@@ -24,7 +24,7 @@ const libPath = fileURLToPath(new URL('../functions/api/_mimi-text.js', import.m
 const { sanitizeLinks, pendingLinkKeep, takeVisible, ALLOWED_LINKS, applySecretRule } = await import(pathToFileURL(libPath).href);
 const chatPath = fileURLToPath(new URL('../functions/api/chat.ts', import.meta.url));
 const clientPath = fileURLToPath(new URL('../src/scripts/mimi-core.js', import.meta.url));
-const { requestReply, localAnswer, linkAllowed, ALLOWED_PATHS } = await import(pathToFileURL(clientPath).href);
+const { requestReply, localAnswer, linkAllowed, ALLOWED_PATHS, linkify } = await import(pathToFileURL(clientPath).href);
 
 let passed = 0;
 const failures = [];
@@ -277,6 +277,50 @@ check('白名单内的链接放行，白名单外的一律不做成链接', () =
   assert.equal(linkAllowed('/contact/#start'), true, '合作页锚点放行');
   assert.equal(linkAllowed('/works/xihu-panorama/'), false, '进行中的那件不给链接');
   assert.equal(linkAllowed('/works/不存在的/'), false, '白名单外的路径不给链接');
+});
+
+/* linkify 要 DOM：给它一个最小桩，只看它做出什么节点 */
+function fakeParent() {
+  const nodes = [];
+  return {
+    nodes,
+    append(node) {
+      nodes.push(typeof node === 'string' ? { text: node } : node);
+    },
+  };
+}
+
+function withDom(fn) {
+  const prev = globalThis.document;
+  globalThis.document = { createElement: () => ({ tag: 'a' }) };
+  try {
+    return fn();
+  } finally {
+    globalThis.document = prev;
+  }
+}
+
+check('linkify：白名单外的裸链接只留文字，不做成可点的链接', () => {
+  const p = fakeParent();
+  withDom(() => linkify(p, '看这个 https://example.com/x 就行'));
+  assert.equal(p.nodes.filter((n) => n.tag === 'a').length, 0, '不该有链接节点');
+  assert.ok(p.nodes.map((n) => n.text || '').join('').includes('https://example.com/x'), '文字要留着');
+});
+
+check('linkify：白名单内的链接照常做成可点的链接', () => {
+  const p = fakeParent();
+  withDom(() => linkify(p, '看这个 [作品页](/works/) 吧'));
+  const links = p.nodes.filter((n) => n.tag === 'a');
+  assert.equal(links.length, 1, '应该有且只有一个链接');
+  assert.equal(links[0].href, '/works/');
+  assert.equal(links[0].textContent, '作品页');
+});
+
+check('linkify：白名单外的 markdown 链接只留标题', () => {
+  const p = fakeParent();
+  withDom(() => linkify(p, '看这个 [假作品](/works/nope/) 吧'));
+  assert.equal(p.nodes.filter((n) => n.tag === 'a').length, 0, '不该有链接节点');
+  assert.ok(p.nodes.map((n) => n.text || '').join('').includes('假作品'), '标题要留着');
 });
 
 /* ===== 前端降级路径：上游挂了，访客看到什么 ===== */
