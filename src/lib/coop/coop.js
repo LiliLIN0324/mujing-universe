@@ -418,6 +418,27 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   }
   .farm-hint.is-off { opacity: 0; }
 
+  /* daily chores: one chip in the HUD, detail in the manual card */
+  .farm-stat.farm-daily { font: inherit; font-weight: 600; cursor: pointer; border-radius: 4px; }
+  .farm-stat.farm-daily:hover { background: var(--yellow); }
+  .farm-stat.farm-daily:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .farm-stat.farm-daily.is-all { color: var(--green); }
+  .farm-dailybox { margin-top: 12px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
+  .farm-dailybox:empty { display: none; }
+  .farm-dailytitle { font-size: 12px; font-weight: 700; margin: 0 0 6px; }
+  .farm-dailyrow { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 2px 0; }
+  .farm-dailyrow.is-done { color: color-mix(in srgb, var(--ink) 55%, transparent); }
+  .farm-dailybar { flex: 1 1 auto; height: 8px; border: 1px solid var(--ink); background: var(--paper); border-radius: 3px; overflow: hidden; }
+  .farm-dailybar i { display: block; height: 100%; background: var(--orange); }
+  .farm-dailyrow.is-done .farm-dailybar i { background: var(--green); }
+  .farm-dailyn { font-variant-numeric: tabular-nums; min-width: 36px; text-align: right; }
+  .farm-dailystreak { font-size: 11px; color: color-mix(in srgb, var(--ink) 62%, transparent); margin: 6px 0 0; }
+  /* bond meter in the chick menu */
+  .farm-bond { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; margin-top: 5px; }
+  .farm-bondbar { width: 54px; height: 7px; border: 1px solid var(--ink); background: var(--paper); border-radius: 3px; overflow: hidden; display: inline-block; }
+  .farm-bondbar i { display: block; height: 100%; background: var(--orange); }
+  .farm-cmenu-friend { font-size: 11px; color: color-mix(in srgb, var(--ink) 62%, transparent); margin-top: 4px; }
+
   /* 跟随光标的小鸡：悬停 UI 面板/输入聚焦时淡出（updateCursorVisibility 控制 opacity） */
   .farm-cursor { position: absolute; left: 0; top: 0; width: 56px; height: 67px; z-index: 1000; pointer-events: none; will-change: transform; transition: opacity 0.2s ease; }
   .farm-cursor-in { width: 100%; height: 100%; transform-origin: 50% 88%; }
@@ -763,6 +784,7 @@ const MARKUP = (brand, page, breedCount) => `<div class="farm" id="farm" data-pa
         <span class="farm-stat farm-vitals" title="心情 · 饱腹 · 清洁：陪它说话 / 摆食盆 / 添水">
           心情 <b id="farm-n-mood">0</b> · 饱 <b id="farm-n-full">0</b> · 洁 <b id="farm-n-clean">0</b>
         </span>
+        <button type="button" class="farm-stat farm-daily" id="farm-btn-daily" hidden title="今天的小事">今日 <b id="farm-n-daily">0/3</b></button>
       </div>
       <div class="farm-btns">
         <button type="button" class="farm-btn" id="farm-btn-butler">管家</button>
@@ -792,6 +814,7 @@ const MARKUP = (brand, page, breedCount) => `<div class="farm" id="farm" data-pa
       <div class="farm-card" role="dialog" aria-label="鸡场手册">
         <div class="farm-cardhead"><b class="farm-tape">鸡场手册 · 图鉴</b><button type="button" class="farm-btn" id="farm-book-x" aria-label="关闭">×</button></div>
         <div class="farm-grid" id="farm-bookgrid"></div>
+        <div class="farm-dailybox" id="farm-dailybox"></div>
         <div class="farm-cardfoot">
           <span class="farm-tip">点击页面空白处下蛋，孵出的小鸡自动入册；概率写在方案里，不玩暗改那套。</span>
           <button type="button" class="farm-btn" id="farm-btn-dexcard" hidden>图鉴卡</button>
@@ -923,6 +946,26 @@ export default function init(cfg = {}) {
      但灰掉、点不动（规矩：条件不满足的入口灰掉但仍可见）。
      老包没有 map 段 → 地图面板自动退回原来的列表视图，不炸。 */
   const MAP_CFG = (pack.map && typeof pack.map === 'object') ? pack.map : null;
+
+  /* ===== 今日三件事（2026-11-15 夜）=====
+     借 Puppy Park 的「每日挑战」：每天几件小事，做完给奖励，**没有失败**。
+     任务池、目标数、奖励、台词全在 pack.json 的 `daily` 段（唯一出处）。
+     规矩（跟成长机制同一条）：**不惩罚不上线的人** —— 过完一天自动换新，
+     昨天没做完什么都不扣，只是连续天数断了。 */
+  const DAILY_CFG = (pack.daily && typeof pack.daily === 'object') ? pack.daily : null;
+
+  /* ===== 熟络（2026-11-15 夜）=====
+     玩家跟**每一只**鸡之间有一个关系值（0~100）。
+     照顾它 → 熟络涨；熟络到不同档 → 它说话的语气、看你鼠标的积极性都变。
+     速度与上限按品种脾气走（temper.bondRate / bondCap）：怕生的慢热，黏人的最快。
+     档位表在 pack.json 的 `bond` 段。 */
+  const BOND_CFG = (pack.bond && typeof pack.bond === 'object') ? pack.bond : null;
+
+  /* ===== 结伴（2026-11-15 夜）=====
+     两只脾气合得来的鸡自己走近 → 交上朋友（跟谁合得来在 pack.json 的 `social.compat`）。
+     这不是玩家点出来的，是鸡自己的事 —— 页面因此有「活着」的感觉。
+     结伴的两只鸡会互相打招呼、心情互相牵引。 */
+  const SOCIAL_CFG = (pack.social && typeof pack.social === 'object') ? pack.social : null;
 
   /* ===== 成长阶段（2026-11-04，方案见 research/growth-mechanics.md）=====
      阶段链写在 pack.json 的 `stages` 段：**改成长节奏 / 改体型不用改引擎代码**
@@ -1183,6 +1226,11 @@ const root = document.getElementById('farm');
     if (typeof state.events.day !== 'string') state.events.day = '';
     if (!Array.isArray(state.unlocked) || !state.unlocked.length) state.unlocked = ['rice', 'piano', 'plate', 'basket'];
     if (!state.dex || typeof state.dex !== 'object') state.dex = {};
+    /* 今日三件事（2026-11-15）：老档没有这字段 → 补默认值，不迁版本号 */
+    if (!state.daily || typeof state.daily !== 'object') state.daily = { day: '', items: [], streak: 0, best: 0 };
+    if (!Array.isArray(state.daily.items)) state.daily.items = [];
+    if (typeof state.daily.streak !== 'number') state.daily.streak = 0;
+    if (typeof state.daily.best !== 'number') state.daily.best = 0;
     /* 成长阶段迁移（2026-11-04）：老档的鸡没有 stage 字段 → 当成成鸡。
        理由：老账本里没有可信的「出生时间」（lastSeen 是「最后一次被看到」），硬折算会让
        老用户的鸡**突然变大** —— 那是没必要的惊吓。**新孵的蛋**才走完整成长线。
@@ -1206,6 +1254,12 @@ const root = document.getElementById('farm');
       else if (typeof r.fullAt !== 'number') r.fullAt = Date.now();
       if (typeof r.clean !== 'number') { r.clean = CLEAN_START; r.cleanAt = Date.now(); }
       else if (typeof r.cleanAt !== 'number') r.cleanAt = Date.now();
+      /* 熟络（2026-11-15）：老档没有 → 补 0。补 0 不是「已经很熟」，
+         也不是惩罚 —— 只是「还没熟络」，玩家照顾几次就上来了。 */
+      if (typeof r.bond !== 'number') { r.bond = 0; r.bondAt = Date.now(); }
+      else if (typeof r.bondAt !== 'number') r.bondAt = Date.now();
+      /* 结伴（2026-11-15）：老档没有 → 空串（还没有朋友） */
+      if (typeof r.friend !== 'string') r.friend = '';
     }
 
     /* ===== 跨标签页同步（2026-11-03） =====
@@ -1244,6 +1298,7 @@ const root = document.getElementById('farm');
         names: {},   // 鸡名（id → 名）：重开鸡场要连它一起清掉（seq 归零后 id 会复用）
         visits: { total: 0, work: 0, news: 0 }, pending: [], unlocked: ['rice', 'piano', 'plate', 'basket'],
         events: { fired: {}, count: 0, day: '', dayCount: 0, last: '' },
+        daily: { day: '', items: [], streak: 0, best: 0 },
         tally: emptyTally(),
       };
     }
@@ -1282,7 +1337,10 @@ const root = document.getElementById('farm');
       return Math.max(
         Number(r.lastSeen) || 0, Number(r.moodAt) || 0, Number(r.at) || 0,
         Number(r.stageAt) || 0, Number(r.fullAt) || 0, Number(r.cleanAt) || 0,
-        Number(r.stowedAt) || 0
+        Number(r.stowedAt) || 0,
+        /* 熟络 / 结伴也要参与「谁新听谁的」（2026-11-15）——
+           不然另一个标签页刚建立的friendship会被旧副本盖回去。 */
+        Number(r.bondAt) || 0, Number(r.friendAt) || 0
       );
     }
     function cmpId(x, y) {
@@ -1393,6 +1451,28 @@ const root = document.getElementById('farm');
         for (const k in BF) AF[k] = Math.max(Number(AF[k]) || 0, Number(BF[k]) || 0);
         a.events.count = Math.max(Number(a.events.count) || 0, Number(BE.count) || 0);
       }
+      /* 今日三件事（2026-11-15）：同一天 → 每条取进度大的那个。
+         抽哪三件事是**按日期定种**的（同一个日子 → 同一串随机数），
+         所以两个标签页抽到的任务本来就一样；万一不一样（换了包），
+         这里按 id 取并集，谁进度大听谁的。 */
+      const BDL = b.daily;
+      if (BDL && typeof BDL === 'object') {
+        if (!a.daily || typeof a.daily !== 'object') a.daily = { day: '', items: [], streak: 0, best: 0 };
+        if (!Array.isArray(a.daily.items)) a.daily.items = [];
+        if (a.daily.day === BDL.day) {
+          for (const it of (Array.isArray(BDL.items) ? BDL.items : [])) {
+            if (!it || !it.id) continue;
+            const cur = a.daily.items.find((x) => x && x.id === it.id);
+            if (!cur) { a.daily.items.push(it); continue; }
+            if ((it.prog | 0) > (cur.prog | 0)) cur.prog = it.prog | 0;
+            if (it.done) cur.done = true;
+          }
+          a.daily.streak = Math.max(Number(a.daily.streak) || 0, Number(BDL.streak) || 0);
+          a.daily.best = Math.max(Number(a.daily.best) || 0, Number(BDL.best) || 0);
+        } else if (String(BDL.day || '') > String(a.daily.day || '')) {
+          a.daily = BDL;   // 对方那天更新 → 听对方的
+        }
+      }
       syncDerived();
       return a;
     }
@@ -1420,6 +1500,8 @@ const root = document.getElementById('farm');
          不把 names 一起清掉，新鸡一出生就顶着上一只的名字（以前漏了这一项）。 */
       a.names = { ...(b.names || {}) };
       a.events = JSON.parse(JSON.stringify(b.events || { fired: {}, count: 0, day: '', dayCount: 0, last: '' }));
+      /* 今日三件事也整份接过来（2026-11-15）：重开鸡场 → 今天的小事从零开始 */
+      a.daily = JSON.parse(JSON.stringify(b.daily || { day: '', items: [], streak: 0, best: 0 }));
       a.resetAt = Number(b.resetAt) || 0;
       syncDerived();
       return a;
@@ -2030,6 +2112,7 @@ const root = document.getElementById('farm');
     function layEgg(x, y) {
       state.eggs = tallyAdd(state.tally.eggs, 1);
       state.pity = (state.pity | 0) + 1; // 软保底计数
+      bumpDaily('lay');                 // 今天的小事：点空白下个蛋
       const breed = pickBreed(); // 蛋一落地品种就定了，图鉴概率不趁机变动
       save(); refreshHUD();
       /* 品种事件音：下蛋 = 品种音短音，发声处浮起视觉音符 */
@@ -2253,7 +2336,7 @@ const root = document.getElementById('farm');
        表里没有的行为一律不做；表整个缺失 → 退回「只走路」，
        **不退回硬编码的默认频率** —— 那会让 pack.json 不再是唯一出处。 */
     const BEHAVIOR_ACTIONS = ['idle', 'peck', 'walk', 'seekFood', 'eatPlate', 'stand', 'chaseMouse'];
-    const BEHAVIOR_COUNTS = { idle: 0, peck: 0, walk: 0, talk: 0 }; // 累计次数（验收看分布用；talk = 主动开口次数）
+    const BEHAVIOR_COUNTS = { idle: 0, peck: 0, walk: 0, talk: 0, social: 0 }; // 累计次数（验收看分布用；talk = 主动开口次数；social = 结伴成功次数）
     const BEHAVIOR_BY_BREED = {}; // 品种 → { idle, peck, walk }：哪只鸡最爱啄
     function normalizeBehaviors(raw) {
       const out = {};
@@ -2425,6 +2508,28 @@ const root = document.getElementById('farm');
       c.el.classList.toggle('is-glum', chickMood(c) < MOOD_LOW);
       c.el.classList.toggle('is-dirty', chickMood(c) >= MOOD_LOW && chickClean(c) < CLEAN_LOW);
       c.eatCool = (c.eatCool || 0) - dt; // 吃一口歇一会儿，别把盘吃穿
+      /* 找朋友（2026-11-15）：朝同伴走过去，走到跟前就成交。
+         这一段必须排在「等一下」那个 return **之前** —— 否则鸡在发呆时根本不会迈步。
+         也必须排在算位移之前：重新瞄准之后 tx/ty 变了，后面算 dx/dy 要用新目标。 */
+      if (c.friendSeek) {
+        const C = socialCfg();
+        const f = flock.find((x) => x && !x.dead && x.mode !== 'leave' && x.id === c.friendSeek);
+        const tooLong = Date.now() - (c.friendSeekAt || 0) > (C.seekTimeoutMs || 25000);
+        if (!f || tooLong) {
+          c.friendSeek = '';
+        } else {
+          const fd = Math.hypot(f.x - c.x, f.y - c.y);
+          if (fd <= C.radius) {
+            makeFriends(c, f);
+          } else {
+            c.tx = f.x; c.ty = f.y;
+            c.mode = 'walk';
+            c.chaseTarget = false;
+            c.grainTarget = null;
+            c.plateTarget = null;
+          }
+        }
+      }
       /* 找吃的：地上的谷子优先；没有就去看盘子里有没有米
          （seekFood / eatPlate 也能在行为表里关掉 —— 「摆出来的东西必须有用」反过来：
           不想要这个行为就别开） */
@@ -2451,7 +2556,8 @@ const root = document.getElementById('farm');
         const cm = behaviorsFor(c).chaseMouse;
         if (cm) {
           const P = cm.params || {};
-          const ir = P.interruptRadius || 110;
+          /* 熟络到「亲密」→ 半径更大：它更愿意跑过来找你（×1.35） */
+          const ir = Math.round((P.interruptRadius || 110) * bondChaseMul(c));
           const d = Math.hypot(mouseStage.x - c.x, mouseStage.y - c.y);
           if (d > 26 && d < ir) startChase(c, cm, ir);
         }
@@ -2473,6 +2579,8 @@ const root = document.getElementById('farm');
              鸡转头就走 —— 那不叫「走过去看一眼」，像没追上。 */
           c.chaseTarget = false;
           c.mode = 'wait'; c.wait = rand(2.5, 4.0);
+          addBond(c, 'chase');      // 逗到了 → 熟络涨
+          bumpDaily('chase');       // 今天的小事：用鼠标逗它玩
           return;
         }
         /* 重新瞄准：每 0.5s 挪一次目标，追着光标的方向走，但不追着抖 */
@@ -2480,7 +2588,7 @@ const root = document.getElementById('farm');
         if (live && now - (c.chaseAimAt || 0) > 500) {
           c.chaseAimAt = now;
           const cm = behaviorsFor(c).chaseMouse;
-          const rad = (cm && cm.params && cm.params.radius) || 160;
+          const rad = Math.round(((cm && cm.params && cm.params.radius) || 160) * bondChaseMul(c));
           if (ld < rad) { c.chaseX = live.x; c.chaseY = live.y; c.tx = live.x; c.ty = live.y; }
         }
       }
@@ -2505,6 +2613,8 @@ const root = document.getElementById('farm');
           /* 追到了：站在那儿看一眼，别顶着鼠标不动（挡着指针） */
           c.chaseTarget = false;
           c.mode = 'wait'; c.wait = rand(0.5, 1.4);
+          addBond(c, 'chase');      // 逗到了 → 熟络涨
+          bumpDaily('chase');       // 今天的小事：用鼠标逗它玩
           return;
         }
         if (c.plateTarget) {
@@ -2525,7 +2635,7 @@ const root = document.getElementById('farm');
         decide(c);
         return;
       }
-      const sp = c.speed * dt;
+      const sp = c.speed * (c.friendSeek ? 1.7 : 1) * dt;   // 去找同伴时走得快一点
       c.x += (dx / dist) * sp;
       c.y += (dy / dist) * sp;
       if (Math.abs(dx) > 2) c.flip = dx < 0 ? -1 : 1;
@@ -2639,6 +2749,7 @@ const root = document.getElementById('farm');
             c.named = v;
             save();
             bubble(c.x, c.y, `记住了，我叫「${v}」～`);
+            bumpDaily('name');
           }
         }
         inp.remove();
@@ -2676,6 +2787,15 @@ const root = document.getElementById('farm');
         + '<span title="饱腹（吃米回）">饱 ' + f + '</span>'
         + '<span title="清洁（添水回）">洁 ' + k + '</span>'
         + '</div>';
+      /* 熟络（2026-11-15）：它跟你有多熟 —— 一条小进度条 + 档位名，悬停有那句话 */
+      const bt = bondTier(c);
+      const bv = Math.round(bondOf(c));
+      html += '<div class="farm-bond" title="' + (bt.line || '') + '">熟络'
+        + '<span class="farm-bondbar"><i style="width:' + Math.max(0, Math.min(100, bv)) + '%"></i></span>'
+        + '<span>' + (bt.name || '') + ' ' + bv + '</span></div>';
+      /* 结伴（2026-11-15）：它的朋友（可能在别的页面上） */
+      const fn = friendName(friendOf(c));
+      if (fn) html += '<div class="farm-cmenu-friend">朋友：' + fn + '</div>';
       /* 菜单项：每项都对应一个**立刻见效**的动作 */
       const items = [
         { id: 'talk', label: '摸摸头', act: () => poke(c) },
@@ -2751,6 +2871,8 @@ const root = document.getElementById('farm');
       addFull(c, FULL_EAT);
       addMood(c, Math.round(MOOD_EAT / 2));
       addGrowth(c, STAGE_BOOST.eat);
+      addBond(c, 'feed');
+      bumpDaily('feed');
       c.eatCool = 1.2;
       c.lastSeen = Date.now();
       bubble(c.x, c.y, '好好吃～');
@@ -2761,6 +2883,8 @@ const root = document.getElementById('farm');
       addClean(c, CLEAN_WATER);
       addMood(c, Math.round(MOOD_WATER / 2));
       addGrowth(c, STAGE_BOOST.water);
+      addBond(c, 'wash');
+      bumpDaily('wash');
       c.lastSeen = Date.now();
       bubble(c.x, c.y, '洗得香喷喷～');
       play((t) => cluck(t, c.breed.f * rand(1.02, 1.06), 0.11));
@@ -2775,7 +2899,296 @@ const root = document.getElementById('farm');
       else if (k < CLEAN_LOW) tip += '\n我脏了，添点水吧';
       else if (m < MOOD_LOW) tip += '\n我有点蔫，陪我说说话';
       if (g) tip += '\n' + g;
+      /* 熟络：它跟你的关系也报一下（玩家得看得见自己养到了什么程度） */
+      const bt = bondTier(c);
+      if (bt && bt.name) tip += '\n' + bt.name + '：' + (bt.line || '');
       bubble(c.x, c.y, tip, 3200);
+    }
+
+    /* ===== 今日三件事（2026-11-15 夜）=====
+       借 Puppy Park 的「每日挑战」：每天几件小事，做完给奖励，**没有失败**。
+
+       三条规矩：
+       1) **不惩罚不上线的人**：过完一天自动换新，昨天没做完什么都不扣，
+          只是连续天数断了 —— 跟成长机制同一条底线。
+       2) **新访客不能对着空场**：没有鸡的时候只抽「不需要鸡」的事
+          （pack 里每条任务有 requires：none / chicken）。
+       3) **进度是真的**：挂在玩家**真做过的事**上（摸头 / 喂 / 添水 / 下蛋 /
+          逛站 / 起名 / 逗它 / 听它说话 / 打听消息 / 打开地图）。
+
+       跨标签页：抽哪三件事**按日期定种**（同一天 → 同一串随机数），
+       所以两个标签页看到的任务一样；进度合并时取大的那个。 */
+    function dailyKey() {
+      const d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    }
+    /* 定种随机：同一个种子 → 同一串数（跨标签页一致，不用联网） */
+    function seededRnd(seed) {
+      let s = 0;
+      const str = String(seed);
+      for (let i = 0; i < str.length; i++) s = (Math.imul(s, 31) + str.charCodeAt(i)) >>> 0;
+      return function () {
+        s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+        return s / 4294967296;
+      };
+    }
+    function dailyCfg() {
+      const C = DAILY_CFG || {};
+      return {
+        enabled: !!DAILY_CFG && C.enabled !== false,
+        count: Math.max(1, Math.min(5, Number(C.count) || 3)),
+        pool: (Array.isArray(C.pool) ? C.pool : []).filter((it) => it && it.id && it.label),
+        doneLines: Array.isArray(C.doneLines) ? C.doneLines : [],
+        allLines: Array.isArray(C.allLines) ? C.allLines : [],
+        streakReward: (C.streakReward && typeof C.streakReward === 'object') ? C.streakReward : {},
+        streakLines: Array.isArray(C.streakLines) ? C.streakLines : [],
+      };
+    }
+    /* 抽今天的三件事：先按「有没有鸡」过滤，再按日期定种抽（不重复） */
+    function rollDailyItems(C, day) {
+      const hasChick = state.chickens.some((r) => r && !r.stowed);
+      const ok = C.pool.filter((it) => (it.requires !== 'chicken') || hasChick);
+      const rnd = seededRnd(day + '|' + C.count + '|' + ok.length);
+      const bag = ok.slice();
+      const out = [];
+      while (out.length < C.count && bag.length) {
+        const i = Math.floor(rnd() * bag.length) % bag.length;
+        out.push(bag.splice(i, 1)[0]);
+      }
+      return out.map((it) => ({
+        id: String(it.id),
+        label: String(it.label),
+        goal: Math.max(1, Number(it.goal) || 1),
+        prog: 0,
+        done: false,
+        reward: (it.reward && typeof it.reward === 'object') ? it.reward : {},
+      }));
+    }
+    /* 今天的小事：跨天自动换新（什么都不扣） */
+    function dailyState() {
+      const C = dailyCfg();
+      if (!C.enabled) return null;
+      if (!state.daily || typeof state.daily !== 'object') state.daily = { day: '', items: [], streak: 0, best: 0 };
+      const D = state.daily;
+      if (!Array.isArray(D.items)) D.items = [];
+      if (typeof D.streak !== 'number') D.streak = 0;
+      if (typeof D.best !== 'number') D.best = 0;
+      const today = dailyKey();
+      if (D.day !== today) {
+        /* 昨天没做完 → 连续天数断了（**不扣东西**：只是连续没了） */
+        if (D.day && (!D.items.length || !D.items.every((it) => it.done))) D.streak = 0;
+        D.day = today;
+        D.items = rollDailyItems(C, today);
+        save();   // 换新了 → 落盘（不然关掉页面又抽一次）
+      }
+      return D;
+    }
+    function dailyDoneCount(D) {
+      if (!D || !Array.isArray(D.items)) return 0;
+      let n = 0;
+      for (const it of D.items) if (it.done) n += 1;
+      return n;
+    }
+    /* 奖励当场兑现：蛋数 / 心情立刻跳（规矩 3） */
+    function giveDailyReward(reward) {
+      const r = reward && typeof reward === 'object' ? reward : {};
+      if (r.egg) state.eggs = tallyAdd(state.tally.eggs, Math.max(1, r.egg | 0));
+      if (r.mood) {
+        const live = flock.filter((c) => !c.dead && c.mode !== 'leave' && c.rec);
+        for (const c of live) addMood(c, r.mood);
+      }
+    }
+    /* 玩家做了一件事 → 对应那条小事往前走一格；做完了发奖励 + 鸡说一句 */
+    function bumpDaily(kind, n) {
+      const D = dailyState();
+      if (!D || !D.items.length) return null;
+      const C = dailyCfg();
+      let hit = null;
+      for (const it of D.items) {
+        if (it.done || it.id !== kind) continue;
+        it.prog = (it.prog | 0) + (n || 1);
+        if (it.prog >= it.goal) { it.prog = it.goal; it.done = true; hit = it; }
+        break;   // 一件事只对一条（不重复计数）
+      }
+      if (!hit) return null;
+      giveDailyReward(hit.reward);
+      const live = flock.filter((c) => !c.dead && c.mode !== 'leave');
+      if (live.length) {
+        const c = live[(Math.random() * live.length) | 0];
+        if (C.doneLines.length) bubble(c.x, c.y, C.doneLines[(Math.random() * C.doneLines.length) | 0], 2600);
+      }
+      /* 三条全做完 → 额外奖励 + 连续天数 +1 */
+      if (D.items.every((it) => it.done)) {
+        D.streak = (D.streak | 0) + 1;
+        D.best = Math.max(D.best | 0, D.streak | 0);
+        giveDailyReward(C.streakReward);
+        const live2 = flock.filter((c) => !c.dead && c.mode !== 'leave');
+        if (live2.length) {
+          const c = live2[(Math.random() * live2.length) | 0];
+          const all = C.allLines.length ? C.allLines[(Math.random() * C.allLines.length) | 0] : '';
+          let txt = all;
+          if (C.streakLines.length) txt += '\n' + C.streakLines[(Math.random() * C.streakLines.length) | 0].replace('{N}', String(D.streak));
+          bubble(c.x, c.y, txt, 3600);
+        }
+      }
+      save();
+      refreshHUD();
+      return hit;
+    }
+
+    /* ===== 熟络（2026-11-15 夜）=====
+       玩家跟**每一只**鸡各有一个关系值（0~100）。
+       照顾它 → 涨；涨到不同档 → 说话的语气、看你鼠标的积极性都变。
+       速度与上限按品种脾气走（怕生的慢热，黏人的最快）——
+       所以「黏人」和「矜持」两只鸡养到亲密要花的功夫完全不一样。 */
+    function bondCfg() {
+      const C = BOND_CFG || {};
+      return {
+        enabled: !!BOND_CFG && C.enabled !== false,
+        gain: (C.gain && typeof C.gain === 'object') ? C.gain : {},
+        tiers: (Array.isArray(C.tiers) ? C.tiers : []).filter((t) => t && t.key),
+        moodBonus: (C.moodBonus && typeof C.moodBonus === 'object') ? C.moodBonus : {},
+        talkBoost: (C.talkBoost && typeof C.talkBoost === 'object') ? C.talkBoost : {},
+        chaseBoost: (C.chaseBoost && typeof C.chaseBoost === 'object') ? C.chaseBoost : {},
+      };
+    }
+    function bondOf(c) {
+      return (c && c.rec && typeof c.rec.bond === 'number') ? c.rec.bond : 0;
+    }
+    function bondTier(c) {
+      const C = bondCfg();
+      let t = C.tiers[0] || { at: 0, key: 'stranger', name: '生疏', line: '' };
+      const v = bondOf(c);
+      for (const x of C.tiers) if (v >= (Number(x.at) || 0)) t = x;
+      return t;
+    }
+    function bondTierKey(c) { return bondTier(c).key; }
+    /* 照顾一下 → 熟络涨；跨档时它说一句（玩家看得见关系变了） */
+    function addBond(c, kind) {
+      const C = bondCfg();
+      if (!C.enabled || !c || !c.rec) return 0;
+      const g = Number(C.gain[kind]);
+      if (!(g > 0)) return 0;
+      const tp = c.breed && c.breed.temper;
+      const rate = (tp && typeof tp.bondRate === 'number') ? tp.bondRate : 1;
+      const cap = (tp && typeof tp.bondCap === 'number') ? tp.bondCap : 100;
+      const before = bondOf(c);
+      const beforeKey = bondTierKey(c);
+      const after = Math.min(cap, 100, before + g * rate);
+      if (after <= before) return 0;
+      c.rec.bond = after;
+      c.rec.bondAt = Date.now();
+      if (bondTierKey(c) !== beforeKey) {
+        const t = bondTier(c);
+        if (t.line) bubble(c.x, c.y, t.line, 2800);
+      }
+      return after - before;
+    }
+    /* 档位带来的加成 */
+    function bondMoodMul(c) {
+      const m = Number(bondCfg().moodBonus[bondTierKey(c)]);
+      return m > 0 ? m : 1;
+    }
+    function bondTalkMul(c) {
+      const m = Number(bondCfg().talkBoost[bondTierKey(c)]);
+      return m > 0 ? m : 1;
+    }
+    function bondChaseMul(c) {
+      const m = Number(bondCfg().chaseBoost[bondTierKey(c)]);
+      return m > 0 ? m : 1;
+    }
+
+    /* ===== 结伴（2026-11-15 夜）=====
+       两只脾气合得来的鸡自己走近 → 交上朋友。
+       「合得来」在 pack.json 的 social.compat（按品种列相容的品种）。
+       结伴之后互相打招呼、心情互相牵引（一只好 → 另一只也沾一点）。
+       **不是玩家点出来的** —— 是鸡自己的事，页面因此有「活着」的感觉。 */
+    function socialCfg() {
+      const C = SOCIAL_CFG || {};
+      return {
+        enabled: !!SOCIAL_CFG && C.enabled !== false,
+        radius: Math.max(16, Number(C.radius) || 40),          // 走近到多少像素就算交上朋友
+        seekTimeoutMs: Math.max(3000, (Number(C.seekTimeoutSec) || 25) * 1000),
+        lines: Array.isArray(C.lines) ? C.lines : [],
+        compat: (C.compat && typeof C.compat === 'object') ? C.compat : {},
+      };
+    }
+    function friendOf(c) { return (c && c.rec && typeof c.rec.friend === 'string') ? c.rec.friend : ''; }
+    function friendName(id) {
+      if (!id) return '';
+      const r = (state.chickens || []).find((x) => x && x.id === id);
+      if (!r) return '';
+      const b = breedById(r.breed);
+      return nameOf(id) || (b ? b.name : '');
+    }
+    function socialCompatible(a, b) {
+      const m = socialCfg().compat;
+      const la = Array.isArray(m[a.breed.id]) ? m[a.breed.id] : [];
+      const lb = Array.isArray(m[b.breed.id]) ? m[b.breed.id] : [];
+      return la.indexOf(b.breed.id) >= 0 || lb.indexOf(a.breed.id) >= 0;
+    }
+    /* 谁去找谁：爱说话/爱热闹的那只更主动（talky 大的优先） */
+    function socialSeek(a, b) {
+      const ta = (a.breed && a.breed.temper && a.breed.temper.talky) || 0;
+      const tb = (b.breed && b.breed.temper && b.breed.temper.talky) || 0;
+      const seeker = ta >= tb ? a : b;
+      const target = seeker === a ? b : a;
+      if (seeker.friendSeek) return false;   // 已经在找别人了
+      seeker.friendSeek = target.id;
+      seeker.friendSeekAt = Date.now();
+      seeker.chaseTarget = false;
+      seeker.grainTarget = null;
+      seeker.plateTarget = null;
+      seeker.mode = 'walk';
+      return true;
+    }
+    /* 成交：建立朋友关系 + 说一句话 */
+    function makeFriends(c, f) {
+      const C = socialCfg();
+      if (!c || !f || !c.rec || !f.rec) return false;
+      if (c.rec.friend || f.rec.friend) { c.friendSeek = ''; f.friendSeek = ''; return false; }
+      c.rec.friend = f.id;
+      f.rec.friend = c.id;
+      const now = Date.now();
+      c.rec.friendAt = now;
+      f.rec.friendAt = now;
+      c.friendSeek = '';
+      f.friendSeek = '';
+      BEHAVIOR_COUNTS.social = (BEHAVIOR_COUNTS.social || 0) + 1;
+      if (C.lines.length) bubble(c.x, c.y, C.lines[(Math.random() * C.lines.length) | 0], 3000);
+      save();
+      return true;
+    }
+    /* 每 2 秒看一眼：有没有两只合得来的鸡还没朋友 → 让一只走过去找另一只。
+       为什么不是「碰巧走近就算」：鸡一上场就各自随机走开（实测两只鸡 8 秒里从没靠近到 95px），
+       靠巧合结伴等于这功能永远不发生。改成「一只主动走过去」——
+       这才像「鸡自己交上朋友」，而且一定发生。 */
+    function checkSocial() {
+      const C = socialCfg();
+      if (!C.enabled) return 0;
+      const live = flock.filter((c) => !c.dead && c.mode !== 'leave' && c.rec);
+      let n = 0;
+      for (let i = 0; i < live.length; i++) {
+        for (let j = i + 1; j < live.length; j++) {
+          const a = live[i], b = live[j];
+          if (a.rec.friend || b.rec.friend) continue;
+          if (!socialCompatible(a, b)) continue;
+          if (socialSeek(a, b)) n += 1;
+        }
+      }
+      return n;
+    }
+    /* 结伴的两只鸡：对方心情好，自己也沾一点（每 5 秒一次） */
+    function socialNudge() {
+      const live = flock.filter((c) => !c.dead && c.mode !== 'leave' && c.rec);
+      if (!live.length) return;
+      for (const c of live) {
+        const fid = friendOf(c);
+        if (!fid) continue;
+        const f = live.find((x) => x.id === fid);
+        if (!f) continue;
+        if (chickMood(f) >= 60) addMood(c, 0.8);
+      }
     }
     /* 空闲冒泡：爱说话的品种自己开口（2026-11-14，品种脾气 talky）。
        原来鸡**只在被互动时说话**（摸它 / 喂它 / 洗它 / 快讯），空闲时一声不吭 ——
@@ -2794,7 +3207,9 @@ const root = document.getElementById('farm');
           ±40% 抖动），爱说话的保证开口，安静的偶尔插一句。 */
     function maybeIdleTalk(c) {
       const t = c.breed && c.breed.temper;
-      const rate = t && typeof t.talky === 'number' ? t.talky : 0;
+      const base = t && typeof t.talky === 'number' ? t.talky : 0;
+      /* 熟络到「亲密」→ 更愿意跟你说话（×1.4，在 pack 的 bond.talkBoost 里） */
+      const rate = base * bondTalkMul(c);
       if (!(rate > 0)) return;
       const now = performance.now();
       /* 第一次开口的延迟：随机开，别所有鸡一上来就挤在一起开口；
@@ -2817,6 +3232,7 @@ const root = document.getElementById('farm');
         per.talk = (per.talk || 0) + 1;
       }
       bubble(c.x, c.y, v[Math.floor(Math.random() * v.length)], 2600);
+      bumpDaily('talk');   // 今天的小事：听它自己说话
     }
 
     function poke(c) {
@@ -2828,16 +3244,22 @@ const root = document.getElementById('farm');
       }
       /* 台词：品种有专属台词（pack.json 的 breeds[].voice）就优先用它 ——
          9 个品种说话不一样，是「9 只鸡」和「一只鸡的 9 个皮肤」的区别。
+         熟络到「亲密」之后改说 breeds[].voiceClose —— 语气不一样，玩家听得出来。
          没有专属台词的品种才回落到 rareLines / 全局 lines。 */
-      const breedVoice = (c.breed && c.breed.voice && c.breed.voice.length) ? c.breed.voice : null;
+      const closeV = (c.breed && c.breed.voiceClose && c.breed.voiceClose.length) ? c.breed.voiceClose : null;
+      const breedVoice = (closeV && bondTierKey(c) === 'close')
+        ? closeV
+        : ((c.breed && c.breed.voice && c.breed.voice.length) ? c.breed.voice : null);
       const line = breedVoice
         ? breedVoice[Math.floor(Math.random() * breedVoice.length)]
         : (RARE_LINES[c.breed.id] && Math.random() < 0.7 ? RARE_LINES[c.breed.id] : LINES[Math.floor(Math.random() * LINES.length)]);
       /* 第二行报成长进度（没长大才有话说；成鸡了就说长大了） */
       const g = growthText(c);
       bubble(c.x, c.y, g ? `${line.replace('{E}', String(state.eggs))}\n${g}` : line.replace('{E}', String(state.eggs)), g ? 2600 : 0);
-      addMood(c, MOOD_TALK); // 跟它说句话，它就高兴一点
+      addMood(c, Math.round(MOOD_TALK * bondMoodMul(c))); // 跟它说句话，它就高兴一点（越熟越高兴）
       addGrowth(c, STAGE_BOOST.talk); // 说话也算照顾，能催大一点
+      addBond(c, 'poke');            // 熟络 +（跨档时它会自己说一句）
+      bumpDaily('poke');             // 今天的小事：摸摸头
       c.lastSeen = Date.now();
       /* poke = 品种音，发声处浮起视觉音符 */
       play((t) => {
@@ -3451,12 +3873,43 @@ const root = document.getElementById('farm');
       if (elClean) elClean.textContent = String(avgAxis(chickClean));
       const dexBtn = $('farm-btn-dexcard');
       if (dexBtn) dexBtn.hidden = found < BREEDS.length; // 集齐了才给图鉴卡
+      renderDaily();
       renderBook();
       if (state.eggs >= 1) {
         hint.classList.add('is-off');
         try { localStorage.setItem('mujing-farm-hint-off', '1'); } catch (_) {}
       }
       try { if (localStorage.getItem('mujing-farm-hint-off') === '1') hint.classList.add('is-off'); } catch (_) {}
+    }
+
+    /* 今日三件事：HUD 一颗小芯片（只报个数），细节在手册里一节。
+       规矩 12 的反面：条件不满足的入口要灰掉但仍可见 —— 这里芯片一直可见，
+       点它就翻到手册那一节。 */
+    function renderDaily() {
+      const chip = $('farm-btn-daily');
+      const num = $('farm-n-daily');
+      const box = $('farm-dailybox');
+      if (!chip || !num || !box) return;
+      const D = dailyState();
+      if (!D || !D.items.length) { chip.hidden = true; box.innerHTML = ''; return; }
+      const done = dailyDoneCount(D);
+      chip.hidden = false;
+      num.textContent = done + '/' + D.items.length;
+      chip.classList.toggle('is-all', done >= D.items.length);
+      let html = '<p class="farm-dailytitle">今天的小事</p>';
+      for (const it of D.items) {
+        const pct = Math.round(Math.min(1, (it.prog | 0) / Math.max(1, it.goal)) * 100);
+        html += '<div class="farm-dailyrow' + (it.done ? ' is-done' : '') + '">'
+          + '<span>' + it.label + '</span>'
+          + '<span class="farm-dailybar"><i style="width:' + pct + '%"></i></span>'
+          + '<span class="farm-dailyn">' + (it.done ? '完成' : (it.prog | 0) + '/' + it.goal) + '</span>'
+          + '</div>';
+      }
+      if (D.streak > 0) {
+        html += '<p class="farm-dailystreak">连续第 ' + D.streak + ' 天'
+          + (D.best > D.streak ? '（最多 ' + D.best + ' 天）' : '') + '</p>';
+      }
+      box.innerHTML = html;
     }
 
     /* 图鉴选中：点格子选中一只（再点同一只取消）。没手动选过时，默认圈第一只已发现的。 */
@@ -4303,6 +4756,9 @@ const root = document.getElementById('farm');
         state.pending.push({ kind: 'unlock', id: 'incubator' });
       }
       save();
+      bumpDaily('visit');                       // 今天的小事：逛逛作品页
+      /* 你来看它们 → 本页的鸡跟你更熟一点 */
+      for (const c of flock) if (c && c.rec && !c.dead && c.mode !== 'leave') addBond(c, 'visit');
       if (!root.hidden) redeemPending();
       else emitSay('你逛站的时候，鸡场都记着呢。');
     });
@@ -4559,6 +5015,8 @@ const root = document.getElementById('farm');
       }
       const item = fireEvent({ manual: true });
       if (!item) { bubble(c.x, c.y, '暂时没什么新消息。'); return false; }
+      addBond(c, 'news');
+      bumpDaily('news');
       return true;
     }
     /* 菜单项的现状：冷却中就灰掉，并把还差几秒写出来（条件要看得见） */
@@ -4760,9 +5218,18 @@ const root = document.getElementById('farm');
 
     /* 手册开合与两步确认重开 */
     $('farm-btn-book').addEventListener('click', () => { ensureAudio(); $('farm-book').hidden = !$('farm-book').hidden; updateAnnot(); });
+/* 今日小事的芯片 → 翻到手册里那一节（细节不挤在 HUD 上） */
+$('farm-btn-daily').addEventListener('click', () => {
+  ensureAudio();
+  const book = $('farm-book');
+  if (book) book.hidden = false;
+  updateAnnot();
+  const box = $('farm-dailybox');
+  if (box && book) book.scrollTop = Math.max(0, box.offsetTop - 14);
+});
     $('farm-book-x').addEventListener('click', () => { $('farm-book').hidden = true; });
     $('farm-book-scrim').addEventListener('click', () => { $('farm-book').hidden = true; });
-    $('farm-btn-map').addEventListener('click', openMap);
+    $('farm-btn-map').addEventListener('click', () => { openMap(); bumpDaily('map'); });
     $('farm-map-x').addEventListener('click', () => { $('farm-map').hidden = true; });
     $('farm-map-scrim').addEventListener('click', () => { $('farm-map').hidden = true; });
     document.addEventListener('keydown', (e) => {
@@ -5186,6 +5653,8 @@ const root = document.getElementById('farm');
     let raf = 0;
     let lastT = -1;
     let taskClock = 0;
+    /* 结伴的两个节拍（真实时钟，不用帧数 —— 帧率一低就漏） */
+    let socialAt = 0, nudgeAt = 0;
     /* 扩展点：外部模块（小游戏）把 update(dt) 挂进**这条** rAF —— 引擎只有一条 rAF，
        小游戏不新开（双 rAF 会和页面动画抢帧）。
        回调签名 (dt, t, api)：api.audio() 返回引擎已有的音频链路 { actx, master }，
@@ -5221,6 +5690,11 @@ const root = document.getElementById('farm');
         checkEventClock();                // 鸡场快讯：到点报一条
         checkWander();                    // 鸡自己出门逛：到点走一只
       }
+      /* 结伴：每 2 秒看一眼有没有两只合得来的鸡走到一起；
+         心情牵引每 5 秒一次。都按**真实时钟**算 —— 帧率一低就漏（跟空闲冒泡同一个坑）。 */
+      const nowMs = performance.now();
+      if (nowMs - socialAt > 2000) { socialAt = nowMs; checkSocial(); }
+      if (nowMs - nudgeAt > 5000) { nudgeAt = nowMs; socialNudge(); }
       /* 扩展点：遍历外部挂上来的 tick 回调（小游戏）。一个挂件炸了不能带塌引擎。 */
       const hooks = window.__coopTick;
       if (hooks && hooks.length) {
@@ -5683,6 +6157,17 @@ const root = document.getElementById('farm');
       byBreed: JSON.parse(JSON.stringify(BEHAVIOR_BY_BREED)), // 品种 → 次数（品种覆盖看得见）
       acts: flock.filter((c) => c && !c.dead).map((c) => ({ breed: (c.breed && c.breed.id) || '', act: c.act || '' })),
     }); // 行为表 + 分布：验收脚本靠它看「行为有没有变」
+    /* 进度台账（2026-11-15）：今日三件事 / 熟络 / 结伴 —— 验收脚本靠它看这三样有没有真的在动 */
+    window.__coopProgress = () => ({
+      daily: (state.daily && typeof state.daily === 'object') ? JSON.parse(JSON.stringify(state.daily)) : null,
+      bond: flock.filter((c) => c && c.rec).map((c) => ({
+        id: c.id, breed: (c.breed && c.breed.id) || '', bond: Math.round(bondOf(c)), tier: bondTierKey(c),
+      })),
+      friend: flock.filter((c) => c && c.rec).map((c) => ({
+        id: c.id, breed: (c.breed && c.breed.id) || '', friend: friendOf(c),
+      })),
+      chip: (() => { const n = $('farm-n-daily'); return n ? n.textContent : ''; })(),
+    });
   }
   /* 引擎真的起来了才占幂等名额（引擎块外面那个 window.__coop 句柄已经先给好了）。
      判据用 __coopSnapshot：它是引擎块跑到最后才落的根 ——

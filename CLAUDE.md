@@ -108,6 +108,28 @@
 - 权威源是引擎仓 `C:\coop-js`（`src/coop.js` + `packs/mujing/pack.json`），
   官网的 `src/lib/coop/coop.js` 是 `npm run sync:site` 的**逐字副本，禁手改**。
 
+## 小鸡宇宙：今日三件事 / 熟络 / 结伴（2026-11-15 夜）
+- 补的是**目标、奖励、关系**三样（之前只有三轴、器物、快讯、地图、整理台、成长这些「慢变量」）。
+  参数同样**全在 pack.json**：`daily` / `bond` / `social` 三段 + `breeds[].temper.bondRate/bondCap`
+  + `breeds[].voiceClose`（亲密后的台词）。引擎只读不改。
+- **今日三件事**：每天抽三条小事（摸头/喂/添水/下蛋/逛站/起名/逗它/听它说话/打听消息/打开地图），
+  做完当场给蛋和心情，三条全完额外给 + 连续天数。
+  - **抽哪三条按日期定种**（`seededRnd(day|count|池长度)`）→ 两个标签页看到的一样，跨天自动换新。
+  - **不惩罚不上线的人**：跨天什么都不扣，只断连续天数。
+  - HUD 左下角多一颗芯片 `今日 0/3`，点它翻到手册里的「今天的小事」。
+- **熟络**：每只鸡一个关系值 0~100，四档（生疏/认识/熟悉/亲密）改**说话语气、摸头心情加成、
+  追鼠标半径、说话频率**。速度与上限按品种脾气（怕生 0.6 / 黏人 1.5 / 财迷上限 75）。
+  看得见：点鸡菜单一行「熟络 ▓▓▓▓░ 生疏 10」。
+- **结伴**：脾气合得来的两只鸡，**一只主动走过去**交上朋友（`social.compat` 决定谁跟谁合得来）。
+  - ⚠ **不能靠「碰巧走近」**：实测两只鸡 8 秒里从没靠近到 95px —— 鸡一上场就各自随机走开，
+    靠巧合这功能永远不发生。要做「一定会发生的玩法」，就得让角色**主动去做**那件事。
+- **跨标签页**：熟络/结伴是「谁新听谁的」型数据 → `recTs()` 里必须算上 `bondAt` / `friendAt`，
+  不然另一个标签页刚建立的关系会被旧副本盖回去（跟「名字被旧副本盖回」同一个坑）。
+- 验收脚本：`workspace/accept-goals.mjs`（真浏览器 26 项，含反向用例）。
+  - **写验收的两个坑**：① 老页面 unload 会 `flushSave()` 把账冲掉 → 先封住
+    `Storage.prototype.setItem` 再写账再刷新；② 点空地会下蛋 → 摸鸡要直接给鸡元素派 pointer 事件，
+    别用坐标（鸡会走）；③ `Page.addScriptToEvaluateOnNewDocument` 在这套 CDP 连接里**没生效**，别指望它。
+
 ## 小鸡宇宙的两个东西住哪儿（2026-11-07 定，别再搬）
 - **名册住在作品页里**：`/works/chicken-universe/` 的正文之后有一节名册
   （`src/components/Roster.astro`；作品内容里 `roster: true` 才渲染这一节）。
@@ -211,6 +233,11 @@
 - 复验方法：`node scripts/audit-badge.mjs --live`（问真模型，看徽标与回答）。
 
 ## 待用户/丽丽审的 PR（别重复做）
+- **#143（feature/breed-voice-temper，等你/丽丽点头）**：
+  小鸡宇宙「9 个品种各有各的声音和脾气」+「今日三件事 / 熟络 / 结伴」两刀合一。
+  预览 https://feature-breed-voice-temper.mujing-universe.pages.dev
+  引擎仓对应 PR：endtree-FDE/coop.js#9（已推送）。
+  验收：`workspace/accept-goals.mjs`（真浏览器 26 项全绿，含「故意搞坏」自证）。
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。
 - cursor/hero-no-autoplay：首页不自动播放，状态待确认。
