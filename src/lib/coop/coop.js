@@ -686,6 +686,8 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
     clip-path: polygon(3% 0, 97% 6%, 100% 55%, 96% 100%, 2% 94%, 0 45%);
   }
   .farm-cellct { font-size: 11px; color: color-mix(in srgb, var(--ink) 70%, transparent); }
+  /* 性格标签：手写小字，跟在品种名下面 */
+  .farm-celltemper { font-size: 10px; line-height: 1.3; color: color-mix(in srgb, var(--orange) 78%, var(--ink)); }
   .farm-rar { font-size: 10px; border: 1px solid var(--ink); border-radius: 6px; padding: 0 5px; background: var(--card); }
   .farm-rar-l { background: var(--orange); color: var(--white); border-color: var(--orange); }
   .farm-cardfoot { margin-top: 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -2251,7 +2253,7 @@ const root = document.getElementById('farm');
        表里没有的行为一律不做；表整个缺失 → 退回「只走路」，
        **不退回硬编码的默认频率** —— 那会让 pack.json 不再是唯一出处。 */
     const BEHAVIOR_ACTIONS = ['idle', 'peck', 'walk', 'seekFood', 'eatPlate', 'stand', 'chaseMouse'];
-    const BEHAVIOR_COUNTS = { idle: 0, peck: 0, walk: 0 }; // 累计次数（验收看分布用）
+    const BEHAVIOR_COUNTS = { idle: 0, peck: 0, walk: 0, talk: 0 }; // 累计次数（验收看分布用；talk = 主动开口次数）
     const BEHAVIOR_BY_BREED = {}; // 品种 → { idle, peck, walk }：哪只鸡最爱啄
     function normalizeBehaviors(raw) {
       const out = {};
@@ -2385,10 +2387,11 @@ const root = document.getElementById('farm');
       }
       if (act === 'peck') { peck(c); c.mode = 'wait'; c.wait = w; }
       else if (act === 'walk') { c.mode = 'walk'; newTarget(c); }
-      else { c.mode = 'wait'; c.wait = w; }   // idle：发呆
+      else { c.mode = 'wait'; c.wait = w; }   // idle：发呆（开口按时间走，见 maybeIdleTalk）
     }
 
     function stepChick(c, dt, t) {
+      maybeIdleTalk(c);   // 爱说话的品种自己开口（按真实时间，不等行为决策）
       if (c.mode === 'leave') {
         /* 装篮淡出中：站着别走，等计时器把它收掉（走出屏要十几秒，
            那段时间台上比上限多几只，面板上的数跟画面对不上） */
@@ -2774,6 +2777,48 @@ const root = document.getElementById('farm');
       if (g) tip += '\n' + g;
       bubble(c.x, c.y, tip, 3200);
     }
+    /* 空闲冒泡：爱说话的品种自己开口（2026-11-14，品种脾气 talky）。
+       原来鸡**只在被互动时说话**（摸它 / 喂它 / 洗它 / 快讯），空闲时一声不吭 ——
+       场上几只鸡一动不动地站着，像贴图。现在「爱说话」那几个品种会自己叽叽喳喳。
+
+       三个坑（都踩过，别再踩）：
+       1) **别挂在行为决策上**。鸡跑得慢（36~68 px/s，跨台一趟 20~30 秒），
+          行为决策很稀（一只鸡一分钟才轮到 1~2 次「发呆」），挂着等于永远不开口
+          （2026-11-14 实测 45 秒一句都没冒）。
+       2) **别用引擎的 dt 累加计时**。tick 里 dt 被钳在 0.05（防跳帧），
+          帧率一低引擎时钟就比真实时间慢 → 老设备上鸡就哑了。
+          冒泡按**真实时钟**走。
+       3) **别用「每秒抛一次骰子」**。那样是泊松分布：平均每分钟 5 句，
+          但完全可能**整整一分钟一句不出**，访客看着就是死气沉沉。
+          现在改成**排期制**：每只鸡排下一次开口的时间（平均间隔 = 60/talky 秒，
+          ±40% 抖动），爱说话的保证开口，安静的偶尔插一句。 */
+    function maybeIdleTalk(c) {
+      const t = c.breed && c.breed.temper;
+      const rate = t && typeof t.talky === 'number' ? t.talky : 0;
+      if (!(rate > 0)) return;
+      const now = performance.now();
+      /* 第一次开口的延迟：随机开，别所有鸡一上来就挤在一起开口；
+         但也别太晚 —— 访客刚打开鸡场，等 5 分钟才听见第一句话就跑了。 */
+      if (!c.nextTalkAt) {
+        c.nextTalkAt = now + rand(2000, 45000);
+        return;
+      }
+      if (now < c.nextTalkAt) return;
+      /* 说完了 → 排下一次：平均 60/rate 秒，±40% 抖动（下限 5 秒，别刷屏） */
+      c.nextTalkAt = now + Math.max(5000, (60000 / rate) * rand(0.6, 1.4));
+      const v = c.breed.voice;
+      if (!v || !v.length) return;
+      c.lastIdleTalk = now;
+      BEHAVIOR_COUNTS.talk = (BEHAVIOR_COUNTS.talk || 0) + 1;
+      /* 分品种记一句：验收要看「爱说话的那个品种说得最多」 */
+      const bk = (c.breed && c.breed.id) || '';
+      if (bk) {
+        const per = (BEHAVIOR_BY_BREED[bk] = BEHAVIOR_BY_BREED[bk] || {});
+        per.talk = (per.talk || 0) + 1;
+      }
+      bubble(c.x, c.y, v[Math.floor(Math.random() * v.length)], 2600);
+    }
+
     function poke(c) {
       if (!reduce) {
         c.inn.classList.remove('is-hop');
@@ -2781,7 +2826,13 @@ const root = document.getElementById('farm');
         c.inn.classList.add('is-hop');
         c.timers.push(window.setTimeout(() => c.inn.classList.remove('is-hop'), 520));
       }
-      const line = RARE_LINES[c.breed.id] && Math.random() < 0.7 ? RARE_LINES[c.breed.id] : LINES[Math.floor(Math.random() * LINES.length)];
+      /* 台词：品种有专属台词（pack.json 的 breeds[].voice）就优先用它 ——
+         9 个品种说话不一样，是「9 只鸡」和「一只鸡的 9 个皮肤」的区别。
+         没有专属台词的品种才回落到 rareLines / 全局 lines。 */
+      const breedVoice = (c.breed && c.breed.voice && c.breed.voice.length) ? c.breed.voice : null;
+      const line = breedVoice
+        ? breedVoice[Math.floor(Math.random() * breedVoice.length)]
+        : (RARE_LINES[c.breed.id] && Math.random() < 0.7 ? RARE_LINES[c.breed.id] : LINES[Math.floor(Math.random() * LINES.length)]);
       /* 第二行报成长进度（没长大才有话说；成鸡了就说长大了） */
       const g = growthText(c);
       bubble(c.x, c.y, g ? `${line.replace('{E}', String(state.eggs))}\n${g}` : line.replace('{E}', String(state.eggs)), g ? 2600 : 0);
@@ -3464,9 +3515,16 @@ const root = document.getElementById('farm');
         /* 盘上那一笔手绘色块：按稀有度取色（common 绿 / rare 蓝 / legendary 深红） */
         const tone = b.rarity === 'legendary' ? 'var(--red)' : b.rarity === 'rare' ? 'var(--blue)' : 'var(--green)';
         if (n > 0) {
-          html += `<div class="farm-cell" data-breed="${b.id}" style="--tone:${tone}" role="button" tabindex="0" aria-label="${b.name}，已养 ${n} 只">`
+          /* 性格（2026-11-14，品种脾气）：名字下面直接写这鸡是什么脾气，
+             鼠标悬停还有一句话说明 —— 脾气不该只藏在行为里，访客得看得见。 */
+          const tp = b.temper && b.temper.name ? b.temper : null;
+          const tps = tp ? `${tp.name} · ${tp.note || ''}` : '';
+          html += `<div class="farm-cell" data-breed="${b.id}" style="--tone:${tone}" role="button" tabindex="0" aria-label="${b.name}，${tps || '已养 ' + n + ' 只'}，已养 ${n} 只"`
+            + (tp ? ` title="${tps}"` : '') + '>'
             + `<div class="farm-cellimg">${chickVisual(b).outerHTML}</div>`
-            + `<div class="farm-cellname">${b.name}</div>${tag}<div class="farm-cellct">已养 ×${n}</div></div>`;
+            + `<div class="farm-cellname">${b.name}</div>${tag}`
+            + (tp ? `<div class="farm-celltemper">${tp.name}</div>` : '')
+            + `<div class="farm-cellct">已养 ×${n}</div></div>`;
         } else {
           html += `<div class="farm-cell" data-breed="${b.id}" style="--tone:${tone}" role="button" tabindex="0" aria-label="未发现的品种">`
             + `<div class="farm-cellimg">${chickSilhouette(b).outerHTML}</div>`
