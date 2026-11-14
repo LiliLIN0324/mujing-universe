@@ -247,7 +247,10 @@
   小鸡宇宙「9 个品种各有各的声音和脾气」+「今日三件事 / 熟络 / 结伴」两刀合一。
   预览 https://feature-breed-voice-temper.mujing-universe.pages.dev
   引擎仓对应 PR：endtree-FDE/coop.js#9（已推送）。
-  验收：`workspace/accept-goals.mjs`（真浏览器 26 项全绿，含「故意搞坏」自证）。
+  验收：`workspace/accept-goals.mjs`（真浏览器 **33 项**全绿，含「故意搞坏」自证）。
+  Cloudflare Pages / Cursor Approval / Cursor Security **三项全绿**，就差 approve + 合并。
+  合并：`gh pr merge 143 -R LiliLIN0324/mujing-universe --squash --delete-branch`
+  （approve 用 `LiliLIN0324`，合并用 `endtree-FDE`；**approve 必须在最后一次 push 之后**）。
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。
 - cursor/hero-no-autoplay：首页不自动播放，状态待确认。
