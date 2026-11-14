@@ -172,14 +172,21 @@
   站内链接白名单（前后端各一份）、保密口径「公开到进行中为止」、functions/ 自检；
   #137 新闻页加浙江音乐学院专题报道；#138 暗色模式快捷问题看不见 + 手机端头像压住按钮；
   #139 面板徽标从「演示」改成「在线」（真模型答了写在线，本地模板/降级/失败退回演示）；
-  #140 提示词禁止模型自造网址或域名（线上实测它编过 https://www.mujing.com）。
-  六条都已合并 main。
+  #140 提示词禁止模型自造网址或域名（线上实测它编过 https://www.mujing.com）；
+  #141 把这次的 CDP 体检脚本固化进仓库（`npm run audit:dark` / `npm run audit:badge`）。
+  七条都已合并 main。
+
+## 已知：模型偶尔还是会自造域名（2026-11-14 复验后记下）
+- 提示词已经禁止模型写网址（#140），但 8B 偶尔不听话 —— 三问里问出过一次
+  `https://scendance.cn`（照着作品 slug 编的）。
+- **访客点不到**：服务端白名单会把它剥成纯文字，客户端 `linkify` 也只给白名单内的
+  地址做 `<a>`；实测访客看到的是「我们官网是 幕景 Scendance」+ 站内链接。
+- **为什么先不动服务端**：把回答里的域名一律删掉会伤语义 ——
+  访客自己问「scendance.cn 是你们的站吗」，模型引用这个域名时会被删没。
+  等换上 32B / 云端模型后再复验，大概率自己就好了。
+- 复验方法：`node scripts/audit-badge.mjs --live`（问真模型，看徽标与回答）。
 
 ## 待用户/丽丽审的 PR（别重复做）
-- **#141 feat/mimi-audit-scripts**：把这次的 CDP 验收脚本固化进仓库
-  （`scripts/audit-mobile-dark.mjs`、`scripts/audit-badge.mjs`、`scripts/cdp-lib.mjs`），
-  自己起 headless Edge、用完关掉，不需要 key、不依赖 npm 包。
-  改暗色模式或动 Mimi 面板之后，跑一遍就知道有没有把文字做成读不出来的样子。
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。
 - cursor/hero-no-autoplay：首页不自动播放，状态待确认。
