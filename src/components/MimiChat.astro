@@ -1025,6 +1025,13 @@ const email = 'lily1326685527@gmail.com';
       note.textContent = '（暂时只能用常见答案回复你）';
       item.append(note);
     }
+    /* 面板标题旁的徽标：真模型答了就写「在线」，走了本地模板或上游挂了退回「演示」。
+       别让访客以为真模型的回答是假的，也别假装还在线。 */
+    function setBadge(online) {
+      const el = root.querySelector('.mimi-demo');
+      if (!el) return;
+      el.textContent = online ? '在线' : '演示';
+    }
     function appendButlerEl() {
       const item = document.createElement('div');
       item.className = 'mimi-msg bot is-butler';
@@ -1533,6 +1540,7 @@ const email = 'lily1326685527@gmail.com';
         const fb = butlerLocal(text);
         if (fb) { reply = fb.text; if (fb.cmd) cmdsOverride = [fb.cmd]; }
       }
+      setBadge(!result.demo && !result.failed && !result.degraded);
       const { shown, cmds: foundCmds } = stripMarks(reply);
       const cmds = cmdsOverride || foundCmds;
       llmTurns.push({ role: 'assistant', content: shown });
@@ -1610,6 +1618,9 @@ const email = 'lily1326685527@gmail.com';
         streamed = false;
       }
       const { reply, showCoop, failed, degraded } = result;
+      /* 徽标跟着这一轮的实际来路走：真模型答的写「在线」，
+         本地模板、上游限流降级、或这轮失败，都退回「演示」。 */
+      setBadge(!result.demo && !failed && !degraded);
       const after = () => { if (showCoop) showCoopCard(); };
       if (failed) {
         setState('error');
