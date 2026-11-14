@@ -421,8 +421,17 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   /* daily chores: one chip in the HUD, detail in the manual card.
      The chip sits right after the brand on purpose: the HUD pill scrolls
      horizontally, so anything placed last is off-screen on a phone
-     (390px viewport) — the daily goal is the reason to come back, it has to be seen. */
-  .farm-stat.farm-daily { font: inherit; font-weight: 600; cursor: pointer; border-radius: 4px; }
+     (390px viewport) — the daily goal is the reason to come back, it has to be seen.
+     ⚠ Two traps here (both cost a round-trip):
+       - "font: inherit" **resets font-size** → the chip came out 17px instead of 12px.
+         Set font-family/size/weight separately.
+       - a bare <button> takes the UA buttontext colour, which under the site's
+         color-scheme: dark resolves to **white** → white text on a light card
+         = invisible. Set "color: var(--ink)" explicitly. */
+  .farm-stat.farm-daily {
+    font-family: inherit; font-size: 12px; font-weight: 600;
+    color: var(--ink); cursor: pointer; border-radius: 4px;
+  }
   .farm-stat.farm-daily:hover { background: var(--yellow); }
   .farm-stat.farm-daily:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   .farm-stat.farm-daily.is-all { color: var(--green); }
