@@ -171,6 +171,13 @@
   默认用 CDP 拦下 `/api/chat` 喂假的 SSE / 502（不需要 key）；
   `--live` 才去问线上真模型。
 - 共享部分在 `scripts/cdp-lib.mjs`（起浏览器 + 连 CDP，Node 18+ 自带 WebSocket，无 npm 依赖）。
+- **「测不出来」先怀疑测量手段，别急着改业务代码**（2026-11-15 踩了两遍）：
+  1. **页面被冻住**：`document.hidden === true` → rAF 被节流到 0 → 页面根本没跑帧。
+     本机 Edge 启动会弹 `edge://sync-confirmation-dialog/` 抢前台，我们的标签页就变 hidden。
+     `cdp-lib.mjs` 的 `startBrowser()` 现在会 `Page.bringToFront` 拉回来。
+  2. **长时间页面内 evaluate**：在页面里 `await` 一个长 promise 会把 rAF/定时器整个冻住
+     （实测 20 秒内引擎决策数 +0）。**等待要放在 Node 侧**，页面侧只发短 evaluate。
+- 验引擎/鸡场是否活着，看 `window.__coopBehaviors().counts`（idle/peck/walk 累计）涨没涨。
 - 体检脚本**必须能查出问题**才算数：改坏一行 CSS 跑一遍，它得报错退出 1。
 
 ## 行尾约定（别擅自改）
