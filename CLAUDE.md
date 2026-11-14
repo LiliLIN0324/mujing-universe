@@ -118,6 +118,7 @@
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。
 - cursor/hero-no-autoplay：首页不自动播放，状态待确认。
+- feat/news-zjcm-2026：新闻页加一条浙江音乐学院的专题报道（丁科智，2026-11-13），封面用文章里的肖像照。
 
 ## 下一步（顺序）
 1. 作品库「代表作」：6–8 件精选 + 折叠的全部作品归档（参考 Marshmallow Laser Feast 的 FEATURES / ALL WORKS）。先出效果图给用户看。
