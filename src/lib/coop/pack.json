@@ -86,7 +86,33 @@
             "h": 140
           }
         ]
-      }
+      },
+      "voice": [
+        "诶？那是什么？我看看。",
+        "先说好，我不是鸡，我是宇宙一号。",
+        "我什么都能试一下，你呢？",
+        "这个有意思！",
+        "别关我，我还在研究。"
+      ],
+      "temper": {
+        "key": "curious",
+        "name": "好奇",
+        "note": "什么都要凑过去看一眼",
+        "talky": 0.5,
+        "bondRate": 1.1,
+        "bondCap": 100
+      },
+      "behaviors": {
+        "chaseMouse": {
+          "radius": 240,
+          "cooldown": 6
+        }
+      },
+      "voiceClose": [
+        "你终于来啦！我发现了个新东西，想讲给你听。",
+        "别走别走，我给你看我今天看见的。",
+        "你身上有股好闻的味道。"
+      ]
     },
     {
       "id": "butter",
@@ -165,7 +191,35 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "有米吗？有米吗？",
+        "先吃饭，别的等会儿说。",
+        "刚吃了三顿，还是有点饿。",
+        "你手上那把米，是我的吧？",
+        "饱了饱了，这回真饱了。"
+      ],
+      "temper": {
+        "key": "greedy",
+        "name": "贪吃",
+        "note": "见米就走，别的往后排",
+        "talky": 0.4,
+        "bondRate": 1.3,
+        "bondCap": 80
+      },
+      "behaviors": {
+        "idle": {
+          "frequency": 18
+        },
+        "walk": {
+          "frequency": 52
+        }
+      },
+      "voiceClose": [
+        "你手里是不是有米？",
+        "先吃饭，再聊天。",
+        "吃饱了才有力气喜欢你。"
+      ]
     },
     {
       "id": "mist",
@@ -244,7 +298,35 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "……",
+        "你太近啦。",
+        "我在这儿，不打扰你们。",
+        "雾里看不清，但我看得见你。",
+        "别追我。"
+      ],
+      "temper": {
+        "key": "shy",
+        "name": "怕生",
+        "note": "你一靠近它就退",
+        "talky": 0.2,
+        "bondRate": 0.6,
+        "bondCap": 100
+      },
+      "behaviors": {
+        "chaseMouse": {
+          "enabled": false
+        },
+        "walk": {
+          "frequency": 50
+        }
+      },
+      "voiceClose": [
+        "你……你不会走远吧？",
+        "我有点怕，但我信你。",
+        "别突然吓我，慢慢来。"
+      ]
     },
     {
       "id": "persimmon",
@@ -323,7 +405,32 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "今天天气不错对吧？我就说一句。",
+        "你今天来啦？昨天也来了吧？",
+        "我跟你说，隔壁那只特别能吃。",
+        "别走嘛，再聊两句。",
+        "有事说事，没事我也能说。"
+      ],
+      "temper": {
+        "key": "chatty",
+        "name": "爱说话",
+        "note": "闲不住，自己会找你聊",
+        "talky": 1.2,
+        "bondRate": 1.4,
+        "bondCap": 80
+      },
+      "behaviors": {
+        "idle": {
+          "frequency": 40
+        }
+      },
+      "voiceClose": [
+        "来啦来啦！我有一堆话要说。",
+        "你听我说嘛——",
+        "跟你讲话最开心了。"
+      ]
     },
     {
       "id": "bean",
@@ -402,7 +509,35 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "等等，我还没梳好。",
+        "今天羽毛很干净，谢谢你。",
+        "水在哪？我要去洗洗。",
+        "沾到泥了，帮我看看。",
+        "干净最舒服了。"
+      ],
+      "temper": {
+        "key": "clean",
+        "name": "爱干净",
+        "note": "总在梳毛，一天要洗好几回",
+        "talky": 0.3,
+        "bondRate": 1,
+        "bondCap": 90
+      },
+      "behaviors": {
+        "idle": {
+          "frequency": 22
+        },
+        "peck": {
+          "frequency": 36
+        }
+      },
+      "voiceClose": [
+        "我刚梳过毛，你闻闻。",
+        "这里有点脏了，我不喜欢。",
+        "你也要讲卫生哦。"
+      ]
     },
     {
       "id": "peach",
@@ -481,7 +616,33 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "你去哪儿？我也去。",
+        "带上我嘛。",
+        "我在这儿等你好久了。",
+        "你回来啦！",
+        "走哪儿都一起，好不好？"
+      ],
+      "temper": {
+        "key": "clingy",
+        "name": "黏人",
+        "note": "你去哪儿它去哪儿",
+        "talky": 0.9,
+        "bondRate": 1.5,
+        "bondCap": 95
+      },
+      "behaviors": {
+        "chaseMouse": {
+          "radius": 200,
+          "interruptRadius": 140
+        }
+      },
+      "voiceClose": [
+        "你去哪儿我去哪儿。",
+        "别丢下我一个人。",
+        "我跟着你啦～"
+      ]
     },
     {
       "id": "noble",
@@ -560,7 +721,33 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "嗯，有事？",
+        "不必大惊小怪。",
+        "我只是路过，不是特意来的。",
+        "……好吧，是有点无聊。",
+        "你们继续，我看着就好。"
+      ],
+      "temper": {
+        "key": "proud",
+        "name": "矜持",
+        "note": "不轻易凑过来，装作路过",
+        "talky": 0.25,
+        "bondRate": 0.5,
+        "bondCap": 100
+      },
+      "behaviors": {
+        "chaseMouse": {
+          "radius": 90,
+          "cooldown": 20
+        }
+      },
+      "voiceClose": [
+        "……你来了。坐吧。",
+        "我可不是随便谁都能靠近的。",
+        "哼，也只有你了。"
+      ]
     },
     {
       "id": "ingot",
@@ -639,7 +826,35 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "今天第几颗蛋了？算了，我自己数。",
+        "这蛋我先收着。",
+        "会下蛋的鸡，才叫好鸡。",
+        "金币不嫌多。",
+        "别动我的蛋。"
+      ],
+      "temper": {
+        "key": "greedygold",
+        "name": "财迷",
+        "note": "只关心蛋，别动我的蛋",
+        "talky": 0.35,
+        "bondRate": 0.9,
+        "bondCap": 75
+      },
+      "behaviors": {
+        "idle": {
+          "frequency": 20
+        },
+        "peck": {
+          "frequency": 20
+        }
+      },
+      "voiceClose": [
+        "今天的蛋还没捡吧？",
+        "别动我的蛋。",
+        "发财的事，路上说。"
+      ]
     },
     {
       "id": "fu",
@@ -722,7 +937,33 @@
             "cell": 8
           }
         ]
-      }
+      },
+      "voice": [
+        "过年好！给你拜个早年。",
+        "好消息我先知道！",
+        "热闹的事算我一份。",
+        "新年要红红火火。",
+        "来来来，一起热闹热闹。"
+      ],
+      "temper": {
+        "key": "festive",
+        "name": "爱热闹",
+        "note": "有好事自己第一个冲",
+        "talky": 1,
+        "bondRate": 1.2,
+        "bondCap": 85
+      },
+      "behaviors": {
+        "chaseMouse": {
+          "radius": 220,
+          "cooldown": 8
+        }
+      },
+      "voiceClose": [
+        "有热闹我第一个到！",
+        "过年啦过年啦！",
+        "来来来，一起热闹热闹！"
+      ]
     }
   ],
   "weights": {
@@ -1549,5 +1790,233 @@
         ]
       }
     }
+  },
+  "daily": {
+    "enabled": true,
+    "count": 3,
+    "pool": [
+      {
+        "id": "lay",
+        "label": "点空白下个蛋",
+        "goal": 2,
+        "requires": "none",
+        "reward": {
+          "mood": 4
+        }
+      },
+      {
+        "id": "visit",
+        "label": "逛逛作品页",
+        "goal": 1,
+        "requires": "none",
+        "reward": {
+          "egg": 1
+        }
+      },
+      {
+        "id": "map",
+        "label": "打开鸡场地图",
+        "goal": 1,
+        "requires": "none",
+        "reward": {
+          "mood": 6
+        }
+      },
+      {
+        "id": "poke",
+        "label": "摸摸头",
+        "goal": 3,
+        "requires": "chicken",
+        "reward": {
+          "egg": 1
+        }
+      },
+      {
+        "id": "feed",
+        "label": "喂一口",
+        "goal": 2,
+        "requires": "chicken",
+        "reward": {
+          "mood": 6
+        }
+      },
+      {
+        "id": "wash",
+        "label": "添点水",
+        "goal": 2,
+        "requires": "chicken",
+        "reward": {
+          "egg": 1
+        }
+      },
+      {
+        "id": "talk",
+        "label": "听它自己说话",
+        "goal": 2,
+        "requires": "chicken",
+        "reward": {
+          "mood": 8
+        }
+      },
+      {
+        "id": "chase",
+        "label": "用鼠标逗它玩",
+        "goal": 1,
+        "requires": "chicken",
+        "reward": {
+          "mood": 6
+        }
+      },
+      {
+        "id": "name",
+        "label": "给一只鸡起名",
+        "goal": 1,
+        "requires": "chicken",
+        "reward": {
+          "egg": 1
+        }
+      },
+      {
+        "id": "news",
+        "label": "打听鸡场消息",
+        "goal": 1,
+        "requires": "chicken",
+        "reward": {
+          "egg": 1,
+          "mood": 4
+        }
+      }
+    ],
+    "doneLines": [
+      "今天这件小事做完啦～",
+      "又办成一件！",
+      "小事也是事。"
+    ],
+    "allLines": [
+      "今天的三件事都做完了！",
+      "今天圆满收工～"
+    ],
+    "streakReward": {
+      "egg": 2,
+      "mood": 10
+    },
+    "streakLines": [
+      "连续第 {N} 天来看我，真有耐心。",
+      "你天天来，我都记着。"
+    ]
+  },
+  "digest": {
+    "enabled": true,
+    "minGapMin": 30,
+    "maxLines": 3,
+    "lines": {
+      "stage": "{name}长大了。",
+      "streak": "昨天的事没做完，连续天数断了 —— 别的什么都没扣。",
+      "hungry": "{name}有点饿了。",
+      "dirty": "{name}想洗个澡。"
+    }
+  },
+  "bond": {
+    "enabled": true,
+    "gain": {
+      "poke": 1.2,
+      "feed": 1.6,
+      "wash": 1.6,
+      "chase": 2.2,
+      "visit": 0.8,
+      "news": 0.8
+    },
+    "tiers": [
+      {
+        "at": 0,
+        "key": "stranger",
+        "name": "生疏",
+        "line": "我们还不太熟……"
+      },
+      {
+        "at": 20,
+        "key": "known",
+        "name": "认识",
+        "line": "你来过，我记住了。"
+      },
+      {
+        "at": 50,
+        "key": "familiar",
+        "name": "熟悉",
+        "line": "跟你待着挺安心。"
+      },
+      {
+        "at": 80,
+        "key": "close",
+        "name": "亲密",
+        "line": "你是我最熟的人。"
+      }
+    ],
+    "moodBonus": {
+      "familiar": 1.5,
+      "close": 2
+    },
+    "talkBoost": {
+      "close": 1.4
+    },
+    "chaseBoost": {
+      "close": 1.35
+    }
+  },
+  "social": {
+    "enabled": true,
+    "radius": 40,
+    "lines": [
+      "我们好像挺合得来。",
+      "要不要一起待会儿？",
+      "嘿，你也在啊。"
+    ],
+    "compat": {
+      "universe01": [
+        "butter",
+        "bean",
+        "persimmon",
+        "peach",
+        "fu"
+      ],
+      "butter": [
+        "universe01",
+        "bean",
+        "ingot"
+      ],
+      "mist": [
+        "noble"
+      ],
+      "persimmon": [
+        "universe01",
+        "fu",
+        "peach"
+      ],
+      "bean": [
+        "universe01",
+        "butter",
+        "peach",
+        "ingot"
+      ],
+      "peach": [
+        "universe01",
+        "persimmon",
+        "bean",
+        "fu"
+      ],
+      "noble": [
+        "mist"
+      ],
+      "ingot": [
+        "butter",
+        "bean"
+      ],
+      "fu": [
+        "universe01",
+        "persimmon",
+        "peach"
+      ]
+    },
+    "seekTimeoutSec": 25
   }
 }

@@ -58,6 +58,12 @@
   「注释里的字必须被剥掉、渲染用的字必须留着」；`scripts/check-fonts.mjs` 仍然会对
   **界面文案**里缺字硬失败（exit 1），不会悄悄回退系统字体。
 - 子集只增不减：`subset-fonts.py` 取 `渲染字 ∪ 已有子集`，不会把历史上烘进去的字删掉。
+- ⚠ **模板串里的注释不剥**（2026-11-15 白天踩到）：引擎的整段 CSS 在 `src/coop.js` 的
+  一个 **backtick 模板字符串**里，`stripJsComments` 把模板串当字符串整体跳过 →
+  **模板串里的 CSS 注释照样进字体子集**。今天为了写一句注释里的「挨」「僻」，
+  连续两次重生成三个字重的 woff2（1688 → 1689），把二进制也改了。
+  → **写引擎 CSS 的注释时别用冷僻字**；改完先 `npm run fonts` 看一眼
+  「字符集未变」再提交，别让一句注释带着三个 woff2 一起进 PR。
 
 ## 鸡场美术素材：本地有，库里没有（2026-11-04）
 - `public/packs/mujing/`（器物图、9 个品种的表情表、universe01 分层图）和
@@ -87,9 +93,73 @@
     → **不阻断**，只说明「线上器物图/表情表会 404」。用 `CF_PAGES` 环境变量判定，不靠猜。
   - **目录在但内容不齐** = 同步被中断/被吞 → **直接失败**。这才是要抓的静默失败。
   **以后加任何 prebuild 检查，先想一遍：全新 clone 上会不会挂？**
-- **既成事实**：线上 `https://mujing-universe.pages.dev/packs/...` 现在**全 404** ——
-  鸡场美术从来没上过公开站（授权条款确认前不能公开分发），
-  所以访客看到的鸡场是「鸡在、图没有」。要上美术得先解决授权与分发方式（待终树定）。
+- **既成事实（2026-11-14 逐个 HEAD 复验）**：线上
+  `https://mujing-universe.pages.dev/packs/...` **不再是 404** ——
+  运行时那 7 个文件（`pack.json`、`expr-sheet.png`、`universe01.png`、
+  4 张器物图 deco-*.png）线上**全是 200**。
+  以前记的「鸡场美术从没上过公开站，访客看到的是鸡在、图没有」**已作废**。
+  仍未上线的只有 `mimi.png` / `mimi.riv`（立绘，站点 `.gitignore` 也排除）
+  和各品种的源码素材目录（`breed-src` / `deco-src` / `expr-src` / `growth-src`）。
+
+## 小鸡宇宙：9 个品种各有各的声音和脾气（2026-11-14）
+- 台词、脾性、行为覆盖**全在 pack.json 里**（`breeds[].voice` / `breeds[].temper` / `breeds[].behaviors`），
+  引擎只读不改；换文案不用改代码。
+- `temper.talky` = **每分钟大概说几句**（0.2 ~ 1.2）：爱说话的品种**自己**会开口，
+  不用玩家点。间隔按真实时钟排期（`60 / talky` 秒，±40% 抖动）。
+- **别把冒泡挂在行为决策上**（鸡走得慢、决策很稀，挂了等于永远不开口）；
+  **别用引擎的 dt 累加计时**（tick 里 dt 钳在 0.05，帧率一低鸡就哑了）；
+  **别用「每秒抛一次骰子」**（泊松分布可能整整一分钟一句不出，场子显得死气沉沉）。
+- 图鉴格子里写着每个品种的**性格**（好奇 / 贪吃 / 怕生 / 爱说话 / 爱干净 / 黏人 / 矜持 / 财迷 / 爱热闹），
+  悬停还有一句话说明 —— 脾气得让访客**看得见**，不能只藏在行为里。
+- 权威源是引擎仓 `C:\coop-js`（`src/coop.js` + `packs/mujing/pack.json`），
+  官网的 `src/lib/coop/coop.js` 是 `npm run sync:site` 的**逐字副本，禁手改**。
+
+## 小鸡宇宙：今日三件事 / 熟络 / 结伴（2026-11-15 夜）
+- 补的是**目标、奖励、关系**三样（之前只有三轴、器物、快讯、地图、整理台、成长这些「慢变量」）。
+  参数同样**全在 pack.json**：`daily` / `bond` / `social` 三段 + `breeds[].temper.bondRate/bondCap`
+  + `breeds[].voiceClose`（亲密后的台词）。引擎只读不改。
+- **今日三件事**：每天抽三条小事（摸头/喂/添水/下蛋/逛站/起名/逗它/听它说话/打听消息/打开地图），
+  做完当场给蛋和心情，三条全完额外给 + 连续天数。
+  - **抽哪三条按日期定种**（`seededRnd(day|count|池长度)`）→ 两个标签页看到的一样，跨天自动换新。
+  - **不惩罚不上线的人**：跨天什么都不扣，只断连续天数。
+  - HUD 左下角多一颗芯片 `今日 0/3`，点它翻到手册里的「今天的小事」。
+- **熟络**：每只鸡一个关系值 0~100，四档（生疏/认识/熟悉/亲密）改**说话语气、摸头心情加成、
+  追鼠标半径、说话频率**。速度与上限按品种脾气（怕生 0.6 / 黏人 1.5 / 财迷上限 75）。
+  看得见：点鸡菜单一行「熟络 ▓▓▓▓░ 生疏 10」。
+- **结伴**：脾气合得来的两只鸡，**一只主动走过去**交上朋友（`social.compat` 决定谁跟谁合得来）。
+  - ⚠ **不能靠「碰巧走近」**：实测两只鸡 8 秒里从没靠近到 95px —— 鸡一上场就各自随机走开，
+    靠巧合这功能永远不发生。要做「一定会发生的玩法」，就得让角色**主动去做**那件事。
+- **跨标签页**：熟络/结伴是「谁新听谁的」型数据 → `recTs()` 里必须算上 `bondAt` / `friendAt`，
+  不然另一个标签页刚建立的关系会被旧副本盖回去（跟「名字被旧副本盖回」同一个坑）。
+- 验收脚本：`workspace/accept-goals.mjs`（真浏览器 **33 项**，含反向用例 + 故意搞坏自证）。
+  - **写验收的两个坑**：① 老页面 unload 会 `flushSave()` 把账冲掉 → 先封住
+    `Storage.prototype.setItem` 再写账再刷新；② 点空地会下蛋 → 摸鸡要直接给鸡元素派 pointer 事件，
+    别用坐标（鸡会走）；③ `Page.addScriptToEvaluateOnNewDocument` 在这套 CDP 连接里**没生效**，别指望它。
+  - **两个 UI 坑（本地看不出、手机上才发现）**：
+    ① 点「今日」芯片要滚到手册里那一节 —— 能滚的是**卡片 `.farm-card`**，
+    不是外层 `#farm-book` 容器（写 `book.scrollTop` 一点反应都没有）；
+    ② HUD 是**横向滚动**的药丸，排在最后的芯片在 390px 手机上**根本看不见** ——
+    芯片必须排在品牌名后面，验收要断言「矩形在视口内」，只断言「没 hidden」不够。
+  - **第三个 UI 坑：鸡场整层是 `position:fixed` + `z-index:90`，自己建了层叠上下文** ——
+    手册卡的 `z-index:1200` 跳不出这一层，所以站侧浮在根层叠里的东西（官网 Mimi 头像 162）
+    会**压在手册上面**：手机端手册铺满屏，正好盖住「今天的小事」那几行的数字。
+    解法走总线：引擎开合模态时派 `farm:modal`（`detail.open`），站侧收到就把浮标收起来。
+    → **以后站侧再往根层叠里加常驻浮层，先想一遍会不会压住鸡场手册/地图。**
+
+## 小鸡宇宙：回来摘要 / 鸡场快照（2026-11-15 白天）
+- 案例出处：`C:\coop-js\research\awwwards-web-game-cases-2.md`（第二批：snor-oh 的回来摘要、
+  Screen Schnauzer 的院子快照、Tamaguchi 的分享卡、1in8bn 的出生卡、Where Worlds Take Shape）。
+- **回来摘要**「你不在的时候」：离开时存**独立的一个快照键** `coop-farm-snap-v1`
+  （**不进账本** —— 账本要跨标签页合并、要管版本迁移），回来时对照差值说最多 3 件事：
+  某只鸡长大了（阶段时间驱动，离线也长）/ 昨天没做完所以连续天数断了（**别的什么都不扣**）/
+  某只鸡有点饿了。HUD 一颗芯片 `回来了 N 件` → 点它翻到手册那一节。
+  - **摘要只在开场算一次**（`computeDigest()` 存进 `DIGEST`）—— 不然访客自己摸一下鸡
+    就多一条「它跟你更熟」，那就不是「你不在的时候」了。
+  - 快照键**也会被老页面的 pagehide 冲掉**（引擎在 pagehide 里 `writeSnapshot()`）——
+    验收写快照也要先封 `Storage.prototype.setItem`（见 `accept-goals.mjs` 的 `writeSnapshotRaw`）。
+- **鸡场快照**：手册页脚多一颗「鸡场快照」→ 复用成就卡那套 canvas 导出，
+  出一张今天的鸡场 PNG（鸡名 + 品种色块 + 今天三件事进度 + 日期）。**零新美术**。
+- 验收脚本：`workspace/accept-goals.mjs`（真浏览器 **45 项**，含反向用例 + 两次故意搞坏自证）。
 
 ## 小鸡宇宙的两个东西住哪儿（2026-11-07 定，别再搬）
 - **名册住在作品页里**：`/works/chicken-universe/` 的正文之后有一节名册
@@ -154,6 +224,13 @@
   默认用 CDP 拦下 `/api/chat` 喂假的 SSE / 502（不需要 key）；
   `--live` 才去问线上真模型。
 - 共享部分在 `scripts/cdp-lib.mjs`（起浏览器 + 连 CDP，Node 18+ 自带 WebSocket，无 npm 依赖）。
+- **「测不出来」先怀疑测量手段，别急着改业务代码**（2026-11-15 踩了两遍）：
+  1. **页面被冻住**：`document.hidden === true` → rAF 被节流到 0 → 页面根本没跑帧。
+     本机 Edge 启动会弹 `edge://sync-confirmation-dialog/` 抢前台，我们的标签页就变 hidden。
+     `cdp-lib.mjs` 的 `startBrowser()` 现在会 `Page.bringToFront` 拉回来。
+  2. **长时间页面内 evaluate**：在页面里 `await` 一个长 promise 会把 rAF/定时器整个冻住
+     （实测 20 秒内引擎决策数 +0）。**等待要放在 Node 侧**，页面侧只发短 evaluate。
+- 验引擎/鸡场是否活着，看 `window.__coopBehaviors().counts`（idle/peck/walk 累计）涨没涨。
 - 体检脚本**必须能查出问题**才算数：改坏一行 CSS 跑一遍，它得报错退出 1。
 
 ## 行尾约定（别擅自改）
@@ -187,6 +264,14 @@
 - 复验方法：`node scripts/audit-badge.mjs --live`（问真模型，看徽标与回答）。
 
 ## 待用户/丽丽审的 PR（别重复做）
+- **#143（feature/breed-voice-temper，等你/丽丽点头）**：
+  小鸡宇宙「9 个品种各有各的声音和脾气」+「今日三件事 / 熟络 / 结伴」两刀合一。
+  预览 https://feature-breed-voice-temper.mujing-universe.pages.dev
+  引擎仓对应 PR：endtree-FDE/coop.js#9（已推送）。
+  验收：`workspace/accept-goals.mjs`（真浏览器 **45 项**全绿，含两次「故意搞坏」自证）。
+  Cloudflare Pages / Cursor Approval / Cursor Security **三项全绿**，就差 approve + 合并。
+  合并：`gh pr merge 143 -R LiliLIN0324/mujing-universe --squash --delete-branch`
+  （approve 用 `LiliLIN0324`，合并用 `endtree-FDE`；**approve 必须在最后一次 push 之后**）。
 - #51 cursor/copy-cleanup：中文标题+英文副标题、错别字、英文详情上加中文摘要、去内部黑话、/services→/contact、/about→/studio（301）。
 - #52 cursor/contact-onestep：微信 endTree-26 + 复制按钮（联系页和所有页脚）、二维码位 public/wechat-qr.png（缺文件则隐藏）、「一起合作」页脚。
 - cursor/hero-no-autoplay：首页不自动播放，状态待确认。

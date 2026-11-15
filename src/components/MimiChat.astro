@@ -778,6 +778,12 @@ const email = 'lily1326685527@gmail.com';
   }
   :global(body:has(#mimi) footer.bot) { padding-bottom: 120px; }
   :global(body:has(#mimi):has(.listen) footer.bot) { padding-bottom: 210px; }
+  /* Farm manual / map are modals: the launcher has to step aside.
+     The whole farm layer is a single stacking context (position:fixed + z-index:90),
+     so the book card can never rise above the launcher (z-index:162, root level).
+     On phones the book fills the screen and the launcher landed right on top of
+     the progress numbers in the "today's little things" section. */
+  .mimi.farm-away .mimi-launch { opacity: 0; visibility: hidden; pointer-events: none; }
   @media (max-width: 768px) {
     .mimi-hi { display: none !important; }
     .mimi-launch { width: 60px; height: 60px; right: 14px; bottom: calc(16px + var(--safe-b)); }
@@ -2169,6 +2175,10 @@ const email = 'lily1326685527@gmail.com';
       window.clearTimeout(toastTimer);
       toastTimer = window.setTimeout(() => { toastEl.hidden = true; }, 4200);
     }
+    /* farm:modal：鸡场手册/地图开了 → 浮标让开（否则手机端它压住手册里的数字） */
+    window.addEventListener('farm:modal', (e) => {
+      root.classList.toggle('farm-away', !!e.detail?.open);
+    });
     /* farm:say：对话框开着就在 log 里以管家名义播，收着用小告示 */
     window.addEventListener('farm:say', (e) => {
       const t = String(e.detail?.text || '');

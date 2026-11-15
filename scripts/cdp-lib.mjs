@@ -40,6 +40,16 @@ export async function startBrowser({ port = 9400, extraArgs = [] } = {}) {
     '--disable-gpu',
     '--hide-scrollbars',
     '--no-first-run',
+    /* 压掉 Edge 的首次运行/同步提示（2026-11-15）：
+       新建临时 profile 启动 Edge 会弹一个「同步确认」页（edge://sync-confirmation-dialog/），
+       那是**浏览器级弹窗**，会把我们这个标签页挤成 hidden → 页面里的 rAF 被节流到 0 →
+       鸡场整个冻住（引擎决策数 60 秒 +0）。
+       加了这几个开关后实测：/json/list 里只剩我们自己的 page 目标，没有那个弹窗页。 */
+    '--no-default-browser-check',
+    '--disable-features=msEdgeFirstRunExperience,msEdgeSync,msSingleSignOn',
+    '--disable-background-mode',
+    '--disable-component-update',
+    '--disable-sync',
     `--remote-debugging-port=${port}`,
     `--user-data-dir=${profile}`,
     ...extraArgs,
@@ -77,6 +87,41 @@ export async function startBrowser({ port = 9400, extraArgs = [] } = {}) {
     ws.addEventListener('error', rej);
   });
 
+  /* 把页面拉回前台 + 关掉 Edge 自己弹的后台页（2026-11-15）。
+     为什么必须：本机 Edge 启动时会弹一个「同步确认」的新页面
+     （edge://sync-confirmation-dialog/），它抢走前台 → 我们这个标签页
+     document.hidden 变成 true → 引擎的 visibilitychange 处理器把 rAF 循环停了
+     → 鸡场整个冻住（决策数 +0）。现场：预览站上「引擎不动了」，
+     查了半天是浏览器开的后台页，不是站点的锅。
+     凡是「页面突然不动了」先查 document.hidden 和 /json/list 里的其他 page 目标。 */
+  /** 把本页拉回前台（不等它回话，最多等 1.5 秒） */
+  const front = () => {
+    try {
+      const id = ++seq;
+      const p = new Promise((res) => { pending.set(id, res); ws.send(JSON.stringify({ id, method: 'Page.bringToFront', params: {} })); });
+      return Promise.race([p, new Promise((r) => setTimeout(r, 1500))]);
+    } catch { return Promise.resolve(); }
+  };
+
+  /** 把 Edge 自己弹出来的后台页（同步确认等）关掉 —— 它们会抢前台 */
+  const closeStrayPages = async () => {
+    try {
+      const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
+      for (const t of list) {
+        if (t.type !== 'page') continue;
+        if (t.id === page.id) continue;
+        if (!/^(edge|chrome|about|devtools):/.test(t.url || '')) continue;
+        try { await fetch(`http://127.0.0.1:${port}/json/close/${t.id}`); } catch { /* 关不掉就算了 */ }
+      }
+    } catch { /* 没有就算了 */ }
+  };
+
+  await front();
+  await closeStrayPages();
+  /* 弹窗可能过一会儿才冒出来，再拉两次 */
+  setTimeout(() => { front(); closeStrayPages(); }, 1200);
+  setTimeout(() => { front(); closeStrayPages(); }, 3200);
+
   /** 订阅一个 CDP 事件，如 Fetch.requestPaused */
   const on = (method, handler) => {
     if (!listeners.has(method)) listeners.set(method, []);
@@ -85,7 +130,11 @@ export async function startBrowser({ port = 9400, extraArgs = [] } = {}) {
 
   const send = (method, params = {}) => {
     const id = ++seq;
-    return new Promise((res) => { pending.set(id, res); ws.send(JSON.stringify({ id, method, params })); });
+    const p = new Promise((res) => { pending.set(id, res); ws.send(JSON.stringify({ id, method, params })); });
+    /* 每次导航完都把页面拉回前台：Edge 的弹窗随时可能抢走前台，
+       一旦我们这个标签页变 hidden，页面里的 rAF 就被节流到 0，什么都不动了。 */
+    if (method === 'Page.navigate') return p.then((m) => { front(); return m; });
+    return p;
   };
 
   const evaluate = async (expression) => {
