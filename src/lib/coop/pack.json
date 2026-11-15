@@ -1905,6 +1905,17 @@
       "你天天来，我都记着。"
     ]
   },
+  "digest": {
+    "enabled": true,
+    "minGapMin": 30,
+    "maxLines": 3,
+    "lines": {
+      "stage": "{name}长大了。",
+      "streak": "昨天的事没做完，连续天数断了 —— 别的什么都没扣。",
+      "hungry": "{name}有点饿了。",
+      "dirty": "{name}想洗个澡。"
+    }
+  },
   "bond": {
     "enabled": true,
     "gain": {

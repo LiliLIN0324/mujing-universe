@@ -58,6 +58,12 @@
   「注释里的字必须被剥掉、渲染用的字必须留着」；`scripts/check-fonts.mjs` 仍然会对
   **界面文案**里缺字硬失败（exit 1），不会悄悄回退系统字体。
 - 子集只增不减：`subset-fonts.py` 取 `渲染字 ∪ 已有子集`，不会把历史上烘进去的字删掉。
+- ⚠ **模板串里的注释不剥**（2026-11-15 白天踩到）：引擎的整段 CSS 在 `src/coop.js` 的
+  一个 **backtick 模板字符串**里，`stripJsComments` 把模板串当字符串整体跳过 →
+  **模板串里的 CSS 注释照样进字体子集**。今天为了写一句注释里的「挨」「僻」，
+  连续两次重生成三个字重的 woff2（1688 → 1689），把二进制也改了。
+  → **写引擎 CSS 的注释时别用冷僻字**；改完先 `npm run fonts` 看一眼
+  「字符集未变」再提交，别让一句注释带着三个 woff2 一起进 PR。
 
 ## 鸡场美术素材：本地有，库里没有（2026-11-04）
 - `public/packs/mujing/`（器物图、9 个品种的表情表、universe01 分层图）和
@@ -139,6 +145,21 @@
     会**压在手册上面**：手机端手册铺满屏，正好盖住「今天的小事」那几行的数字。
     解法走总线：引擎开合模态时派 `farm:modal`（`detail.open`），站侧收到就把浮标收起来。
     → **以后站侧再往根层叠里加常驻浮层，先想一遍会不会压住鸡场手册/地图。**
+
+## 小鸡宇宙：回来摘要 / 鸡场快照（2026-11-15 白天）
+- 案例出处：`C:\coop-js\research\awwwards-web-game-cases-2.md`（第二批：snor-oh 的回来摘要、
+  Screen Schnauzer 的院子快照、Tamaguchi 的分享卡、1in8bn 的出生卡、Where Worlds Take Shape）。
+- **回来摘要**「你不在的时候」：离开时存**独立的一个快照键** `coop-farm-snap-v1`
+  （**不进账本** —— 账本要跨标签页合并、要管版本迁移），回来时对照差值说最多 3 件事：
+  某只鸡长大了（阶段时间驱动，离线也长）/ 昨天没做完所以连续天数断了（**别的什么都不扣**）/
+  某只鸡有点饿了。HUD 一颗芯片 `回来了 N 件` → 点它翻到手册那一节。
+  - **摘要只在开场算一次**（`computeDigest()` 存进 `DIGEST`）—— 不然访客自己摸一下鸡
+    就多一条「它跟你更熟」，那就不是「你不在的时候」了。
+  - 快照键**也会被老页面的 pagehide 冲掉**（引擎在 pagehide 里 `writeSnapshot()`）——
+    验收写快照也要先封 `Storage.prototype.setItem`（见 `accept-goals.mjs` 的 `writeSnapshotRaw`）。
+- **鸡场快照**：手册页脚多一颗「鸡场快照」→ 复用成就卡那套 canvas 导出，
+  出一张今天的鸡场 PNG（鸡名 + 品种色块 + 今天三件事进度 + 日期）。**零新美术**。
+- 验收脚本：`workspace/accept-goals.mjs`（真浏览器 **45 项**，含反向用例 + 两次故意搞坏自证）。
 
 ## 小鸡宇宙的两个东西住哪儿（2026-11-07 定，别再搬）
 - **名册住在作品页里**：`/works/chicken-universe/` 的正文之后有一节名册
@@ -247,7 +268,7 @@
   小鸡宇宙「9 个品种各有各的声音和脾气」+「今日三件事 / 熟络 / 结伴」两刀合一。
   预览 https://feature-breed-voice-temper.mujing-universe.pages.dev
   引擎仓对应 PR：endtree-FDE/coop.js#9（已推送）。
-  验收：`workspace/accept-goals.mjs`（真浏览器 **33 项**全绿，含「故意搞坏」自证）。
+  验收：`workspace/accept-goals.mjs`（真浏览器 **45 项**全绿，含两次「故意搞坏」自证）。
   Cloudflare Pages / Cursor Approval / Cursor Security **三项全绿**，就差 approve + 合并。
   合并：`gh pr merge 143 -R LiliLIN0324/mujing-universe --squash --delete-branch`
   （approve 用 `LiliLIN0324`，合并用 `endtree-FDE`；**approve 必须在最后一次 push 之后**）。

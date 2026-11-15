@@ -445,6 +445,15 @@ const CSS = `/* v3：全站隐形舞台 + SIMPY LIFE 画风（扁平色块 / 白
   .farm-dailyrow.is-done .farm-dailybar i { background: var(--green); }
   .farm-dailyn { font-variant-numeric: tabular-nums; min-width: 36px; text-align: right; margin-left: auto; }
   .farm-dailystreak { font-size: 11px; color: color-mix(in srgb, var(--ink) 62%, transparent); margin: 6px 0 0; }
+  /* 回来摘要：跟「今天的小事」同一套视觉（同一节里并排，不新开对话框）
+     ⚠ 这段 CSS 在模板串里 → **注释里的字会进字体子集**，注释尽量用简单字。 */
+  .farm-stat.farm-digest { border-color: var(--green); }
+  .farm-stat.farm-digest:hover { background: var(--green); }
+  .farm-stat.farm-digest:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  .farm-digestbox { margin-top: 12px; padding-top: 10px; border-top: 1px solid color-mix(in srgb, var(--ink) 14%, transparent); }
+  .farm-digestbox:empty { display: none; }
+  .farm-digesttitle { font-size: 12px; font-weight: 700; margin: 0 0 6px; }
+  .farm-digestrow { font-size: 12px; margin: 0 0 4px; padding: 2px 0; color: color-mix(in srgb, var(--ink) 78%, transparent); }
   /* bond meter in the chick menu */
   .farm-bond { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; margin-top: 5px; }
   .farm-bondbar { width: 54px; height: 7px; border: 1px solid var(--ink); background: var(--paper); border-radius: 3px; overflow: hidden; display: inline-block; }
@@ -791,6 +800,7 @@ const MARKUP = (brand, page, breedCount) => `<div class="farm" id="farm" data-pa
       <div class="farm-stats">
         <span class="farm-stat farm-brand">${brand}</span>
         <button type="button" class="farm-stat farm-daily" id="farm-btn-daily" hidden title="今天的小事">今日 <b id="farm-n-daily">0/3</b></button>
+        <button type="button" class="farm-stat farm-digest" id="farm-btn-digest" hidden title="你不在的时候，鸡场发生了什么">回来了 <b id="farm-n-digest">0</b> 件</button>
         <span class="farm-stat">蛋 <b id="farm-n-eggs">0</b></span>
         <span class="farm-stat">鸡 <b id="farm-n-chicks">0</b></span>
         <span class="farm-stat">图鉴 <b id="farm-n-dex">0/${breedCount}</b></span>
@@ -827,10 +837,12 @@ const MARKUP = (brand, page, breedCount) => `<div class="farm" id="farm" data-pa
         <div class="farm-cardhead"><b class="farm-tape">鸡场手册 · 图鉴</b><button type="button" class="farm-btn" id="farm-book-x" aria-label="关闭">×</button></div>
         <div class="farm-grid" id="farm-bookgrid"></div>
         <div class="farm-dailybox" id="farm-dailybox"></div>
+        <div class="farm-digestbox" id="farm-digestbox"></div>
         <div class="farm-cardfoot">
           <span class="farm-tip">点击页面空白处下蛋，孵出的小鸡自动入册；概率写在方案里，不玩暗改那套。</span>
           <button type="button" class="farm-btn" id="farm-btn-dexcard" hidden>图鉴卡</button>
           <button type="button" class="farm-btn" id="farm-btn-card">成就卡</button>
+          <button type="button" class="farm-btn" id="farm-btn-shot">鸡场快照</button>
           <button type="button" class="farm-btn" id="farm-btn-reset">重开鸡场</button>
         </div>
       </div>
@@ -965,6 +977,13 @@ export default function init(cfg = {}) {
      规矩（跟成长机制同一条）：**不惩罚不上线的人** —— 过完一天自动换新，
      昨天没做完什么都不扣，只是连续天数断了。 */
   const DAILY_CFG = (pack.daily && typeof pack.daily === 'object') ? pack.daily : null;
+
+  /* ===== 回来摘要（2026-11-15 白天）=====
+     「你不在的时候」：离开时存一份快照，回来时对照差值说最多 3 件事。
+     案例出处 research/awwwards-web-game-cases-2.md（snor-oh 的回来摘要 / pixel-chicken 离线摘要）。
+     规矩：**只报差值算得出来的**（阶段长大、三轴掉、连续天数断）—— 不许编。
+     文案在 pack.json 的 `digest` 段（唯一出处）。 */
+  const DIGEST_CFG = (pack.digest && typeof pack.digest === 'object') ? pack.digest : null;
 
   /* ===== 熟络（2026-11-15 夜）=====
      玩家跟**每一只**鸡之间有一个关系值（0~100）。
@@ -1194,6 +1213,10 @@ const root = document.getElementById('farm');
     /* ===== 模块一：存储 store（schema 与迁移见 farm-state.md） ===== */
     const KEY = 'coop-farm-v1';
     const LEGACY_KEYS = ['mujing-farm-v1', 'mujing-chicken-farm-v0']; // 官网 0.1.9 内嵌版与原型 v0 的账，读到即迁移
+    /* 上次来过的快照（回来摘要用）：**不进账本** ——
+       账本要跨标签页合并、要管版本迁移；快照只是「上次来过的记录」，
+       塞进账本会让 recTs / mergeState 多一套要维护的分支（规矩 39）。 */
+    const SNAP_KEY = 'coop-farm-snap-v1';
 
     let state = {
       v: 1, seq: 0, eggs: 0, hatched: 0, pity: 0, dex: {}, chickens: [], decos: [],
@@ -3053,6 +3076,97 @@ const root = document.getElementById('farm');
       return hit;
     }
 
+    /* ===== 回来摘要（2026-11-15 白天）=====
+       「你不在的时候」：离开时存快照，回来时对照差值说最多 3 件事。
+       ⚠ 摘要**只在开场算一次**（算完存内存）——
+          不然每帧重算，访客自己摸一下鸡就多一条「它跟你更熟」，那不是「你不在的时候」。
+       ⚠ 快照是**独立的一个键**，不进账本（规矩 39）。 */
+    /* 摘要只在开场算一次（算完存内存）：不然访客自己摸一下鸡就多一条，
+       那就不是「你不在的时候」了。 */
+    let DIGEST = [];
+    function digestCfg() {
+      const C = DIGEST_CFG || {};
+      return {
+        enabled: !!DIGEST_CFG && C.enabled !== false,
+        minGapMin: Math.max(0, Number(C.minGapMin) || 30),
+        maxLines: Math.max(1, Math.min(5, Number(C.maxLines) || 3)),
+        lines: (C.lines && typeof C.lines === 'object') ? C.lines : {},
+      };
+    }
+    /* 快照：这次离开时鸡场长什么样（鸡名 / 阶段 / 三轴 / 连续天数 / 时间戳） */
+    function snapshotNow() {
+      const chicks = {};
+      for (const r of (state.chickens || [])) {
+        if (!r || !r.id || r.stowed) continue;
+        chicks[r.id] = {
+          name: nameOf(r.id),
+          stage: stageOf(r),
+          full: recFull(r), clean: recClean(r), mood: recMood(r),
+        };
+      }
+      return {
+        at: Date.now(),
+        streak: (state.daily && state.daily.streak) | 0,
+        chicks,
+      };
+    }
+    function readSnapshot() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(SNAP_KEY) || '');
+        if (raw && typeof raw === 'object' && Number(raw.at) > 0) return raw;
+      } catch { /* 隐私模式 / 空档 */ }
+      return null;
+    }
+    function writeSnapshot() {
+      try { localStorage.setItem(SNAP_KEY, JSON.stringify(snapshotNow())); } catch { /* 隐私模式 */ }
+    }
+    /* 差值 → 最多 maxLines 行。**只报算得出来的**（规矩 38）。 */
+    function computeDigest() {
+      const C = digestCfg();
+      if (!C.enabled) return [];
+      const snap = readSnapshot();
+      if (!snap) return [];
+      const gapMin = (Date.now() - (Number(snap.at) || 0)) / 60000;
+      if (!isFinite(gapMin) || gapMin < C.minGapMin) return [];   // 刷新一下不该弹一堆
+      const L = C.lines || {};
+      const fill = (t, vars) => String(t || '').replace(/\{(\w+)\}/g, (m, k) => (vars && vars[k] != null ? String(vars[k]) : m));
+      const out = [];
+      const live = (state.chickens || []).filter((r) => r && r.id && !r.stowed);
+      const prevOf = (r) => (snap.chicks && snap.chicks[r.id]) || null;
+      /* ① 长大了（阶段是时间驱动的，离线也在长，回来补账） */
+      const grew = live.filter((r) => {
+        const p = prevOf(r); if (!p) return false;
+        const a = STAGE_ORDER.indexOf(String(p.stage || ''));
+        const b = STAGE_ORDER.indexOf(stageOf(r));
+        return a >= 0 && b > a;
+      });
+      if (grew.length) {
+        const t = fill(L.stage, { name: nameOf(grew[0].id) || '小鸡', n: grew.length });
+        if (t) out.push({ kind: 'stage', text: t });
+      }
+      /* ② 昨天没做完 → 连续天数断了（**别的什么都不扣**，这句话必须带上） */
+      if ((Number(snap.streak) || 0) > 0 && ((state.daily && state.daily.streak) | 0) === 0) {
+        const t = fill(L.streak, { n: snap.streak });
+        if (t) out.push({ kind: 'streak', text: t });
+      }
+      /* ③ 三轴按真实时间掉：饿了 / 想洗澡（是事实，不是讨债 —— 规矩 37） */
+      const hungry = [], dirty = [];
+      for (const r of live) {
+        const p = prevOf(r); if (!p) continue;
+        if (recFull(r) < (Number(p.full) || 0) - 12) hungry.push(nameOf(r.id) || '小鸡');
+        if (recClean(r) < (Number(p.clean) || 0) - 12) dirty.push(nameOf(r.id) || '小鸡');
+      }
+      if (hungry.length) {
+        const t = fill(L.hungry, { name: hungry[0], n: hungry.length });
+        if (t) out.push({ kind: 'hungry', text: t });
+      }
+      if (dirty.length) {
+        const t = fill(L.dirty, { name: dirty[0], n: dirty.length });
+        if (t) out.push({ kind: 'dirty', text: t });
+      }
+      return out.slice(0, C.maxLines);
+    }
+
     /* ===== 熟络（2026-11-15 夜）=====
        玩家跟**每一只**鸡各有一个关系值（0~100）。
        照顾它 → 涨；涨到不同档 → 说话的语气、看你鼠标的积极性都变。
@@ -3891,6 +4005,7 @@ const root = document.getElementById('farm');
       const dexBtn = $('farm-btn-dexcard');
       if (dexBtn) dexBtn.hidden = found < BREEDS.length; // 集齐了才给图鉴卡
       renderDaily();
+      renderDigest();
       renderBook();
       if (state.eggs >= 1) {
         hint.classList.add('is-off');
@@ -3926,6 +4041,21 @@ const root = document.getElementById('farm');
         html += '<p class="farm-dailystreak">连续第 ' + D.streak + ' 天'
           + (D.best > D.streak ? '（最多 ' + D.best + ' 天）' : '') + '</p>';
       }
+      box.innerHTML = html;
+    }
+
+    /* 回来摘要：HUD 一颗芯片「回来了 N 件」→ 点它翻到手册里那一节。
+       规矩：**不自动弹窗、不自动展开手册** —— 访客没动过的东西不该抢注意力。 */
+    function renderDigest() {
+      const chip = $('farm-btn-digest');
+      const num = $('farm-n-digest');
+      const box = $('farm-digestbox');
+      if (!chip || !num || !box) return;
+      if (!DIGEST.length) { chip.hidden = true; box.innerHTML = ''; return; }
+      chip.hidden = false;
+      num.textContent = String(DIGEST.length);
+      let html = '<p class="farm-digesttitle">你不在的时候</p>';
+      for (const d of DIGEST) html += '<p class="farm-digestrow">' + d.text + '</p>';
       box.innerHTML = html;
     }
 
@@ -5247,6 +5377,16 @@ $('farm-btn-daily').addEventListener('click', () => {
   const card = book ? book.querySelector('.farm-card') : null;
   if (box && card) card.scrollTop = Math.max(0, box.offsetTop - 14);
 });
+/* 回来摘要的芯片 → 同样翻到手册里那一节（细节不挤在 HUD 上）。 */
+$('farm-btn-digest').addEventListener('click', () => {
+  ensureAudio();
+  const book = $('farm-book');
+  if (book) book.hidden = false;
+  updateAnnot();
+  const box = $('farm-digestbox');
+  const card = book ? book.querySelector('.farm-card') : null;
+  if (box && card) card.scrollTop = Math.max(0, box.offsetTop - 14);
+});
     $('farm-book-x').addEventListener('click', () => { $('farm-book').hidden = true; });
     $('farm-book-scrim').addEventListener('click', () => { $('farm-book').hidden = true; });
     $('farm-btn-map').addEventListener('click', () => { openMap(); bumpDaily('map'); });
@@ -5334,6 +5474,55 @@ $('farm-btn-daily').addEventListener('click', () => {
         });
         ctx.fillStyle = cOrange; ctx.font = '600 16px system-ui, sans-serif';
         ctx.fillText('集齐全部品种 · 幕景宇宙', 360, 424);
+      } else if (kind === 'shot') {
+        /* 鸡场快照：今天这一页的鸡 + 今天的三件事（带得走的那张图） */
+        ctx.fillText('鸡场快照', 360, 74);
+        ctx.font = '13px system-ui, sans-serif';
+        ctx.fillStyle = cInk;
+        ctx.fillText(`${date} · 蛋 ${state.eggs | 0} · 鸡 ${state.hatched | 0}`, 360, 98);
+        const live = (state.chickens || []).filter((r) => r && !r.stowed).slice(0, 6);
+        live.forEach((r, i) => {
+          const b = BREEDS.find((x) => x.id === r.breed) || BREEDS[0];
+          const cx = 150 + (i % 3) * 210;
+          const cy = 160 + Math.floor(i / 3) * 96;
+          ctx.beginPath(); ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+          ctx.fillStyle = cCard; ctx.fill();
+          ctx.lineWidth = 2.5; ctx.strokeStyle = cOrange; ctx.stroke();
+          dexGlyph(ctx, cx, cy, 16, b.color || cOrange, cInk);
+          ctx.textAlign = 'center';
+          ctx.fillStyle = cInk; ctx.font = '600 13px system-ui, sans-serif';
+          ctx.fillText(nameOf(r.id) || b.name, cx, cy + 42);
+        });
+        if (!live.length) {
+          ctx.font = '13px system-ui, sans-serif';
+          ctx.fillText('（今天场上一只鸡也没有）', 360, 170);
+        }
+        ctx.textAlign = 'center';
+        ctx.fillStyle = cInk; ctx.font = '600 13px system-ui, sans-serif';
+        ctx.fillText('今天的小事', 360, 320);
+        const D = state.daily;
+        const items = (D && Array.isArray(D.items)) ? D.items.slice(0, 3) : [];
+        if (!items.length) {
+          ctx.font = '12px system-ui, sans-serif';
+          ctx.fillText('（今天还没派活）', 360, 344);
+        }
+        items.forEach((it, i) => {
+          const y = 348 + i * 22;
+          ctx.textAlign = 'left';
+          ctx.fillStyle = cInk; ctx.font = '12px system-ui, sans-serif';
+          ctx.fillText(it.label, 120, y);
+          const pct = Math.round(Math.min(1, (it.prog | 0) / Math.max(1, it.goal)) * 100);
+          ctx.fillStyle = cCard; ctx.fillRect(320, y - 10, 260, 10);
+          ctx.strokeStyle = cInk; ctx.lineWidth = 1; ctx.strokeRect(320, y - 10, 260, 10);
+          ctx.fillStyle = it.done ? (cssVar('--green') || cOrange) : cOrange;
+          ctx.fillRect(321, y - 9, Math.max(0, Math.round(258 * pct / 100)), 8);
+          ctx.textAlign = 'right';
+          ctx.fillStyle = cInk; ctx.font = '12px system-ui, sans-serif';
+          ctx.fillText(it.done ? '完成' : (it.prog | 0) + '/' + it.goal, 648, y);
+          ctx.textAlign = 'center';
+        });
+        ctx.fillStyle = cOrange; ctx.font = '600 16px system-ui, sans-serif';
+        ctx.fillText('幕景宇宙 · 小鸡宇宙', 360, 424);
       } else {
         ctx.fillText('满屏鸡群合影', 360, 120);
         ctx.font = '16px system-ui, sans-serif';
@@ -5366,6 +5555,9 @@ $('farm-btn-daily').addEventListener('click', () => {
       if (found < BREEDS.length) { emitSay('还没集齐。'); return; }
       drawCard('dex');
     });
+    /* 鸡场快照：今天这一页的鸡 + 今天的三件事，导出 PNG（访客自愿带走，不是分享门槛） */
+    const shotBtn = $('farm-btn-shot');
+    if (shotBtn) shotBtn.addEventListener('click', () => { ensureAudio(); drawCard('shot'); });
     $('farm-btn-reset').addEventListener('click', () => {
       ensureAudio();
       if (!resetArmed) {
@@ -5742,12 +5934,12 @@ $('farm-btn-daily').addEventListener('click', () => {
     function startLoop() { if (!raf) { lastT = -1; raf = requestAnimationFrame(tick); } }
     function stopLoop() { if (raf) { cancelAnimationFrame(raf); raf = 0; } }
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) { stopLoop(); flushSave(); } // 藏起来先把账记了（lastSeen 粒度够用）
+      if (document.hidden) { stopLoop(); writeSnapshot(); flushSave(); } // 藏起来先把账记了（lastSeen 粒度够用）
       else if (!root.hidden) startLoop(); // 鸡场收起中不空转
     });
     /* 关页面/切走前强制落盘：合并写有 250ms 延迟，不冲一下会丢掉最后一下 */
-    window.addEventListener('pagehide', () => flushSave());
-    window.addEventListener('beforeunload', () => flushSave());
+    window.addEventListener('pagehide', () => { writeSnapshot(); flushSave(); });
+    window.addEventListener('beforeunload', () => { writeSnapshot(); flushSave(); });
 
     /* 把一条账本记录放上台（还原 / 召回 / 差事办完自己回家 共用一条路）
        pop = 刚回来时弹一下（还原/召回不弹 —— 那是「摆上去」，不是「回来了」） */
@@ -6146,6 +6338,10 @@ $('farm-btn-daily').addEventListener('click', () => {
         /* 成长补账：离线期间长到的阶段在这里补上（静默 —— 不连播动画，回来只报一句喜） */
         const grew = checkGrowth(false);
         restore(); firstVisit();
+        /* 回来摘要：开场算一次（差值 = 上次离开到现在真的发生的事）。
+           必须在 checkGrowth 之后 —— 离线期间长到的阶段要补上，差值才算得出来。 */
+        DIGEST = computeDigest();
+        renderDigest();   // 芯片立刻出来（不等下一次 refreshHUD）
         /* 姿态立刻刷一次：refreshExpr 平时每 60 帧才跑一次，
            刚放回来的鸡会先以「正常脸」出现一两秒 —— 饿的/脏的看不出来，
            玩家会以为刚才的白粥白喂了。这里开场就刷，姿态立刻对。 */
@@ -6202,6 +6398,8 @@ $('farm-btn-daily').addEventListener('click', () => {
         id: c.id, breed: (c.breed && c.breed.id) || '', friend: friendOf(c),
       })),
       chip: (() => { const n = $('farm-n-daily'); return n ? n.textContent : ''; })(),
+      digest: DIGEST.map((d) => ({ kind: d.kind, text: d.text })),
+      digestChip: (() => { const n = $('farm-n-digest'); return n ? n.textContent : ''; })(),
     });
   }
   /* 引擎真的起来了才占幂等名额（引擎块外面那个 window.__coop 句柄已经先给好了）。
